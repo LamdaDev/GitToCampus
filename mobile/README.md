@@ -1,24 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+# GitToCampus Mobile App
 
-const MapScreen = () => {
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>GitToCampus</Text>
-        </View>
-    );
-};
+## Prerequisites
+- Node.js (version 14 or later)
+- npm or yarn
+- Expo CLI (install with `npm install -g expo-cli`)
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-    },
-});
-
-export default MapScreen;
+## How to Run
+- To start the app, run:
+  ```bash
+  npm start
