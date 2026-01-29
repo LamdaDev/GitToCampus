@@ -1,24 +1,28 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import MapView, { PROVIDER_GOOGLE, Region } from 'react-native-maps';
 
-const MapScreen = () => {
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>GitToCampus</Text>
-        </View>
-    );
+import { mapScreenStyles as styles } from '../styles/Mapscreen.styles';
+
+const INITIAL_REGION: Region = {
+  latitude: 45.4973, // near SGW
+  longitude: -73.5789,
+  latitudeDelta: 0.01,
+  longitudeDelta: 0.01,
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-    },
-});
-
-export default MapScreen;
+export default function MapScreen() {
+  return (
+    <View style={styles.container}>
+      <MapView
+        style={StyleSheet.absoluteFillObject}
+        initialRegion={INITIAL_REGION}
+        // NOTE: provider GOOGLE works on Android by default; iOS may require dev build later.
+        provider={PROVIDER_GOOGLE}
+      />
+      <View style={styles.overlay}>
+        <Text style={styles.overlayText}>GitToCampus</Text>
+      </View>
+    </View>
+  );
+}
