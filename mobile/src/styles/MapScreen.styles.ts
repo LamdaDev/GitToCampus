@@ -1,5 +1,9 @@
 import { StyleSheet } from 'react-native';
 
+/**
+ * MapScreen styles are separated from MapScreen.tsx to keep UI logic and styling modular.
+ * This helps maintain consistency as the app grows (more screens/components).
+ */
 export const mapScreenStyles = StyleSheet.create({
   container: { flex: 1 },
   overlay: {
