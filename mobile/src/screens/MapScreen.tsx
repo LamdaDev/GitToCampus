@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Region } from 'react-native-maps';
 
-import { mapScreenStyles as styles } from '../styles/MapScreen.styles';
+import { mapScreenStyles as styles } from '../styles/Mapscreen.styles';
 
 const INITIAL_REGION: Region = {
   latitude: 45.4973, // near SGW
