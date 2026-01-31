@@ -16,6 +16,7 @@ Created by Team GitGood.
 
 <img width="128" height="128" alt="team_git_good" src="https://github.com/user-attachments/assets/36b1d1bc-7f92-4483-a908-6ee5fac72d68" />
 
+<!--
 ## Tech Stack
 
 TBD
@@ -27,6 +28,7 @@ TBD
 ## Default Configuration from Expo Docs
 
 TBD
+-->
 
 ## Team Members:
 
