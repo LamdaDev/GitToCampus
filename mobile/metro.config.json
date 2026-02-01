@@ -1,0 +1,5 @@
+{
+  "resolver": {
+    "sourceExts": ["js", "jsx", "ts", "tsx", "json", "cjs", "mjs", "geojson"]
+  }
+}
