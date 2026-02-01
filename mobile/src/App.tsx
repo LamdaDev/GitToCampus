@@ -9,11 +9,11 @@ import MapScreen from './screens/MapScreen';
  * SafeAreaView ensures content doesn't overlap with notches/status bars on iOS.
  */
 const App = () => {
-    return (
-        <SafeAreaView style={{ flex: 1 }}>
-            <MapScreen />
-        </SafeAreaView>
-    );
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <MapScreen />
+    </SafeAreaView>
+  );
 };
 
 export default App;
