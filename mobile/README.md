@@ -3,6 +3,7 @@
 This is an Expo-based React Native app using TypeScript and the managed workflow.
 
 ## Prerequisites
+
 - **Node.js** (version 14 or later): Download from [nodejs.org](https://nodejs.org/).
 - **npm** or **yarn**: Comes with Node.js.
 - **Expo CLI**: Install globally with `npm install -g @expo/cli`.
@@ -24,6 +25,7 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
 ## How to Run
 
 ### General Setup
+
 1. Clone or navigate to the project root.
 2. Navigate to the `mobile` directory:
    ```bash
@@ -35,6 +37,7 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
    ```
 
 ### Running on Android
+
 1. **Set up Android Emulator**:
    - Open Android Studio.
    - Go to **Tools > Device Manager**.
@@ -42,10 +45,12 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
    - Start the emulator from Device Manager.
 
 2. **Start the Expo Server**:
+
    ```bash
    cd mobile/
    npm start
    ```
+
    - This opens the Expo dev tools in your browser or shows a QR code in the terminal.
 
 3. **Run on Android Emulator**:
@@ -61,6 +66,7 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
    - Run `npm start`, then `npm run android` or scan QR code with Expo Go.
 
 ### Running on iOS
+
 - Requires macOS and Xcode.
 - Install Xcode from the Mac App Store.
 - Run:
@@ -74,17 +80,20 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
 - Or scan QR code with Expo Go on iOS device.
 
 ### Running in Expo Go (Easiest for Testing)
+
 - Run `npm start`.
 - On your device (Android or iOS), open Expo Go and scan the QR code.
 - Ensure your computer and device are on the same Wi-Fi network.
 
 ## Assumptions
+
 - This project uses Expo managed workflow.
 - Recommended Node version: 14 or later.
 - For Android, Android Studio is required for emulator; physical devices work with USB debugging.
 - No custom native modules; stick to Expo SDK.
 
 ## Troubleshooting
+
 - If `adb` is not found, check your PATH and ANDROID_HOME.
 - Restart terminal after environment changes.
 - For Expo issues, check [Expo documentation](https://docs.expo.dev/).

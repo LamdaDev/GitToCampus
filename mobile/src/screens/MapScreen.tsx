@@ -9,12 +9,12 @@ import { mapScreenStyles as styles } from '../styles/MapScreen.styles';
 /**
  * MapScreen renders the interactive map and provides the foundation for:
  * - displaying SGW/Loyola campus presets
- * - switching campuses via state + camera animation 
+ * - switching campuses via state + camera animation
  * - adding UI controls later
  */
 export default function MapScreen() {
   const mapRef = useRef<MapView | null>(null);
-  const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
+  const [selectedCampus, _setSelectedCampus] = useState<Campus>('SGW');
 
   /**
    * Whenever selectedCampus changes, animate the map camera to the appropriate
@@ -39,10 +39,10 @@ export default function MapScreen() {
    *
    * IMPORTANT: Keep this commented out for production/merge unless desired.
    */
-//   useEffect(() => {
-//     const timer = setTimeout(() => setSelectedCampus('LOYOLA'), 1500);
-//     return () => clearTimeout(timer);
-//   }, []);
+  //   useEffect(() => {
+  //     const timer = setTimeout(() => setSelectedCampus('LOYOLA'), 1500);
+  //     return () => clearTimeout(timer);
+  //   }, []);
 
   return (
     <View style={styles.container}>
