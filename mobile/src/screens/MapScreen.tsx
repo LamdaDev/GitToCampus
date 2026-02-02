@@ -1,79 +1,92 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import React, { useMemo, useState } from "react";
+import { View, Text } from "react-native";
+import MapView, { Polygon } from "react-native-maps";
+import type { Campus } from "../types/Campus";
+import { getCampusRegion } from "../constants/campuses";
+import styles, { POLYGON_THEME } from "../styles/MapScreen.styles";
 
-import type { Campus } from '../types/Campus';
-import { getCampusRegion } from '../constants/campuses';
-import { mapScreenStyles as styles } from '../styles/MapScreen.styles';
+// Adjust this import path based on where you placed it
+import {
+  getCampusBuildingShapes,
+  getBuildingShapeById,
+} from "../utils/buildingsRepository";
 
-/**
- * MapScreen renders the interactive map and provides the foundation for:
- * - displaying SGW/Loyola campus presets
- * - switching campuses via state + camera animation
- * - adding UI controls later
- */
+type PolygonRenderItem = {
+  key: string;
+  buildingId: string;
+  campus: Campus;
+  coordinates: { latitude: number; longitude: number }[];
+};
+
 export default function MapScreen() {
-  const mapRef = useRef<MapView | null>(null);
-  const [selectedCampus] = useState<Campus>('SGW');
+  // Keep this for US-1.3 camera panning later (even if no UI yet)
+  const [selectedCampus, setSelectedCampus] = useState<Campus>("SGW");
 
-  /**
-   * Whenever selectedCampus changes, animate the map camera to the appropriate
-   * preset region (SGW or Loyola).
-   *
-   * This separates UI from behavior:
-   * - The "toggle UI" can be implemented later without rewriting map logic.
-   * - Any component can change selectedCampus, and the map will react consistently.
-   */
-  useEffect(() => {
-    const targetRegion = getCampusRegion(selectedCampus);
+  // New for US-1.2 selection
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
-    // Smooth camera transition to new campus region (duration in ms)
-    mapRef.current?.animateToRegion(targetRegion, 800);
-  }, [selectedCampus]);
+  // Fetch both campuses (TASK-1.2.3 handles join/filter internally + cache)
+  const sgwBuildings = useMemo(() => getCampusBuildingShapes("SGW"), []);
+  const loyolaBuildings = useMemo(() => getCampusBuildingShapes("LOYOLA"), []);
 
-  /**
-   * DEV-ONLY TEST (optional):
-   * If you want to verify that region switching works *without* UI,
-   * temporarily uncomment this effect. It will auto-switch from SGW to Loyola
-   * after a short delay.
-   *
-   * IMPORTANT: Keep this commented out for production/merge unless desired.
-   */
-  //   useEffect(() => {
-  //     const timer = setTimeout(() => setSelectedCampus('LOYOLA'), 1500);
-  //     return () => clearTimeout(timer);
-  //   }, []);
+  // Flatten polygons for rendering (MultiPolygon support)
+  const polygonItems: PolygonRenderItem[] = useMemo(() => {
+    const flatten = (campus: Campus, buildings: ReturnType<typeof getCampusBuildingShapes>) =>
+      buildings.flatMap((b) =>
+        b.polygons.map((coords, idx) => ({
+          key: `${campus}-${b.id}-${idx}`,
+          buildingId: b.id,
+          campus,
+          coordinates: coords,
+        }))
+      );
+
+    return [...flatten("SGW", sgwBuildings), ...flatten("LOYOLA", loyolaBuildings)];
+  }, [sgwBuildings, loyolaBuildings]);
+
+  const selectedBuilding = useMemo(() => {
+    if (!selectedBuildingId) return null;
+    return getBuildingShapeById(selectedBuildingId) ?? null;
+  }, [selectedBuildingId]);
 
   return (
     <View style={styles.container}>
       <MapView
-        /**
-         * Store the MapView reference so we can call animateToRegion later.
-         * Note: callback ref avoids some typing issues compared to useRef<MapView>(null)
-         */
-        ref={(ref) => {
-          mapRef.current = ref;
-        }}
-        style={StyleSheet.absoluteFillObject}
-        /**
-         * initialRegion is used only on first render.
-         * After that, region switching is handled by animateToRegion in the effect above.
-         */
-        initialRegion={getCampusRegion(selectedCampus)}
-        /**
-         * provider={PROVIDER_GOOGLE}:
-         * - Works reliably on Android (Google Maps tiles).
-         * - On iOS with Expo Go, Google provider may require an Expo Dev Build later.
-         *   If iOS testing becomes an issue, remove provider to fall back to Apple Maps tiles.
-         */
-        provider={PROVIDER_GOOGLE}
-      />
+        style={styles.map}
+        initialRegion={getCampusRegion("SGW")}
+        // Keep your existing mapRef + animateToRegion logic if you already have it.
+        // US-1.3 will add a button to pan between SGW and Loyola.
+      >
+        {polygonItems.map((p) => {
+          const theme = POLYGON_THEME[p.campus];
+          const isSelected = p.buildingId === selectedBuildingId;
 
-      {/* Overlay UI for quick verification (no campus toggle UI yet) */}
+          return (
+            <Polygon
+              key={p.key}
+              coordinates={p.coordinates}
+              tappable
+              strokeColor={isSelected ? theme.selectedStroke : theme.stroke}
+              fillColor={isSelected ? theme.selectedFill : theme.fill}
+              strokeWidth={isSelected ? theme.selectedStrokeWidth : theme.strokeWidth}
+              onPress={() => setSelectedBuildingId(p.buildingId)}
+            />
+          );
+        })}
+      </MapView>
+
+      {/* Overlay (optional, good for demo/testing) */}
       <View style={styles.overlay}>
-        <Text style={styles.overlayText}>GitToCampus</Text>
-        {/* Shows current campus state so reviewers understand what’s selected */}
-        <Text style={{ marginTop: 2, fontSize: 12 }}>Campus: {selectedCampus}</Text>
+        <Text style={styles.overlayTitle}>GitToCampus</Text>
+
+        {/* selectedCampus kept for future US-1.3 (camera control) */}
+        <Text style={styles.overlayText}>Camera target: {selectedCampus}</Text>
+
+        {selectedBuilding ? (
+          <Text style={styles.overlayText}>Selected: {selectedBuilding.name}</Text>
+        ) : (
+          <Text style={styles.overlayText}>Tap a building</Text>
+        )}
       </View>
     </View>
   );
