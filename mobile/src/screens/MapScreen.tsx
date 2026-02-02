@@ -10,13 +10,8 @@ import {
   getCampusBuildingShapes,
   getBuildingShapeById,
 } from "../utils/buildingsRepository";
+import type { PolygonRenderItem } from "../types/Map";
 
-type PolygonRenderItem = {
-  key: string;
-  buildingId: string;
-  campus: Campus;
-  coordinates: { latitude: number; longitude: number }[];
-};
 
 export default function MapScreen() {
   // Keep this for US-1.3 camera panning later (even if no UI yet)
@@ -43,7 +38,7 @@ export default function MapScreen() {
 
     return [...flatten("SGW", sgwBuildings), ...flatten("LOYOLA", loyolaBuildings)];
   }, [sgwBuildings, loyolaBuildings]);
-
+  
   const selectedBuilding = useMemo(() => {
     if (!selectedBuildingId) return null;
     return getBuildingShapeById(selectedBuildingId) ?? null;
