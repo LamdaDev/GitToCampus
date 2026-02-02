@@ -22,6 +22,9 @@ module.exports = [
         sourceType: 'module',
         ecmaFeatures: { jsx: true },
       },
+      globals: {
+        console: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': tsPlugin,

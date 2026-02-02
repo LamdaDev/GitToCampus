@@ -1,8 +1,8 @@
-import { GEOJSON_ASSETS } from "../assets/geojson";
-import type { GeoJsonFeatureCollection } from "../types/GeoJson";
-import type { Campus } from "../types/Campus";
-import type { BuildingShape } from "../types/BuildingShape";
-import { getFeaturePolygons, normalizeCampusCode } from "../utils/geoJson";
+import { GEOJSON_ASSETS } from '../assets/geojson';
+import type { GeoJsonFeatureCollection } from '../types/GeoJson';
+import type { Campus } from '../types/Campus';
+import type { BuildingShape } from '../types/BuildingShape';
+import { getFeaturePolygons, normalizeCampusCode } from '../utils/geoJson';
 
 /**
  * Building metadata properties from building_list.json.
@@ -13,7 +13,7 @@ type BuildingListProps = Record<string, unknown> & {
   Campus?: string;
   Building?: string; // short code e.g., "MB"
   BuildingName?: string;
-  "Building Long Name"?: string;
+  'Building Long Name'?: string;
   Address?: string;
 };
 
@@ -26,24 +26,24 @@ type BuildingBoundaryProps = Record<string, unknown> & {
 };
 
 const toStableId = (raw: unknown): string | null => {
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
-  if (typeof raw === "number" && Number.isFinite(raw)) return String(raw);
+  if (typeof raw === 'string' && raw.trim().length > 0) return raw.trim();
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw);
   return null;
 };
 
 const getBestBuildingName = (props: BuildingListProps): string => {
-  const longName = props["Building Long Name"];
-  if (typeof longName === "string" && longName.trim()) return longName.trim();
+  const longName = props['Building Long Name'];
+  if (typeof longName === 'string' && longName.trim()) return longName.trim();
 
-  if (typeof props.BuildingName === "string" && props.BuildingName.trim()) {
+  if (typeof props.BuildingName === 'string' && props.BuildingName.trim()) {
     return props.BuildingName.trim();
   }
 
-  if (typeof props.Building === "string" && props.Building.trim()) {
+  if (typeof props.Building === 'string' && props.Building.trim()) {
     return props.Building.trim();
   }
 
-  return "Unknown Building";
+  return 'Unknown Building';
 };
 
 /**
@@ -52,8 +52,10 @@ const getBestBuildingName = (props: BuildingListProps): string => {
 let cachedAllBuildings: BuildingShape[] | null = null;
 
 const buildAllBuildingsCache = (): BuildingShape[] => {
-  const buildingList = GEOJSON_ASSETS.buildingList as unknown as GeoJsonFeatureCollection<BuildingListProps>;
-  const boundaries = GEOJSON_ASSETS.buildingBoundaries as unknown as GeoJsonFeatureCollection<BuildingBoundaryProps>;
+  const buildingList =
+    GEOJSON_ASSETS.buildingList as unknown as GeoJsonFeatureCollection<BuildingListProps>;
+  const boundaries =
+    GEOJSON_ASSETS.buildingBoundaries as unknown as GeoJsonFeatureCollection<BuildingBoundaryProps>;
 
   // 1) Build metadata map: unique_id -> { campus, name, ... }
   const metaById = new Map<
@@ -73,8 +75,8 @@ const buildAllBuildingsCache = (): BuildingShape[] => {
     metaById.set(id, {
       campus,
       name: getBestBuildingName(props),
-      shortCode: typeof props.Building === "string" ? props.Building : undefined,
-      address: typeof props.Address === "string" ? props.Address : undefined,
+      shortCode: typeof props.Building === 'string' ? props.Building : undefined,
+      address: typeof props.Address === 'string' ? props.Address : undefined,
     });
   }
 

@@ -7,29 +7,29 @@
 export type GeoJsonPosition = [number, number]; // [longitude, latitude]
 
 export type GeoJsonPoint = {
-  type: "Point";
+  type: 'Point';
   coordinates: GeoJsonPosition;
 };
 
 export type GeoJsonPolygon = {
-  type: "Polygon";
+  type: 'Polygon';
   coordinates: GeoJsonPosition[][]; // [ring][pos]
 };
 
 export type GeoJsonMultiPolygon = {
-  type: "MultiPolygon";
+  type: 'MultiPolygon';
   coordinates: GeoJsonPosition[][][]; // [polygon][ring][pos]
 };
 
 export type GeoJsonGeometry = GeoJsonPoint | GeoJsonPolygon | GeoJsonMultiPolygon;
 
 export type GeoJsonFeature<TProps = Record<string, unknown>> = {
-  type: "Feature";
+  type: 'Feature';
   geometry: GeoJsonGeometry | null;
   properties: TProps;
 };
 
 export type GeoJsonFeatureCollection<TProps = Record<string, unknown>> = {
-  type: "FeatureCollection";
+  type: 'FeatureCollection';
   features: Array<GeoJsonFeature<TProps>>;
 };

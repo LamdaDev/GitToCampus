@@ -1,9 +1,9 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { Campus } from "../types/Campus";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Campus } from '../types/Campus';
 
-const KEY_DATASET_VERSION = "gittocampus.buildings.datasetVersion";
-const KEY_LAST_SELECTED_CAMPUS = "gittocampus.buildings.lastSelectedCampus";
-const KEY_LAST_SELECTED_BUILDING = "gittocampus.buildings.lastSelectedBuildingId";
+const KEY_DATASET_VERSION = 'gittocampus.buildings.datasetVersion';
+const KEY_LAST_SELECTED_CAMPUS = 'gittocampus.buildings.lastSelectedCampus';
+const KEY_LAST_SELECTED_BUILDING = 'gittocampus.buildings.lastSelectedBuildingId';
 
 /**
  * Store a dataset version flag so we can detect changes later.
@@ -22,7 +22,7 @@ export const setLastSelectedCampus = async (campus: Campus): Promise<void> => {
 
 export const getLastSelectedCampus = async (): Promise<Campus | null> => {
   const value = await AsyncStorage.getItem(KEY_LAST_SELECTED_CAMPUS);
-  if (value === "SGW" || value === "LOYOLA") return value;
+  if (value === 'SGW' || value === 'LOYOLA') return value;
   return null;
 };
 
