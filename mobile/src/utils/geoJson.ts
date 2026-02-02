@@ -1,11 +1,11 @@
-import type { LatLng } from "react-native-maps";
+import type { LatLng } from 'react-native-maps';
 import type {
   GeoJsonFeature,
   GeoJsonMultiPolygon,
   GeoJsonPolygon,
   GeoJsonPosition,
-} from "../types/GeoJson";
-import type { Campus } from "../types/Campus";
+} from '../types/GeoJson';
+import type { Campus } from '../types/Campus';
 
 /**
  * Convert a GeoJSON position [lng, lat] to react-native-maps LatLng.
@@ -26,11 +26,11 @@ export const isValidRing = (ring: GeoJsonPosition[]): boolean => ring.length >= 
  * GeoJSON uses "LOY" but our app uses "LOYOLA".
  */
 export const normalizeCampusCode = (raw: unknown): Campus | null => {
-  if (typeof raw !== "string") return null;
+  if (typeof raw !== 'string') return null;
 
   const trimmed = raw.trim().toUpperCase();
-  if (trimmed === "SGW") return "SGW";
-  if (trimmed === "LOY" || trimmed === "LOYOLA") return "LOYOLA";
+  if (trimmed === 'SGW') return 'SGW';
+  if (trimmed === 'LOY' || trimmed === 'LOYOLA') return 'LOYOLA';
 
   return null;
 };
@@ -46,9 +46,9 @@ export const normalizeCampusCode = (raw: unknown): Campus | null => {
  * Holes (inner rings) are ignored for simplicity/sprint friendliness.
  */
 export const extractOuterRingsAsLatLngPolygons = (
-  geometry: GeoJsonPolygon | GeoJsonMultiPolygon
+  geometry: GeoJsonPolygon | GeoJsonMultiPolygon,
 ): LatLng[][] => {
-  if (geometry.type === "Polygon") {
+  if (geometry.type === 'Polygon') {
     const outerRing = geometry.coordinates?.[0];
     if (!outerRing || !isValidRing(outerRing)) return [];
     return [outerRing.map(toLatLng)];
@@ -74,7 +74,7 @@ export const extractOuterRingsAsLatLngPolygons = (
 export const getFeaturePolygons = (feature: GeoJsonFeature): LatLng[][] => {
   if (!feature.geometry) return [];
 
-  if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
+  if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
     return extractOuterRingsAsLatLngPolygons(feature.geometry);
   }
 

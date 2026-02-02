@@ -14,7 +14,7 @@ import { mapScreenStyles as styles } from '../styles/MapScreen.styles';
  */
 export default function MapScreen() {
   const mapRef = useRef<MapView | null>(null);
-  const [selectedCampus, _setSelectedCampus] = useState<Campus>('SGW');
+  const [selectedCampus] = useState<Campus>('SGW');
 
   /**
    * Whenever selectedCampus changes, animate the map camera to the appropriate
