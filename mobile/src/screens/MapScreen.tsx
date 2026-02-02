@@ -1,28 +1,24 @@
-import React, { useMemo, useState } from "react";
-import { View, Text } from "react-native";
-import MapView, { Polygon } from "react-native-maps";
-import type { Campus } from "../types/Campus";
-import { getCampusRegion } from "../constants/campuses";
-import styles, { POLYGON_THEME } from "../styles/MapScreen.styles";
+import React, { useMemo, useState } from 'react';
+import { View, Text } from 'react-native';
+import MapView, { Polygon } from 'react-native-maps';
+import type { Campus } from '../types/Campus';
+import { getCampusRegion } from '../constants/campuses';
+import styles, { POLYGON_THEME } from '../styles/MapScreen.styles';
 
 // Adjust this import path based on where you placed it
-import {
-  getCampusBuildingShapes,
-  getBuildingShapeById,
-} from "../utils/buildingsRepository";
-import type { PolygonRenderItem } from "../types/Map";
-
+import { getCampusBuildingShapes, getBuildingShapeById } from '../utils/buildingsRepository';
+import type { PolygonRenderItem } from '../types/Map';
 
 export default function MapScreen() {
   // Keep this for US-1.3 camera panning later (even if no UI yet)
-  const [selectedCampus, setSelectedCampus] = useState<Campus>("SGW");
+  const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
 
   // New for US-1.2 selection
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
   // Fetch both campuses (TASK-1.2.3 handles join/filter internally + cache)
-  const sgwBuildings = useMemo(() => getCampusBuildingShapes("SGW"), []);
-  const loyolaBuildings = useMemo(() => getCampusBuildingShapes("LOYOLA"), []);
+  const sgwBuildings = useMemo(() => getCampusBuildingShapes('SGW'), []);
+  const loyolaBuildings = useMemo(() => getCampusBuildingShapes('LOYOLA'), []);
 
   // Flatten polygons for rendering (MultiPolygon support)
   const polygonItems: PolygonRenderItem[] = useMemo(() => {
@@ -33,12 +29,12 @@ export default function MapScreen() {
           buildingId: b.id,
           campus,
           coordinates: coords,
-        }))
+        })),
       );
 
-    return [...flatten("SGW", sgwBuildings), ...flatten("LOYOLA", loyolaBuildings)];
+    return [...flatten('SGW', sgwBuildings), ...flatten('LOYOLA', loyolaBuildings)];
   }, [sgwBuildings, loyolaBuildings]);
-  
+
   const selectedBuilding = useMemo(() => {
     if (!selectedBuildingId) return null;
     return getBuildingShapeById(selectedBuildingId) ?? null;
@@ -48,7 +44,7 @@ export default function MapScreen() {
     <View style={styles.container}>
       <MapView
         style={styles.map}
-        initialRegion={getCampusRegion("SGW")}
+        initialRegion={getCampusRegion('SGW')}
         // Keep your existing mapRef + animateToRegion logic if you already have it.
         // US-1.3 will add a button to pan between SGW and Loyola.
       >

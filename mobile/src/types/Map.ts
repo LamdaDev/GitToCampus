@@ -1,5 +1,5 @@
-import type { LatLng } from "react-native-maps";
-import type { Campus } from "./Campus";
+import type { LatLng } from 'react-native-maps';
+import type { Campus } from './Campus';
 
 /**
  * UI-layer render item for map polygons.
