@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 import type { Campus } from '../types/Campus';
 import { getCampusRegion } from '../constants/campuses';
 import { mapScreenStyles as styles } from '../styles/MapScreen.styles';
+import { getCurrentLocation } from '../utils/location';
 
 /**
  * MapScreen renders the interactive map and provides the foundation for:
@@ -15,6 +17,42 @@ import { mapScreenStyles as styles } from '../styles/MapScreen.styles';
 export default function MapScreen() {
   const mapRef = useRef<MapView | null>(null);
   const [selectedCampus] = useState<Campus>('SGW');
+
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  // 1) Location on mount
+  useEffect(() => {
+    let subscription: Location.LocationSubscription | null = null;
+
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationError('Location permission denied');
+        return;
+      }
+
+      subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          distanceInterval: 5, // meters before update
+        },
+        (pos) => {
+          const coords = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          };
+
+          setUserCoords(coords);
+        }
+      );
+    })();
+
+    // Cleanup on unmount
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
 
   /**
    * Whenever selectedCampus changes, animate the map camera to the appropriate
@@ -47,6 +85,8 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <MapView
+        showsUserLocation={true}
+        showsMyLocationButton={true}
         /**
          * Store the MapView reference so we can call animateToRegion later.
          * Note: callback ref avoids some typing issues compared to useRef<MapView>(null)
@@ -67,14 +107,25 @@ export default function MapScreen() {
          *   If iOS testing becomes an issue, remove provider to fall back to Apple Maps tiles.
          */
         provider={PROVIDER_GOOGLE}
-      />
-
+      >
+        {/* User location marker (rendered only when location is available) */}
+        {userCoords && (
+          <Marker
+            coordinate={userCoords}
+            title="You are here"
+          />
+        )}
+      </MapView>
+      
       {/* Overlay UI for quick verification (no campus toggle UI yet) */}
       <View style={styles.overlay}>
         <Text style={styles.overlayText}>GitToCampus</Text>
         {/* Shows current campus state so reviewers understand what’s selected */}
-        <Text style={{ marginTop: 2, fontSize: 12 }}>Campus: {selectedCampus}</Text>
+        <Text style={{ marginTop: 2, fontSize: 12 }}>
+          Campus: {selectedCampus}
+        </Text>
       </View>
     </View>
   );
+
 }
