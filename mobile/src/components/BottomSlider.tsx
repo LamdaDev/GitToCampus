@@ -33,7 +33,7 @@ export default function BottomSlider() {
                   <Ionicons name="enter-outline" size={22} color="#fff" />
                 </TouchableOpacity>
                 <TouchableOpacity style={bottomSliderStyles.iconButton}>
-                  <Ionicons name="share-social-outline" size={22} color="#fff" />
+                  <Ionicons name="location" size={22} color="#fff" />
                 </TouchableOpacity>
                 <TouchableOpacity style={bottomSliderStyles.iconButton}>
                   <Ionicons name="close-sharp" size={22} color="#fff" />
