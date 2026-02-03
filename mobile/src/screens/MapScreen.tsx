@@ -18,7 +18,9 @@ export default function MapScreen() {
   const mapRef = useRef<MapView | null>(null);
   const [selectedCampus] = useState<Campus>('SGW');
 
-  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(
+    null,
+  );
   const [locationError, setLocationError] = useState<string | null>(null);
 
   // 1) Location on mount
@@ -44,7 +46,7 @@ export default function MapScreen() {
           };
 
           setUserCoords(coords);
-        }
+        },
       );
     })();
 
@@ -109,23 +111,15 @@ export default function MapScreen() {
         provider={PROVIDER_GOOGLE}
       >
         {/* User location marker (rendered only when location is available) */}
-        {userCoords && (
-          <Marker
-            coordinate={userCoords}
-            title="You are here"
-          />
-        )}
+        {userCoords && <Marker coordinate={userCoords} title="You are here" />}
       </MapView>
-      
+
       {/* Overlay UI for quick verification (no campus toggle UI yet) */}
       <View style={styles.overlay}>
         <Text style={styles.overlayText}>GitToCampus</Text>
         {/* Shows current campus state so reviewers understand what’s selected */}
-        <Text style={{ marginTop: 2, fontSize: 12 }}>
-          Campus: {selectedCampus}
-        </Text>
+        <Text style={{ marginTop: 2, fontSize: 12 }}>Campus: {selectedCampus}</Text>
       </View>
     </View>
   );
-
 }

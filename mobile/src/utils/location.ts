@@ -1,9 +1,8 @@
-import * as Location from "expo-location";
-import * as Linking from "expo-linking";
+import * as Location from 'expo-location';
+import * as Linking from 'expo-linking';
 
 export async function getCurrentLocation() {
-  const { granted, canAskAgain } =
-    await Location.requestForegroundPermissionsAsync();
+  const { granted, canAskAgain } = await Location.requestForegroundPermissionsAsync();
 
   if (!granted) {
     if (!canAskAgain) {
