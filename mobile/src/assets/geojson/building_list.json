@@ -752,21 +752,6 @@
         "unique_id": 64
       },
       "geometry": { "type": "Point", "coordinates": [-73.577603, 45.494666] }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "Campus": "SGW",
-        "Building": "ES",
-        "BuildingName": "ES Building",
-        "Building Long Name": "ES Building",
-        "Address": "2135 Guy Street",
-        "Latitude": 45.496172,
-        "Longitude": -73.579922,
-        "id": 66,
-        "unique_id": 66
-      },
-      "geometry": { "type": "Point", "coordinates": [-73.579922, 45.496172] }
     }
   ]
 }
