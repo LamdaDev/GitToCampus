@@ -60,7 +60,10 @@ export default function MapScreen() {
               strokeColor={isSelected ? theme.selectedStroke : theme.stroke}
               fillColor={isSelected ? theme.selectedFill : theme.fill}
               strokeWidth={isSelected ? theme.selectedStrokeWidth : theme.strokeWidth}
-              onPress={() => setSelectedBuildingId(p.buildingId)}
+              onPress={() => {
+                setSelectedBuildingId(p.buildingId);
+                setSelectedCampus(p.campus);
+              }}
             />
           );
         })}
