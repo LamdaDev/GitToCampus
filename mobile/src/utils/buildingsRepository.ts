@@ -136,3 +136,17 @@ export const getCampusBuildingShapes = (campus: Campus): BuildingShape[] => {
 export const getBuildingShapeById = (id: string): BuildingShape | undefined => {
   return getAllBuildingShapes().find((b) => b.id === id);
 };
+
+/**
+ * Find the first building that contains the given point/userCoords.
+ * Return undefined if no building has that point.
+ */
+export const findBuildingAt = (point: { latitude: number; longitude: number }): BuildingShape | undefined => {
+  const { isPointInAnyPolygon } = require('../utils/geoJson');
+
+  for (const b of getAllBuildingShapes()) {
+    if (isPointInAnyPolygon(point as any, b.polygons)) return b;
+  }
+
+  return undefined;
+};
