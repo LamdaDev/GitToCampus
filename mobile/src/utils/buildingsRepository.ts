@@ -15,6 +15,9 @@ type BuildingListProps = Record<string, unknown> & {
   BuildingName?: string;
   'Building Long Name'?: string;
   Address?: string;
+  //TEMP: Sprint 2: used for building details
+  Hotspots?: Record<string, string>;
+  Services?: Record<string, string>;
 };
 
 /**
@@ -60,7 +63,14 @@ const buildAllBuildingsCache = (): BuildingShape[] => {
   // 1) Build metadata map: unique_id -> { campus, name, ... }
   const metaById = new Map<
     string,
-    { campus: Campus; name: string; shortCode?: string; address?: string }
+    {
+      campus: Campus;
+      name: string;
+      shortCode?: string;
+      address?: string;
+      hotspots?: Record<string, string>;
+      services?: Record<string, string>;
+    }
   >();
 
   for (const feature of buildingList.features) {
@@ -77,6 +87,9 @@ const buildAllBuildingsCache = (): BuildingShape[] => {
       name: getBestBuildingName(props),
       shortCode: typeof props.Building === 'string' ? props.Building : undefined,
       address: typeof props.Address === 'string' ? props.Address : undefined,
+      //TEMP: For Sprint 2 Task-1.5.2
+      hotspots: props.Hotspots,
+      services: props.Services,
     });
   }
 
@@ -108,6 +121,9 @@ const buildAllBuildingsCache = (): BuildingShape[] => {
       polygons,
       shortCode: meta.shortCode,
       address: meta.address,
+      //TEMP: For Sprint 2 Task-1.5.2
+      hotspots:meta.hotspots,
+      services:meta.services,
     });
   }
 
