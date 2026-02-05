@@ -8,6 +8,7 @@ import { getCampusRegion } from '../constants/campuses';
 import styles, { POLYGON_THEME } from '../styles/MapScreen.styles';
 import { getCampusBuildingShapes, getBuildingShapeById } from '../utils/buildingsRepository';
 import type { PolygonRenderItem } from '../types/Map';
+import CampusToggle from '../components/CampusToggle';
 
 export default function MapScreen() {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
@@ -81,6 +82,12 @@ export default function MapScreen() {
     return getBuildingShapeById(selectedBuildingId) ?? null;
   }, [selectedBuildingId]);
 
+  // For the toggle button:
+  const handleToggleCampus = () => {
+    setSelectedCampus((prev) => (prev === 'SGW' ? 'LOYOLA' : 'SGW'));
+    setSelectedBuildingId(null);
+  };
+
   return (
     <View style={styles.container}>
       <MapView
@@ -115,6 +122,9 @@ export default function MapScreen() {
 
         {userCoords && <Marker coordinate={userCoords} title="You are here" />}
       </MapView>
+
+      <CampusToggle selectedCampus={selectedCampus} onToggle={handleToggleCampus} />
+
 
       <View style={styles.overlay}>
         <Text style={styles.overlayTitle}>GitToCampus</Text>
