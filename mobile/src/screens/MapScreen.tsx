@@ -29,15 +29,15 @@ export default function MapScreen() {
         return;
       }
 
-//       //* Simulate being inside LB building - tested with this, since i was off campus
-//       if (__DEV__) {
-//         setUserCoords({
-//           latitude: 45.49705,
-//           longitude: -73.578009,
-//         });
-//         return;
-//       }
-//
+      //* Simulate being inside LB building - tested with this, since i was off campus
+      // if (__DEV__) {
+      //   setUserCoords({
+      //     latitude: 57.49705,
+      //     longitude: -73.578009,
+      //   });
+      //   return;
+      // }
+
 
       subscription = await Location.watchPositionAsync(
         {

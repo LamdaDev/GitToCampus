@@ -3,6 +3,7 @@ import type { GeoJsonFeatureCollection } from '../types/GeoJson';
 import type { Campus } from '../types/Campus';
 import type { BuildingShape } from '../types/BuildingShape';
 import { getFeaturePolygons, normalizeCampusCode } from '../utils/geoJson';
+import { getDistance } from 'geolib';
 
 /**
  * Building metadata properties from building_list.json.
@@ -127,26 +128,71 @@ export const getAllBuildingShapes = (): BuildingShape[] => {
  * Returns campus-filtered building shapes for rendering.
  */
 export const getCampusBuildingShapes = (campus: Campus): BuildingShape[] => {
-  return getAllBuildingShapes().filter((b) => b.campus === campus);
+  return getAllBuildingShapes().filter((building) => building.campus === campus);
 };
 
 /**
  * Optional helper: lookup by id for future selection/popup work.
  */
 export const getBuildingShapeById = (id: string): BuildingShape | undefined => {
-  return getAllBuildingShapes().find((b) => b.id === id);
+  return getAllBuildingShapes().find((building) => building.id === id);
 };
 
 /**
- * Find the first building that contains the given point/userCoords.
- * Return undefined if no building has that point.
+ * Find the first building that contains the given point
+ * First determines which campus the user is closest to, then only searches buildings on that campus.
+ * Early exits if user is too far from any campus 
+ * Return undefined if no building has that point
  */
 export const findBuildingAt = (point: { latitude: number; longitude: number }): BuildingShape | undefined => {
   const { isPointInAnyPolygon } = require('../utils/geoJson');
+  const { getCampusRegion } = require('../constants/campuses');
 
-  for (const b of getAllBuildingShapes()) {
-    if (isPointInAnyPolygon(point as any, b.polygons)) return b;
+  // Find which campus the user is closest to
+  const closestCampus = findClosestCampus(point);
+  const campusCenter = getCampusRegion(closestCampus);
+
+  // Early exit if urser isnt atleast somewhat close to that campus 
+  const MAX_DISTANCE_METERS = 2000;
+  const distanceToCampus = getDistance(point, {
+    latitude: campusCenter.latitude,
+    longitude: campusCenter.longitude,
+  });
+
+  if (distanceToCampus > MAX_DISTANCE_METERS) {
+    return undefined; // Too far away, skip building search
+  }
+
+  // User is near campus, proceed with building search
+  const campusBuildings = getCampusBuildingShapes(closestCampus);
+
+  for (const building of campusBuildings) {
+    if (isPointInAnyPolygon(point as any, building.polygons)) return building;
   }
 
   return undefined;
+};
+
+
+/**
+ * Find the closest campus to the user's current location.
+ * Returns the Campus that is nearest to the given coordinates.
+ */
+export const findClosestCampus = (userCoords: { latitude: number; longitude: number }): Campus => {
+  const { getCampusRegion } = require('../constants/campuses');
+
+  const sgwCenter = getCampusRegion('SGW');
+  const loyolaCenter = getCampusRegion('LOYOLA');
+
+  const distanceToSGW = getDistance(userCoords, {
+    latitude: sgwCenter.latitude,
+    longitude: sgwCenter.longitude,
+  });
+
+  const distanceToLoyola = getDistance(userCoords, {
+    latitude: loyolaCenter.latitude,
+    longitude: loyolaCenter.longitude,
+  });
+
+  return distanceToSGW <= distanceToLoyola ? 'SGW' : 'LOYOLA';
 };
