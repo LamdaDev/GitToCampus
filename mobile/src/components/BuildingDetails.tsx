@@ -18,6 +18,9 @@ export default function BuildingDetails({ selectedBuilding ,onClose}: BuildingDe
   const hotspots = selectedBuilding?.hotspots;
   const services = selectedBuilding?.services;
 
+  /**
+   * hotspotsSection & servicesSection loads any information if present, else it will render nothing
+   */
   const hotspotsSection =
     hotspots && Object.keys(hotspots).length > 0 ? (
       <Section title="Hotspots">
@@ -83,7 +86,7 @@ type BulletProps = {
 
 /* ---------- Reusable Components ---------- */
 
-const Section = ({ title, children }: SectionProps) => {
+const Section = ({ title, children }: SectionProps) => {  
   return (
     <View style={bottomSliderStyles.section}>
       <View style={bottomSliderStyles.sectionHeader}>

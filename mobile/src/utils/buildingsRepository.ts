@@ -68,6 +68,7 @@ const buildAllBuildingsCache = (): BuildingShape[] => {
       name: string;
       shortCode?: string;
       address?: string;
+      //TEMP added in by RJ for Sprint2: Task 1.5.2
       hotspots?: Record<string, string>;
       services?: Record<string, string>;
     }

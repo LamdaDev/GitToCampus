@@ -11,7 +11,9 @@ import { BuildingShape } from './types/BuildingShape';
  *
  * SafeAreaView ensures content doesn't overlap with notches/status bars on iOS.
  *
- * selectedBuildingName is a prop that will be passed down to MapScreen, the value gets updated upon tapping a building from the UI
+ * selectedBuilding is a prop that will be passed down to MapScreen, the value gets updated upon tapping a building from the UI and used to pass into BottomSlider
+ * Currently MapScreen seems to be taking some time loading which building is selected. This could be due to the logic constantly iterating through each building name in
+ * building_list.json
  */
 const App = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
@@ -21,6 +23,7 @@ const App = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
+        
         <MapScreen passSelectedBuilding={setSelectedBuilding} 
         openBottomSheet={openBottomSheet}/>
         <BottomSlider selectedBuilding={selectedBuilding}
