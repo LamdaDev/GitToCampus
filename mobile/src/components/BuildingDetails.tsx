@@ -11,9 +11,10 @@ import { BuildingShape } from '../types/BuildingShape';
 
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
+  onClose:()=>void;
 };
 
-export default function BuildingDetails({ selectedBuilding }: BuildingDetailProps) {
+export default function BuildingDetails({ selectedBuilding ,onClose}: BuildingDetailProps) {
   const hotspots = selectedBuilding?.hotspots;
   const services = selectedBuilding?.services;
 
@@ -55,7 +56,7 @@ export default function BuildingDetails({ selectedBuilding }: BuildingDetailProp
           <TouchableOpacity style={bottomSliderStyles.iconButton}>
             <Ionicons name="location" size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={bottomSliderStyles.iconButton}>
+          <TouchableOpacity style={bottomSliderStyles.iconButton} onPress={onClose}>
             <Ionicons name="close-sharp" size={22} color="#fff" />
           </TouchableOpacity>
         </View>

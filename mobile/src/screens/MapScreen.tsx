@@ -15,9 +15,10 @@ import { BuildingShape } from '../types/BuildingShape';
 //passSelectedBuilding is a state setter passed from the parent to retrieve selected building object
 type MapScreenProps={
   passSelectedBuilding:React.Dispatch<React.SetStateAction<BuildingShape|null>>;
+  openBottomSheet:()=>void;
 }
 
-export default function MapScreen({ passSelectedBuilding }:MapScreenProps) {
+export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapScreenProps) {
   // Keep this for US-1.3 camera panning later (even if no UI yet)
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
 
@@ -75,6 +76,7 @@ export default function MapScreen({ passSelectedBuilding }:MapScreenProps) {
                 //todo: ask about how MapScreen.tsx works and look into loading time upon clicking a polygon - RJ
                 const building = getBuildingShapeById(p.buildingId);
                 passSelectedBuilding(building??  null);
+                openBottomSheet();
               }}
             />
           );
