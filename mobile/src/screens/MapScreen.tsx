@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text } from 'react-native';
-import MapView, { Polygon } from 'react-native-maps';
+import MapView, { Marker, Polygon, PROVIDER_GOOGLE } from 'react-native-maps';
+import * as Location from 'expo-location';
+
 import type { Campus } from '../types/Campus';
 import { getCampusRegion } from '../constants/campuses';
 import styles, { POLYGON_THEME } from '../styles/MapScreen.styles';
-
-// Adjust this import path based on where you placed it
 import { getCampusBuildingShapes, getBuildingShapeById } from '../utils/buildingsRepository';
 import type { PolygonRenderItem } from '../types/Map';
 
@@ -21,15 +21,57 @@ type MapScreenProps={
 export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapScreenProps) {
   // Keep this for US-1.3 camera panning later (even if no UI yet)
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
-
-  // New for US-1.2 selection
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
-  // Fetch both campuses (TASK-1.2.3 handles join/filter internally + cache)
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(
+    null,
+  );
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const mapRef = useRef<any>(null);
+
+  // Location tracking (request permission + watch position)
+  useEffect(() => {
+    let subscription: Location.LocationSubscription | null = null;
+
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationError('Location permission denied');
+        return;
+      }
+
+      subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          distanceInterval: 5,
+        },
+        (pos) => {
+          setUserCoords({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+        },
+      );
+    })();
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
+  // Animate camera when campus changes
+  useEffect(() => {
+    const targetRegion = getCampusRegion(selectedCampus);
+    if (mapRef.current?.animateToRegion) {
+      mapRef.current.animateToRegion(targetRegion, 1000);
+    }
+  }, [selectedCampus]);
+
+  // Buildings data
   const sgwBuildings = useMemo(() => getCampusBuildingShapes('SGW'), []);
   const loyolaBuildings = useMemo(() => getCampusBuildingShapes('LOYOLA'), []);
 
-  // Flatten polygons for rendering (MultiPolygon support)
   const polygonItems: PolygonRenderItem[] = useMemo(() => {
     const flatten = (campus: Campus, buildings: ReturnType<typeof getCampusBuildingShapes>) =>
       buildings.flatMap((b) =>
@@ -52,10 +94,14 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
   return (
     <View style={styles.container}>
       <MapView
+        ref={(ref) => {
+          mapRef.current = ref;
+        }}
         style={styles.map}
         initialRegion={getCampusRegion('SGW')}
-        // Keep your existing mapRef + animateToRegion logic if you already have it.
-        // US-1.3 will add a button to pan between SGW and Loyola.
+        provider={PROVIDER_GOOGLE}
+        showsUserLocation
+        showsMyLocationButton
       >
         {polygonItems.map((p) => {
           const theme = POLYGON_THEME[p.campus];
@@ -81,13 +127,12 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
             />
           );
         })}
+
+        {userCoords && <Marker coordinate={userCoords} title="You are here" />}
       </MapView>
 
-      {/* Overlay (optional, good for demo/testing) */}
       <View style={styles.overlay}>
         <Text style={styles.overlayTitle}>GitToCampus</Text>
-
-        {/* selectedCampus kept for future US-1.3 (camera control) */}
         <Text style={styles.overlayText}>Camera target: {selectedCampus}</Text>
 
         {selectedBuilding ? (
@@ -95,6 +140,8 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
         ) : (
           <Text style={styles.overlayText}>Tap a building</Text>
         )}
+
+        {locationError ? <Text style={styles.overlayText}>{locationError}</Text> : null}
       </View>
     </View>
   );
