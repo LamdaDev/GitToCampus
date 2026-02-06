@@ -4,7 +4,7 @@
 import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
-import { bottomSliderStyles } from "../styles/BottomSlider.styles";
+import { buildingDetailsStyles } from "../styles/BuildingDetails.styles";
 import BuildingDetails from "./BuildingDetails";
 import type { BuildingShape } from "../types/BuildingShape";
 
@@ -36,11 +36,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         ref={sheetRef}
         index={-1}
         snapPoints={snapPoints}
-        backgroundStyle={bottomSliderStyles.sheetBackground}
-        handleIndicatorStyle={bottomSliderStyles.handle}
+        backgroundStyle={buildingDetailsStyles.sheetBackground}
+        handleIndicatorStyle={buildingDetailsStyles.handle}
         enablePanDownToClose={true}
       >
-        <BottomSheetView style={bottomSliderStyles.container}>
+        <BottomSheetView style={buildingDetailsStyles.container}>
           <BuildingDetails selectedBuilding={selectedBuilding} onClose={closeSheet} />
         </BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}

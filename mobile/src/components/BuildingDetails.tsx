@@ -6,7 +6,7 @@ import { Divider } from 'react-native-paper';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 
-import { bottomSliderStyles } from '../styles/BottomSlider.styles';
+import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 
 type BuildingDetailProps = {
@@ -47,19 +47,19 @@ export default function BuildingDetails({ selectedBuilding ,onClose}: BuildingDe
   return (
     <>
       {/* Header */}
-      <View style={bottomSliderStyles.header}>
+      <View style={buildingDetailsStyles.header}>
         <View>
-          <Text style={bottomSliderStyles.title}>{selectedBuilding?.name}</Text>
-          <Text style={bottomSliderStyles.subtitle}>{selectedBuilding?.address}</Text>
+          <Text style={buildingDetailsStyles.title}>{selectedBuilding?.name}</Text>
+          <Text style={buildingDetailsStyles.subtitle}>{selectedBuilding?.address}</Text>
         </View>
-        <View style={bottomSliderStyles.headerIcons}>
-          <TouchableOpacity style={bottomSliderStyles.iconButton}>
+        <View style={buildingDetailsStyles.headerIcons}>
+          <TouchableOpacity style={buildingDetailsStyles.iconButton}>
             <Ionicons name="enter-outline" size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={bottomSliderStyles.iconButton}>
+          <TouchableOpacity style={buildingDetailsStyles.iconButton}>
             <Ionicons name="location" size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={bottomSliderStyles.iconButton} onPress={onClose}>
+          <TouchableOpacity style={buildingDetailsStyles.iconButton} onPress={onClose}>
             <Ionicons name="close-sharp" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -88,9 +88,9 @@ type BulletProps = {
 
 const Section = ({ title, children }: SectionProps) => {  
   return (
-    <View style={bottomSliderStyles.section}>
-      <View style={bottomSliderStyles.sectionHeader}>
-        <Text style={bottomSliderStyles.sectionTitle}>{title}</Text>
+    <View style={buildingDetailsStyles.section}>
+      <View style={buildingDetailsStyles.sectionHeader}>
+        <Text style={buildingDetailsStyles.sectionTitle}>{title}</Text>
       </View>
       {children}
     </View>
@@ -99,9 +99,9 @@ const Section = ({ title, children }: SectionProps) => {
 
 const Bullet = ({ name, link }: BulletProps) => {
   return (
-    <View style={bottomSliderStyles.bulletRow}>
-      <Text style={bottomSliderStyles.bullet}>•</Text>
-      <Text style={bottomSliderStyles.bulletText} onPress={() => Linking.openURL(`${link}`)}>
+    <View style={buildingDetailsStyles.bulletRow}>
+      <Text style={buildingDetailsStyles.bullet}>•</Text>
+      <Text style={buildingDetailsStyles.bulletText} onPress={() => Linking.openURL(`${link}`)}>
         {name}
       </Text>
     </View>

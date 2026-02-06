@@ -1,12 +1,14 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 
 /**
  * BottomSlider styles are separated from BottomSlider.tsx to keep UI logic and styling modular.
  * This helps maintain consistency as the app grows (more screens/components).
  */
 
-export const bottomSliderStyles = StyleSheet.create({
-sheetBackground: {
+const SCREEN_WIDTH = Dimensions.get("window").width;
+
+export const buildingDetailsStyles = StyleSheet.create({
+  sheetBackground: {
     backgroundColor: "#616263",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -26,6 +28,7 @@ sheetBackground: {
     marginBottom: 16,
   },
   title: {
+      maxWidth: SCREEN_WIDTH * 0.6,
     fontSize: 20,
     fontWeight: "600",
     color: "#fff",
