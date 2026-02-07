@@ -92,6 +92,69 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
 - For Android, Android Studio is required for emulator; physical devices work with USB debugging.
 - No custom native modules; stick to Expo SDK.
 
+## Testing (Jest + React Native Testing Library)
+
+This project uses Jest with `jest-expo` and `@testing-library/react-native`.
+
+### One-Time Setup
+
+1. From the repo root, go to the mobile app:
+   ```bash
+   cd mobile
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+Key files already in the repo:
+- `mobile/jest.config.js` (Jest config)
+- `mobile/jest.setup.ts` (test setup and mocks)
+- `mobile/__mocks__/react-native-maps.ts` (MapView/Polygon mock)
+- `mobile/__test__/` (test files live here)
+
+### Running Tests
+
+Run all tests:
+```bash
+cd mobile
+npm test
+```
+
+Run a single test file:
+```bash
+cd mobile
+npm test -- __test__/geoJson.test.ts
+```
+
+Run tests in watch mode:
+```bash
+cd mobile
+npm run test:watch
+```
+
+### Writing Tests
+
+Place tests in `mobile/__test__/` using:
+- `.test.ts` for non-UI modules
+- `.test.tsx` for React components
+
+Example paths:
+- `mobile/__test__/geoJson.test.ts`
+- `mobile/__test__/MapScreen.test.tsx`
+
+### Mocks Used in This Repo
+
+- AsyncStorage is mocked in `mobile/jest.setup.ts`
+- `react-native-maps` is mocked in `mobile/__mocks__/react-native-maps.ts`
+
+If you add a dependency that touches native modules, you may need to add a mock in `mobile/__mocks__/`.
+
+### Common Issues
+
+- If Jest says a test file has no tests, the file exists but has no `test(...)` blocks yet.
+- If a mock error appears, make sure the mock file extension matches the syntax used (no JSX in `.ts` files).
+
 ## Troubleshooting
 
 - If `adb` is not found, check your PATH and ANDROID_HOME.
