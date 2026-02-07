@@ -53,9 +53,9 @@ export const buildingDetailsStyles = StyleSheet.create({
   iconButton: {
     backgroundColor: "#4A4A4A",
     borderRadius: 20,
-    padding: 6,
-    opacity: 0.7,
-    boxShadow: 'inset 0 -3px 2px rgba(0, 0, 0, 0.35)',
+    padding: 8,
+    opacity: 0.85,
+    boxShadow: 'inset 0 -3.5px 4px rgba(0, 0, 0, 0.4)',
   },
   section: {
     marginBottom: 5,
