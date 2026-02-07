@@ -80,3 +80,64 @@ export const getFeaturePolygons = (feature: GeoJsonFeature): LatLng[][] => {
 
   return [];
 };
+/**
+ * Find if point is in polygon wiht ray-casting algorithm.
+ * - point: { latitude, longitude }
+ * - polygon: array of LatLng forming the polygon outer shape
+ * Returns true if point is inside or on the boundary.
+ */
+export const isPointInPolygon = (point: LatLng, polygon: LatLng[]): boolean => {
+  if (!polygon || polygon.length === 0) return false;
+
+  const x = point.longitude;
+  const y = point.latitude;
+  let inside = false;
+
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].longitude,
+      yi = polygon[i].latitude;
+    const xj = polygon[j].longitude,
+      yj = polygon[j].latitude;
+
+    const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi + 0.0) + xi;
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+};
+
+/**
+ * Helper func: check if point is inside any polygon among an array of polygons.
+ */
+export const isPointInAnyPolygon = (point: LatLng, polygons: LatLng[][]): boolean => {
+  for (const poly of polygons) {
+    if (isPointInPolygon(point, poly)) return true;
+  }
+  return false;
+};
+
+/**
+ * Approximate centroid of a polygon (mean of vertices).
+ * Works well for small convex-ish building footprints.
+ */
+export const centroidOfPolygon = (polygon: LatLng[]): LatLng | null => {
+  if (!polygon || polygon.length === 0) return null;
+
+  let latSum = 0;
+  let lonSum = 0;
+
+  for (const p of polygon) {
+    latSum += p.latitude;
+    lonSum += p.longitude;
+  }
+
+  return { latitude: latSum / polygon.length, longitude: lonSum / polygon.length };
+};
+
+/**
+ * Centroid for a set of polygons: pick the centroid of the first polygon (outer ring).
+ */
+export const centroidOfPolygons = (polygons: LatLng[][]): LatLng | null => {
+  if (!polygons || polygons.length === 0) return null;
+  return centroidOfPolygon(polygons[0]);
+};
