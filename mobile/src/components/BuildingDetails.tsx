@@ -24,7 +24,7 @@ export default function BuildingDetails({ selectedBuilding ,onClose}: BuildingDe
   const hotspotsSection =
     hotspots && Object.keys(hotspots).length > 0 ? (
       <Section title="Hotspots">
-        <Divider style={{ backgroundColor: '#9B9B9B', height: 1, marginVertical: 8 }} />
+        <Divider style={{ backgroundColor: '#9B9B9B', height: 1.5, marginVertical: 8 }} />
         {Object.entries(hotspots).map(([name, url]) => (
           <Bullet key={name} name={name} link={url} />
         ))}
@@ -34,7 +34,7 @@ export default function BuildingDetails({ selectedBuilding ,onClose}: BuildingDe
   const servicesSection =
     services && Object.keys(services).length > 0 ? (
       <Section title="Services">
-        <Divider style={{ backgroundColor: '#9B9B9B', height: 1, marginVertical: 8 }} />
+        <Divider style={{ backgroundColor: '#9B9B9B', height: 1.5, marginVertical: 8 }} />
         {services
           ? Object.entries(services).map(([name, url]) => (
               <Bullet key={name} name={name} link={url} />

@@ -58,7 +58,7 @@ export const buildingDetailsStyles = StyleSheet.create({
     boxShadow: 'inset 0 -3.5px 4px rgba(0, 0, 0, 0.4)',
   },
   section: {
-    marginBottom: 5,
+    marginBottom: 10,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -88,7 +88,7 @@ export const buildingDetailsStyles = StyleSheet.create({
   bullet: {
     color: "#fff",
     marginRight: 6,
-    marginLeft: 10,
+    marginLeft: 8,
     fontSize: 16,
   },
   bulletText: {
