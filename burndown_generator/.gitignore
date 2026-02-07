@@ -1,0 +1,3 @@
+# Git ignore file for the burndown generator project
+.env
+.venv
