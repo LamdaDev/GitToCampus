@@ -12,6 +12,10 @@ jest.mock('react-native-gesture-handler', () => {
   };
 });
 
+jest.mock('expo-font', () => ({
+  useFonts: () => [true],
+}));
+
 jest.mock('../src/components/BottomSheet', () => {
   const React = require('react');
 

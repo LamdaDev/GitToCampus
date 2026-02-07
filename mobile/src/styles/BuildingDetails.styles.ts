@@ -6,20 +6,26 @@ import { StyleSheet, Dimensions } from 'react-native';
  */
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
+const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 export const buildingDetailsStyles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: "#616263",
+    backgroundColor: "#4A4A4A",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     boxShadow: '0 -3px 2px rgba(0, 0, 0, 0.25)',
+    opacity: 0.91,
+    paddingTop: 0,
   },
   handle: {
-    backgroundColor: "#aaa",
-    width: 120,
+    backgroundColor: "#000000",
+    width: SCREEN_WIDTH * 0.35,
+    top: SCREEN_HEIGHT * -0.005,
+    opacity: 0.45,
   },
   container: {
     padding: 16,
+    paddingTop: 0,
   },
   header: {
     flexDirection: "row",
@@ -28,15 +34,17 @@ export const buildingDetailsStyles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-      maxWidth: SCREEN_WIDTH * 0.6,
-    fontSize: 20,
+    maxWidth: SCREEN_WIDTH * 0.55,
+    fontSize: 24,
+    fontFamily: 'gabarito',
     fontWeight: "600",
-    color: "#fff",
+    color: "#D8D8D8",
   },
   subtitle: {
-    fontSize: 13,
-    color: "#ccc",
-    marginTop: 2,
+    fontSize: 14,
+    fontFamily: 'gabarito',
+    color: "#D7D7D7",
+    marginTop: 15,
   },
   headerIcons: {
     flexDirection: "row",
@@ -46,20 +54,20 @@ export const buildingDetailsStyles = StyleSheet.create({
     backgroundColor: "#4A4A4A",
     borderRadius: 20,
     padding: 6,
-
+    opacity: 0.7,
     boxShadow: 'inset 0 -3px 2px rgba(0, 0, 0, 0.35)',
   },
   section: {
-    marginBottom: 16,
+    marginBottom: 5,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 3,
   },
   sectionTitle: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -76,16 +84,17 @@ export const buildingDetailsStyles = StyleSheet.create({
   bulletRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: -3,
   },
   bullet: {
     color: "#fff",
     marginRight: 6,
+    marginLeft: 10,
     fontSize: 16,
   },
   bulletText: {
-    color: "#ddd",
+    color: "#FFFFFF",
     textDecorationLine: "underline",
+    fontFamily: 'gabarito',
     fontSize: 13,
     flex: 1,
   },

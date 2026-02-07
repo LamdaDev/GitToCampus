@@ -54,13 +54,13 @@ export default function BuildingDetails({ selectedBuilding ,onClose}: BuildingDe
         </View>
         <View style={buildingDetailsStyles.headerIcons}>
           <TouchableOpacity style={buildingDetailsStyles.iconButton}>
-            <Ionicons name="enter-outline" size={22} color="#fff" />
+            <Ionicons name="enter-outline" size={25} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={buildingDetailsStyles.iconButton}>
-            <Ionicons name="location" size={22} color="#fff" />
+            <Ionicons name="location" size={25} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={buildingDetailsStyles.iconButton} onPress={onClose}>
-            <Ionicons name="close-sharp" size={22} color="#fff" />
+            <Ionicons name="close-sharp" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>

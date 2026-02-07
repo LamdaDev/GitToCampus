@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
 import MapScreen from './screens/MapScreen';
 import { BuildingShape } from './types/BuildingShape';
+import { useFonts } from 'expo-font';
 
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -20,8 +21,16 @@ const App = () => {
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
 
   const openBottomSheet = () => bottomSheetRef.current?.open();
+
+  const [fontsLoaded] = useFonts({
+    gabarito: require('./assets/fonts/Gabarito-Regular.ttf'),
+    'gabarito-bold': require('./assets/fonts/Gabarito-Bold.ttf'),
+  });
+
+  if (!fontsLoaded) return null;
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView>
       <SafeAreaView style={{ flex: 1 }}>
         
         <MapScreen passSelectedBuilding={setSelectedBuilding} 
