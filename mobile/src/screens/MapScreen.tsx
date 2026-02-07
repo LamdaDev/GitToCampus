@@ -6,8 +6,9 @@ import * as Location from 'expo-location';
 import type { Campus } from '../types/Campus';
 import { getCampusRegion } from '../constants/campuses';
 import styles, { POLYGON_THEME } from '../styles/MapScreen.styles';
-import { getCampusBuildingShapes, getBuildingShapeById } from '../utils/buildingsRepository';
+import { getCampusBuildingShapes, getBuildingShapeById, findBuildingAt } from '../utils/buildingsRepository';
 import type { PolygonRenderItem } from '../types/Map';
+import CampusToggle from '../components/CampusToggle';
 
 
 import { BuildingShape } from '../types/BuildingShape';
@@ -23,9 +24,7 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
-  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(
-    null,
-  );
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const mapRef = useRef<any>(null);
@@ -40,6 +39,16 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
         setLocationError('Location permission denied');
         return;
       }
+
+      //* Simulate being inside LB building - tested with this, since i was off campus
+      // if (__DEV__) {
+      //   setUserCoords({
+      //     latitude: 57.49705,
+      //     longitude: -73.578009,
+      //   });
+      //   return;
+      // }
+
 
       subscription = await Location.watchPositionAsync(
         {
@@ -59,6 +68,26 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
       subscription?.remove();
     };
   }, []);
+
+  // Auto-select building when user enters a building
+  useEffect(() => {
+    if (!userCoords) return;
+
+    try {
+      const building = findBuildingAt(userCoords);
+
+      if (building) {
+        setSelectedBuildingId(building.id);
+        setSelectedCampus(building.campus);
+      } else {
+        // Clear that selection when user is no longer inside a building
+        setSelectedBuildingId(null);
+      }
+    } catch (err) {
+      // Don't crash on unexpected geometry errors
+      console.warn('Error checking building containment', err);
+    }
+  }, [userCoords]);
 
   // Animate camera when campus changes
   useEffect(() => {
@@ -90,6 +119,12 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
     if (!selectedBuildingId) return null;
     return getBuildingShapeById(selectedBuildingId) ?? null;
   }, [selectedBuildingId]);
+
+  // For the toggle button:
+  const handleToggleCampus = () => {
+    setSelectedCampus((prev) => (prev === 'SGW' ? 'LOYOLA' : 'SGW'));
+    setSelectedBuildingId(null);
+  };
 
   return (
     <View style={styles.container}>
@@ -130,6 +165,9 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
 
         {userCoords && <Marker coordinate={userCoords} title="You are here" />}
       </MapView>
+
+      <CampusToggle selectedCampus={selectedCampus} onToggle={handleToggleCampus} />
+
 
       <View style={styles.overlay}>
         <Text style={styles.overlayTitle}>GitToCampus</Text>
