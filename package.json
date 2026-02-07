@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^30.0.0",
+    "jest": "^29.7.0",
+    "jest-expo": "^54.0.17"
+  }
+}
