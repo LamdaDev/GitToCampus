@@ -2,3 +2,5 @@
 node_modules
 .idea/
 *.iml
+package.json
+package-lock.json
