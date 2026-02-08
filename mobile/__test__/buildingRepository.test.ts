@@ -50,6 +50,36 @@ describe('buildingsRepository', () => {
             Building: 'XX',
           },
         },
+        {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [-73.63, 45.47] },
+          properties: {
+            unique_id: '5',
+            Campus: 'SGW',
+            Building: 'H',
+          },
+        },
+        {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [-73.62, 45.48] },
+          properties: {
+            unique_id: '6',
+            Campus: 'LOY',
+          },
+        },
+        {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [-73.62, 45.48] },
+          properties: {
+            unique_id: '   ',
+            Campus: 'SGW',
+            BuildingName: 'Should Be Skipped',
+          },
+        },
+        {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [-73.62, 45.48] },
+        } as any,
       ],
     };
 
@@ -108,6 +138,14 @@ describe('buildingsRepository', () => {
           type: 'Feature',
           geometry: {
             type: 'Polygon',
+            coordinates: [[[-73.72, 45.62], [-73.73, 45.62]]],
+          },
+          properties: { unique_id: '6' },
+        },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
             coordinates: [
               [
                 [-73.8, 45.7],
@@ -119,6 +157,50 @@ describe('buildingsRepository', () => {
           },
           properties: { unique_id: '999' },
         },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-73.66, 45.5],
+                [-73.67, 45.5],
+                [-73.67, 45.51],
+                [-73.66, 45.5],
+              ],
+            ],
+          },
+          properties: { unique_id: '5' },
+        },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-73.64, 45.49],
+                [-73.65, 45.49],
+                [-73.65, 45.5],
+                [-73.64, 45.49],
+              ],
+            ],
+          },
+          properties: {},
+        },
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-73.63, 45.48],
+                [-73.64, 45.48],
+                [-73.64, 45.49],
+                [-73.63, 45.48],
+              ],
+            ],
+          },
+        } as any,
       ],
     };
 
@@ -134,8 +216,8 @@ describe('buildingsRepository', () => {
     const repo = loadRepositoryWithAssets(baseAssets());
     const all = repo.getAllBuildingShapes();
 
-    expect(all).toHaveLength(2);
-    expect(all.map((b: BuildingShape) => b.id).sort()).toEqual(['1', '2']);
+    expect(all).toHaveLength(3);
+    expect(all.map((b: BuildingShape) => b.id).sort()).toEqual(['1', '2', '5']);
 
     const sgw = all.find((b: BuildingShape) => b.id === '1');
     expect(sgw?.campus).toBe('SGW');
@@ -154,15 +236,28 @@ describe('buildingsRepository', () => {
     expect(loyola?.polygons).toHaveLength(2);
   });
 
+  test('falls back to short building code when long and short names are missing', () => {
+    const repo = loadRepositoryWithAssets(baseAssets());
+    const building = repo.getBuildingShapeById('5');
+
+    expect(building?.name).toBe('H');
+    expect(building?.shortCode).toBe('H');
+  });
+
+  test('uses "Unknown Building" when no name fields are present', () => {
+    const repo = loadRepositoryWithAssets(baseAssets());
+    expect(repo.getBuildingShapeById('6')).toBeUndefined();
+  });
+
   test('getCampusBuildingShapes filters by campus', () => {
     const repo = loadRepositoryWithAssets(baseAssets());
     const sgw = repo.getCampusBuildingShapes('SGW');
     const loyola = repo.getCampusBuildingShapes('LOYOLA');
 
-    expect(sgw).toHaveLength(1);
+    expect(sgw).toHaveLength(2);
     expect(loyola).toHaveLength(1);
-    expect(sgw[0].campus).toBe('SGW');
-    expect(loyola[0].campus).toBe('LOYOLA');
+    expect(sgw.every((b: BuildingShape) => b.campus === 'SGW')).toBe(true);
+    expect(loyola.every((b: BuildingShape) => b.campus === 'LOYOLA')).toBe(true);
   });
 
   test('getBuildingShapeById returns undefined for missing id', () => {
