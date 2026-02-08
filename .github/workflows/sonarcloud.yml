@@ -71,22 +71,23 @@ jobs:
 
   Analysis:
     runs-on: ubuntu-latest
-    if: ${{needs.jest.result == 'success' }}
+    if: ${{ needs.jest.result == 'success' }}
     permissions:
       contents: read # allows SonarCloud to read the repository's code for analysis
       pull-requests: write # allows SonarCloud to decorate PRs with analysis results
     steps:
-      - name: Analyze with SonarCloud
-
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better analysis of branches and pull requests
+
+      - name: Download Jest coverage
         uses: actions/download-artifact@v4
         with:
           name: jest-coverage
           path: mobile/coverage
 
-        # You can pin the exact commit or the version.
+      - name: Analyze with SonarCloud
         uses: SonarSource/sonarcloud-github-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # Generate a token on Sonarcloud.io, add it to the secrets of this repo with the name SONAR_TOKEN (Settings > Secrets > Actions > add new repository secret)
