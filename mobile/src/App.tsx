@@ -32,11 +32,8 @@ const App = () => {
   return (
     <GestureHandlerRootView>
       <SafeAreaView style={{ flex: 1 }}>
-        
-        <MapScreen passSelectedBuilding={setSelectedBuilding} 
-        openBottomSheet={openBottomSheet}/>
-        <BottomSlider selectedBuilding={selectedBuilding}
-        ref={bottomSheetRef} />
+        <MapScreen passSelectedBuilding={setSelectedBuilding} openBottomSheet={openBottomSheet} />
+        <BottomSlider selectedBuilding={selectedBuilding} ref={bottomSheetRef} />
       </SafeAreaView>
     </GestureHandlerRootView>
   );

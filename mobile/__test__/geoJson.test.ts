@@ -5,11 +5,7 @@ import {
   normalizeCampusCode,
   toLatLng,
 } from '../src/utils/geoJson';
-import type {
-  GeoJsonFeature,
-  GeoJsonMultiPolygon,
-  GeoJsonPolygon,
-} from '../src/types/GeoJson';
+import type { GeoJsonFeature, GeoJsonMultiPolygon, GeoJsonPolygon } from '../src/types/GeoJson';
 
 describe('geoJson utils', () => {
   test('toLatLng converts [lng, lat] to { latitude, longitude }', () => {
@@ -19,8 +15,19 @@ describe('geoJson utils', () => {
 
   test('isValidRing requires at least 3 points', () => {
     expect(isValidRing([])).toBe(false);
-    expect(isValidRing([[0, 0], [1, 1]])).toBe(false);
-    expect(isValidRing([[0, 0], [1, 1], [2, 2]])).toBe(true);
+    expect(
+      isValidRing([
+        [0, 0],
+        [1, 1],
+      ]),
+    ).toBe(false);
+    expect(
+      isValidRing([
+        [0, 0],
+        [1, 1],
+        [2, 2],
+      ]),
+    ).toBe(true);
   });
 
   test('normalizeCampusCode maps SGW/LOY to internal campus codes', () => {
@@ -64,7 +71,12 @@ describe('geoJson utils', () => {
   test('extractOuterRingsAsLatLngPolygons returns [] for invalid rings', () => {
     const polygon: GeoJsonPolygon = {
       type: 'Polygon',
-      coordinates: [[[-73.57, 45.5], [-73.58, 45.5]]],
+      coordinates: [
+        [
+          [-73.57, 45.5],
+          [-73.58, 45.5],
+        ],
+      ],
     };
 
     expect(extractOuterRingsAsLatLngPolygons(polygon)).toEqual([]);

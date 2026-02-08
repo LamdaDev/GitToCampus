@@ -108,6 +108,7 @@ This project uses Jest with `jest-expo` and `@testing-library/react-native`.
    ```
 
 Key files already in the repo:
+
 - `mobile/jest.config.js` (Jest config)
 - `mobile/jest.setup.ts` (test setup and mocks)
 - `mobile/__mocks__/react-native-maps.ts` (MapView/Polygon mock)
@@ -116,18 +117,21 @@ Key files already in the repo:
 ### Running Tests
 
 Run all tests:
+
 ```bash
 cd mobile
 npm test
 ```
 
 Run a single test file:
+
 ```bash
 cd mobile
 npm test -- __test__/geoJson.test.ts
 ```
 
 Run tests in watch mode:
+
 ```bash
 cd mobile
 npm run test:watch
@@ -136,10 +140,12 @@ npm run test:watch
 ### Writing Tests
 
 Place tests in `mobile/__test__/` using:
+
 - `.test.ts` for non-UI modules
 - `.test.tsx` for React components
 
 Example paths:
+
 - `mobile/__test__/geoJson.test.ts`
 - `mobile/__test__/MapScreen.test.tsx`
 

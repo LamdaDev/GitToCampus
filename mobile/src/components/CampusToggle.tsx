@@ -6,7 +6,7 @@ import styles from '../styles/CampusToggle.styles';
 type Props = {
   selectedCampus: Campus;
   onToggle: () => void;
-}
+};
 
 const CampusToggle = ({ selectedCampus, onToggle }: Props) => {
   let nextCampus;
@@ -26,7 +26,7 @@ const CampusToggle = ({ selectedCampus, onToggle }: Props) => {
   return (
     <View style={styles.wrapper}>
       <Pressable
-        accessibilityRole='button'
+        accessibilityRole="button"
         accessibilityLabel={`${nextCampus}`}
         onPress={onToggle}
         style={styles.button}
@@ -35,9 +35,6 @@ const CampusToggle = ({ selectedCampus, onToggle }: Props) => {
       </Pressable>
     </View>
   );
-}
-
+};
 
 export default CampusToggle;
-
-
