@@ -137,12 +137,15 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
   // For the recenter button:
   const handleRecenter = () => {
     if (mapRef.current && userCoords) {
-      mapRef.current.animateToRegion({
-        latitude: userCoords.latitude,
-        longitude: userCoords.longitude,
-        latitudeDelta: 0.01, // Zoom level (adjust if needed)
-        longitudeDelta: 0.01,
-      }, 1000);
+      mapRef.current.animateToRegion(
+        {
+          latitude: userCoords.latitude,
+          longitude: userCoords.longitude,
+          latitudeDelta: 0.01, // Zoom level (adjust if needed)
+          longitudeDelta: 0.01,
+        },
+        1000,
+      );
     }
   };
 
@@ -194,7 +197,7 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
       </MapView>
 
       {/* to put the toggle and recenter buttons together in a single pill-shaped control */}
-      <MapControls 
+      <MapControls
         selectedCampus={selectedCampus}
         onToggleCampus={handleToggleCampus}
         onRecenter={handleRecenter}

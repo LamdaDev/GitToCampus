@@ -5,9 +5,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     bottom: 20, // Adjust position as needed
-    width: 50, 
-    backgroundColor: '#4A4A4A', 
-    borderRadius: 25, 
+    width: 50,
+    backgroundColor: '#4A4A4A',
+    borderRadius: 25,
     borderWidth: 1,
     borderColor: '#1f2937',
     alignItems: 'center',
@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
     overflow: 'hidden',
-    opacity: 0.85, 
+    opacity: 0.85,
   },
   button: {
     width: '100%',
@@ -27,10 +27,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonPressed: {
-    backgroundColor: 'rgba(0, 0, 0, 0.2)', 
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   label: {
-    fontFamily: 'gabarito', 
+    fontFamily: 'gabarito',
     fontWeight: '600',
     color: '#EAEAEA',
     fontSize: 14,
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   divider: {
     width: '70%',
     height: 1,
-    backgroundColor: '#6C6C6C', 
+    backgroundColor: '#6C6C6C',
   },
 });
 

@@ -33,7 +33,7 @@ const MapControls = ({ selectedCampus, onToggleCampus, onRecenter }: Props) => {
         style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
         accessibilityLabel="Recenter Map"
       >
-        <Ionicons name="navigate" size={20} color="#EAEAEA" /> 
+        <Ionicons name="navigate" size={20} color="#EAEAEA" />
       </Pressable>
     </View>
   );

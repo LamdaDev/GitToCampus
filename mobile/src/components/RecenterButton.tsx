@@ -14,10 +14,7 @@ const RecenterButton = ({ onPress }: Props) => {
         accessibilityRole="button"
         accessibilityLabel="Recenter Map"
         onPress={onPress}
-        style={({ pressed }) => [
-          styles.button,
-          pressed && styles.buttonPressed 
-        ]}
+        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
       >
         {/* Using a standard location icon */}
         <Ionicons name="locate" size={28} color="#d8d8d8" />
