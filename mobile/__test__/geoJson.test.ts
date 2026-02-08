@@ -30,6 +30,7 @@ describe('geoJson utils', () => {
     expect(normalizeCampusCode('loyola')).toBe('LOYOLA');
     expect(normalizeCampusCode('unknown')).toBeNull();
     expect(normalizeCampusCode(123)).toBeNull();
+    expect(normalizeCampusCode({})).toBeNull();
   });
 
   test('extractOuterRingsAsLatLngPolygons handles Polygon and ignores holes', () => {
@@ -59,6 +60,15 @@ describe('geoJson utils', () => {
       { latitude: 45.51, longitude: -73.58 },
       { latitude: 45.5, longitude: -73.57 },
     ]);
+  });
+
+  test('extractOuterRingsAsLatLngPolygons returns [] for polygon with missing outer ring', () => {
+    const polygon: GeoJsonPolygon = {
+      type: 'Polygon',
+      coordinates: [],
+    };
+
+    expect(extractOuterRingsAsLatLngPolygons(polygon)).toEqual([]);
   });
 
   test('extractOuterRingsAsLatLngPolygons returns [] for invalid rings', () => {
@@ -99,6 +109,38 @@ describe('geoJson utils', () => {
     expect(polygons[1][0]).toEqual({ latitude: 45.52, longitude: -73.59 });
   });
 
+  test('extractOuterRingsAsLatLngPolygons skips invalid/missing multipolygon outer rings', () => {
+    const multi: GeoJsonMultiPolygon = {
+      type: 'MultiPolygon',
+      coordinates: [
+        [
+          [
+            [-73.57, 45.5],
+            [-73.58, 45.5],
+            [-73.58, 45.51],
+            [-73.57, 45.5],
+          ],
+        ],
+        [
+          [
+            [-73.59, 45.52],
+            [-73.6, 45.52],
+          ],
+        ],
+        [],
+      ],
+    };
+
+    const polygons = extractOuterRingsAsLatLngPolygons(multi);
+    expect(polygons).toHaveLength(1);
+    expect(polygons[0][0]).toEqual({ latitude: 45.5, longitude: -73.57 });
+  });
+
+  test('extractOuterRingsAsLatLngPolygons handles malformed multipolygon without coordinates', () => {
+    const malformed = { type: 'MultiPolygon' } as unknown as GeoJsonMultiPolygon;
+    expect(extractOuterRingsAsLatLngPolygons(malformed)).toEqual([]);
+  });
+
   test('getFeaturePolygons returns [] for missing or unsupported geometry', () => {
     const noGeom: GeoJsonFeature = { type: 'Feature', geometry: null, properties: {} };
     expect(getFeaturePolygons(noGeom)).toEqual([]);
@@ -131,5 +173,38 @@ describe('geoJson utils', () => {
     const polygons = getFeaturePolygons(feature);
     expect(polygons).toHaveLength(1);
     expect(polygons[0][0]).toEqual({ latitude: 45.5, longitude: -73.57 });
+  });
+
+  test('getFeaturePolygons returns polygons for MultiPolygon geometry', () => {
+    const feature: GeoJsonFeature = {
+      type: 'Feature',
+      geometry: {
+        type: 'MultiPolygon',
+        coordinates: [
+          [
+            [
+              [-73.57, 45.5],
+              [-73.58, 45.5],
+              [-73.58, 45.51],
+              [-73.57, 45.5],
+            ],
+          ],
+          [
+            [
+              [-73.59, 45.52],
+              [-73.6, 45.52],
+              [-73.6, 45.53],
+              [-73.59, 45.52],
+            ],
+          ],
+        ],
+      },
+      properties: {},
+    };
+
+    const polygons = getFeaturePolygons(feature);
+    expect(polygons).toHaveLength(2);
+    expect(polygons[0][0]).toEqual({ latitude: 45.5, longitude: -73.57 });
+    expect(polygons[1][0]).toEqual({ latitude: 45.52, longitude: -73.59 });
   });
 });
