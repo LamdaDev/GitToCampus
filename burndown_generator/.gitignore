@@ -1,3 +1,8 @@
 # Git ignore file for the burndown generator project
+
+# Ignore environment variable files
 .env
 .venv
+
+# Ignore Python bytecode files
+__pycache__/
