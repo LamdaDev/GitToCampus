@@ -2,7 +2,7 @@ appId: host.exp.exponent
 ---
 - launchApp
 - openLink: "exp://10.0.2.2:8081"
-- assertVisible: "LOY"
+- assertVisible: "SGW"
 - tapOn:
     point: "70%,80%"
 - extendedWaitUntil:
