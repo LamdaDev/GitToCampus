@@ -45,6 +45,8 @@ class Issue:
         self.sub_issues = sub_issues or {"nodes": []}
         self.sub_issues_summary = sub_issues_summary or {}
         self.status = None
+        self.sprint_start_date = None
+        self.sprint_duration = None
         
         # Additional properties
         self.milestone = None
@@ -191,12 +193,18 @@ class Issue:
                 if "title" in field_value and "startDate" in field_value and "duration" in field_value:
                     if isinstance(field_value["title"], str):
                         self.sprint = field_value["title"]
+                    self.sprint_start_date = field_value.get("startDate")
+                    self.sprint_duration = field_value.get("duration")
                 continue
 
             if field_name == Configuration.ITERATION_FIELD_NAME:
                 # Iteration field uses title/startDate/duration
                 if "title" in field_value and isinstance(field_value["title"], str):
                     self.sprint = field_value["title"]
+                if "startDate" in field_value:
+                    self.sprint_start_date = field_value.get("startDate")
+                if "duration" in field_value:
+                    self.sprint_duration = field_value.get("duration")
             elif field_name == Configuration.ESTIMATE_FIELD_NAME:
                 if "number" in field_value:
                     try:
