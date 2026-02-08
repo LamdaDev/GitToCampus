@@ -37,6 +37,35 @@ class Configuration:
     # Default: Status
     STATUS_FIELD_NAME = os.getenv("GITHUB_FIELD_STATUS", "Status")
 
+    # --- Label Filtering (Optional) ---
+    # Comma-separated label names to include
+    LABELS_INCLUDE = os.getenv("GITHUB_LABELS_INCLUDE", "")
+
+    # Defaults: GitHub's common repository labels
+    DEFAULT_LABEL_INCLUDE_LIST = [
+        "bug",
+        "documentation",
+        "duplicate",
+        "enhancement",
+        "good first issue",
+        "help wanted",
+        "invalid",
+        "question",
+        "wontfix"
+    ]
+
+    LABEL_INCLUDE_LIST = [label.strip().lower() for label in LABELS_INCLUDE.split(",") if label.strip()]
+    LABEL_FILTER_ENABLED = bool(LABEL_INCLUDE_LIST)
+
+    # --- Issue Type Filtering (Optional, Org Scope) ---
+    # Comma-separated issue type names to include
+    ISSUE_TYPES_INCLUDE = os.getenv("GITHUB_ISSUE_TYPES_INCLUDE", "")
+
+    DEFAULT_ISSUE_TYPES_INCLUDE_LIST = ["task", "bug", "feature"]
+
+    ISSUE_TYPES_INCLUDE_LIST = [t.strip().lower() for t in ISSUE_TYPES_INCLUDE.split(",") if t.strip()]
+    ISSUE_TYPE_FILTER_ENABLED = bool(ISSUE_TYPES_INCLUDE_LIST)
+
     # --- Algorithm Settings ---
     USE_WEIGHTED_ALGORITHM = True
     
