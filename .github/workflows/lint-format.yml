@@ -1,5 +1,4 @@
-name: Lint & Format
-
+name: ESLint + Prettier Code Formatting
 on:
   pull_request:
     branches: [main]
