@@ -71,6 +71,7 @@ jobs:
 
   Analysis:
     runs-on: ubuntu-latest
+    needs: jest
     if: ${{ needs.jest.result == 'success' }}
     permissions:
       contents: read # allows SonarCloud to read the repository's code for analysis
