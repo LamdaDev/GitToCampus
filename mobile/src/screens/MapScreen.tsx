@@ -6,25 +6,31 @@ import * as Location from 'expo-location';
 import type { Campus } from '../types/Campus';
 import { getCampusRegion } from '../constants/campuses';
 import styles, { POLYGON_THEME } from '../styles/MapScreen.styles';
-import { getCampusBuildingShapes, getBuildingShapeById, findBuildingAt } from '../utils/buildingsRepository';
+import {
+  getCampusBuildingShapes,
+  getBuildingShapeById,
+  findBuildingAt,
+} from '../utils/buildingsRepository';
 import type { PolygonRenderItem } from '../types/Map';
 import CampusToggle from '../components/CampusToggle';
 
-
 import { BuildingShape } from '../types/BuildingShape';
+import { centroidOfPolygon } from '../utils/geoJson';
 
 //passSelectedBuilding is a state setter passed from the parent to retrieve selected building object
-type MapScreenProps={
-  passSelectedBuilding:React.Dispatch<React.SetStateAction<BuildingShape|null>>;
-  openBottomSheet:()=>void;
-}
+type MapScreenProps = {
+  passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
+  openBottomSheet: () => void;
+};
 
-export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapScreenProps) {
+export default function MapScreen({ passSelectedBuilding, openBottomSheet }: MapScreenProps) {
   // Keep this for US-1.3 camera panning later (even if no UI yet)
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
-  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(
+    null,
+  );
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const mapRef = useRef<any>(null);
@@ -48,7 +54,6 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
       //   });
       //   return;
       // }
-
 
       subscription = await Location.watchPositionAsync(
         {
@@ -135,7 +140,7 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
         style={styles.map}
         initialRegion={getCampusRegion('SGW')}
         provider={PROVIDER_GOOGLE}
-        showsUserLocation
+        showsUserLocation={true} // Disable user location marker
         showsMyLocationButton
       >
         {polygonItems.map((p) => {
@@ -154,33 +159,26 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
                 setSelectedBuildingId(p.buildingId);
                 setSelectedCampus(p.campus);
 
-                //todo: ask about how MapScreen.tsx works and look into loading time upon clicking a polygon - RJ
                 const building = getBuildingShapeById(p.buildingId);
-                passSelectedBuilding(building??  null);
+                passSelectedBuilding(building ?? null);
                 openBottomSheet();
               }}
             />
           );
         })}
 
-        {userCoords && <Marker coordinate={userCoords} title="You are here" />}
+        {selectedBuildingId &&
+          selectedBuilding && ( // Show marker only for selected building
+            <Marker
+              coordinate={
+                centroidOfPolygon(selectedBuilding.polygons[0]) ?? { latitude: 0, longitude: 0 }
+              }
+              title={selectedBuilding.name}
+            />
+          )}
       </MapView>
 
       <CampusToggle selectedCampus={selectedCampus} onToggle={handleToggleCampus} />
-
-
-      <View style={styles.overlay}>
-        <Text style={styles.overlayTitle}>GitToCampus</Text>
-        <Text style={styles.overlayText}>Camera target: {selectedCampus}</Text>
-
-        {selectedBuilding ? (
-          <Text style={styles.overlayText}>Selected: {selectedBuilding.name}</Text>
-        ) : (
-          <Text style={styles.overlayText}>Tap a building</Text>
-        )}
-
-        {locationError ? <Text style={styles.overlayText}>{locationError}</Text> : null}
-      </View>
     </View>
   );
 }

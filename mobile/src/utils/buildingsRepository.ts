@@ -4,6 +4,8 @@ import type { Campus } from '../types/Campus';
 import type { BuildingShape } from '../types/BuildingShape';
 import { getFeaturePolygons, normalizeCampusCode } from '../utils/geoJson';
 import { getDistance } from 'geolib';
+import { isPointInAnyPolygon } from '../utils/geoJson';
+import { getCampusRegion } from '../constants/campuses';
 
 /**
  * Building metadata properties from building_list.json.
@@ -124,8 +126,8 @@ const buildAllBuildingsCache = (): BuildingShape[] => {
       shortCode: meta.shortCode,
       address: meta.address,
       //TEMP: For Sprint 2 Task-1.5.2
-      hotspots:meta.hotspots,
-      services:meta.services,
+      hotspots: meta.hotspots,
+      services: meta.services,
     });
   }
 
@@ -158,18 +160,18 @@ export const getBuildingShapeById = (id: string): BuildingShape | undefined => {
 /**
  * Find the first building that contains the given point
  * First determines which campus the user is closest to, then only searches buildings on that campus.
- * Early exits if user is too far from any campus 
+ * Early exits if user is too far from any campus
  * Return undefined if no building has that point
  */
-export const findBuildingAt = (point: { latitude: number; longitude: number }): BuildingShape | undefined => {
-  const { isPointInAnyPolygon } = require('../utils/geoJson');
-  const { getCampusRegion } = require('../constants/campuses');
-
+export const findBuildingAt = (point: {
+  latitude: number;
+  longitude: number;
+}): BuildingShape | undefined => {
   // Find which campus the user is closest to
   const closestCampus = findClosestCampus(point);
   const campusCenter = getCampusRegion(closestCampus);
 
-  // Early exit if urser isnt atleast somewhat close to that campus 
+  // Early exit if urser isnt atleast somewhat close to that campus
   const MAX_DISTANCE_METERS = 2000;
   const distanceToCampus = getDistance(point, {
     latitude: campusCenter.latitude,
@@ -190,14 +192,11 @@ export const findBuildingAt = (point: { latitude: number; longitude: number }): 
   return undefined;
 };
 
-
 /**
  * Find the closest campus to the user's current location.
  * Returns the Campus that is nearest to the given coordinates.
  */
 export const findClosestCampus = (userCoords: { latitude: number; longitude: number }): Campus => {
-  const { getCampusRegion } = require('../constants/campuses');
-
   const sgwCenter = getCampusRegion('SGW');
   const loyolaCenter = getCampusRegion('LOYOLA');
 

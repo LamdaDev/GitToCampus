@@ -11,10 +11,10 @@ import { BuildingShape } from '../types/BuildingShape';
 
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
-  onClose:()=>void;
+  onClose: () => void;
 };
 
-export default function BuildingDetails({ selectedBuilding ,onClose}: BuildingDetailProps) {
+export default function BuildingDetails({ selectedBuilding, onClose }: BuildingDetailProps) {
   const hotspots = selectedBuilding?.hotspots;
   const services = selectedBuilding?.services;
 
@@ -42,7 +42,6 @@ export default function BuildingDetails({ selectedBuilding ,onClose}: BuildingDe
           : ''}
       </Section>
     ) : null;
-
 
   return (
     <>
@@ -86,7 +85,7 @@ type BulletProps = {
 
 /* ---------- Reusable Components ---------- */
 
-const Section = ({ title, children }: SectionProps) => {  
+const Section = ({ title, children }: SectionProps) => {
   return (
     <View style={buildingDetailsStyles.section}>
       <View style={buildingDetailsStyles.sectionHeader}>

@@ -9,7 +9,7 @@ const loadRepositoryWithAssets = (assets: {
   jest.resetModules();
   jest.doMock('../src/assets/geojson', () => ({ GEOJSON_ASSETS: assets }));
   // Use require to avoid Node ESM dynamic import requirements in Jest.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+
   return require('../src/utils/buildingsRepository');
 };
 
@@ -100,7 +100,12 @@ describe('buildingsRepository', () => {
           type: 'Feature',
           geometry: {
             type: 'Polygon',
-            coordinates: [[[-73.7, 45.6], [-73.71, 45.6]]],
+            coordinates: [
+              [
+                [-73.7, 45.6],
+                [-73.71, 45.6],
+              ],
+            ],
           },
           properties: { unique_id: '4' },
         },
