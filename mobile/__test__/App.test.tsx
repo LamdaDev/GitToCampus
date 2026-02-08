@@ -20,9 +20,9 @@ jest.mock('expo-font', () => ({
 jest.mock('../src/components/BottomSheet', () => {
   const React = require('react');
 
-    return function MockBottomSheet() {
-      return null
-    };
+  return function MockBottomSheet() {
+    return null;
+  };
 });
 
 const mockOpenBottomSheet = jest.fn();
@@ -34,11 +34,7 @@ jest.mock('../src/screens/MapScreen', () => {
   return function MockMapScreen({ passSelectedBuilding, openBottomSheet }) {
     return (
       <View testID="map-screen">
-        <Button
-          testID="open-sheet"
-          title="Open"
-          onPress={mockOpenBottomSheet}
-        />
+        <Button testID="open-sheet" title="Open" onPress={mockOpenBottomSheet} />
       </View>
     );
   };
@@ -61,6 +57,5 @@ describe('App', () => {
 
     // Check if MapScreen's passed prop has fired
     expect(mockOpenBottomSheet).toHaveBeenCalled();
-
   });
 });
