@@ -1,0 +1,14 @@
+appId: host.exp.exponent
+---
+- launchApp
+- openLink: "exp://10.0.2.2:8081"
+- assertVisible:
+    text: "LOY"
+    delay: 2000
+- doubleTapOn:
+    point: "20%,80%"
+- swipe:
+    delay: 1000
+    start: "50%,80%"
+    end: "50%,40%"
+- tapOn: "LOY"

@@ -12,3 +12,4 @@ appId: host.exp.exponent
     from:
       text: "Grey Nuns Building"
     direction: DOWN
+- tapOn: "LOY"
