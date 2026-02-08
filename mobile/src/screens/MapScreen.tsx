@@ -10,7 +10,17 @@ import { getCampusBuildingShapes, getBuildingShapeById, findBuildingAt } from '.
 import type { PolygonRenderItem } from '../types/Map';
 import CampusToggle from '../components/CampusToggle';
 
-export default function MapScreen() {
+
+import { BuildingShape } from '../types/BuildingShape';
+
+//passSelectedBuilding is a state setter passed from the parent to retrieve selected building object
+type MapScreenProps={
+  passSelectedBuilding:React.Dispatch<React.SetStateAction<BuildingShape|null>>;
+  openBottomSheet:()=>void;
+}
+
+export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapScreenProps) {
+  // Keep this for US-1.3 camera panning later (even if no UI yet)
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
 
@@ -143,6 +153,11 @@ export default function MapScreen() {
               onPress={() => {
                 setSelectedBuildingId(p.buildingId);
                 setSelectedCampus(p.campus);
+
+                //todo: ask about how MapScreen.tsx works and look into loading time upon clicking a polygon - RJ
+                const building = getBuildingShapeById(p.buildingId);
+                passSelectedBuilding(building??  null);
+                openBottomSheet();
               }}
             />
           );

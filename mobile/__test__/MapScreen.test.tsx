@@ -4,6 +4,9 @@ import { Polygon } from 'react-native-maps';
 import MapScreen from '../src/screens/MapScreen';
 import type { BuildingShape } from '../src/types/BuildingShape';
 
+const mockPassSelectedBuildings = jest.fn();
+const mockOpenBottomSheet = jest.fn();
+
 const mockBuildings: BuildingShape[] = [
   {
     id: 'sgw-1',
@@ -44,7 +47,7 @@ jest.mock('../src/utils/buildingsRepository', () => ({
 
 describe('MapScreen', () => {
   test('renders overlay with default camera target and prompt', () => {
-    const { getByText } = render(<MapScreen />);
+    const { getByText } = render(<MapScreen passSelectedBuilding={mockPassSelectedBuildings} openBottomSheet={mockOpenBottomSheet} />);
 
     expect(getByText('GitToCampus')).toBeTruthy();
     expect(getByText('Camera target: SGW')).toBeTruthy();
@@ -52,14 +55,14 @@ describe('MapScreen', () => {
   });
 
   test('renders one polygon per building polygon', () => {
-    const { UNSAFE_getAllByType } = render(<MapScreen />);
+    const { UNSAFE_getAllByType } = render(<MapScreen passSelectedBuilding={mockPassSelectedBuildings} openBottomSheet={mockOpenBottomSheet} />);
 
     const polygons = UNSAFE_getAllByType(Polygon);
     expect(polygons).toHaveLength(3);
   });
 
   test('selecting a polygon updates selected building and camera target', () => {
-    const { getByText, queryByText, UNSAFE_getAllByType } = render(<MapScreen />);
+    const { getByText, queryByText, UNSAFE_getAllByType } = render(<MapScreen passSelectedBuilding={mockPassSelectedBuildings} openBottomSheet={mockOpenBottomSheet} />);
 
     const polygons = UNSAFE_getAllByType(Polygon);
     // First polygon is SGW, next polygons are Loyola

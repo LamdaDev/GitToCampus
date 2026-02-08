@@ -10,6 +10,11 @@
         "Building": "SB",
         "BuildingName": "SB Building",
         "Building Long Name": "Samuel Bronfman Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Arts and Science Research Groups": "https://www.concordia.ca/artsci/research/centres.html"
+        },
         "Address": "1590 Doctor Penfield",
         "Latitude": 45.4966,
         "Longitude": -73.58609,
@@ -25,6 +30,12 @@
         "Building": "VA",
         "BuildingName": "VA Building",
         "Building Long Name": "Visual Arts Building",
+        "Hotspots": {
+          "4TH SPACE": ""
+        },
+        "Services": {
+          "VAV Gallery": "https://www.vavgallery.ca/"
+        },
         "Address": "1395 Rene Levesque W",
         "Latitude": 45.495543,
         "Longitude": -73.573795,
@@ -40,6 +51,23 @@
         "Building": "LB",
         "BuildingName": "LB Building",
         "Building Long Name": "J.W. McConnell Building",
+        "Hotspots": {
+          "4TH SPACE": "https://www.concordia.ca/next-gen/4th-space.html",
+          "J.A. De Sève Cinema": "https://www.concordia.ca/it/cinemas/deseve-cinema.html",
+          "Leonard and Bina Ellen Art Gallery": "https://ellengallery.concordia.ca/news/?lang=en",
+          "SHIFT Centre for Social Transformation": "https://www.concordia.ca/about/shift.html"
+        },
+        "Services": {
+          "Birks Student Service Centre": "https://www.concordia.ca/students/birks.html",
+          "Concordia Book Stop": "https://www.bkstr.com/concordiastore/home",
+          "Concordia Print Services": "https://www.concordia.ca/print.html",
+          "First Stop": "https://www.concordia.ca/students/first-stop.html",
+          "Instructional and Information Technology Services (IITS)": "https://www.concordia.ca/it.html",
+          "J.A. De Sève Cinema": "https://www.concordia.ca/it/cinemas/deseve-cinema.html",
+          "R. Howard Webster Library": "https://library.concordia.ca/locations/",
+          "SHIFT Centre for Social Transformation": "https://www.concordia.ca/about/shift.html",
+          "Welcome Centre": "https://www.concordia.ca/admissions/undergraduate/welcome-centre.html"
+        },
         "Address": "1400 DeMaisonneuve W",
         "Latitude": 45.49705,
         "Longitude": -73.578009,
@@ -55,6 +83,25 @@
         "Building": "H",
         "BuildingName": "H Building",
         "Building Long Name": "Henry F. Hall Building",
+        "Hotspots": {
+          "Concordia Theatre": "https://www.concordia.ca/arts/venues/db-clarke-theatre.html",
+          "Reggies": "https://reggies.ca/",
+          "Sir George Williams University Alumni Auditorium": "https://www.concordia.ca/maps/buildings/concordia-panoramas/h-h110.html"
+        },
+        "Services": {
+          "Campus Safety and Prevention Services": "https://www.concordia.ca/campus-life/security.html",
+          "Concordia Student Union (CSU)": "https://www.csu.qc.ca/",
+          "First Stop": "https://www.concordia.ca/students/first-stop.html",
+          "Espace Franco": "https://www.concordia.ca/fr/etudiants/espace-franco.html",
+          "IT Service Desk": "https://www.concordia.ca/it.html",
+          "NouLa Black Student Centre": "https://www.concordia.ca/students/noula.html",
+          "Office of Student Life and Engagement": "https://www.concordia.ca/students/life/engagement.html",
+          "Otsenhákta Student Centre": "https://www.concordia.ca/students/otsenhakta.html",
+          "Sexual Assault Resource Centre (SARC)": "https://www.concordia.ca/conduct/sexual-assault.html",
+          "Student Success Centre": "https://www.concordia.ca/students/success.html",
+          "Welcome Crew Office": "https://www.concordia.ca/students/new/mentoring.html",
+          "Zen Den": "https://www.concordia.ca/health/cuwellness.html"
+        },
         "Address": "1455 DeMaisonneuve W",
         "Latitude": 45.497092,
         "Longitude": -73.5788,
@@ -70,6 +117,10 @@
         "Building": "K",
         "BuildingName": "K Building",
         "Building Long Name": "K Annex",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "2150 Bishop Street",
         "Latitude": 45.497777,
         "Longitude": -73.579531,
@@ -85,6 +136,10 @@
         "Building": "MU",
         "BuildingName": "MU Building",
         "Building Long Name": "MU Annex",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "2170 Bishop Street",
         "Latitude": 45.497963,
         "Longitude": -73.579506,
@@ -100,6 +155,10 @@
         "Building": "S",
         "BuildingName": "S Building",
         "Building Long Name": "S Annex",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "2145 Mackay Street",
         "Latitude": 45.497423,
         "Longitude": -73.579851,
@@ -115,6 +174,10 @@
         "Building": "FA",
         "BuildingName": "FA Building",
         "Building Long Name": "FA Annex",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "2060 Mackay Street",
         "Latitude": 45.496874,
         "Longitude": -73.579468,
@@ -130,6 +193,11 @@
         "Building": "PR",
         "BuildingName": "PR Building",
         "Building Long Name": "PR Annex",
+        "Hotspots": {
+        },
+        "Services": {
+          "Concordia University Library Employees' Union (CULEU)": "https://www.concordia.ca/hr/labour-agreements/culeu.html"
+        },
         "Address": "2100 Mackay Street",
         "Latitude": 45.497066,
         "Longitude": -73.57979,
@@ -145,6 +213,10 @@
         "Building": "ER",
         "BuildingName": "ER Building",
         "Building Long Name": "ER Building",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "2155 Guy Street",
         "Latitude": 45.496428,
         "Longitude": -73.57999,
@@ -160,6 +232,10 @@
         "Building": "LS",
         "BuildingName": "Learning Square",
         "Building Long Name": "Learning Square LS Building",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "1535 De Maisonneuve Blvd. W.",
         "Latitude": 45.49633,
         "Longitude": -73.5794,
@@ -175,6 +251,11 @@
         "Building": "GS",
         "BuildingName": "GS Building",
         "Building Long Name": "Guy-Sherbrooke Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Concordia University Part-time Faculty Association (CUPFA)": "https://www.cupfa.org/en_CA/"
+        },
         "Address": "1538, Sherbrooke W",
         "Latitude": 45.496673,
         "Longitude": -73.581409,
@@ -190,6 +271,25 @@
         "Building": "GM",
         "BuildingName": "GM Building",
         "Building Long Name": "Guy-De Maisonneuve Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Access Centre for Students with Disabilities": "https://www.concordia.ca/students/accessibility.html",
+          "Facilities Management": "https://www.concordia.ca/offices/facilities.html",
+          "Financial Aid and Awards Office": "https://www.concordia.ca/students/financial.html",
+          "Financial Services": "https://www.concordia.ca/financial-services.html",
+          "Graduate Studies": "https://www.concordia.ca/gradstudies.html",
+          "Health Services": "https://www.concordia.ca/health/medical/clinic.html",
+          "Institute for Co-operative Education": "https://www.concordia.ca/academics/co-op.html",
+          "International Students Office": "https://www.concordia.ca/students/international.html",
+          "Office of the President and Vice-Chancellor": "https://www.concordia.ca/about/administration-governance/president.html",
+          "Office of the Provost and Vice-President, Academic": "https://www.concordia.ca/provost.html",
+          "Office of the Vice-President, Research, Innovation and Impact": "https://www.concordia.ca/about/administration-governance/office-vp-research-innovation-impact.html",
+          "Office of the Vice-President, Services and Sustainability": "https://www.concordia.ca/about/administration-governance/office-vp-services-sustainability.html",
+          "Ombuds Office": "https://www.concordia.ca/offices/ombuds.html",
+          "University Communications Services": "https://www.concordia.ca/about/administration-governance/office-chief-communications-officer.html",
+          "Zen Den": "https://www.concordia.ca/health/cuwellness.html"
+        },
         "Address": "1550 DeMaisonneuve W",
         "Latitude": 45.495983,
         "Longitude": -73.578824,
@@ -205,6 +305,17 @@
         "Building": "MB",
         "BuildingName": "MB Building",
         "Building Long Name": "John Molson Building",
+        "Hotspots": {
+          "Concordia Conference Centre, 9th Floor": "https://www.concordia.ca/hospitality/venues/concordia-conference-centre.html",
+          "Cloud Deck": "https://www.concordia.ca/maps/buildings/concordia-panoramas/mb-3-130.html"
+        },
+        "Services": {
+          "Career Management Services": "https://www.concordia.ca/jmsb/career.html",
+          "First Stop": "https://www.concordia.ca/students/first-stop.html",
+          "John Molson Executive Centre": "https://www.concordia.ca/jmsb/executive-education.html",
+          "Performing Arts Facilities": "https://www.concordia.ca/finearts/shops-studios/performing-arts.html",
+          "Zen Den": "https://www.concordia.ca/health/cuwellness.html"
+        },
         "Address": "1450 Guy Street",
         "Latitude": 45.495304,
         "Longitude": -73.579044,
@@ -220,6 +331,10 @@
         "Building": "TD",
         "BuildingName": "TD Building",
         "Building Long Name": "Toronto-Dominion Building",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "1410 Guy Street",
         "Latitude": 45.495103,
         "Longitude": -73.578375,
@@ -235,6 +350,11 @@
         "Building": "FG",
         "BuildingName": "FG Building",
         "Building Long Name": "Faubourg Ste-Catherine Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Records Management and Archives (RMA) Research Room and Vault": "https://www.concordia.ca/offices/archives.html"
+        },
         "Address": "1610 Ste-Catherine",
         "Latitude": 45.494381,
         "Longitude": -73.578425,
@@ -250,6 +370,10 @@
         "Building": "CL",
         "BuildingName": "CL Building",
         "Building Long Name": "CL Annex",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "1665 Ste-Catherine W",
         "Latitude": 45.494259,
         "Longitude": -73.579007,
@@ -265,6 +389,10 @@
         "Building": "MM",
         "BuildingName": "MM Building",
         "Building Long Name": "MM Annex",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "1209 Guy Street",
         "Latitude": 45.494665,
         "Longitude": -73.576365,
@@ -280,6 +408,10 @@
         "Building": "MT",
         "BuildingName": "MT Building",
         "Building Long Name": "Montefiore Building",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "1195 Guy Street",
         "Latitude": 45.494442,
         "Longitude": -73.576108,
@@ -295,6 +427,11 @@
         "Building": "LD",
         "BuildingName": "LD Building",
         "Building Long Name": "LD Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "CSU Daycare & Nursery": "https://csudaycarenursery.ca/"
+        },
         "Address": "1424 Bishop Street",
         "Latitude": 45.496697,
         "Longitude": -73.577312,
@@ -310,6 +447,16 @@
         "Building": "GNA",
         "BuildingName": "GN Building - wing A",
         "Building Long Name": "Grey Nuns Building",
+        "Hotspots": {
+          "Grey Nuns Garden": "https://www.concordia.ca/maps/buildings/gg.html"
+        },
+        "Services": {
+          "Concordia Daycare (1185 St-Mathieu St.)": "https://cpeconcordia.ca/",
+          "Concordia University Student Parents Centre (CUSP): 1175 St-Mathieu St.": "https://www.concordia.ca/students/student-parents-centre.html",
+          "Grey Nuns Reading Room & Group Study Rooms (1190 Guy St.)": "https://www.concordia.ca/gradstudies/about/grey-nuns-grad-space.html",
+          "Residences": "https://www.concordia.ca/students/housing/residences/grey-nuns.html",
+          "Summer accommodations": "https://www.concordia.ca/summer/accommodations.html/greynunsresidence/"
+        },
         "Address": "1190 Guy Street",
         "Latitude": 45.493622,
         "Longitude": -73.577003,
@@ -325,6 +472,11 @@
         "Building": "BH",
         "BuildingName": "BH Building",
         "Building Long Name": "BB-BH Annex",
+        "Hotspots": {
+        },
+        "Services": {
+          "CPE Les P'tits Profs Daycare": "https://lesptitsprofs.wordpress.com/"
+        },
         "Address": "3500 Bermore Avenue",
         "Latitude": 45.459819,
         "Longitude": -73.639152,
@@ -340,6 +492,12 @@
         "Building": "PS",
         "BuildingName": "PS Building",
         "Building Long Name": "Physical Services Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Environmental Health and Safety": "https://www.concordia.ca/campus-life/safety.html",
+          "Facilities Management": "https://www.concordia.ca/offices/facilities.html"
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.459636,
         "Longitude": -73.639758,
@@ -355,6 +513,11 @@
         "Building": "DO",
         "BuildingName": "Stinger Dome",
         "Building Long Name": "Stinger Dome Seasonal",
+        "Hotspots": {
+        },
+        "Services": {
+          "Concordia Stingers": "https://stingers.ca/"
+        },
         "Address": "7200 Sherbrooke St W, Montreal, Quebec H4B 1R3",
         "Latitude": 45.45769,
         "Longitude": -73.63616,
@@ -370,6 +533,10 @@
         "Building": "PB",
         "BuildingName": "PB Building",
         "Building Long Name": "PB Building",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "7200 Sherbrooke W",
         "Latitude": 45.456534,
         "Longitude": -73.638106,
@@ -385,6 +552,13 @@
         "Building": "RA",
         "BuildingName": "RA Building",
         "Building Long Name": "Recreation and Athletics Complex",
+        "Hotspots": {
+          "Concordia Stadium": "https://www.concordia.ca/campus-life/recreation/facilities/athletic-complex.html",
+          "Ed Meagher Arena": "https://www.concordia.ca/campus-life/recreation/facilities/arena.html",
+          "Gymnasium": "https://www.concordia.ca/campus-life/recreation/facilities/athletic-complex.html"
+        },
+        "Services": {
+        },
         "Address": "7200 Sherbrooke W",
         "Latitude": 45.456774,
         "Longitude": -73.63761,
@@ -400,6 +574,14 @@
         "Building": "PC",
         "BuildingName": "PC Building",
         "Building Long Name": "PERFORM centre",
+        "Hotspots": {
+          "Athletic Therapy Clinic": "https://www.concordia.ca/schoolofhealth/for-public/assessment-rehabilitation.html",
+          "Nutrition Centre": "https://www.concordia.ca/schoolofhealth/for-public/nutrition.html",
+          "PERFORM Gym": "https://www.concordia.ca/schoolofhealth/for-public/gym-fitness-classes.html",
+          "School of Health": "https://www.concordia.ca/schoolofhealth.html"
+        },
+        "Services": {
+        },
         "Address": "7200 Sherbrooke W",
         "Latitude": 45.457088,
         "Longitude": -73.637683,
@@ -415,6 +597,11 @@
         "Building": "GE",
         "BuildingName": "GE Building",
         "Building Long Name": "Centre for Structural and Functional Genomics",
+        "Hotspots": {
+        },
+        "Services": {
+          "Centre for Structural and Functional Genomics": "https://www.concordia.ca/research/genomics.html"
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.457017,
         "Longitude": -73.640432,
@@ -430,6 +617,11 @@
         "Building": "CJA",
         "BuildingName": "CJ Building - wing A",
         "Building Long Name": "Communication Studies and Journalism Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Book Stop": "https://www.bkstr.com/concordiastore/home"
+        },
         "Address": "7141, Sherbrooke Wes",
         "Latitude": 45.457478,
         "Longitude": -73.640354,
@@ -445,6 +637,11 @@
         "Building": "CJN",
         "BuildingName": "CJ Building - wing N",
         "Building Long Name": "Communication Studies and Journalism Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Book Stop": "https://www.bkstr.com/concordiastore/home"
+        },
         "Address": "7141, Sherbrooke Wes",
         "Latitude": 45.457478,
         "Longitude": -73.640354,
@@ -460,6 +657,11 @@
         "Building": "CJS",
         "BuildingName": "CJ Building - wing S",
         "Building Long Name": "Communication Studies and Journalism Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Book Stop": "https://www.bkstr.com/concordiastore/home"
+        },
         "Address": "7141, Sherbrooke Wes",
         "Latitude": 45.457478,
         "Longitude": -73.640354,
@@ -475,6 +677,13 @@
         "Building": "SP",
         "BuildingName": "SP Building",
         "Building Long Name": "Richard J. Renaud Science Complex",
+        "Hotspots": {
+        },
+        "Services": {
+          "Campus Safety and Prevention Services": "https://www.concordia.ca/campus-life/security.html",
+          "First Stop": "https://www.concordia.ca/students/first-stop.html",
+          "Science College": "https://www.concordia.ca/artsci/science-college.html"
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.457881,
         "Longitude": -73.641565,
@@ -490,6 +699,10 @@
         "Building": "HU",
         "BuildingName": "HU Building",
         "Building Long Name": "Applied Science Hub",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "7141, Sherbrooke W",
         "Latitude": 45.458513,
         "Longitude": -73.641921,
@@ -505,6 +718,12 @@
         "Building": "RF",
         "BuildingName": "RF Building",
         "Building Long Name": "Loyola Jesuit Hall and Conference Centre",
+        "Hotspots": {
+        },
+        "Services": {
+          "Conference services": "https://www.concordia.ca/hospitality.html",
+          "Loyola Jesuit Hall and Conference Centre": "https://www.concordia.ca/hospitality/venues/loyola-jesuit-hall-conference-centre.html"
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.458489,
         "Longitude": -73.641028,
@@ -520,6 +739,10 @@
         "Building": "PY",
         "BuildingName": "PY Building",
         "Building Long Name": "Psychology Building",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.458938,
         "Longitude": -73.640467,
@@ -535,6 +758,13 @@
         "Building": "CC",
         "BuildingName": "CC Building",
         "Building Long Name": "Central Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Concordia Student Union": "https://www.csu.qc.ca/",
+          "Loyola College for Diversity and Sustainability and Loyola": "https://www.concordia.ca/artsci/loyola-college-diversity-sustainability.html",
+          "Zen Den": "https://www.concordia.ca/health/cuwellness.html"
+        },
         "Address": "7141 Sherbrooke West",
         "Latitude": 45.458204,
         "Longitude": -73.6403,
@@ -550,6 +780,19 @@
         "Building": "AD",
         "BuildingName": "AD Building",
         "Building Long Name": "Administration Building",
+        "Hotspots": {
+        },
+        "Services": {
+          "Access Centre for Students with Disabilities": "https://www.concordia.ca/students/accessibility.html",
+          "Centre for Teaching and Learning": "https://www.concordia.ca/ctl.html",
+          "Counselling and Psychological Services": "https://www.concordia.ca/health/mental-health/counselling.html",
+          "Health Services": "https://www.concordia.ca/health/medical/clinic.html",
+          "Loyola College for Diversity and Sustainability": "https://www.concordia.ca/artsci/loyola-college-diversity-sustainability.html",
+          "Loyola Landing": "https://www.concordia.ca/students/services/loyola.html",
+          "Office of the Provost and Vice-President, Academic": "https://www.concordia.ca/provost.html",
+          "Office of Student Life and Engagement": "https://www.concordia.ca/students/life.html",
+          "Welcome Crew Office": "https://www.concordia.ca/students/new/mentoring.html"
+        },
         "Address": "7141, Sherbrooke West",
         "Latitude": 45.457984,
         "Longitude": -73.639834,
@@ -565,6 +808,12 @@
         "Building": "FC",
         "BuildingName": "FC Building",
         "Building Long Name": "F.C. Smith Building",
+        "Hotspots": {
+          "Loyola Chapel": "https://www.concordia.ca/hospitality/venues/loyola-chapel.html"
+        },
+        "Services": {
+          "Concordia Multi-Faith and Spirituality Centre": "https://www.concordia.ca/equity/spirituality.html"
+        },
         "Address": "7141 Sherbrooke West",
         "Latitude": 45.458493,
         "Longitude": -73.639287,
@@ -580,6 +829,11 @@
         "Building": "PT",
         "BuildingName": "PT Building",
         "Building Long Name": "Oscar Peterson Concert Hall",
+        "Hotspots": {
+        },
+        "Services": {
+          "Concert Hall": "https://www.concordia.ca/arts/venues/oscar-peterson.html"
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.459308,
         "Longitude": -73.638941,
@@ -595,6 +849,13 @@
         "Building": "SC",
         "BuildingName": "SC Building",
         "Building Long Name": "Student Centre",
+        "Hotspots": {
+          "Cafeteria": "https://www.concordia.ca/campus-life/food-services/places-to-eat/buzz-dining-hall.html",
+          "Café": "https://hivecafe.ca/"
+        },
+        "Services": {
+          "Food Services": "https://www.concordia.ca/students/housing/residences.html"
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.459131,
         "Longitude": -73.639251,
@@ -610,6 +871,11 @@
         "Building": "VE",
         "BuildingName": "VE Building",
         "Building Long Name": "Vanier Extension",
+        "Hotspots": {
+          "Library": "https://library.concordia.ca/locations/vanier.php"
+        },
+        "Services": {
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.459026,
         "Longitude": -73.638606,
@@ -625,6 +891,11 @@
         "Building": "VL",
         "BuildingName": "VL Building",
         "Building Long Name": "Vanier Library Building",
+        "Hotspots": {
+          "Georges P. Vanier Library": "https://library.concordia.ca/locations/vanier.php"
+        },
+        "Services": {
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.459026,
         "Longitude": -73.638606,
@@ -640,6 +911,11 @@
         "Building": "JR",
         "BuildingName": "JR Building",
         "Building Long Name": "Jesuit Residence",
+        "Hotspots": {
+        },
+        "Services": {
+          "Student Residence": "https://www.concordia.ca/students/housing/residences/loyola-residences.html"
+        },
         "Address": "7141 Sherbrooke West",
         "Latitude": 45.458432,
         "Longitude": -73.643235,
@@ -655,6 +931,10 @@
         "Building": "SH",
         "BuildingName": "SH Building",
         "Building Long Name": "Solar House",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.459298,
         "Longitude": -73.642478,
@@ -670,6 +950,11 @@
         "Building": "HC",
         "BuildingName": "HC Building",
         "Building Long Name": "Hingston Hall, wing HC",
+        "Hotspots": {
+        },
+        "Services": {
+          "Student Residence": "https://www.concordia.ca/students/housing/residences/loyola-residences.html"
+        },
         "Address": "7141 Sherbrooke West",
         "Latitude": 45.459663,
         "Longitude": -73.64208,
@@ -685,6 +970,12 @@
         "Building": "HB",
         "BuildingName": "HB Building",
         "Building Long Name": "Hingston Hall, wing HB",
+        "Hotspots": {
+        },
+        "Services": {
+          "Concordia University Faculty Association (CUFA)": "https://cufa.net/",
+          "Student Residence": "https://www.concordia.ca/students/housing/residences/loyola-residences.html"
+        },
         "Address": "7141 Sherbrooke West",
         "Latitude": 45.459308,
         "Longitude": -73.641849,
@@ -700,6 +991,11 @@
         "Building": "HA",
         "BuildingName": "HA Building",
         "Building Long Name": "Hingston Hall, wing HA",
+        "Hotspots": {
+        },
+        "Services": {
+          "Student Residence": "https://www.concordia.ca/students/housing/residences/loyola-residences.html"
+        },
         "Address": "7141 Sherbrooke West",
         "Latitude": 45.459356,
         "Longitude": -73.64127,
@@ -715,6 +1011,10 @@
         "Building": "TB",
         "BuildingName": "TB Building",
         "Building Long Name": "TB Annex",
+        "Hotspots": {
+        },
+        "Services": {
+        },
         "Address": "7075 Terrebonne",
         "Latitude": 45.460051,
         "Longitude": -73.640842,
@@ -730,6 +1030,13 @@
         "Building": "EV",
         "BuildingName": "EV Building",
         "Building Long Name": "Engineering, Computer Science and Visual Arts Integrated Complex",
+        "Hotspots": {
+          "FOFA Gallery": "https://www.concordia.ca/finearts/about/galleries-venues/fofa-gallery.html"
+        },
+        "Services": {
+          "Le Gym": "https://www.concordia.ca/campus-life/recreation/le-gym.html",
+          "Zen Den": "https://www.concordia.ca/health/cuwellness.html"
+        },
         "Address": "1515 Ste-Catherine W",
         "Latitude": 45.495376,
         "Longitude": -73.577997,
@@ -745,6 +1052,19 @@
         "Building": "FB",
         "BuildingName": "FB Building",
         "Building Long Name": "Faubourg Building",
+        "Hotspots": {
+          "District 3 Innovation Hub": "https://www.concordia.ca/research/d3.html"
+        },
+        "Services": {
+          "Enrolment Services / Office of the Registrar / Student Recruitment": "https://www.concordia.ca/offices/registrar.html",
+          "Environmental Health and Safety": "https://www.concordia.ca/maps/buildings/fb.html",
+          "Examinations Office": "https://www.concordia.ca/students/exams.html",
+          "Human Resources": "https://www.concordia.ca/hr.html",
+          "Office of Sustainability": "https://www.concordia.ca/sustainability.html",
+          "Records Management and Archives (RMA) Office": "https://www.concordia.ca/offices/archives.html",
+          "Senior non-credit program": "https://www.concordia.ca/lifelong-learning/seniors.html",
+          "Study Hub": "https://www.concordia.ca/students/success/superb-study-spots-at-concordia.html#study-spots"
+        },
         "Address": "1250 Guy Street",
         "Latitude": 45.494666,
         "Longitude": -73.577603,
@@ -752,6 +1072,25 @@
         "unique_id": 64
       },
       "geometry": { "type": "Point", "coordinates": [-73.577603, 45.494666] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Campus": "SGW",
+        "Building": "ES",
+        "BuildingName": "ES Building",
+        "Building Long Name": "ES Building",
+        "Hotspots": {
+        },
+        "Services": {
+        },
+        "Address": "2135 Guy Street",
+        "Latitude": 45.496172,
+        "Longitude": -73.579922,
+        "id": 66,
+        "unique_id": 66
+      },
+      "geometry": { "type": "Point", "coordinates": [-73.579922, 45.496172] }
     }
   ]
 }
