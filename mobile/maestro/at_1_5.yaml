@@ -10,4 +10,7 @@ appId: host.exp.exponent
 - extendedWaitUntil:
     visible: "Grey Nuns Garden"
     timeout: 2000
-- tapOn: "Grey Nuns Garden"
+- swipe:
+    from:
+      text: "Grey Nuns Building"
+    direction: DOWN
