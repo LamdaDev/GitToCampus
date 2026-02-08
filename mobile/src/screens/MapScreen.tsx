@@ -150,6 +150,7 @@ export default function MapScreen({ passSelectedBuilding,openBottomSheet }:MapSc
               strokeColor={isSelected ? theme.selectedStroke : theme.stroke}
               fillColor={isSelected ? theme.selectedFill : theme.fill}
               strokeWidth={isSelected ? theme.selectedStrokeWidth : theme.strokeWidth}
+              id={p.buildingId}
               onPress={() => {
                 setSelectedBuildingId(p.buildingId);
                 setSelectedCampus(p.campus);

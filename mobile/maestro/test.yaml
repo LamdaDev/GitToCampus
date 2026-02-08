@@ -1,0 +1,13 @@
+appId: host.exp.exponent
+---
+- launchApp
+- openLink: "exp://10.0.2.2:8081"
+- assertVisible: "LOY"
+- tapOn:
+    point: "59%,31%"
+- tapOn:
+    point: "70%,80%"
+- extendedWaitUntil:
+    visible: "Grey Nuns Garden"
+    timeout: 2000
+- tapOn: "Grey Nuns Garden"
