@@ -6,3 +6,7 @@
 
 # Ignore Python bytecode files
 __pycache__/
+
+# Ignore project data and generated HTML files
+project_data.json
+sprint_burndown.html
