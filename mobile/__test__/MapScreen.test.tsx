@@ -41,23 +41,6 @@ jest.mock('react-native-maps', () => {
   };
 });
 
-jest.mock('../src/components/CampusToggle', () => {
-  const React = require('react');
-  const { Pressable, Text } = require('react-native');
-
-  const MockCampusToggle = (props: { selectedCampus: string; onToggle: () => void }) =>
-    React.createElement(
-      Pressable,
-      { testID: 'campus-toggle', onPress: props.onToggle },
-      React.createElement(Text, { testID: 'campus-toggle-label' }, props.selectedCampus),
-    );
-
-  return {
-    __esModule: true,
-    default: MockCampusToggle,
-  };
-});
-
 jest.mock('../src/utils/buildingsRepository', () => ({
   getCampusBuildingShapes: jest.fn(),
   getBuildingShapeById: jest.fn(),
@@ -200,7 +183,7 @@ describe('MapScreen', () => {
   });
 
   test('toggle switches campus and clears selected marker', async () => {
-    const { UNSAFE_getAllByType, getAllByTestId, getByTestId, queryAllByTestId } = render(
+    const { UNSAFE_getAllByType, getByLabelText, queryAllByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
@@ -213,17 +196,16 @@ describe('MapScreen', () => {
       expect(queryAllByTestId('map-marker')).toHaveLength(1);
     });
 
-    fireEvent.press(getByTestId('campus-toggle'));
+    fireEvent.press(getByLabelText('Toggle Campus'));
 
     await waitFor(() => {
-      expect(getAllByTestId('campus-toggle-label')[0].props.children).toBe('LOYOLA');
       expect(queryAllByTestId('map-marker')).toHaveLength(0);
       expect(mockAnimateToRegion).toHaveBeenCalledWith(getCampusRegion('LOYOLA'), 1000);
     });
   });
 
   test('toggle switches campus back from LOYOLA to SGW', async () => {
-    const { UNSAFE_getAllByType, getAllByTestId, getByTestId } = render(
+    const { UNSAFE_getAllByType, getByLabelText } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
@@ -231,15 +213,9 @@ describe('MapScreen', () => {
     );
 
     fireEvent(UNSAFE_getAllByType(Polygon)[1], 'press');
+    fireEvent.press(getByLabelText('Toggle Campus'));
 
     await waitFor(() => {
-      expect(getAllByTestId('campus-toggle-label')[0].props.children).toBe('LOYOLA');
-    });
-
-    fireEvent.press(getByTestId('campus-toggle'));
-
-    await waitFor(() => {
-      expect(getAllByTestId('campus-toggle-label')[0].props.children).toBe('SGW');
       expect(mockAnimateToRegion).toHaveBeenCalledWith(getCampusRegion('SGW'), 1000);
     });
   });
@@ -274,7 +250,7 @@ describe('MapScreen', () => {
       return { remove: jest.fn() } as any;
     });
 
-    const { getAllByTestId, queryAllByTestId } = render(
+    const { queryAllByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
@@ -291,7 +267,7 @@ describe('MapScreen', () => {
 
     await waitFor(() => {
       expect(repoMock.findBuildingAt).toHaveBeenCalledWith({ latitude: 45.52, longitude: -73.59 });
-      expect(getAllByTestId('campus-toggle-label')[0].props.children).toBe('LOYOLA');
+      expect(mockAnimateToRegion).toHaveBeenCalledWith(getCampusRegion('LOYOLA'), 1000);
       expect(queryAllByTestId('map-marker')).toHaveLength(1);
     });
   });
