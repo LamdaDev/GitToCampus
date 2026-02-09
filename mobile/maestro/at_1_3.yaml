@@ -2,6 +2,6 @@ appId: host.exp.exponent
 ---
 - launchApp
 - openLink: "exp://10.0.2.2:8081"
-- assertVisible: "LOY"
-- tapOn: "LOY"
 - assertVisible: "SGW"
+- tapOn: "SGW"
+- assertVisible: "LOY"
