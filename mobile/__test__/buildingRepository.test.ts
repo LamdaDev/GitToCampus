@@ -348,11 +348,7 @@ describe('buildingsRepository', () => {
 
     expect(building).toBeUndefined();
     expect(mocks.isPointInAnyPolygonMock).toHaveBeenCalledTimes(2);
-    expect(mocks.isPointInAnyPolygonMock).toHaveBeenNthCalledWith(
-      1,
-      point,
-      expect.any(Array),
-    );
+    expect(mocks.isPointInAnyPolygonMock).toHaveBeenNthCalledWith(1, point, expect.any(Array));
   });
 
   test('findBuildingAt returns matching building when point is inside a campus polygon', () => {

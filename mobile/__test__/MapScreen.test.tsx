@@ -26,11 +26,7 @@ jest.mock('react-native-maps', () => {
 
   const MockPolygon = (props: any) => React.createElement(View, props, props.children);
   const MockMarker = (props: any) =>
-    React.createElement(
-      View,
-      { ...props, testID: props.testID ?? 'map-marker' },
-      props.children,
-    );
+    React.createElement(View, { ...props, testID: props.testID ?? 'map-marker' }, props.children);
 
   return {
     __esModule: true,

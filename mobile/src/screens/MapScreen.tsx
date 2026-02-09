@@ -195,7 +195,9 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
 
   const mapInitialRegion = useMemo(() => getCampusRegion('SGW'), []);
 
-  const showSelectedMarker = Boolean(selectedBuildingId && selectedBuilding && selectedMarkerCoordinate);
+  const showSelectedMarker = Boolean(
+    selectedBuildingId && selectedBuilding && selectedMarkerCoordinate,
+  );
 
   const selectedMarker = showSelectedMarker ? (
     <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} />

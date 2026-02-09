@@ -18,8 +18,19 @@ describe('geoJson utils', () => {
 
   test('isValidRing requires at least 3 points', () => {
     expect(isValidRing([])).toBe(false);
-    expect(isValidRing([[0, 0], [1, 1]])).toBe(false);
-    expect(isValidRing([[0, 0], [1, 1], [2, 2]])).toBe(true);
+    expect(
+      isValidRing([
+        [0, 0],
+        [1, 1],
+      ]),
+    ).toBe(false);
+    expect(
+      isValidRing([
+        [0, 0],
+        [1, 1],
+        [2, 2],
+      ]),
+    ).toBe(true);
   });
 
   test('normalizeCampusCode maps SGW/LOY/LOYOLA and rejects others', () => {
@@ -63,7 +74,12 @@ describe('geoJson utils', () => {
     };
     const invalidOuter: GeoJsonPolygon = {
       type: 'Polygon',
-      coordinates: [[[-73.57, 45.5], [-73.58, 45.5]]],
+      coordinates: [
+        [
+          [-73.57, 45.5],
+          [-73.58, 45.5],
+        ],
+      ],
     };
 
     expect(extractOuterRingsAsLatLngPolygons(missingOuter)).toEqual([]);
