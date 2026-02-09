@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as Location from 'expo-location';
-import { Marker, Polygon } from 'react-native-maps';
+import { Polygon } from 'react-native-maps';
 import MapScreen from '../src/screens/MapScreen';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import * as buildingsRepository from '../src/utils/buildingsRepository';
@@ -94,7 +94,6 @@ describe('MapScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
     mockHasAnimateToRegion = true;
 
     repoMock.getCampusBuildingShapes.mockImplementation((campus: 'SGW' | 'LOYOLA') =>
@@ -357,6 +356,61 @@ describe('MapScreen', () => {
     });
 
     expect(queryAllByTestId('map-marker')).toHaveLength(0);
+    expect(mockAnimateToRegion).not.toHaveBeenCalled();
+  });
+
+  test('recenter animates to user location when available', async () => {
+    let locationCallback: ((value: any) => void) | undefined;
+    locationMock.watchPositionAsync.mockImplementationOnce(async (_opts: any, cb: any) => {
+      locationCallback = cb;
+      return { remove: jest.fn() } as any;
+    });
+
+    const { getByLabelText } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(locationMock.watchPositionAsync).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      locationCallback?.({ coords: { latitude: 45.501, longitude: -73.567 } });
+    });
+
+    mockAnimateToRegion.mockClear();
+    fireEvent.press(getByLabelText('Recenter Map'));
+
+    await waitFor(() => {
+      expect(mockAnimateToRegion).toHaveBeenCalledWith(
+        {
+          latitude: 45.501,
+          longitude: -73.567,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000,
+      );
+    });
+  });
+
+  test('recenter does nothing when user location is unavailable', async () => {
+    const { getByLabelText } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(locationMock.requestForegroundPermissionsAsync).toHaveBeenCalledTimes(1);
+    });
+
+    mockAnimateToRegion.mockClear();
+    fireEvent.press(getByLabelText('Recenter Map'));
     expect(mockAnimateToRegion).not.toHaveBeenCalled();
   });
 
