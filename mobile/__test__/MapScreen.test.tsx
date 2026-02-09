@@ -220,6 +220,8 @@ describe('MapScreen', () => {
   });
 
   test('permission denied skips location watching', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
     locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
       status: 'denied',
       granted: false,
@@ -239,6 +241,8 @@ describe('MapScreen', () => {
     });
 
     expect(locationMock.watchPositionAsync).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith('Location permission denied');
+    warnSpy.mockRestore();
   });
 
   test('auto-selects building based on location updates', async () => {

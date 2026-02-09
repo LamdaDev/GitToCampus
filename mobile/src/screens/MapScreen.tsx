@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import MapView, { Marker, Polygon, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 
@@ -12,7 +12,6 @@ import {
   findBuildingAt,
 } from '../utils/buildingsRepository';
 import type { PolygonRenderItem } from '../types/Map';
-import CampusToggle from '../components/CampusToggle';
 
 import { BuildingShape } from '../types/BuildingShape';
 import { centroidOfPolygon } from '../utils/geoJson';
@@ -26,6 +25,26 @@ type MapScreenProps = {
   openBottomSheet: () => void;
 };
 
+const flattenBuildingsByCampus = (
+  campus: Campus,
+  buildings: ReturnType<typeof getCampusBuildingShapes>,
+): PolygonRenderItem[] => {
+  const items: PolygonRenderItem[] = [];
+
+  for (const building of buildings) {
+    for (const [idx, coordinates] of building.polygons.entries()) {
+      items.push({
+        key: `${campus}-${building.id}-${idx}`,
+        buildingId: building.id,
+        campus,
+        coordinates,
+      });
+    }
+  }
+
+  return items;
+};
+
 export default function MapScreen({ passSelectedBuilding, openBottomSheet }: MapScreenProps) {
   // Keep this for US-1.3 camera panning later (even if no UI yet)
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
@@ -34,7 +53,6 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(
     null,
   );
-  const [locationError, setLocationError] = useState<string | null>(null);
 
   const mapRef = useRef<any>(null);
 
@@ -45,7 +63,7 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setLocationError('Location permission denied');
+        console.warn('Location permission denied');
         return;
       }
 
@@ -109,19 +127,13 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
   const sgwBuildings = useMemo(() => getCampusBuildingShapes('SGW'), []);
   const loyolaBuildings = useMemo(() => getCampusBuildingShapes('LOYOLA'), []);
 
-  const polygonItems: PolygonRenderItem[] = useMemo(() => {
-    const flatten = (campus: Campus, buildings: ReturnType<typeof getCampusBuildingShapes>) =>
-      buildings.flatMap((b) =>
-        b.polygons.map((coords, idx) => ({
-          key: `${campus}-${b.id}-${idx}`,
-          buildingId: b.id,
-          campus,
-          coordinates: coords,
-        })),
-      );
-
-    return [...flatten('SGW', sgwBuildings), ...flatten('LOYOLA', loyolaBuildings)];
-  }, [sgwBuildings, loyolaBuildings]);
+  const polygonItems: PolygonRenderItem[] = useMemo(
+    () => [
+      ...flattenBuildingsByCampus('SGW', sgwBuildings),
+      ...flattenBuildingsByCampus('LOYOLA', loyolaBuildings),
+    ],
+    [sgwBuildings, loyolaBuildings],
+  );
 
   const selectedBuilding = useMemo(() => {
     if (!selectedBuildingId) return null;
@@ -132,6 +144,15 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
   const handleToggleCampus = () => {
     setSelectedCampus((prev) => (prev === 'SGW' ? 'LOYOLA' : 'SGW'));
     setSelectedBuildingId(null);
+  };
+
+  const handlePolygonPress = (item: PolygonRenderItem) => {
+    setSelectedBuildingId(item.buildingId);
+    setSelectedCampus(item.campus);
+
+    const building = getBuildingShapeById(item.buildingId);
+    passSelectedBuilding(building ?? null);
+    openBottomSheet();
   };
 
   // For the recenter button:
@@ -173,14 +194,7 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
               strokeColor={isSelected ? theme.selectedStroke : theme.stroke}
               fillColor={isSelected ? theme.selectedFill : theme.fill}
               strokeWidth={isSelected ? theme.selectedStrokeWidth : theme.strokeWidth}
-              onPress={() => {
-                setSelectedBuildingId(p.buildingId);
-                setSelectedCampus(p.campus);
-
-                const building = getBuildingShapeById(p.buildingId);
-                passSelectedBuilding(building ?? null);
-                openBottomSheet();
-              }}
+              onPress={() => handlePolygonPress(p)}
             />
           );
         })}
@@ -202,8 +216,6 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
         onToggleCampus={handleToggleCampus}
         onRecenter={handleRecenter}
       />
-
-      {/* <CampusToggle selectedCampus={selectedCampus} onToggle={handleToggleCampus} /> */}
     </View>
   );
 }
