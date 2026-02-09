@@ -17,6 +17,9 @@ import CampusToggle from '../components/CampusToggle';
 import { BuildingShape } from '../types/BuildingShape';
 import { centroidOfPolygon } from '../utils/geoJson';
 
+// Importing MapControls
+import MapControls from '../components/MapControls';
+
 //passSelectedBuilding is a state setter passed from the parent to retrieve selected building object
 type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
@@ -131,6 +134,21 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
     setSelectedBuildingId(null);
   };
 
+  // For the recenter button:
+  const handleRecenter = () => {
+    if (mapRef.current && userCoords) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: userCoords.latitude,
+          longitude: userCoords.longitude,
+          latitudeDelta: 0.01, // Zoom level (adjust if needed)
+          longitudeDelta: 0.01,
+        },
+        1000,
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       <MapView
@@ -140,8 +158,8 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
         style={styles.map}
         initialRegion={getCampusRegion('SGW')}
         provider={PROVIDER_GOOGLE}
-        showsUserLocation={true} // Disable user location marker
-        showsMyLocationButton
+        showsUserLocation={true} // Disable/enable user location marker
+        showsMyLocationButton={false} // False bacause we have our own recenter button, we dont need google maps'
       >
         {polygonItems.map((p) => {
           const theme = POLYGON_THEME[p.campus];
@@ -178,7 +196,14 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
           )}
       </MapView>
 
-      <CampusToggle selectedCampus={selectedCampus} onToggle={handleToggleCampus} />
+      {/* to put the toggle and recenter buttons together in a single pill-shaped control */}
+      <MapControls
+        selectedCampus={selectedCampus}
+        onToggleCampus={handleToggleCampus}
+        onRecenter={handleRecenter}
+      />
+
+      {/* <CampusToggle selectedCampus={selectedCampus} onToggle={handleToggleCampus} /> */}
     </View>
   );
 }
