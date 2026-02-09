@@ -3,9 +3,9 @@ appId: host.exp.exponent
 - launchApp:
     permissions:
       android.permission.ACCESS_FINE_LOCATION: unset
-- openLink: "exp://10.0.2.2:8081"
-- assertVisible: "Only this time"
-- tapOn: "Only this time"
+- openLink: 'exp://10.0.2.2:8081'
+- assertVisible: 'Only this time'
+- tapOn: 'Only this time'
 - setLocation:
     latitude: 45.497284
     longitude: -73.579013
