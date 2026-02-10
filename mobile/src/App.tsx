@@ -5,6 +5,7 @@ import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
 import MapScreen from './screens/MapScreen';
 import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
+import AppSearchBar from './components/AppSearchBar';
 
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -19,7 +20,7 @@ import { useFonts } from 'expo-font';
 const App = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
-
+ const [search,setSearch]=useState("");
   const openBottomSheet = () => bottomSheetRef.current?.open();
 
   const [fontsLoaded] = useFonts({
@@ -33,6 +34,11 @@ const App = () => {
     <GestureHandlerRootView>
       <SafeAreaView style={{ flex: 1 }}>
         <MapScreen passSelectedBuilding={setSelectedBuilding} openBottomSheet={openBottomSheet} />
+      <AppSearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder='Get to...'
+          ></AppSearchBar>
         <BottomSlider selectedBuilding={selectedBuilding} ref={bottomSheetRef} />
       </SafeAreaView>
     </GestureHandlerRootView>

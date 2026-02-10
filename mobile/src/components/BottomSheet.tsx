@@ -1,13 +1,12 @@
 /**BottomSlider.tsx is a template to allow other components such as BuildingDetails.tsx
  * to slot inside information into the BottomSheet**/
 
-import React, { forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import BuildingDetails from './BuildingDetails';
 import type { BuildingShape } from '../types/BuildingShape';
-
 export type BottomSliderHandle = {
   open: () => void;
   close: () => void;
@@ -21,6 +20,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
   ({ selectedBuilding }, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = ['33%', '66%'];
+   
 
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = () => sheetRef.current?.snapToIndex(0); // 33% (use 1 for 66%)
@@ -41,6 +41,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       >
         <BottomSheetView style={buildingDetailsStyles.container}>
           <BuildingDetails selectedBuilding={selectedBuilding} onClose={closeSheet} />
+    
         </BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>

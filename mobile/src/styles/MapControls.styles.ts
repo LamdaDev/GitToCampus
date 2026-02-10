@@ -4,7 +4,7 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     right: 16,
-    bottom: 20, // Adjust position as needed
+    bottom: 110, // Adjust position as needed
     width: 50,
     backgroundColor: '#4A4A4A',
     borderRadius: 25,
