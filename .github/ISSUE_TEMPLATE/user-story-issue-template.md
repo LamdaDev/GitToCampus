@@ -1,12 +1,3 @@
----
-name: User Story Issue Template
-about: Use this template when creating a new User Story
-title: 'US-#: Title'
-labels: First Issue, User Story
-assignees: ''
-
----
-
 ## User Story
 As a [user description], I want to [functionality], so that [goal/benefit]
 
