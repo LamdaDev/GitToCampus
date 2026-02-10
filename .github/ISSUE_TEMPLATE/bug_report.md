@@ -1,3 +1,12 @@
+---
+name: Bug report
+about: Use this template when reporting a new Bug
+title: 'BUG-#: Bug Title'
+labels: Bug
+assignees: ''
+
+---
+
 ## Severity
 - [ ] S1 Blocker
 - [ ] S2 Major
