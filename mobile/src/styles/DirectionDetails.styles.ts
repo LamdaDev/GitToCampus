@@ -47,6 +47,15 @@ export const directionDetailsStyles = StyleSheet.create({
     alignSelf: 'start',
     justifyContent: 'space-between',
   },
+  separationHeader: {
+      marginTop: -20,
+      marginBottom: -20,
+      flexDirection: 'row',
+      marginLeft: 5,
+      gap: 10,
+      alignSelf: 'start',
+      justifyContent: 'space-between',
+  },
   headerIcons: {
     flexDirection: 'row',
     gap: 10,

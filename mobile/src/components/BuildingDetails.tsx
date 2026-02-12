@@ -13,10 +13,10 @@ import { DirectionDetails } from '..'
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
   onClose: () => void;
-  getDirections: () => void;
+  onShowDirections: () => void;
 };
 
-export default function BuildingDetails({ selectedBuilding, onClose }: BuildingDetailProps) {
+export default function BuildingDetails({ selectedBuilding, onClose, onShowDirections }: BuildingDetailProps) {
   const hotspots = selectedBuilding?.hotspots;
   const services = selectedBuilding?.services;
 
@@ -31,7 +31,7 @@ export default function BuildingDetails({ selectedBuilding, onClose }: BuildingD
             <TouchableOpacity style={buildingDetailsStyles.navigationButton}>
               <Ionicons name="walk" size={25} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity style={buildingDetailsStyles.navigationButton}>
+            <TouchableOpacity style={buildingDetailsStyles.navigationButton} onPress={onShowDirections}>
               <Text style={{fontSize: 15, color:"white"}}> Set as starting point </Text>
             </TouchableOpacity>
         </View>

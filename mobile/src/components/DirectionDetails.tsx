@@ -34,7 +34,7 @@ export default function DirectionDetails({ selectedBuilding, onClose }: Building
                     <Ionicons name="menu-outline" size={20} style={directionDetailsStyles.dragIcon} />
                   </View>
                 </View>
-                <View marginTop={-20} marginBottom={-20} style={directionDetailsStyles.inlineHeader}>
+                <View style={directionDetailsStyles.separationHeader}>
                     <Ionicons name="ellipsis-vertical" size={20} style={directionDetailsStyles.dragIcon} />
                     <Divider style={{ backgroundColor: '#9B9B9B', height: 1.5, flex: 1, alignSelf: 'center'}} />
                 </View>

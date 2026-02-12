@@ -13,6 +13,8 @@ export type BottomSliderHandle = {
   close: () => void;
 };
 
+type ViewType = 'building' | 'directions';
+
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
 };
@@ -21,10 +23,20 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
   ({ selectedBuilding }, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = ['33%', '66%'];
-   
+
+    const [activeView, setActiveView] = useState<ViewType>('building');
 
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = () => sheetRef.current?.snapToIndex(0); // 33% (use 1 for 66%)
+
+    const showDirections = () => {
+      setActiveView('directions');
+
+    };
+
+    const handleSheetClose = () => {
+      setActiveView('building');
+    };
 
     useImperativeHandle(ref, () => ({
       open: openSheet,
@@ -39,15 +51,22 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         backgroundStyle={buildingDetailsStyles.sheetBackground}
         handleIndicatorStyle={buildingDetailsStyles.handle}
         enablePanDownToClose={true}
+        onClose={handleSheetClose}
       >
         <BottomSheetView style={buildingDetailsStyles.container}>
-          <BuildingDetails selectedBuilding={selectedBuilding} onClose={closeSheet} />
-          <DirectionDetails />
+          {activeView === 'building' && (
+            <BuildingDetails
+              selectedBuilding={selectedBuilding}
+              onClose={closeSheet}
+              onShowDirections={showDirections} // pass callback
+            />
+          )}
+          {activeView === 'directions' && <DirectionDetails onClose={closeSheet} />}
         </BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>
     );
-  },
+  }
 );
 
 export default BottomSlider;
