@@ -16,6 +16,7 @@ export const buildingDetailsStyles = StyleSheet.create({
     boxShadow: '0 -3px 2px rgba(0, 0, 0, 0.25)',
     opacity: 0.91,
     paddingTop: 0,
+    marginBottom: 50,
   },
   handle: {
     backgroundColor: '#000000',

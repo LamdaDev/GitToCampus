@@ -6,6 +6,7 @@ import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import BuildingDetails from './BuildingDetails';
+import DirectionDetails from './DirectionDetails';
 import type { BuildingShape } from '../types/BuildingShape';
 export type BottomSliderHandle = {
   open: () => void;
@@ -41,7 +42,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       >
         <BottomSheetView style={buildingDetailsStyles.container}>
           <BuildingDetails selectedBuilding={selectedBuilding} onClose={closeSheet} />
-    
+          <DirectionDetails />
         </BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>

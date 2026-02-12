@@ -8,10 +8,12 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
+import { DirectionDetails } from '..'
 
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
   onClose: () => void;
+  getDirections: () => void;
 };
 
 export default function BuildingDetails({ selectedBuilding, onClose }: BuildingDetailProps) {
@@ -69,9 +71,6 @@ export default function BuildingDetails({ selectedBuilding, onClose }: BuildingD
         <View style={buildingDetailsStyles.headerIcons}>
           <TouchableOpacity style={buildingDetailsStyles.iconButton}>
             <Ionicons name="enter-outline" size={25} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={buildingDetailsStyles.iconButton}>
-            <Ionicons name="location" size={25} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={buildingDetailsStyles.iconButton} onPress={onClose}>
             <Ionicons name="close-sharp" size={25} color="#fff" />
