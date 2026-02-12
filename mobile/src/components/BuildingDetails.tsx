@@ -21,6 +21,21 @@ export default function BuildingDetails({ selectedBuilding, onClose }: BuildingD
   /**
    * hotspotsSection & servicesSection loads any information if present, else it will render nothing
    */
+  const navigationSection =
+    (
+      <Section title="Navigation">
+        <Divider style={{ backgroundColor: '#9B9B9B', height: 1.5, marginVertical: 8 }} />
+        <View style={buildingDetailsStyles.navigationSection}>
+            <TouchableOpacity style={buildingDetailsStyles.navigationButton}>
+              <Ionicons name="walk" size={25} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={buildingDetailsStyles.navigationButton}>
+              <Text style={{fontSize: 15, color:"white"}}> Set as starting point </Text>
+            </TouchableOpacity>
+        </View>
+      </Section>
+    );
+
   const hotspotsSection =
     hotspots && Object.keys(hotspots).length > 0 ? (
       <Section title="Hotspots">
@@ -63,6 +78,8 @@ export default function BuildingDetails({ selectedBuilding, onClose }: BuildingD
           </TouchableOpacity>
         </View>
       </View>
+      {/* Navigation Section */}
+      {navigationSection}
       {/* Building Hotspots */}
       {hotspotsSection}
       {/* Building Services*/}

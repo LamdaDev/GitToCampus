@@ -50,6 +50,22 @@ export const buildingDetailsStyles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
   },
+  navigationSection: {
+    flexDirection: 'row',
+    gap: 25,
+    alignSelf: "center",
+  },
+  navigationButton: {
+    backgroundColor: '#4A4A4A',
+    borderRadius: 30,
+    padding: 8,
+    opacity: 0.85,
+    boxShadow: 'inset 0 -3.5px 4px rgba(0, 0, 0, 0.4)',
+    paddingLeft: 30,
+    paddingRight: 30,
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
   iconButton: {
     backgroundColor: '#4A4A4A',
     borderRadius: 20,

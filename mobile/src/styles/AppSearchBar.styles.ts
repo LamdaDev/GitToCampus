@@ -2,9 +2,9 @@ import { StyleSheet } from 'react-native';
 
 export const searchBar = StyleSheet.create({
   container: {
-    backgroundColor: '#757575',
+    backgroundColor: '#912338',
     paddingHorizontal: 10,
-    opacity: 0.8,
+    opacity: 0.75,
     boxShadow: 'inset 0 -1.5px 4px rgba(0, 0, 0, 0.51)',
     alignSelf: 'center',
     borderRadius: 30,
