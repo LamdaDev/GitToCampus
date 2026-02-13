@@ -8,22 +8,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 
-// type DirectionSelectMode = 'start' | 'destination' | null;
-
 type DirectionDetailProps = {
   onClose: () => void;
   startBuilding: BuildingShape | null;
   destinationBuilding: BuildingShape | null;
-  //selectMode: 'start' | 'destination' | null;
-  //onSelectStart: () => void;
-  //onSelectDestination: () => void;
 };
 
 export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
   onClose,
-}: DirectionDetailProps) {
+}: Readonly<DirectionDetailProps>) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (

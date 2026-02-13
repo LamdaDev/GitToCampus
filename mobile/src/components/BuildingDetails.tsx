@@ -1,9 +1,8 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
-import React, { useMemo, useRef, ReactNode, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import React, { ReactNode } from 'react';
+import { View, Text, TouchableOpacity, Linking } from 'react-native';
 import { Divider } from 'react-native-paper';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
@@ -19,7 +18,7 @@ export default function BuildingDetails({
   selectedBuilding,
   onClose,
   onShowDirections,
-}: BuildingDetailProps) {
+}: Readonly<BuildingDetailProps>) {
   const hotspots = selectedBuilding?.hotspots;
   const services = selectedBuilding?.services;
 

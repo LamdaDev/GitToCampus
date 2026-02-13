@@ -28,7 +28,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
-    const [selectMode, setSelectMode] = useState<'start' | 'destination' | null>(null);
 
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = () => sheetRef.current?.snapToIndex(0); // 33% (use 1 for 66%)
@@ -79,9 +78,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               onClose={closeSheet}
               startBuilding={startBuilding}
               destinationBuilding={destinationBuilding}
-              selectMode={selectMode}
-              onSelectStart={() => setSelectMode('start')}
-              onSelectDestination={() => setSelectMode('destination')}
             />
           )}
         </BottomSheetView>
