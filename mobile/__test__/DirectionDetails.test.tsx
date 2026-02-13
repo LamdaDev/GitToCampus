@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import DirectionDetails from '../src/components/DirectionDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import React from 'react';
@@ -52,5 +52,53 @@ describe('Direction Details', () => {
 
     expect(getByText('FC Building')).toBeTruthy();
     expect(getByText('EV Building')).toBeTruthy();
+  });
+
+  test('renders default placeholders when no building is selected', () => {
+    const { getByText } = render(
+      <DirectionDetails
+        startBuilding={null}
+        destinationBuilding={null}
+        onClose={jest.fn()}
+        selectMode={null}
+        onSelectStart={jest.fn()}
+        onSelectDestination={jest.fn()}
+      />,
+    );
+  });
+
+  test('updates activeIndex when transportation buttons are pressed', () => {
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        selectMode={null}
+        onSelectStart={jest.fn()}
+        onSelectDestination={jest.fn()}
+      />,
+    );
+
+    const walkButton = getByTestId('transport-walk');
+    const carButton = getByTestId('transport-car');
+    const busButton = getByTestId('transport-bus');
+  
+    // Walk button starts active
+    fireEvent.press(walkButton);  
+    expect(walkButton.props.accessibilityState.selected).toBe(true);
+    expect(carButton.props.accessibilityState.selected).toBe(false);
+    expect(busButton.props.accessibilityState.selected).toBe(false);
+
+    // Press car button
+    fireEvent.press(carButton);
+    expect(walkButton.props.accessibilityState.selected).toBe(false);
+    expect(carButton.props.accessibilityState.selected).toBe(true);
+    expect(busButton.props.accessibilityState.selected).toBe(false);
+
+    // Press bus button
+    fireEvent.press(busButton);
+    expect(walkButton.props.accessibilityState.selected).toBe(false);
+    expect(carButton.props.accessibilityState.selected).toBe(false);
+    expect(busButton.props.accessibilityState.selected).toBe(true);
   });
 });

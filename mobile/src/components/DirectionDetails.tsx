@@ -44,8 +44,7 @@ export default function DirectionDetails({
             <Ionicons name="navigate" size={20} style={directionDetailsStyles.frontIcon} />
             <TouchableOpacity style={directionDetailsStyles.locationButton}>
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
-                {' '}
-                {startBuilding?.name ?? 'Set as starting point'}{' '}
+                {startBuilding?.name ?? 'Set as starting point'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -64,8 +63,7 @@ export default function DirectionDetails({
             <Ionicons name="location-outline" size={20} style={directionDetailsStyles.frontIcon} />
             <TouchableOpacity style={directionDetailsStyles.locationButton}>
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
-                {' '}
-                {destinationBuilding?.name ?? 'Set destination'}{' '}
+                {destinationBuilding?.name ?? 'Set destination'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -77,6 +75,8 @@ export default function DirectionDetails({
       <View style={directionDetailsStyles.transportationHeader}>
         <View style={directionDetailsStyles.transportationSubHeader}>
           <TouchableOpacity
+            testID="transport-walk"
+            accessibilityState={{ selected: activeIndex === 0 }}
             style={[
               directionDetailsStyles.transportationButton,
               activeIndex === 0 && { backgroundColor: 'rgba(0, 0, 0, 0.4)' },
@@ -86,6 +86,8 @@ export default function DirectionDetails({
             <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
           </TouchableOpacity>
           <TouchableOpacity
+            testID="transport-car"
+            accessibilityState={{ selected: activeIndex === 1 }}
             style={[
               directionDetailsStyles.transportationButton,
               activeIndex === 1 && { backgroundColor: 'rgba(0, 0, 0, 0.4)' },
@@ -99,6 +101,8 @@ export default function DirectionDetails({
             />
           </TouchableOpacity>
           <TouchableOpacity
+            testID="transport-bus"
+            accessibilityState={{ selected: activeIndex === 2 }}
             style={[
               directionDetailsStyles.transportationButton,
               activeIndex === 2 && { backgroundColor: 'rgba(0, 0, 0, 0.4)' },
