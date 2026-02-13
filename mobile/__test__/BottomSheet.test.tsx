@@ -1,13 +1,22 @@
 import React, { createRef } from 'react';
+import type { ReactNode } from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import BottomSlider, { BottomSliderHandle } from '../src/components/BottomSheet';
 import { BuildingShape } from '../src/types/BuildingShape';
+import { Button, View } from 'react-native';
 
 const mockSnapToIndex = jest.fn();
 const mockClose = jest.fn();
 
+type MockProps = {
+  onClose: () => void;
+  onShowDirections?: (building: any) => void;
+  children?: ReactNode;
+};
+
 const mockBuildings: BuildingShape[] = [
   {
+    polygons: [],
     id: 'sgw-1',
     campus: 'LOYOLA',
     name: 'FC Building',
@@ -21,6 +30,7 @@ const mockBuildings: BuildingShape[] = [
     address: '7141 Sherbrooke West',
   },
   {
+    polygons: [],
     id: 'loy-1',
     campus: 'SGW',
     name: 'EV Building',
@@ -32,12 +42,17 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const React = require('react');
   const { View } = require('react-native');
 
+  type MockProps = {
+    children?: React.ReactNode;
+  };
+
   return {
     __esModule: true,
 
-    // Mocks the ref needed to call open/close
-    default: React.forwardRef((props, ref) => {
-      // Mocks the handler for open/close calls to mock fn
+    default: React.forwardRef((props: { children: any }, ref: any) => {
+      const React = require('react');
+      const { View } = require('react-native');
+
       React.useImperativeHandle(ref, () => ({
         snapToIndex: mockSnapToIndex,
         close: mockClose,
@@ -45,21 +60,46 @@ jest.mock('@gorhom/bottom-sheet', () => {
 
       return <View testID="bottom-sheet">{props.children}</View>;
     }),
-    BottomSheetView: ({ children }) => <View testID="bottom-sheet-view">{children}</View>,
+    BottomSheetView: ({ children }: MockProps) => (
+      <View testID="bottom-sheet-view">{children}</View>
+    ),
   };
 });
 
 jest.mock('../src/components/BuildingDetails', () => {
   const React = require('react');
-  const { Button, View } = require('react-native');
+  const { View, Button } = require('react-native');
 
-  return function MockBuildingDetails({ onClose }) {
-    return (
-      <View testID="building-details">
-        <Button testID="close-button" title="Close" onPress={onClose} />
-      </View>
-    );
+  type MockProps = {
+    onClose: () => void;
+    onShowDirections?: (building: any) => void;
   };
+
+  const MockBuildingDetails: React.FC<MockProps> = ({ onClose, onShowDirections }) => (
+    <View testID="building-details">
+      <Button testID="close-button" title="Close" onPress={onClose} />
+      <Button
+        testID="on-show-directions"
+        title="Directions"
+        onPress={() => onShowDirections?.({ id: 'mock-building' })}
+      />
+    </View>
+  );
+
+  return MockBuildingDetails;
+});
+
+jest.mock('../src/components/DirectionDetails', () => {
+  const React = require('react');
+  const { View, Button } = require('react-native');
+
+  const MockDirectionDetails: React.FC<{ onClose: () => void }> = ({ onClose }) => (
+    <View testID="direction-details">
+      <Button testID="close-directions-button" title="Close" onPress={onClose} />
+    </View>
+  );
+
+  return MockDirectionDetails;
 });
 
 describe('BottomSheet', () => {
@@ -104,6 +144,28 @@ describe('BottomSheet', () => {
     fireEvent.press(getByTestId('close-button'));
 
     // The bottom sheet's close method should have been called
+    expect(mockClose).toHaveBeenCalled();
+  });
+
+  test('renders DirectionDetails when onShowDirections is called', () => {
+    const ref = React.createRef<BottomSliderHandle>();
+    const selectedBuilding = mockBuildings[0];
+
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider ref={ref} selectedBuilding={selectedBuilding} />,
+    );
+
+    // Initially, DirectionDetails should not be visible
+    expect(queryByTestId('direction-details')).toBeNull();
+
+    // Press the onShowDirections button inside BuildingDetails
+    fireEvent.press(getByTestId('on-show-directions'));
+
+    // Now DirectionDetails should be rendered
+    expect(getByTestId('direction-details')).toBeTruthy();
+
+    // Optionally test closing DirectionDetails
+    fireEvent.press(getByTestId('close-directions-button'));
     expect(mockClose).toHaveBeenCalled();
   });
 });

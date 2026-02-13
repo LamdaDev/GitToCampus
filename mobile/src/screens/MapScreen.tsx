@@ -226,7 +226,6 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
         {renderedPolygons}
         {selectedMarker}
       </MapView>
-
       <MapControls
         selectedCampus={selectedCampus}
         onToggleCampus={handleToggleCampus}

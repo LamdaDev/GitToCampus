@@ -12,15 +12,40 @@ import { BuildingShape } from '../types/BuildingShape';
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
   onClose: () => void;
+  onShowDirections: (building: BuildingShape) => void;
 };
 
-export default function BuildingDetails({ selectedBuilding, onClose }: BuildingDetailProps) {
+export default function BuildingDetails({
+  selectedBuilding,
+  onClose,
+  onShowDirections,
+}: BuildingDetailProps) {
   const hotspots = selectedBuilding?.hotspots;
   const services = selectedBuilding?.services;
 
   /**
    * hotspotsSection & servicesSection loads any information if present, else it will render nothing
    */
+  const navigationSection = (
+    <Section title="Navigation">
+      <View style={buildingDetailsStyles.navigationSection}>
+        <TouchableOpacity style={buildingDetailsStyles.navigationButton}>
+          <Ionicons name="walk" size={25} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={buildingDetailsStyles.navigationButton}
+          onPress={() => {
+            if (selectedBuilding) {
+              onShowDirections(selectedBuilding);
+            }
+          }}
+        >
+          <Text style={{ fontSize: 15, color: 'white' }}> Set as starting point </Text>
+        </TouchableOpacity>
+      </View>
+    </Section>
+  );
+
   const hotspotsSection =
     hotspots && Object.keys(hotspots).length > 0 ? (
       <Section title="Hotspots">
@@ -55,14 +80,13 @@ export default function BuildingDetails({ selectedBuilding, onClose }: BuildingD
           <TouchableOpacity style={buildingDetailsStyles.iconButton}>
             <Ionicons name="enter-outline" size={25} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={buildingDetailsStyles.iconButton}>
-            <Ionicons name="location" size={25} color="#fff" />
-          </TouchableOpacity>
           <TouchableOpacity style={buildingDetailsStyles.iconButton} onPress={onClose}>
             <Ionicons name="close-sharp" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
+      {/* Navigation Section */}
+      {navigationSection}
       {/* Building Hotspots */}
       {hotspotsSection}
       {/* Building Services*/}
