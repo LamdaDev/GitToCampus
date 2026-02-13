@@ -1,11 +1,14 @@
 import { render } from '@testing-library/react-native';
 import BuildingDetails from '../src/components/BuildingDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
+import React from 'react';
 
 const mockOnClose = jest.fn();
+const mockOnShowDirections = jest.fn();
 
 const mockBuildings: BuildingShape[] = [
   {
+    polygons: [],
     id: 'sgw-1',
     campus: 'LOYOLA',
     name: 'FC Building',
@@ -19,6 +22,7 @@ const mockBuildings: BuildingShape[] = [
     address: '7141 Sherbrooke West',
   },
   {
+    polygons: [],
     id: 'loy-1',
     campus: 'SGW',
     name: 'EV Building',
@@ -41,7 +45,7 @@ describe('Building Details', () => {
     const selectedBuilding = mockBuildings[0];
 
     const { getByText } = render(
-      <BuildingDetails selectedBuilding={selectedBuilding} onClose={mockOnClose} />,
+      <BuildingDetails selectedBuilding={selectedBuilding} onClose={mockOnClose} onShowDirections={mockOnShowDirections} />,
     );
 
     expect(getByText('FC Building')).toBeTruthy();
@@ -53,7 +57,7 @@ describe('Building Details', () => {
     const selectedBuilding = mockBuildings[1];
 
     const { getByText, queryByText } = render(
-      <BuildingDetails selectedBuilding={selectedBuilding} onClose={mockOnClose} />,
+      <BuildingDetails selectedBuilding={selectedBuilding} onClose={mockOnClose} onShowDirections={mockOnShowDirections} />,
     );
 
     expect(getByText('EV Building')).toBeTruthy();
