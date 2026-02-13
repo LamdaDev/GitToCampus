@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import BottomSlider, { BottomSliderHandle } from '../src/components/BottomSheet';
 import { BuildingShape } from '../src/types/BuildingShape';
-import { Button, View } from 'react-native';
+import { Button, TouchableOpacity, View } from 'react-native';
 
 const mockSnapToIndex = jest.fn();
 const mockClose = jest.fn();
@@ -91,15 +91,23 @@ jest.mock('../src/components/BuildingDetails', () => {
 
 jest.mock('../src/components/DirectionDetails', () => {
   const React = require('react');
-  const { View, Button } = require('react-native');
+  const { View, Text, TouchableOpacity } = require('react-native');
 
-  const MockDirectionDetails: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-    <View testID="direction-details">
-      <Button testID="close-directions-button" title="Close" onPress={onClose} />
-    </View>
-  );
+  // Mock component
+  return ({ destinationBuilding }: any) => {
+    // Lazy import of mockClose
+    const { mockClose } = require('./BottomSheet.test'); // must be inside function
 
-  return MockDirectionDetails;
+    return (
+      <View testID="direction-details">
+        <Text testID="destination-id">{destinationBuilding ? destinationBuilding.id : 'none'}</Text>
+
+        <TouchableOpacity testID="close-directions-button" onPress={mockClose}>
+          <Text>Close</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 });
 
 describe('BottomSheet', () => {
@@ -167,5 +175,20 @@ describe('BottomSheet', () => {
     // Optionally test closing DirectionDetails
     fireEvent.press(getByTestId('close-directions-button'));
     expect(mockClose).toHaveBeenCalled();
+  });
+
+  test('useEffect does NOT set destinationBuilding when selecting same building', () => {
+    const ref = React.createRef<any>();
+
+    const { getByTestId, rerender } = render(
+      <BottomSlider ref={ref} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions'));
+
+    // Re-select SAME building
+    rerender(<BottomSlider ref={ref} selectedBuilding={mockBuildings[0]} />);
+
+    expect(getByTestId('destination-id').props.children).toBe('sgw-1');
   });
 });

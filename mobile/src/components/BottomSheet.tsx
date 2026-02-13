@@ -46,7 +46,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       if (activeView !== 'directions') return;
       if (!selectedBuilding) return;
       if (selectedBuilding.id === startBuilding?.id) return;
-    
+
       setDestinationBuilding(selectedBuilding);
     }, [selectedBuilding, activeView]);
 

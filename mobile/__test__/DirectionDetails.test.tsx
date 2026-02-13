@@ -44,9 +44,6 @@ describe('Direction Details', () => {
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[1]}
         onClose={jest.fn()}
-        selectMode={'destination'}
-        onSelectStart={jest.fn()}
-        onSelectDestination={jest.fn()}
       />,
     );
 
@@ -56,15 +53,11 @@ describe('Direction Details', () => {
 
   test('renders default placeholders when no building is selected', () => {
     const { getByText } = render(
-      <DirectionDetails
-        startBuilding={null}
-        destinationBuilding={null}
-        onClose={jest.fn()}
-        selectMode={null}
-        onSelectStart={jest.fn()}
-        onSelectDestination={jest.fn()}
-      />,
+      <DirectionDetails startBuilding={null} destinationBuilding={null} onClose={jest.fn()} />,
     );
+
+    expect(getByText('Set as starting point')).toBeTruthy();
+    expect(getByText('Set destination')).toBeTruthy();
   });
 
   test('updates activeIndex when transportation buttons are pressed', () => {
@@ -73,9 +66,6 @@ describe('Direction Details', () => {
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[1]}
         onClose={jest.fn()}
-        selectMode={null}
-        onSelectStart={jest.fn()}
-        onSelectDestination={jest.fn()}
       />,
     );
 
