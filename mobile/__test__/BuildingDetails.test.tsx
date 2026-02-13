@@ -45,7 +45,11 @@ describe('Building Details', () => {
     const selectedBuilding = mockBuildings[0];
 
     const { getByText } = render(
-      <BuildingDetails selectedBuilding={selectedBuilding} onClose={mockOnClose} onShowDirections={mockOnShowDirections} />,
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+      />,
     );
 
     expect(getByText('FC Building')).toBeTruthy();
@@ -57,7 +61,11 @@ describe('Building Details', () => {
     const selectedBuilding = mockBuildings[1];
 
     const { getByText, queryByText } = render(
-      <BuildingDetails selectedBuilding={selectedBuilding} onClose={mockOnClose} onShowDirections={mockOnShowDirections} />,
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+      />,
     );
 
     expect(getByText('EV Building')).toBeTruthy();

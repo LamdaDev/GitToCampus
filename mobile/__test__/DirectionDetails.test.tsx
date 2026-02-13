@@ -38,19 +38,19 @@ jest.mock('@expo/vector-icons', () => {
 });
 
 describe('Direction Details', () => {
-    test('renders selected building names', () => {
-        const { getByText } = render(
-          <DirectionDetails
-            startBuilding={mockBuildings[0]}
-            destinationBuilding={mockBuildings[1]}
-            onClose={jest.fn()}
-            selectMode={'destination'}
-            onSelectStart={jest.fn()}
-            onSelectDestination={jest.fn()}
-          />
-        );
-        
-        expect(getByText('FC Building')).toBeTruthy();
-        expect(getByText('EV Building')).toBeTruthy();
-    });
+  test('renders selected building names', () => {
+    const { getByText } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        selectMode={'destination'}
+        onSelectStart={jest.fn()}
+        onSelectDestination={jest.fn()}
+      />,
+    );
+
+    expect(getByText('FC Building')).toBeTruthy();
+    expect(getByText('EV Building')).toBeTruthy();
+  });
 });

@@ -10,7 +10,7 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export const buildingDetailsStyles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: "hsla(349, 61%, 35%, 0.9)",
+    backgroundColor: 'hsla(349, 61%, 35%, 0.9)',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     boxShadow: '0 -3px 2px rgba(0, 0, 0, 0.25)',
@@ -54,10 +54,10 @@ export const buildingDetailsStyles = StyleSheet.create({
     marginTop: 10,
     flexDirection: 'row',
     gap: 25,
-    alignSelf: "center",
+    alignSelf: 'center',
   },
   navigationButton: {
-    backgroundColor: "rgba(70, 117, 153, 0.60)",
+    backgroundColor: 'rgba(70, 117, 153, 0.60)',
     borderRadius: 30,
     padding: 8,
     opacity: 0.85,
@@ -68,10 +68,10 @@ export const buildingDetailsStyles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 20,
     elevation: 10,
-    boxShadow: '0 3px 6px rgba(0, 0, 0, 0.4)'
+    boxShadow: '0 3px 6px rgba(0, 0, 0, 0.4)',
   },
   iconButton: {
-    backgroundColor: "rgba(0, 0, 0, 0.30)",
+    backgroundColor: 'rgba(0, 0, 0, 0.30)',
     borderWidth: 0.3,
     borderColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 20,

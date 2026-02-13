@@ -6,9 +6,8 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 110, // Adjust position as needed
     width: 50,
-    backgroundColor: '#4A4A4A',
+    backgroundColor: 'hsla(349, 61%, 35%, 0.85)',
     borderRadius: 25,
-    borderWidth: 1,
     borderColor: '#1f2937',
     alignItems: 'center',
     justifyContent: 'center',

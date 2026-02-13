@@ -20,7 +20,7 @@ import AppSearchBar from './components/AppSearchBar';
 const App = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
- const [search,setSearch]=useState("");
+  const [search, setSearch] = useState('');
   const openBottomSheet = () => bottomSheetRef.current?.open();
 
   const [fontsLoaded] = useFonts({

@@ -41,7 +41,7 @@ const mockBuildings: BuildingShape[] = [
 jest.mock('@gorhom/bottom-sheet', () => {
   const React = require('react');
   const { View } = require('react-native');
-  
+
   type MockProps = {
     children?: React.ReactNode;
   };
@@ -49,18 +49,20 @@ jest.mock('@gorhom/bottom-sheet', () => {
   return {
     __esModule: true,
 
-    default: React.forwardRef((props: { children: any; }, ref: any) => {
+    default: React.forwardRef((props: { children: any }, ref: any) => {
       const React = require('react');
       const { View } = require('react-native');
-    
+
       React.useImperativeHandle(ref, () => ({
         snapToIndex: mockSnapToIndex,
         close: mockClose,
       }));
-    
+
       return <View testID="bottom-sheet">{props.children}</View>;
     }),
-    BottomSheetView: ({ children }: MockProps) => <View testID="bottom-sheet-view">{children}</View>,
+    BottomSheetView: ({ children }: MockProps) => (
+      <View testID="bottom-sheet-view">{children}</View>
+    ),
   };
 });
 
@@ -148,20 +150,20 @@ describe('BottomSheet', () => {
   test('renders DirectionDetails when onShowDirections is called', () => {
     const ref = React.createRef<BottomSliderHandle>();
     const selectedBuilding = mockBuildings[0];
-  
+
     const { getByTestId, queryByTestId } = render(
-      <BottomSlider ref={ref} selectedBuilding={selectedBuilding} />
+      <BottomSlider ref={ref} selectedBuilding={selectedBuilding} />,
     );
-  
+
     // Initially, DirectionDetails should not be visible
     expect(queryByTestId('direction-details')).toBeNull();
-  
+
     // Press the onShowDirections button inside BuildingDetails
     fireEvent.press(getByTestId('on-show-directions'));
-  
+
     // Now DirectionDetails should be rendered
     expect(getByTestId('direction-details')).toBeTruthy();
-  
+
     // Optionally test closing DirectionDetails
     fireEvent.press(getByTestId('close-directions-button'));
     expect(mockClose).toHaveBeenCalled();

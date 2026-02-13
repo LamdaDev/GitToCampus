@@ -66,20 +66,21 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               onShowDirections={showDirections} // pass callback
             />
           )}
-          {activeView === 'directions' && 
-            <DirectionDetails 
-              onClose={closeSheet} 
+          {activeView === 'directions' && (
+            <DirectionDetails
+              onClose={closeSheet}
               startBuilding={startBuilding}
               destinationBuilding={destinationBuilding}
               selectMode={selectMode}
               onSelectStart={() => setSelectMode('start')}
               onSelectDestination={() => setSelectMode('destination')}
-            />}
+            />
+          )}
         </BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>
     );
-  }
+  },
 );
 
 export default BottomSlider;
