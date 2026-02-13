@@ -1,22 +1,22 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
-import React, { useMemo, useRef, ReactNode, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Divider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 
-type DirectionSelectMode = 'start' | 'destination' | null;
+// type DirectionSelectMode = 'start' | 'destination' | null;
 
 type DirectionDetailProps = {
   onClose: () => void;
   startBuilding: BuildingShape | null;
   destinationBuilding: BuildingShape | null;
-  selectMode: 'start' | 'destination' | null;
-  onSelectStart: () => void;
-  onSelectDestination: () => void;
+  //selectMode: 'start' | 'destination' | null;
+  //onSelectStart: () => void;
+  //onSelectDestination: () => void;
 };
 
 export default function DirectionDetails({
