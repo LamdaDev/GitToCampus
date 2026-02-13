@@ -1,22 +1,22 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
-import React, { useMemo, useRef, ReactNode, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Divider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 
-type DirectionSelectMode = 'start' | 'destination' | null;
+// type DirectionSelectMode = 'start' | 'destination' | null;
 
 type DirectionDetailProps = {
   onClose: () => void;
   startBuilding: BuildingShape | null;
   destinationBuilding: BuildingShape | null;
-  selectMode: 'start' | 'destination' | null;
-  onSelectStart: () => void;
-  onSelectDestination: () => void;
+  //selectMode: 'start' | 'destination' | null;
+  //onSelectStart: () => void;
+  //onSelectDestination: () => void;
 };
 
 export default function DirectionDetails({
@@ -44,8 +44,7 @@ export default function DirectionDetails({
             <Ionicons name="navigate" size={20} style={directionDetailsStyles.frontIcon} />
             <TouchableOpacity style={directionDetailsStyles.locationButton}>
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
-                {' '}
-                {startBuilding?.name ?? 'Set as starting point'}{' '}
+                {startBuilding?.name ?? 'Set as starting point'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -64,8 +63,7 @@ export default function DirectionDetails({
             <Ionicons name="location-outline" size={20} style={directionDetailsStyles.frontIcon} />
             <TouchableOpacity style={directionDetailsStyles.locationButton}>
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
-                {' '}
-                {destinationBuilding?.name ?? 'Set destination'}{' '}
+                {destinationBuilding?.name ?? 'Set destination'}
               </Text>
             </TouchableOpacity>
           </View>

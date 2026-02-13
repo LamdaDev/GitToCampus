@@ -20,7 +20,9 @@ import AppSearchBar from './components/AppSearchBar';
 const App = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
-  const [search, setSearch] = useState('');
+
+  // Commented out because it is used for the search bar which is currently not implemented. We can uncomment and implement it when we add the search bar back in.
+  // const [search, setSearch] = useState('');
   const openBottomSheet = () => bottomSheetRef.current?.open();
 
   const [fontsLoaded] = useFonts({
