@@ -82,9 +82,9 @@ describe('Direction Details', () => {
     const walkButton = getByTestId('transport-walk');
     const carButton = getByTestId('transport-car');
     const busButton = getByTestId('transport-bus');
-  
+
     // Walk button starts active
-    fireEvent.press(walkButton);  
+    fireEvent.press(walkButton);
     expect(walkButton.props.accessibilityState.selected).toBe(true);
     expect(carButton.props.accessibilityState.selected).toBe(false);
     expect(busButton.props.accessibilityState.selected).toBe(false);
