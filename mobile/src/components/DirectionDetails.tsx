@@ -3,13 +3,23 @@
 import React, { useMemo, useRef, ReactNode, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { Divider } from 'react-native-paper';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 
-export default function DirectionDetails({ selectedBuilding, onClose }: BuildingDetailProps) {
+type DirectionSelectMode = 'start' | 'destination' | null;
+
+type DirectionDetailProps = {
+  onClose: () => void;
+  startBuilding: BuildingShape | null;
+  destinationBuilding: BuildingShape | null;
+  selectMode: 'start' | 'destination' | null;
+  onSelectStart: () => void;
+  onSelectDestination: () => void;
+};
+
+export default function DirectionDetails({ startBuilding, destinationBuilding, onClose }: DirectionDetailProps ) {
     return (
         <>
             <View style={directionDetailsStyles.header}>
@@ -27,7 +37,7 @@ export default function DirectionDetails({ selectedBuilding, onClose }: Building
                   <View style={directionDetailsStyles.inlineHeader}>
                       <Ionicons name="navigate" size={20} style={directionDetailsStyles.frontIcon} />
                       <TouchableOpacity style={directionDetailsStyles.locationButton}>
-                        <Text style={{fontSize: 15, color:"white",}}> Set as starting point </Text>
+                        <Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize: 15, color:"white",}}> {startBuilding?.name ?? 'Set as starting point'} </Text>
                       </TouchableOpacity>
                   </View>
                   <View style={directionDetailsStyles.subLocationHeader}>
@@ -42,7 +52,7 @@ export default function DirectionDetails({ selectedBuilding, onClose }: Building
                   <View style={directionDetailsStyles.inlineHeader}>
                       <Ionicons name="location-outline" size={20} style={directionDetailsStyles.frontIcon} />
                       <TouchableOpacity style={directionDetailsStyles.locationButton}>
-                        <Text style={{fontSize: 15, color:"white"}}> Set destination </Text>
+                        <Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize: 15, color:"white"}}> {destinationBuilding?.name ?? 'Set destination'} </Text>
                       </TouchableOpacity>
                   </View>
                   <View style={directionDetailsStyles.subLocationHeader}>

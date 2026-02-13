@@ -10,11 +10,10 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export const buildingDetailsStyles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: '#4A4A4A',
+    backgroundColor: "hsla(349, 61%, 35%, 0.9)",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     boxShadow: '0 -3px 2px rgba(0, 0, 0, 0.25)',
-    opacity: 0.91,
     paddingTop: 0,
     marginBottom: 50,
   },
@@ -52,26 +51,32 @@ export const buildingDetailsStyles = StyleSheet.create({
     gap: 10,
   },
   navigationSection: {
+    marginTop: 10,
     flexDirection: 'row',
     gap: 25,
     alignSelf: "center",
   },
   navigationButton: {
-    backgroundColor: '#4A4A4A',
+    backgroundColor: "rgba(70, 117, 153, 0.60)",
     borderRadius: 30,
     padding: 8,
     opacity: 0.85,
-    boxShadow: 'inset 0 -3.5px 4px rgba(0, 0, 0, 0.4)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
     paddingLeft: 30,
     paddingRight: 30,
     paddingTop: 20,
     paddingBottom: 20,
+    elevation: 10,
+    boxShadow: '0 3px 6px rgba(0, 0, 0, 0.4)'
   },
   iconButton: {
-    backgroundColor: '#4A4A4A',
+    backgroundColor: "rgba(0, 0, 0, 0.30)",
+    borderWidth: 0.3,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 20,
     padding: 8,
-    opacity: 0.85,
+    elevation: 10,
     boxShadow: 'inset 0 -3.5px 4px rgba(0, 0, 0, 0.4)',
   },
   section: {

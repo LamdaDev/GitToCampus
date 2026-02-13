@@ -44,7 +44,7 @@ export const directionDetailsStyles = StyleSheet.create({
     marginTop: 0,
     marginLeft: 5,
     gap: 10,
-    alignSelf: 'start',
+    alignSelf: 'flex-start',
     justifyContent: 'space-between',
   },
   separationHeader: {
@@ -53,7 +53,7 @@ export const directionDetailsStyles = StyleSheet.create({
       flexDirection: 'row',
       marginLeft: 5,
       gap: 10,
-      alignSelf: 'start',
+      alignSelf: 'flex-start',
       justifyContent: 'space-between',
   },
   headerIcons: {

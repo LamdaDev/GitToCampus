@@ -8,12 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
-import { DirectionDetails } from '..'
 
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
   onClose: () => void;
-  onShowDirections: () => void;
+  onShowDirections: (building: BuildingShape) => void;
 };
 
 export default function BuildingDetails({ selectedBuilding, onClose, onShowDirections }: BuildingDetailProps) {
@@ -26,12 +25,14 @@ export default function BuildingDetails({ selectedBuilding, onClose, onShowDirec
   const navigationSection =
     (
       <Section title="Navigation">
-        <Divider style={{ backgroundColor: '#9B9B9B', height: 1.5, marginVertical: 8 }} />
         <View style={buildingDetailsStyles.navigationSection}>
             <TouchableOpacity style={buildingDetailsStyles.navigationButton}>
               <Ionicons name="walk" size={25} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity style={buildingDetailsStyles.navigationButton} onPress={onShowDirections}>
+            <TouchableOpacity style={buildingDetailsStyles.navigationButton} onPress={() => 
+              {if (selectedBuilding)
+                {onShowDirections(selectedBuilding)}
+              }}>
               <Text style={{fontSize: 15, color:"white"}}> Set as starting point </Text>
             </TouchableOpacity>
         </View>

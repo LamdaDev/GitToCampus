@@ -34,11 +34,6 @@ const App = () => {
     <GestureHandlerRootView>
       <SafeAreaView style={{ flex: 1 }}>
         <MapScreen passSelectedBuilding={setSelectedBuilding} openBottomSheet={openBottomSheet} />
-      <AppSearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder='Get to...'
-          ></AppSearchBar>
         <BottomSlider selectedBuilding={selectedBuilding} ref={bottomSheetRef} />
       </SafeAreaView>
     </GestureHandlerRootView>

@@ -26,12 +26,17 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const [activeView, setActiveView] = useState<ViewType>('building');
 
+    const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
+    const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
+    const [selectMode, setSelectMode] = useState<'start' | 'destination' | null>(null);
+
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = () => sheetRef.current?.snapToIndex(0); // 33% (use 1 for 66%)
 
-    const showDirections = () => {
+    const showDirections = (building: BuildingShape) => {
+      setStartBuilding(building);
+      setDestinationBuilding(null); // or keep existing if you want
       setActiveView('directions');
-
     };
 
     const handleSheetClose = () => {
@@ -61,7 +66,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               onShowDirections={showDirections} // pass callback
             />
           )}
-          {activeView === 'directions' && <DirectionDetails onClose={closeSheet} />}
+          {activeView === 'directions' && 
+            <DirectionDetails 
+              onClose={closeSheet} 
+              startBuilding={startBuilding}
+              destinationBuilding={destinationBuilding}
+              selectMode={selectMode}
+              onSelectStart={() => setSelectMode('start')}
+              onSelectDestination={() => setSelectMode('destination')}
+            />}
         </BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>
