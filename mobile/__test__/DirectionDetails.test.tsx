@@ -29,7 +29,6 @@ const mockBuildings: BuildingShape[] = [
 
 // Icons cause issues during test as they are loaded asynchronously
 jest.mock('@expo/vector-icons', () => {
-  const React = require('react');
   return {
     Ionicons: (props: any) => <span {...props} />,
     MaterialIcons: (props: any) => <span {...props} />,

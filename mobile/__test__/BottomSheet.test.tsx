@@ -1,18 +1,10 @@
 import React, { createRef } from 'react';
-import type { ReactNode } from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import BottomSlider, { BottomSliderHandle } from '../src/components/BottomSheet';
 import { BuildingShape } from '../src/types/BuildingShape';
-import { Button, TouchableOpacity, View } from 'react-native';
 
 const mockSnapToIndex = jest.fn();
 const mockClose = jest.fn();
-
-type MockProps = {
-  onClose: () => void;
-  onShowDirections?: (building: any) => void;
-  children?: ReactNode;
-};
 
 const mockBuildings: BuildingShape[] = [
   {
@@ -67,7 +59,6 @@ jest.mock('@gorhom/bottom-sheet', () => {
 });
 
 jest.mock('../src/components/BuildingDetails', () => {
-  const React = require('react');
   const { View, Button } = require('react-native');
 
   type MockProps = {
@@ -90,7 +81,6 @@ jest.mock('../src/components/BuildingDetails', () => {
 });
 
 jest.mock('../src/components/DirectionDetails', () => {
-  const React = require('react');
   const { View, Text, TouchableOpacity } = require('react-native');
 
   // Mock component
