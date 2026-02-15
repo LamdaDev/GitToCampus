@@ -1,27 +1,18 @@
 import React from 'react';
-import { SearchBar } from 'react-native-elements';
 import { searchBar } from '../styles/AppSearchBar.styles';
-type AppSearchBarProps = {
-  value: string;
-  onChange: (text: string) => void;
-  placeholder?: string;
-};
+import { TouchableOpacity, View, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function AppSearchBar({
-  value,
-  onChange,
-  placeholder = 'Type here...',
-}: AppSearchBarProps) {
+export default function AppSearchBar() {
   return (
-    <SearchBar
-      placeholder={placeholder}
-      onChangeText={onChange}
-      value={value}
-      platform="default"
-      containerStyle={searchBar.container}
-      inputContainerStyle={searchBar.inputContainer}
-      inputStyle={searchBar.inputText}
-      placeholderTextColor="#cfcfcf"
-    />
+    <View style={searchBar.container}>
+      <TouchableOpacity>
+        <View style={searchBar.inputContainer}>
+          <Ionicons name="search-outline" size={25} color={'#7d7476'}></Ionicons>
+
+          <Text style={searchBar.font}>Get to...</Text>
+        </View>
+      </TouchableOpacity>
+    </View>
   );
 }

@@ -4,25 +4,32 @@ export const searchBar = StyleSheet.create({
   container: {
     backgroundColor: '#912338',
     paddingHorizontal: 10,
+    paddingVertical: 10,
     opacity: 0.75,
     boxShadow: 'inset 0 -1.5px 4px rgba(0, 0, 0, 0.51)',
     alignSelf: 'center',
-    borderRadius: 30,
+    borderRadius: 50,
     bottom: 30,
-    width: '80%',
+    width: '85%',
     position: 'absolute',
-    height: '6.8%',
     borderBottomWidth: 0,
     borderTopWidth: 0,
   },
   inputContainer: {
-    backgroundColor: '#646464',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    backgroundColor: '#773c46',
     borderRadius: 30,
     height: '100%',
-    paddingTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    gap: 7,
   },
-  inputText: {
+
+  font: {
     fontFamily: 'gabarito',
     color: '#ffffff',
+    fontSize: 20,
   },
 });
