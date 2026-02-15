@@ -79,7 +79,7 @@ export default function DirectionDetails({
             accessibilityState={{ selected: activeIndex === 0 }}
             style={[
               directionDetailsStyles.transportationButton,
-              activeIndex === 0 && { backgroundColor: 'rgba(0, 0, 0, 0.4)' },
+              activeIndex === 0 && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={() => setActiveIndex(0)}
           >
@@ -90,7 +90,7 @@ export default function DirectionDetails({
             accessibilityState={{ selected: activeIndex === 1 }}
             style={[
               directionDetailsStyles.transportationButton,
-              activeIndex === 1 && { backgroundColor: 'rgba(0, 0, 0, 0.4)' },
+              activeIndex === 1 && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={() => setActiveIndex(1)}
           >
@@ -105,7 +105,7 @@ export default function DirectionDetails({
             accessibilityState={{ selected: activeIndex === 2 }}
             style={[
               directionDetailsStyles.transportationButton,
-              activeIndex === 2 && { backgroundColor: 'rgba(0, 0, 0, 0.4)' },
+              activeIndex === 2 && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={() => setActiveIndex(2)}
           >
