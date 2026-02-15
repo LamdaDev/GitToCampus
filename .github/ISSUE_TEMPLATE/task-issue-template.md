@@ -1,8 +1,8 @@
 ---
-name: Task Issue Template
-about: Use this template when creating a new Task
-title: 'TASK-x.x.x: <task title>'
-labels: Task
+name: Task
+about: Acceptance test checklist tied to a user story
+title: "TASK-x.x.x: <short title>"
+labels: task
 assignees: ''
 
 ---

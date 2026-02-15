@@ -7,14 +7,6 @@ assignees: ''
 
 ---
 
----
-name: Bug Report
-about: Report a bug with repro steps and expected vs actual behavior
-title: "BUG: <short description>"
-labels: bug
-assignees: ''
----
-
 ## Severity
 - [ ] S1 Blocker
 - [ ] S2 Major
