@@ -7,6 +7,8 @@ import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
 
+type SheetMode = 'detail' | 'search';
+
 /**
  * App.tsx is the entry point Expo looks for by default.
  * We keep it lightweight and delegate most UI logic to screens/components.
@@ -20,11 +22,28 @@ import AppSearchBar from './components/AppSearchBar';
 const App = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
+  const [sheetMode, setSheetMode] = useState<SheetMode>('detail');
 
-  // Commented out because it is used for the search bar which is currently not implemented. We can uncomment and implement it when we add the search bar back in.
-  // const [search, setSearch] = useState('');
+  // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
+  const [sheetOpen, setSheetOpen] = useState(false);
   const openBottomSheet = () => bottomSheetRef.current?.open();
 
+  const toggleSearchBarState = () => {
+    setSheetOpen(!sheetOpen);
+  };
+
+  const openBuildingDetails = () => {
+    setSheetMode('detail');
+    toggleSearchBarState();
+    openBottomSheet();
+  };
+
+  const openSearchBuilding = () => {
+    setSheetMode('search');
+    toggleSearchBarState();
+
+    openBottomSheet();
+  };
   const [fontsLoaded] = useFonts({
     gabarito: require('./assets/fonts/Gabarito-Regular.ttf'),
     'gabarito-bold': require('./assets/fonts/Gabarito-Bold.ttf'),
@@ -35,9 +54,18 @@ const App = () => {
   return (
     <GestureHandlerRootView>
       <SafeAreaView style={{ flex: 1 }}>
-        <MapScreen passSelectedBuilding={setSelectedBuilding} openBottomSheet={openBottomSheet} />
-        <BottomSlider selectedBuilding={selectedBuilding} ref={bottomSheetRef} />
-        <AppSearchBar/>
+        <MapScreen
+          passSelectedBuilding={setSelectedBuilding}
+          openBottomSheet={openBuildingDetails}
+        />
+
+        {sheetOpen ? '' : <AppSearchBar openSearch={openSearchBuilding} />}
+        <BottomSlider
+          selectedBuilding={selectedBuilding}
+          ref={bottomSheetRef}
+          mode={sheetMode}
+          revealSearchBar={toggleSearchBarState}
+        />
       </SafeAreaView>
     </GestureHandlerRootView>
   );

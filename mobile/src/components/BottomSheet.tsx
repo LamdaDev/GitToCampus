@@ -1,13 +1,14 @@
 /**BottomSlider.tsx is a template to allow other components such as BuildingDetails.tsx
  * to slot inside information into the BottomSheet**/
 
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import React, { act, forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import BuildingDetails from './BuildingDetails';
 import DirectionDetails from './DirectionDetails';
 import type { BuildingShape } from '../types/BuildingShape';
+import SearchSheet from './SearchSheet';
 export type BottomSliderHandle = {
   open: () => void;
   close: () => void;
@@ -17,10 +18,12 @@ type ViewType = 'building' | 'directions';
 
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
+  mode: 'detail' | 'search';
+  revealSearchBar:()=>void;
 };
 
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
-  ({ selectedBuilding }, ref) => {
+  ({ selectedBuilding, mode,revealSearchBar }, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = ['33%', '66%'];
 
@@ -41,12 +44,39 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const handleSheetClose = () => {
       setActiveView('building');
+      revealSearchBar()
     };
 
     useImperativeHandle(ref, () => ({
       open: openSheet,
       close: closeSheet,
     }));
+
+    const renderContent = () => {
+      if (mode === 'search') {
+        return <SearchSheet />;
+      }
+
+      if (activeView === 'building') {
+        return (
+          <BuildingDetails
+            selectedBuilding={selectedBuilding}
+            onClose={closeSheet}
+            onShowDirections={showDirections}
+          />
+        );
+      } else
+        return (
+          <DirectionDetails
+            onClose={closeSheet}
+            startBuilding={startBuilding}
+            destinationBuilding={destinationBuilding}
+            selectMode={selectMode}
+            onSelectStart={() => setSelectMode('start')}
+            onSelectDestination={() => setSelectMode('destination')}
+          />
+        );
+    };
 
     return (
       <BottomSheet
@@ -58,25 +88,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         enablePanDownToClose={true}
         onClose={handleSheetClose}
       >
-        <BottomSheetView style={buildingDetailsStyles.container}>
-          {activeView === 'building' && (
-            <BuildingDetails
-              selectedBuilding={selectedBuilding}
-              onClose={closeSheet}
-              onShowDirections={showDirections} // pass callback
-            />
-          )}
-          {activeView === 'directions' && (
-            <DirectionDetails
-              onClose={closeSheet}
-              startBuilding={startBuilding}
-              destinationBuilding={destinationBuilding}
-              selectMode={selectMode}
-              onSelectStart={() => setSelectMode('start')}
-              onSelectDestination={() => setSelectMode('destination')}
-            />
-          )}
-        </BottomSheetView>
+        <BottomSheetView style={buildingDetailsStyles.container}>{renderContent()}</BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>
     );
