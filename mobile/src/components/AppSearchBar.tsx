@@ -11,7 +11,7 @@ export default function AppSearchBar({
   value,
   onChange,
   placeholder = 'Type here...',
-}: AppSearchBarProps) {
+}: Readonly<AppSearchBarProps>) {
   return (
     <SearchBar
       placeholder={placeholder}
