@@ -29,18 +29,19 @@ const App = () => {
   const openBottomSheet = () => bottomSheetRef.current?.open();
 
   const toggleSearchBarState = () => {
-    setSheetOpen(!sheetOpen);
+    setSheetOpen(false);
   };
 
   const openBuildingDetails = () => {
     setSheetMode('detail');
-    toggleSearchBarState();
+    setSheetOpen(true)
     openBottomSheet();
   };
 
   const openSearchBuilding = () => {
     setSheetMode('search');
-    toggleSearchBarState();
+        setSheetOpen(true)
+
 
     openBottomSheet();
   };
