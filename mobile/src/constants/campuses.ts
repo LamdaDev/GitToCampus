@@ -14,7 +14,6 @@ import type { Campus } from '../types/Campus';
  *
  * If the zoom feels off later, adjust the delta values rather than the center points.
  */
-
 // SGW (Sir George Williams) — downtown campus (approx center point)
 export const SGW_REGION: Region = {
   latitude: 45.4973,
