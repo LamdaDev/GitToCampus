@@ -174,11 +174,14 @@ describe('BottomSheet', () => {
       <BottomSlider ref={ref} selectedBuilding={mockBuildings[0]} />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions'));
+    const directionDetailsButton = getByTestId('on-show-directions');
+
+    fireEvent.press(directionDetailsButton);
 
     // Re-select SAME building
     rerender(<BottomSlider ref={ref} selectedBuilding={mockBuildings[0]} />);
 
-    expect(getByTestId('destination-id').props.children).toBe('sgw-1');
+    const destinationBuildingID = getByTestId('destination-id').props.children;
+    expect(destinationBuildingID).toBe('sgw-1');
   });
 });
