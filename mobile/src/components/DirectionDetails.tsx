@@ -61,7 +61,10 @@ export default function DirectionDetails({
         <View style={directionDetailsStyles.header}>
           <View style={directionDetailsStyles.inlineHeader}>
             <Ionicons name="location-outline" size={20} style={directionDetailsStyles.frontIcon} />
-            <TouchableOpacity style={directionDetailsStyles.locationButton} onPress={onPressDestination}>
+            <TouchableOpacity
+              style={directionDetailsStyles.locationButton}
+              onPress={onPressDestination}
+            >
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
                 {destinationBuilding?.name ?? 'Set destination'}
               </Text>

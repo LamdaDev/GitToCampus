@@ -72,10 +72,8 @@ export default function SearchSheet({ buildings, onPressBuilding }: Readonly<Sea
                   {item.name}
                 </Text>
                 <Text style={searchBuilding.buildingAddress} numberOfLines={1}>
-                  {'('+item.shortCode+') '}
+                  {'(' + item.shortCode + ') '}
                   {item.address}
-                  
-                  
                 </Text>
               </View>
             </TouchableOpacity>

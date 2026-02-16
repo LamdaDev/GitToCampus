@@ -412,7 +412,7 @@ describe('MapScreen', () => {
     const { getByLabelText } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
-        openBottomSheet={mockOpenBottomSheet} 
+        openBottomSheet={mockOpenBottomSheet}
         externalSelectedBuilding={null}
       />,
     );
@@ -452,14 +452,14 @@ describe('MapScreen', () => {
         passSelectedBuilding={jest.fn()}
         openBottomSheet={jest.fn()}
         externalSelectedBuilding={null}
-      />
+      />,
     );
-    
+
     mockAnimateToRegion.mockClear();
 
     expect(mockAnimateToRegion).not.toHaveBeenCalledWith(
       expect.objectContaining({ latitude: expect.any(Number) }),
-      expect.any(Number)
+      expect.any(Number),
     );
   });
 
@@ -470,7 +470,7 @@ describe('MapScreen', () => {
         passSelectedBuilding={jest.fn()}
         openBottomSheet={jest.fn()}
         externalSelectedBuilding={null}
-      />
+      />,
     );
 
     rerender(
@@ -478,7 +478,7 @@ describe('MapScreen', () => {
         passSelectedBuilding={jest.fn()}
         openBottomSheet={jest.fn()}
         externalSelectedBuilding={mockBuildings[0]}
-      />
+      />,
     );
 
     expect(mockAnimateToRegion).toHaveBeenCalled();

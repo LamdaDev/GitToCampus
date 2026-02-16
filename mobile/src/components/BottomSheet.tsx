@@ -71,7 +71,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const closeSearchBuilding = (chosenBuilding: BuildingShape) => {
       passSelectedBuilding(chosenBuilding);
 
-      
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
       setStartBuilding(null);
       setDestinationBuilding(chosenBuilding);

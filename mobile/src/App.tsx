@@ -7,8 +7,10 @@ import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
 import { getAllBuildingShapes } from './utils/buildingsRepository';
+import { LogBox } from 'react-native';
 type SheetMode = 'detail' | 'search';
 
+LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
  * We keep it lightweight and delegate most UI logic to screens/components.
@@ -26,7 +28,6 @@ const App = () => {
 
   // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
   const [sheetOpen, setSheetOpen] = useState(false);
-  const openBottomSheet = () => bottomSheetRef.current?.open();
 
   const toggleSearchBarState = () => {
     setSheetOpen(false);
@@ -45,10 +46,8 @@ const App = () => {
   };
 
   const exitSearchMode = () => {
-    
     setSheetMode('detail');
-  
-  }
+  };
   /*load once for the searching for specifc buildings
    * buildings gets passed into bottomSheet then into searchBuilding.tsx
    */

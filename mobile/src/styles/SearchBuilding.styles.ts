@@ -1,10 +1,8 @@
 import { StyleSheet } from 'react-native';
 
 export const searchBuilding = StyleSheet.create({
-  
   screen: {
     flex: 1,
-    
   },
 
   searchOuter: {
@@ -12,17 +10,16 @@ export const searchBuilding = StyleSheet.create({
     borderTopWidth: 0,
     borderBottomWidth: 0,
     paddingHorizontal: 0,
-    
   },
   searchInner: {
     backgroundColor: 'rgb(103, 33, 47)',
     borderRadius: 100,
     height: 44,
-    width:'100%'
+    width: '100%',
   },
   searchText: {
     color: '#ffffff',
-    fontFamily:'gaborito'
+    fontFamily: 'gaborito',
   },
 
   helperText: {
@@ -66,7 +63,7 @@ export const searchBuilding = StyleSheet.create({
 
   listContent: {
     gap: 14, // spacing between pills
-    marginHorizontal:8,
+    marginHorizontal: 8,
   },
 
   buildingPill: {

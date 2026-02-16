@@ -5,9 +5,27 @@ import { Campus } from '../src/types/Campus';
 import { BuildingShape } from '../src/types/BuildingShape';
 
 const mockBuildings: BuildingShape[] = [
-  { id: '1', name: 'Hall Building', address: '1455 De Maisonneuve', polygons: [], campus: 'SGW' as Campus },
-  { id: '2', name: 'Library Building', address: '1400 De Maisonneuve', polygons: [], campus: 'SGW' as Campus },
-  { id: '3', name: 'Loyola Chapel', address: '7141 Sherbrooke', polygons: [], campus: 'LOYOLA' as Campus },
+  {
+    id: '1',
+    name: 'Hall Building',
+    address: '1455 De Maisonneuve',
+    polygons: [],
+    campus: 'SGW' as Campus,
+  },
+  {
+    id: '2',
+    name: 'Library Building',
+    address: '1400 De Maisonneuve',
+    polygons: [],
+    campus: 'SGW' as Campus,
+  },
+  {
+    id: '3',
+    name: 'Loyola Chapel',
+    address: '7141 Sherbrooke',
+    polygons: [],
+    campus: 'LOYOLA' as Campus,
+  },
 ];
 
 jest.mock('@expo/vector-icons', () => {
@@ -18,24 +36,32 @@ jest.mock('@expo/vector-icons', () => {
 });
 
 jest.mock('react-native-elements', () => {
-    const { TextInput } = require('react-native');
-    return {
-      SearchBar: ({ onChangeText, value, placeholder }: { onChangeText: (text: string) => void; value: string; placeholder: string }) => (
-        <TextInput
-          testID="search-bar"
-          placeholder={placeholder}
-          onChangeText={onChangeText}
-          value={value}
-        />
-      ),
-    };
-  });
+  const { TextInput } = require('react-native');
+  return {
+    SearchBar: ({
+      onChangeText,
+      value,
+      placeholder,
+    }: {
+      onChangeText: (text: string) => void;
+      value: string;
+      placeholder: string;
+    }) => (
+      <TextInput
+        testID="search-bar"
+        placeholder={placeholder}
+        onChangeText={onChangeText}
+        value={value}
+      />
+    ),
+  };
+});
 
 jest.mock('@gorhom/bottom-sheet', () => {
-const { FlatList } = require('react-native');
-return {
+  const { FlatList } = require('react-native');
+  return {
     BottomSheetFlatList: (props: React.ComponentProps<typeof FlatList>) => <FlatList {...props} />,
-};
+  };
 });
 
 describe('SearchSheet', () => {
@@ -53,7 +79,7 @@ describe('SearchSheet', () => {
 
   test('filters buildings by name', () => {
     const { getByTestId, getByText, queryByText } = render(
-      <SearchSheet buildings={mockBuildings} />
+      <SearchSheet buildings={mockBuildings} />,
     );
     fireEvent.changeText(getByTestId('search-bar'), 'hall');
     expect(getByText('Hall Building')).toBeTruthy();
@@ -63,7 +89,7 @@ describe('SearchSheet', () => {
 
   test('filters buildings by address', () => {
     const { getByTestId, getByText, queryByText } = render(
-      <SearchSheet buildings={mockBuildings} />
+      <SearchSheet buildings={mockBuildings} />,
     );
     fireEvent.changeText(getByTestId('search-bar'), 'Sherbrooke');
     expect(getByText('Loyola Chapel')).toBeTruthy();
@@ -79,7 +105,7 @@ describe('SearchSheet', () => {
   test('calls onPressBuilding with correct building when pressed', () => {
     const onPressBuilding = jest.fn();
     const { getByText } = render(
-      <SearchSheet buildings={mockBuildings} onPressBuilding={onPressBuilding} />
+      <SearchSheet buildings={mockBuildings} onPressBuilding={onPressBuilding} />,
     );
     fireEvent.press(getByText('Hall Building'));
     expect(onPressBuilding).toHaveBeenCalledWith(mockBuildings[0]);
