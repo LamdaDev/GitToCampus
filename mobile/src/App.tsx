@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaView, LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
 import MapScreen from './screens/MapScreen';
@@ -7,7 +7,6 @@ import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
 import { getAllBuildingShapes } from './utils/buildingsRepository';
-import { LogBox } from 'react-native';
 type SheetMode = 'detail' | 'search';
 
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);

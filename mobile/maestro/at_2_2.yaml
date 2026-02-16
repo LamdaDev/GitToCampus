@@ -3,7 +3,7 @@ appId: host.exp.exponent
 - launchApp
 - openLink: 'exp://10.0.2.2:8081'
 - assertVisible: 'SGW'
-- tapOn: 
+- tapOn:
     point: '70%,80%'
 - tapOn: ' Set as starting point '
 - tapOn: 'Set destination'
