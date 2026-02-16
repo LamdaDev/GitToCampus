@@ -64,6 +64,7 @@ const App = () => {
         <MapScreen
           passSelectedBuilding={setSelectedBuilding}
           openBottomSheet={openBuildingDetails}
+          externalSelectedBuilding={selectedBuilding}
         />
 
         {sheetOpen ? '' : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -75,6 +76,7 @@ const App = () => {
           revealSearchBar={toggleSearchBarState}
           buildings={buildings}
           onExitSearch={exitSearchMode}
+          passSelectedBuilding={setSelectedBuilding}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

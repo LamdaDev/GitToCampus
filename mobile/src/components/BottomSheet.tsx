@@ -1,7 +1,7 @@
 /**BottomSlider.tsx is a template to allow other components such as BuildingDetails.tsx
  * to slot inside information into the BottomSheet**/
 
-import React, { act, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
@@ -22,10 +22,11 @@ type BottomSheetProps = {
   revealSearchBar: () => void;
   buildings: BuildingShape[];
   onExitSearch:()=>void;
+  passSelectedBuilding: (b: BuildingShape | null) => void;
 };
 
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
-  ({ selectedBuilding, mode, revealSearchBar, buildings,onExitSearch }, ref) => {
+  ({ selectedBuilding, mode, revealSearchBar, buildings, onExitSearch, passSelectedBuilding }, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['75%'], []);
 
@@ -50,6 +51,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const closeSearchBuilding=(chosenBuilding:BuildingShape)=>{
       console.log(chosenBuilding)
+      passSelectedBuilding(chosenBuilding);
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
       setStartBuilding(null)
       setDestinationBuilding(chosenBuilding)
