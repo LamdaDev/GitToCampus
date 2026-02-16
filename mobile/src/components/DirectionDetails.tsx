@@ -8,23 +8,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 
-// type DirectionSelectMode = 'start' | 'destination' | null;
-
 type DirectionDetailProps = {
   onClose: () => void;
   startBuilding: BuildingShape | null;
   destinationBuilding: BuildingShape | null;
-  //selectMode: 'start' | 'destination' | null;
-  //onSelectStart: () => void;
-  //onSelectDestination: () => void;
 };
 
 export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
   onClose,
-}: DirectionDetailProps) {
+}: Readonly<DirectionDetailProps>) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const isSelected = (index: number) => activeIndex === index;
 
   return (
     <>
@@ -76,10 +72,10 @@ export default function DirectionDetails({
         <View style={directionDetailsStyles.transportationSubHeader}>
           <TouchableOpacity
             testID="transport-walk"
-            accessibilityState={{ selected: activeIndex === 0 }}
+            accessibilityState={{ selected: isSelected(0) }}
             style={[
               directionDetailsStyles.transportationButton,
-              activeIndex === 0 && directionDetailsStyles.activeTransportationButton,
+              isSelected(0) && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={() => setActiveIndex(0)}
           >
@@ -87,10 +83,10 @@ export default function DirectionDetails({
           </TouchableOpacity>
           <TouchableOpacity
             testID="transport-car"
-            accessibilityState={{ selected: activeIndex === 1 }}
+            accessibilityState={{ selected: isSelected(1) }}
             style={[
               directionDetailsStyles.transportationButton,
-              activeIndex === 1 && directionDetailsStyles.activeTransportationButton,
+              isSelected(1) && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={() => setActiveIndex(1)}
           >
@@ -102,10 +98,10 @@ export default function DirectionDetails({
           </TouchableOpacity>
           <TouchableOpacity
             testID="transport-bus"
-            accessibilityState={{ selected: activeIndex === 2 }}
+            accessibilityState={{ selected: isSelected(2) }}
             style={[
               directionDetailsStyles.transportationButton,
-              activeIndex === 2 && directionDetailsStyles.activeTransportationButton,
+              isSelected(2) && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={() => setActiveIndex(2)}
           >

@@ -1,7 +1,7 @@
 /**BottomSlider.tsx is a template to allow other components such as BuildingDetails.tsx
  * to slot inside information into the BottomSheet**/
 
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
@@ -28,7 +28,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
-    const [selectMode, setSelectMode] = useState<'start' | 'destination' | null>(null);
 
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = () => sheetRef.current?.snapToIndex(0); // 33% (use 1 for 66%)
@@ -42,6 +41,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleSheetClose = () => {
       setActiveView('building');
     };
+
+    useEffect(() => {
+      if (activeView !== 'directions') return;
+      if (!selectedBuilding) return;
+      if (selectedBuilding.id === startBuilding?.id) return;
+
+      setDestinationBuilding(selectedBuilding);
+    }, [selectedBuilding, activeView]);
 
     useImperativeHandle(ref, () => ({
       open: openSheet,
@@ -71,9 +78,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               onClose={closeSheet}
               startBuilding={startBuilding}
               destinationBuilding={destinationBuilding}
-              selectMode={selectMode}
-              onSelectStart={() => setSelectMode('start')}
-              onSelectDestination={() => setSelectMode('destination')}
             />
           )}
         </BottomSheetView>
