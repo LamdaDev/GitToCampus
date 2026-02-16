@@ -1,7 +1,7 @@
 /**BottomSlider.tsx is a template to allow other components such as BuildingDetails.tsx
  * to slot inside information into the BottomSheet**/
 
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
@@ -19,13 +19,18 @@ type ViewType = 'building' | 'directions';
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
   mode: 'detail' | 'search';
-  revealSearchBar:()=>void;
+  revealSearchBar: () => void;
+  buildings: {
+    id: string;
+    name: string;
+    address: string;
+  };
 };
 
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
-  ({ selectedBuilding, mode,revealSearchBar }, ref) => {
+  ({ selectedBuilding, mode, revealSearchBar, buildings }, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
-    const snapPoints = ['33%', '66%'];
+    const snapPoints = useMemo(() => ['75%'], []);
 
     const [activeView, setActiveView] = useState<ViewType>('building');
 
@@ -44,7 +49,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const handleSheetClose = () => {
       setActiveView('building');
-      revealSearchBar()
+      revealSearchBar();
     };
 
     useImperativeHandle(ref, () => ({
@@ -54,7 +59,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const renderContent = () => {
       if (mode === 'search') {
-        return <SearchSheet />;
+        return <SearchSheet buildings={buildings} />;
       }
 
       if (activeView === 'building') {
@@ -86,10 +91,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         backgroundStyle={buildingDetailsStyles.sheetBackground}
         handleIndicatorStyle={buildingDetailsStyles.handle}
         enablePanDownToClose={true}
+        enableContentPanningGesture={false}
+        enableDynamicSizing={false}
         onClose={handleSheetClose}
       >
         <BottomSheetView style={buildingDetailsStyles.container}>{renderContent()}</BottomSheetView>
-        
       </BottomSheet>
     );
   },

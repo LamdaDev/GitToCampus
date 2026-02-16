@@ -23,7 +23,7 @@ export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
   onClose,
-}: DirectionDetailProps) {
+}: Readonly<DirectionDetailProps>) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (

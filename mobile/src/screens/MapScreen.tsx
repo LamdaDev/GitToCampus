@@ -90,7 +90,7 @@ const renderPolygonItem = (
   );
 };
 
-export default function MapScreen({ passSelectedBuilding, openBottomSheet }: MapScreenProps) {
+export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
