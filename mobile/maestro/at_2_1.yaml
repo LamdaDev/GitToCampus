@@ -1,0 +1,15 @@
+appId: host.exp.exponent
+---
+- launchApp
+- openLink: 'exp://10.0.2.2:8081'
+- assertVisible: 'SGW'
+- tapOn:
+    point: '70%,80%'
+- extendedWaitUntil:
+    visible: 'Grey Nuns Garden'
+    timeout: 2000
+- tapOn: ' Set as starting point '
+- tapOn:
+    point: '55%,50%'
+- assertVisible:
+    text: Henry F. Hall Building

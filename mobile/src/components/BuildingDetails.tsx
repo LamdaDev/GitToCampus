@@ -1,6 +1,6 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
-import React, {  ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
 import { Divider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
