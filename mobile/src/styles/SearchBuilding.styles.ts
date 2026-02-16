@@ -66,6 +66,7 @@ export const searchBuilding = StyleSheet.create({
 
   listContent: {
     gap: 14, // spacing between pills
+    marginHorizontal:8,
   },
 
   buildingPill: {

@@ -1,7 +1,7 @@
 /**BottomSlider.tsx is a template to allow other components such as BuildingDetails.tsx
  * to slot inside information into the BottomSheet**/
 
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { act, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
@@ -20,15 +20,12 @@ type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
   mode: 'detail' | 'search';
   revealSearchBar: () => void;
-  buildings: {
-    id: string;
-    name: string;
-    address: string;
-  };
+  buildings: BuildingShape[];
+  onExitSearch:()=>void;
 };
 
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
-  ({ selectedBuilding, mode, revealSearchBar, buildings }, ref) => {
+  ({ selectedBuilding, mode, revealSearchBar, buildings,onExitSearch }, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['75%'], []);
 
@@ -51,6 +48,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       revealSearchBar();
     };
 
+    const closeSearchBuilding=(chosenBuilding:BuildingShape)=>{
+      console.log(chosenBuilding)
+      //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
+      setStartBuilding(null)
+      setDestinationBuilding(chosenBuilding)
+      setActiveView('directions')
+      onExitSearch()
+    }
     useEffect(() => {
       if (activeView !== 'directions') return;
       if (!selectedBuilding) return;
@@ -66,7 +71,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const renderContent = () => {
       if (mode === 'search') {
-        return <SearchSheet buildings={buildings} />;
+        return <SearchSheet 
+        buildings={buildings}
+        onPressBuilding={closeSearchBuilding}
+        />;
       }
 
       if (activeView === 'building') {
@@ -77,15 +85,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             onShowDirections={showDirections}
           />
         );
-      } else
+      }
+      if(activeView==='directions')
         return (
           <DirectionDetails
             onClose={closeSheet}
             startBuilding={startBuilding}
             destinationBuilding={destinationBuilding}
-            selectMode={selectMode}
-            onSelectStart={() => setSelectMode('start')}
-            onSelectDestination={() => setSelectMode('destination')}
+           
           />
         );
     };

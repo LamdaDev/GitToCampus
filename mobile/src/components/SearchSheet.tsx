@@ -1,19 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { SearchBar } from 'react-native-elements';
 import { searchBuilding } from '../styles/SearchBuilding.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-
-type Building = {
-  id: string;
-  name: string;
-  address: string;
-};
+import { BuildingShape } from '../types/BuildingShape';
 
 type SearchBarProps = {
-  buildings: Building[];
-  onPressBuilding?: (b: Building) => void;
+  buildings: BuildingShape[];
+  onPressBuilding?: (b: BuildingShape) => void;
 };
 
 export default function SearchSheet({ buildings, onPressBuilding }: Readonly<SearchBarProps>) {
@@ -39,7 +34,14 @@ export default function SearchSheet({ buildings, onPressBuilding }: Readonly<Sea
         inputContainerStyle={searchBuilding.searchInner}
         inputStyle={searchBuilding.searchText}
         placeholderTextColor={'#ffffffc9'}
-        searchIcon={<Ionicons name="search" size={25} color="#d7c9cf" style={{ opacity: 0.9,paddingLeft:2 }} />}
+        searchIcon={
+          <Ionicons
+            name="search"
+            size={25}
+            color="#d7c9cf"
+            style={{ opacity: 0.9, paddingLeft: 2 }}
+          />
+        }
       />
 
       <Text style={searchBuilding.helperText}>Sign in below to sync your calendar</Text>
@@ -54,7 +56,7 @@ export default function SearchSheet({ buildings, onPressBuilding }: Readonly<Sea
           data={filtered}
           keyExtractor={(item: { id: any }) => item.id}
           contentContainerStyle={searchBuilding.listContent}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
           ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
           renderItem={({ item }) => (
             <TouchableOpacity

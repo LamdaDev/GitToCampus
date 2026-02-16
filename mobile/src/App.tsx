@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { SafeAreaView, Text } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { SafeAreaView } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
 import MapScreen from './screens/MapScreen';
@@ -43,18 +43,13 @@ const App = () => {
     setSheetOpen(true);
     openBottomSheet();
   };
-  
-  /*load once for the searching for specifc buildings
-  * buildings gets passed into bottomSheet then into searchBuilding.tsx
-  */
 
-  const [buildings] = useState(() =>
-    getAllBuildingShapes().map((b) => ({
-      id:b.id,
-      name: b.name,
-      address: b.address,
-    })),
-  );
+  const exitSearchMode =()=>setSheetMode('detail')
+  /*load once for the searching for specifc buildings
+   * buildings gets passed into bottomSheet then into searchBuilding.tsx
+   */
+
+  const buildings = useMemo(() => getAllBuildingShapes(), []);
 
   const [fontsLoaded] = useFonts({
     gabarito: require('./assets/fonts/Gabarito-Regular.ttf'),
@@ -79,6 +74,7 @@ const App = () => {
           mode={sheetMode}
           revealSearchBar={toggleSearchBarState}
           buildings={buildings}
+          onExitSearch={exitSearchMode}
         />
       </SafeAreaView>
     </GestureHandlerRootView>
