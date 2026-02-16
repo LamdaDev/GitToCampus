@@ -1,7 +1,14 @@
 /**BottomSlider.tsx is a template to allow other components such as BuildingDetails.tsx
  * to slot inside information into the BottomSheet**/
 
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
@@ -10,7 +17,7 @@ import DirectionDetails from './DirectionDetails';
 import type { BuildingShape } from '../types/BuildingShape';
 import SearchSheet from './SearchSheet';
 export type BottomSliderHandle = {
-  open: () => void;
+  open: (index?: number) => void;
   close: () => void;
 };
 
@@ -21,14 +28,17 @@ type BottomSheetProps = {
   mode: 'detail' | 'search';
   revealSearchBar: () => void;
   buildings: BuildingShape[];
-  onExitSearch:()=>void;
+  onExitSearch: () => void;
   passSelectedBuilding: (b: BuildingShape | null) => void;
 };
 
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
-  ({ selectedBuilding, mode, revealSearchBar, buildings, onExitSearch, passSelectedBuilding }, ref) => {
+  (
+    { selectedBuilding, mode, revealSearchBar, buildings, onExitSearch, passSelectedBuilding },
+    ref,
+  ) => {
     const sheetRef = useRef<BottomSheet>(null);
-    const snapPoints = useMemo(() => ['75%'], []);
+    const snapPoints = useMemo(() => ['36%', '75%'], []);
 
     const [activeView, setActiveView] = useState<ViewType>('building');
 
@@ -36,8 +46,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
 
     const closeSheet = () => sheetRef.current?.close();
-    const openSheet = () => sheetRef.current?.snapToIndex(0); // 33% (use 1 for 66%)
-
+    const openSheet = (index: number = 0) => {
+      sheetRef.current?.snapToIndex(index);
+    };
     const showDirections = (building: BuildingShape) => {
       setStartBuilding(building);
       setDestinationBuilding(null); // or keep existing if you want
@@ -49,15 +60,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       revealSearchBar();
     };
 
-    const closeSearchBuilding=(chosenBuilding:BuildingShape)=>{
-      console.log(chosenBuilding)
+    const closeSearchBuilding = (chosenBuilding: BuildingShape) => {
       passSelectedBuilding(chosenBuilding);
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
-      setStartBuilding(null)
-      setDestinationBuilding(chosenBuilding)
-      setActiveView('directions')
-      onExitSearch()
-    }
+      setStartBuilding(null);
+      setDestinationBuilding(chosenBuilding);
+      setActiveView('directions');
+      onExitSearch();
+      sheetRef.current?.snapToIndex(0)
+    };
     useEffect(() => {
       if (activeView !== 'directions') return;
       if (!selectedBuilding) return;
@@ -73,10 +84,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const renderContent = () => {
       if (mode === 'search') {
-        return <SearchSheet 
-        buildings={buildings}
-        onPressBuilding={closeSearchBuilding}
-        />;
+        return <SearchSheet buildings={buildings} onPressBuilding={closeSearchBuilding} />;
       }
 
       if (activeView === 'building') {
@@ -88,13 +96,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           />
         );
       }
-      if(activeView==='directions')
+      if (activeView === 'directions')
         return (
           <DirectionDetails
             onClose={closeSheet}
             startBuilding={startBuilding}
             destinationBuilding={destinationBuilding}
-           
           />
         );
     };

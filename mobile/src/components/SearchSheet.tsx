@@ -29,7 +29,6 @@ export default function SearchSheet({ buildings, onPressBuilding }: Readonly<Sea
         onChangeText={setSearch}
         value={search}
         platform="default"
-        autoFocus
         containerStyle={searchBuilding.searchOuter}
         inputContainerStyle={searchBuilding.searchInner}
         inputStyle={searchBuilding.searchText}

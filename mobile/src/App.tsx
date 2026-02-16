@@ -35,16 +35,20 @@ const App = () => {
   const openBuildingDetails = () => {
     setSheetMode('detail');
     setSheetOpen(true);
-    openBottomSheet();
+    bottomSheetRef.current?.open(0);
   };
 
   const openSearchBuilding = () => {
     setSheetMode('search');
     setSheetOpen(true);
-    openBottomSheet();
+    bottomSheetRef.current?.open(1);
   };
 
-  const exitSearchMode =()=>setSheetMode('detail')
+  const exitSearchMode = () => {
+    
+    setSheetMode('detail');
+  
+  }
   /*load once for the searching for specifc buildings
    * buildings gets passed into bottomSheet then into searchBuilding.tsx
    */
