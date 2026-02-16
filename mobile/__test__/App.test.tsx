@@ -25,13 +25,20 @@ jest.mock('../src/components/BottomSheet', () => {
   };
 });
 
+jest.mock('@expo/vector-icons', () => {
+  const { Text } = require('react-native');
+  return {
+    Ionicons: ({ name }) => <Text>{name}</Text>,
+  };
+});
+
 const mockOpenBottomSheet = jest.fn();
 
 jest.mock('../src/screens/MapScreen', () => {
   const React = require('react');
   const { Button, View } = require('react-native');
 
-  return function MockMapScreen({ passSelectedBuilding, openBottomSheet }) {
+  return function MockMapScreen() {
     return (
       <View testID="map-screen">
         <Button testID="open-sheet" title="Open" onPress={mockOpenBottomSheet} />

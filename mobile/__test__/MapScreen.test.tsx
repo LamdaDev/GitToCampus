@@ -127,6 +127,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -144,6 +145,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -166,6 +168,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -182,6 +185,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -204,6 +208,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -229,6 +234,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -253,6 +259,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -283,6 +290,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -316,6 +324,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -345,6 +354,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -370,6 +380,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -401,7 +412,8 @@ describe('MapScreen', () => {
     const { getByLabelText } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
-        openBottomSheet={mockOpenBottomSheet}
+        openBottomSheet={mockOpenBottomSheet} 
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -422,6 +434,7 @@ describe('MapScreen', () => {
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={null}
       />,
     );
 
@@ -431,5 +444,43 @@ describe('MapScreen', () => {
 
     unmount();
     expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  test('does nothing when externalSelectedBuilding is null', () => {
+    render(
+      <MapScreen
+        passSelectedBuilding={jest.fn()}
+        openBottomSheet={jest.fn()}
+        externalSelectedBuilding={null}
+      />
+    );
+    
+    mockAnimateToRegion.mockClear();
+
+    expect(mockAnimateToRegion).not.toHaveBeenCalledWith(
+      expect.objectContaining({ latitude: expect.any(Number) }),
+      expect.any(Number)
+    );
+  });
+
+  test('updates selected campus when externalSelectedBuilding changes', () => {
+    mockAnimateToRegion.mockClear();
+    const { rerender } = render(
+      <MapScreen
+        passSelectedBuilding={jest.fn()}
+        openBottomSheet={jest.fn()}
+        externalSelectedBuilding={null}
+      />
+    );
+
+    rerender(
+      <MapScreen
+        passSelectedBuilding={jest.fn()}
+        openBottomSheet={jest.fn()}
+        externalSelectedBuilding={mockBuildings[0]}
+      />
+    );
+
+    expect(mockAnimateToRegion).toHaveBeenCalled();
   });
 });
