@@ -38,6 +38,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = () => sheetRef.current?.snapToIndex(0); // 33% (use 1 for 66%)
 
+    const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
+
     const showDirections = (building: BuildingShape) => {
       setStartBuilding(building);
       setDestinationBuilding(null); // or keep existing if you want
@@ -57,6 +59,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setActiveView('directions')
       onExitSearch()
     }
+
+    const handleInternalSearch = (building: BuildingShape) => {
+      if (searchFor === 'start') setStartBuilding(building);
+      else setDestinationBuilding(building);
+      setSearchFor(null);
+    };
+
     useEffect(() => {
       if (activeView !== 'directions') return;
       if (!selectedBuilding) return;
@@ -71,6 +80,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }));
 
     const renderContent = () => {
+      if (searchFor) {
+        return <SearchSheet buildings={buildings} onPressBuilding={handleInternalSearch} />;
+      }
+
       if (mode === 'search') {
         return <SearchSheet 
         buildings={buildings}
@@ -93,7 +106,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             onClose={closeSheet}
             startBuilding={startBuilding}
             destinationBuilding={destinationBuilding}
-           
+            onPressStart={() => setSearchFor('start')}
+            onPressDestination={() => setSearchFor('destination')}
           />
         );
     };
