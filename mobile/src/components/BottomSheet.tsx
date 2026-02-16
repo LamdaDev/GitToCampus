@@ -48,6 +48,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const handleSheetClose = () => {
       setActiveView('building');
+      setSearchFor(null);
       revealSearchBar();
     };
 
