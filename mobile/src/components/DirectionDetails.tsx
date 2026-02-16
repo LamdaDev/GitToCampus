@@ -12,12 +12,16 @@ type DirectionDetailProps = {
   onClose: () => void;
   startBuilding: BuildingShape | null;
   destinationBuilding: BuildingShape | null;
+  onPressStart: () => void;
+  onPressDestination: () => void;
 };
 
 export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
   onClose,
+  onPressStart,
+  onPressDestination,
 }: Readonly<DirectionDetailProps>) {
   const [activeIndex, setActiveIndex] = useState(0);
   const isSelected = (index: number) => activeIndex === index;
@@ -38,7 +42,7 @@ export default function DirectionDetails({
         <View style={directionDetailsStyles.header}>
           <View style={directionDetailsStyles.inlineHeader}>
             <Ionicons name="navigate" size={20} style={directionDetailsStyles.frontIcon} />
-            <TouchableOpacity style={directionDetailsStyles.locationButton}>
+            <TouchableOpacity style={directionDetailsStyles.locationButton} onPress={onPressStart}>
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
                 {startBuilding?.name ?? 'Set as starting point'}
               </Text>
@@ -57,7 +61,7 @@ export default function DirectionDetails({
         <View style={directionDetailsStyles.header}>
           <View style={directionDetailsStyles.inlineHeader}>
             <Ionicons name="location-outline" size={20} style={directionDetailsStyles.frontIcon} />
-            <TouchableOpacity style={directionDetailsStyles.locationButton}>
+            <TouchableOpacity style={directionDetailsStyles.locationButton} onPress={onPressDestination}>
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
                 {destinationBuilding?.name ?? 'Set destination'}
               </Text>

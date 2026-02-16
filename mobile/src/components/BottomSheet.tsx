@@ -49,6 +49,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const openSheet = (index: number = 0) => {
       sheetRef.current?.snapToIndex(index);
     };
+  
+    const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
+
     const showDirections = (building: BuildingShape) => {
       setStartBuilding(building);
       setDestinationBuilding(null); // or keep existing if you want
@@ -57,18 +60,26 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const handleSheetClose = () => {
       setActiveView('building');
+      setSearchFor(null);
       revealSearchBar();
     };
 
-    const closeSearchBuilding = (chosenBuilding: BuildingShape) => {
+    const closeSearchBuilding=(chosenBuilding:BuildingShape)=>{
       passSelectedBuilding(chosenBuilding);
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
-      setStartBuilding(null);
-      setDestinationBuilding(chosenBuilding);
-      setActiveView('directions');
-      onExitSearch();
+      setStartBuilding(null)
+      setDestinationBuilding(chosenBuilding)
+      setActiveView('directions')
+      onExitSearch()
       sheetRef.current?.snapToIndex(0)
+    }
+
+    const handleInternalSearch = (building: BuildingShape) => {
+      if (searchFor === 'start') setStartBuilding(building);
+      else setDestinationBuilding(building);
+      setSearchFor(null);
     };
+
     useEffect(() => {
       if (activeView !== 'directions') return;
       if (!selectedBuilding) return;
@@ -83,6 +94,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }));
 
     const renderContent = () => {
+      if (searchFor) {
+        return <SearchSheet buildings={buildings} onPressBuilding={handleInternalSearch} />;
+      }
+
       if (mode === 'search') {
         return <SearchSheet buildings={buildings} onPressBuilding={closeSearchBuilding} />;
       }
@@ -102,6 +117,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             onClose={closeSheet}
             startBuilding={startBuilding}
             destinationBuilding={destinationBuilding}
+            onPressStart={() => setSearchFor('start')}
+            onPressDestination={() => setSearchFor('destination')}
           />
         );
     };
