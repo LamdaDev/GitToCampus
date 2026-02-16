@@ -19,6 +19,7 @@ import SearchSheet from './SearchSheet';
 export type BottomSliderHandle = {
   open: (index?: number) => void;
   close: () => void;
+  setSnap: (index: number) => void;
 };
 
 type ViewType = 'building' | 'directions';
@@ -49,12 +50,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const openSheet = (index: number = 0) => {
       sheetRef.current?.snapToIndex(index);
     };
-  
+    const setSnapPoint = (index: number) => {
+      sheetRef.current?.snapToIndex(index);
+    };
+
     const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
 
     const showDirections = (building: BuildingShape) => {
       setStartBuilding(building);
-      setDestinationBuilding(null); // or keep existing if you want
+      setDestinationBuilding(null);
       setActiveView('directions');
     };
 
@@ -64,20 +68,24 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       revealSearchBar();
     };
 
-    const closeSearchBuilding=(chosenBuilding:BuildingShape)=>{
+    const closeSearchBuilding = (chosenBuilding: BuildingShape) => {
       passSelectedBuilding(chosenBuilding);
+
+      
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
-      setStartBuilding(null)
-      setDestinationBuilding(chosenBuilding)
-      setActiveView('directions')
-      onExitSearch()
-      sheetRef.current?.snapToIndex(0)
-    }
+      setStartBuilding(null);
+      setDestinationBuilding(chosenBuilding);
+      setActiveView('directions');
+      onExitSearch();
+      sheetRef.current?.snapToIndex(0);
+    };
 
     const handleInternalSearch = (building: BuildingShape) => {
+      passSelectedBuilding(building);
       if (searchFor === 'start') setStartBuilding(building);
       else setDestinationBuilding(building);
       setSearchFor(null);
+      sheetRef.current?.snapToIndex(0);
     };
 
     useEffect(() => {
@@ -88,9 +96,19 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setDestinationBuilding(selectedBuilding);
     }, [selectedBuilding, activeView]);
 
+    useEffect(() => {
+      const isSearching = mode === 'search' || searchFor !== null;
+      if (!isSearching) return;
+
+      requestAnimationFrame(() => {
+        sheetRef.current?.snapToIndex(1);
+      });
+    }, [mode, searchFor]);
+
     useImperativeHandle(ref, () => ({
       open: openSheet,
       close: closeSheet,
+      setSnap: setSnapPoint,
     }));
 
     const renderContent = () => {

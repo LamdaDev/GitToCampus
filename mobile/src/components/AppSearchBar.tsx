@@ -13,7 +13,7 @@ export default function AppSearchBar({ openSearch }: Readonly<AppSearchBarProps>
       <TouchableOpacity onPress={openSearch}>
         <View style={searchBar.inputContainer}>
           <Ionicons name="search-outline" size={25} color="#7d7476" />
-          <Text style={searchBar.font}>Get to...</Text>
+          <Text style={searchBar.font}>Enter building name</Text>
         </View>
       </TouchableOpacity>
     </View>
