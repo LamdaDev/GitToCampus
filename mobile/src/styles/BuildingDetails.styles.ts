@@ -41,6 +41,7 @@ export const buildingDetailsStyles = StyleSheet.create({
     color: '#D8D8D8',
   },
   subtitle: {
+    maxWidth: SCREEN_WIDTH * 0.65,
     fontSize: 14,
     fontFamily: 'gabarito',
     color: '#D7D7D7',
