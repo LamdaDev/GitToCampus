@@ -10,7 +10,7 @@ import React, {
   useState,
 } from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-
+import { ViewType } from '../types/ViewType';
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import BuildingDetails from './BuildingDetails';
 import DirectionDetails from './DirectionDetails';
@@ -22,7 +22,6 @@ export type BottomSliderHandle = {
   setSnap: (index: number) => void;
 };
 
-type ViewType = 'building' | 'directions';
 
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;

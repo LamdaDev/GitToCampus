@@ -7,8 +7,7 @@ import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
 import { getAllBuildingShapes } from './utils/buildingsRepository';
-type SheetMode = 'detail' | 'search';
-
+import { SheetMode } from './types/SheetMode';
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
