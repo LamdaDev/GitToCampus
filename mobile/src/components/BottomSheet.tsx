@@ -22,7 +22,6 @@ export type BottomSliderHandle = {
   setSnap: (index: number) => void;
 };
 
-
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
   mode: 'detail' | 'search';

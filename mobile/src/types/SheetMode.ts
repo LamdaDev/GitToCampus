@@ -1,1 +1,1 @@
-export type SheetMode='detail'|'search'
+export type SheetMode = 'detail' | 'search';
