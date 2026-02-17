@@ -21,6 +21,7 @@ import MapControls from '../components/MapControls';
 type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
   openBottomSheet: () => void;
+  externalSelectedBuilding: BuildingShape | null;
 };
 
 type UserCoords = { latitude: number; longitude: number };
@@ -90,7 +91,11 @@ const renderPolygonItem = (
   );
 };
 
-export default function MapScreen({ passSelectedBuilding, openBottomSheet }: MapScreenProps) {
+export default function MapScreen({
+  passSelectedBuilding,
+  openBottomSheet,
+  externalSelectedBuilding,
+}: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
@@ -136,6 +141,12 @@ export default function MapScreen({ passSelectedBuilding, openBottomSheet }: Map
       mapRef.current.animateToRegion(targetRegion, 1000);
     }
   }, [selectedCampus]);
+
+  useEffect(() => {
+    if (!externalSelectedBuilding) return;
+    setSelectedBuildingId(externalSelectedBuilding.id);
+    setSelectedCampus(externalSelectedBuilding.campus);
+  }, [externalSelectedBuilding]);
 
   const sgwBuildings = useMemo(() => getCampusBuildingShapes('SGW'), []);
   const loyolaBuildings = useMemo(() => getCampusBuildingShapes('LOYOLA'), []);

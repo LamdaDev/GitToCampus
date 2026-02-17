@@ -73,7 +73,9 @@ export default function BuildingDetails({
       <View style={buildingDetailsStyles.header}>
         <View>
           <Text style={buildingDetailsStyles.title}>{selectedBuilding?.name}</Text>
-          <Text style={buildingDetailsStyles.subtitle}>{selectedBuilding?.address}</Text>
+          <Text style={buildingDetailsStyles.subtitle}>
+            {'(' + selectedBuilding?.shortCode + ') ' + selectedBuilding?.address}
+          </Text>
         </View>
         <View style={buildingDetailsStyles.headerIcons}>
           <TouchableOpacity style={buildingDetailsStyles.iconButton}>

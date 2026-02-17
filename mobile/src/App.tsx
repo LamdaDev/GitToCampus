@@ -1,12 +1,14 @@
-import React, { useRef, useState } from 'react';
-import { SafeAreaView } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { SafeAreaView, LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
 import MapScreen from './screens/MapScreen';
 import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
-
+import { getAllBuildingShapes } from './utils/buildingsRepository';
+import { SheetMode } from './types/SheetMode';
+LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
  * We keep it lightweight and delegate most UI logic to screens/components.
@@ -20,10 +22,35 @@ import AppSearchBar from './components/AppSearchBar';
 const App = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
+  const [sheetMode, setSheetMode] = useState<SheetMode>('detail');
 
-  // Commented out because it is used for the search bar which is currently not implemented. We can uncomment and implement it when we add the search bar back in.
-  // const [search, setSearch] = useState('');
-  const openBottomSheet = () => bottomSheetRef.current?.open();
+  // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const toggleSearchBarState = () => {
+    setSheetOpen(false);
+  };
+
+  const openBuildingDetails = () => {
+    setSheetMode('detail');
+    setSheetOpen(true);
+    bottomSheetRef.current?.open(0);
+  };
+
+  const openSearchBuilding = () => {
+    setSheetMode('search');
+    setSheetOpen(true);
+    bottomSheetRef.current?.open(1);
+  };
+
+  const exitSearchMode = () => {
+    setSheetMode('detail');
+  };
+  /*load once for the searching for specifc buildings
+   * buildings gets passed into bottomSheet then into searchBuilding.tsx
+   */
+
+  const buildings = useMemo(() => getAllBuildingShapes(), []);
 
   const [fontsLoaded] = useFonts({
     gabarito: require('./assets/fonts/Gabarito-Regular.ttf'),
@@ -35,8 +62,23 @@ const App = () => {
   return (
     <GestureHandlerRootView>
       <SafeAreaView style={{ flex: 1 }}>
-        <MapScreen passSelectedBuilding={setSelectedBuilding} openBottomSheet={openBottomSheet} />
-        <BottomSlider selectedBuilding={selectedBuilding} ref={bottomSheetRef} />
+        <MapScreen
+          passSelectedBuilding={setSelectedBuilding}
+          openBottomSheet={openBuildingDetails}
+          externalSelectedBuilding={selectedBuilding}
+        />
+
+        {sheetOpen ? '' : <AppSearchBar openSearch={openSearchBuilding} />}
+
+        <BottomSlider
+          selectedBuilding={selectedBuilding}
+          ref={bottomSheetRef}
+          mode={sheetMode}
+          revealSearchBar={toggleSearchBarState}
+          buildings={buildings}
+          onExitSearch={exitSearchMode}
+          passSelectedBuilding={setSelectedBuilding}
+        />
       </SafeAreaView>
     </GestureHandlerRootView>
   );
