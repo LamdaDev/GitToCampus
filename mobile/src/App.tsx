@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
-import MapScreen from './screens/MapScreen';
+import MapScreen, { UserCoords } from './screens/MapScreen';
 import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
@@ -19,6 +19,8 @@ import AppSearchBar from './components/AppSearchBar';
  */
 const App = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
+  const [userLocation, setUserLocation] = useState<UserCoords | null>(null);
+  const [currentBuilding, setCurrentBuilding] = useState<BuildingShape | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
 
   // Commented out because it is used for the search bar which is currently not implemented. We can uncomment and implement it when we add the search bar back in.
@@ -35,8 +37,18 @@ const App = () => {
   return (
     <GestureHandlerRootView>
       <SafeAreaView style={{ flex: 1 }}>
-        <MapScreen passSelectedBuilding={setSelectedBuilding} openBottomSheet={openBottomSheet} />
-        <BottomSlider selectedBuilding={selectedBuilding} ref={bottomSheetRef} />
+        <MapScreen
+          passSelectedBuilding={setSelectedBuilding}
+          passUserLocation={setUserLocation}
+          passCurrentBuilding={setCurrentBuilding}
+          openBottomSheet={openBottomSheet}
+        />
+        <BottomSlider
+          selectedBuilding={selectedBuilding}
+          userLocation={userLocation}
+          currentBuilding={currentBuilding}
+          ref={bottomSheetRef}
+        />
       </SafeAreaView>
     </GestureHandlerRootView>
   );
