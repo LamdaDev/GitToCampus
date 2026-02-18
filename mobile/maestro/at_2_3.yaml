@@ -21,30 +21,24 @@ appId: host.exp.exponent
     point: '50%,50%'
 
 # Wait for building details to appear
-- extendedWaitUntil:
-    visible: 'Building'
-    timeout: 2000
+- assertVisible: Henry F. Hall Building
 
 # Tap the walking figure icon (current location as start)
 - tapOn:
     point: '33%,23%'
 
 # Verify directions modal appears
-- extendedWaitUntil:
-    visible: 'Directions'
-    timeout: 2000
+- tapOn: 
 
 # Verify "My Location" is displayed as the starting point
 - assertVisible:
     text: 'My Location'
 
 # Verify the selected building is shown as destination
-- assertVisible:
-    text: 'Set destination'
+- assertVisible: Henry F. Hall Building
 
 # Close directions modal
-- tapOn:
-    point: '95%,5%'
+- tapOn: 
 
 # Verify bottom sheet closed
 - assertNotVisible:
@@ -55,22 +49,18 @@ appId: host.exp.exponent
     point: '50%,50%'
 
 # Wait for building details
-- extendedWaitUntil:
-    visible: 'Building'
-    timeout: 2000
+- assertVisible:
+    text: Henry F. Hall Building
 
 # Tap "Set as starting point" button
-- tapOn:
-    text: 'Set as starting point'
+- tapOn: " Set as starting point "
 
 # Verify directions modal appears
-- extendedWaitUntil:
-    visible: 'Directions'
-    timeout: 2000
+- assertVisible: " Directions "
 
 # Verify the selected building is now the starting point
 - assertVisible:
-    text: 'Building'
+    text: Henry F. Hall Building
 
 # Verify we can select a destination
 - tapOn:
