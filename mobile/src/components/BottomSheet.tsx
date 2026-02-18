@@ -50,7 +50,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     },
     ref,
   ) => {
-
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['36%', '75%'], []);
 

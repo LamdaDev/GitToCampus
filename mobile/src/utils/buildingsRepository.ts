@@ -239,9 +239,7 @@ export const findNearestBuildings = (
         }
       : null;
 
-    const distance = centroid
-      ? getDistance(point, centroid)
-      : Number.MAX_VALUE; // No valid polygon = far away
+    const distance = centroid ? getDistance(point, centroid) : Number.MAX_VALUE; // No valid polygon = far away
 
     return { building, distance };
   });

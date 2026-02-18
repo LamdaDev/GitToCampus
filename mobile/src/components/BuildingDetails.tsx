@@ -21,8 +21,8 @@ export default function BuildingDetails({
   selectedBuilding,
   onClose,
   onShowDirections,
-  currentBuilding,
-  userLocation,
+  currentBuilding: _currentBuilding,
+  userLocation: _userLocation,
 }: Readonly<BuildingDetailProps>) {
   const hotspots = selectedBuilding?.hotspots;
   const services = selectedBuilding?.services;

@@ -98,7 +98,7 @@ export default function MapScreen({
   passUserLocation,
   passCurrentBuilding,
   openBottomSheet,
-  externalSelectedBuilding
+  externalSelectedBuilding,
 }: MapScreenProps) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
