@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import BuildingDetails from '../src/components/BuildingDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import React from 'react';
@@ -41,6 +41,10 @@ jest.mock('@expo/vector-icons', () => {
 });
 
 describe('Building Details', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   test('Retrieve building details on the selected building', () => {
     const selectedBuilding = mockBuildings[0];
 
@@ -49,6 +53,8 @@ describe('Building Details', () => {
         selectedBuilding={selectedBuilding}
         onClose={mockOnClose}
         onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
       />,
     );
 
@@ -65,11 +71,53 @@ describe('Building Details', () => {
         selectedBuilding={selectedBuilding}
         onClose={mockOnClose}
         onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
       />,
     );
 
     expect(getByText('EV Building')).toBeTruthy();
     expect(queryByText('HotSpots')).toBeNull();
     expect(queryByText('Services')).toBeNull();
+  });
+
+  test('"Set as starting point" button calls onShowDirections with building as start', () => {
+    const selectedBuilding = mockBuildings[0];
+
+    const { getByText } = render(
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    const setStartButton = getByText('Set as starting point');
+    fireEvent.press(setStartButton);
+
+    expect(mockOnShowDirections).toHaveBeenCalledWith(selectedBuilding);
+    expect(mockOnShowDirections).toHaveBeenCalledTimes(1);
+  });
+
+  test('Walking figure button calls onShowDirections with building as destination', () => {
+    const selectedBuilding = mockBuildings[0];
+
+    const { getByTestId } = render(
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    const walkingButton = getByTestId('walking-figure-button');
+    fireEvent.press(walkingButton);
+
+    expect(mockOnShowDirections).toHaveBeenCalledWith(selectedBuilding, true);
+    expect(mockOnShowDirections).toHaveBeenCalledTimes(1);
   });
 });

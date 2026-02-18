@@ -104,13 +104,29 @@ describe('BottomSheet', () => {
   test('handles null selectedBuilding safely', () => {
     const ref = React.createRef<any>();
 
-    expect(() => render(<BottomSlider ref={ref} selectedBuilding={null} />)).not.toThrow();
+    expect(() =>
+      render(
+        <BottomSlider
+          ref={ref}
+          selectedBuilding={null}
+          userLocation={null}
+          currentBuilding={null}
+        />,
+      ),
+    ).not.toThrow();
   });
 
   test('opens and closes the bottom sheet via Imperative Handler', () => {
     const ref = createRef<BottomSliderHandle>();
 
-    const { getByTestId } = render(<BottomSlider ref={ref} selectedBuilding={null} />);
+    const { getByTestId } = render(
+      <BottomSlider
+        ref={ref}
+        selectedBuilding={null}
+        userLocation={null}
+        currentBuilding={null}
+      />,
+    );
 
     // Check open and close events have been called
     ref.current?.open();
@@ -124,7 +140,14 @@ describe('BottomSheet', () => {
   test('renders the BottomSheet components', () => {
     const ref = React.createRef<any>();
 
-    const { getByTestId } = render(<BottomSlider ref={ref} selectedBuilding={null} />);
+    const { getByTestId } = render(
+      <BottomSlider
+        ref={ref}
+        selectedBuilding={null}
+        userLocation={null}
+        currentBuilding={null}
+      />,
+    );
 
     expect(getByTestId('bottom-sheet')).toBeTruthy();
     expect(getByTestId('bottom-sheet-view')).toBeTruthy();
@@ -134,7 +157,14 @@ describe('BottomSheet', () => {
     const ref = createRef<BottomSliderHandle>();
     const selectedBuilding = mockBuildings[0];
 
-    const { getByTestId } = render(<BottomSlider ref={ref} selectedBuilding={selectedBuilding} />);
+    const { getByTestId } = render(
+      <BottomSlider
+        ref={ref}
+        selectedBuilding={selectedBuilding}
+        userLocation={null}
+        currentBuilding={null}
+      />,
+    );
 
     expect(getByTestId('building-details')).toBeTruthy();
 
@@ -150,7 +180,12 @@ describe('BottomSheet', () => {
     const selectedBuilding = mockBuildings[0];
 
     const { getByTestId, queryByTestId } = render(
-      <BottomSlider ref={ref} selectedBuilding={selectedBuilding} />,
+      <BottomSlider
+        ref={ref}
+        selectedBuilding={selectedBuilding}
+        userLocation={null}
+        currentBuilding={null}
+      />,
     );
 
     // Initially, DirectionDetails should not be visible
@@ -171,7 +206,12 @@ describe('BottomSheet', () => {
     const ref = React.createRef<any>();
 
     const { getByTestId, rerender } = render(
-      <BottomSlider ref={ref} selectedBuilding={mockBuildings[0]} />,
+      <BottomSlider
+        ref={ref}
+        selectedBuilding={mockBuildings[0]}
+        userLocation={null}
+        currentBuilding={null}
+      />,
     );
 
     const directionDetailsButton = getByTestId('on-show-directions');
@@ -179,7 +219,14 @@ describe('BottomSheet', () => {
     fireEvent.press(directionDetailsButton);
 
     // Re-select SAME building
-    rerender(<BottomSlider ref={ref} selectedBuilding={mockBuildings[0]} />);
+    rerender(
+      <BottomSlider
+        ref={ref}
+        selectedBuilding={mockBuildings[0]}
+        userLocation={null}
+        currentBuilding={null}
+      />,
+    );
 
     const destinationBuildingID = getByTestId('destination-id').props.children;
     expect(destinationBuildingID).toBe('sgw-1');
