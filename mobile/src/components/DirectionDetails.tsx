@@ -7,20 +7,48 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
+import type { UserCoords } from '../screens/MapScreen';
 
 type DirectionDetailProps = {
   onClose: () => void;
   startBuilding: BuildingShape | null;
   destinationBuilding: BuildingShape | null;
+  userLocation: UserCoords | null;
+  currentBuilding: BuildingShape | null;
+};
+
+/**
+ * Helper to determine what to display as the start location.
+ * Priority: currentBuilding (user is in a building) > userLocation available > "Set as starting point"
+ */
+const getStartDisplayText = (
+  startBuilding: BuildingShape | null,
+  currentBuilding: BuildingShape | null,
+  userLocation: UserCoords | null,
+): string => {
+  if (startBuilding?.name) {
+    return startBuilding.name;
+  }
+  if (currentBuilding?.name) {
+    return `${currentBuilding.name} (My Location)`;
+  }
+  if (userLocation) {
+    return 'My Location';
+  }
+  return 'Set as starting point';
 };
 
 export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
   onClose,
+  userLocation,
+  currentBuilding,
 }: Readonly<DirectionDetailProps>) {
   const [activeIndex, setActiveIndex] = useState(0);
   const isSelected = (index: number) => activeIndex === index;
+
+  const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
 
   return (
     <>
@@ -40,7 +68,7 @@ export default function DirectionDetails({
             <Ionicons name="navigate" size={20} style={directionDetailsStyles.frontIcon} />
             <TouchableOpacity style={directionDetailsStyles.locationButton}>
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
-                {startBuilding?.name ?? 'Set as starting point'}
+                {startDisplayText}
               </Text>
             </TouchableOpacity>
           </View>
