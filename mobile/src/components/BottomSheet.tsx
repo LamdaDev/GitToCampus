@@ -8,6 +8,8 @@ import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import BuildingDetails from './BuildingDetails';
 import DirectionDetails from './DirectionDetails';
 import type { BuildingShape } from '../types/BuildingShape';
+import type { UserCoords } from '../screens/MapScreen';
+
 export type BottomSliderHandle = {
   open: () => void;
   close: () => void;
@@ -17,10 +19,12 @@ type ViewType = 'building' | 'directions';
 
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
+  userLocation: UserCoords | null;
+  currentBuilding: BuildingShape | null;
 };
 
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
-  ({ selectedBuilding }, ref) => {
+  ({ selectedBuilding, userLocation, currentBuilding }, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = ['33%', '66%'];
 
@@ -32,9 +36,16 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = () => sheetRef.current?.snapToIndex(0); // 33% (use 1 for 66%)
 
-    const showDirections = (building: BuildingShape) => {
-      setStartBuilding(building);
-      setDestinationBuilding(null); // or keep existing if you want
+    const showDirections = (building: BuildingShape, asDestination?: boolean) => {
+      if (asDestination) {
+        // Walking figure: building is destination, start is current location
+        setStartBuilding(null);
+        setDestinationBuilding(building);
+      } else {
+        // "Set as starting point" button: building is start
+        setStartBuilding(building);
+        setDestinationBuilding(null);
+      }
       setActiveView('directions');
     };
 
@@ -70,7 +81,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             <BuildingDetails
               selectedBuilding={selectedBuilding}
               onClose={closeSheet}
-              onShowDirections={showDirections} // pass callback
+              onShowDirections={showDirections}
+              currentBuilding={currentBuilding}
+              userLocation={userLocation}
             />
           )}
           {activeView === 'directions' && (
@@ -78,6 +91,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               onClose={closeSheet}
               startBuilding={startBuilding}
               destinationBuilding={destinationBuilding}
+              userLocation={userLocation}
+              currentBuilding={currentBuilding}
             />
           )}
         </BottomSheetView>
