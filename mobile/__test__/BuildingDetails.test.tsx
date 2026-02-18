@@ -19,6 +19,7 @@ const mockBuildings: BuildingShape[] = [
       'Concordia Multi-Faith and Spirituality Centre':
         'https://www.concordia.ca/equity/spirituality.html',
     },
+    shortCode: 'FC',
     address: '7141 Sherbrooke West',
   },
   {
@@ -32,7 +33,6 @@ const mockBuildings: BuildingShape[] = [
 
 // Icons cause issues during test as they are loaded asynchronously
 jest.mock('@expo/vector-icons', () => {
-  const React = require('react');
   return {
     Ionicons: (props: any) => <span {...props} />,
     MaterialIcons: (props: any) => <span {...props} />,
@@ -54,7 +54,7 @@ describe('Building Details', () => {
 
     expect(getByText('FC Building')).toBeTruthy();
     expect(getByText('Loyola Chapel')).toBeTruthy();
-    expect(getByText('7141 Sherbrooke West')).toBeTruthy();
+    expect(getByText('(FC) 7141 Sherbrooke West')).toBeTruthy();
   });
 
   test('Hotspots and Services are absent when the building has none', () => {

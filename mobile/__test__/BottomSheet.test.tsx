@@ -30,6 +30,14 @@ const mockBuildings: BuildingShape[] = [
   },
 ];
 
+const defaultProps = {
+  mode: 'detail' as const,
+  revealSearchBar: jest.fn(),
+  buildings: mockBuildings,
+  onExitSearch: jest.fn(),
+  passSelectedBuilding: jest.fn(),
+};
+
 jest.mock('@gorhom/bottom-sheet', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -41,16 +49,23 @@ jest.mock('@gorhom/bottom-sheet', () => {
   return {
     __esModule: true,
 
-    default: React.forwardRef((props: { children: any }, ref: any) => {
+    default: React.forwardRef((props: { children: any; onClose?: () => void }, ref: any) => {
       const React = require('react');
-      const { View } = require('react-native');
+      const { View, TouchableOpacity, Text } = require('react-native');
 
       React.useImperativeHandle(ref, () => ({
         snapToIndex: mockSnapToIndex,
         close: mockClose,
       }));
 
-      return <View testID="bottom-sheet">{props.children}</View>;
+      return (
+        <View testID="bottom-sheet">
+          <TouchableOpacity testID="trigger-on-close" onPress={props.onClose}>
+            <Text>Trigger Close</Text>
+          </TouchableOpacity>
+          {props.children}
+        </View>
+      );
     }),
     BottomSheetView: ({ children }: MockProps) => (
       <View testID="bottom-sheet-view">{children}</View>
@@ -83,21 +98,37 @@ jest.mock('../src/components/BuildingDetails', () => {
 jest.mock('../src/components/DirectionDetails', () => {
   const { View, Text, TouchableOpacity } = require('react-native');
 
-  // Mock component
-  return ({ destinationBuilding }: any) => {
-    // Lazy import of mockClose
-    const { mockClose } = require('./BottomSheet.test'); // must be inside function
+  return ({ destinationBuilding, onClose, onPressStart, onPressDestination }: any) => (
+    <View testID="direction-details">
+      <Text testID="destination-id">{destinationBuilding ? destinationBuilding.id : 'none'}</Text>
+      <TouchableOpacity testID="close-directions-button" onPress={onClose}>
+        <Text>Close</Text>
+      </TouchableOpacity>
+      {/* NEW: exposes lines 137-138 */}
+      <TouchableOpacity testID="press-start" onPress={onPressStart}>
+        <Text>Start</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="press-destination" onPress={onPressDestination}>
+        <Text>Destination</Text>
+      </TouchableOpacity>
+    </View>
+  );
+});
 
-    return (
-      <View testID="direction-details">
-        <Text testID="destination-id">{destinationBuilding ? destinationBuilding.id : 'none'}</Text>
-
-        <TouchableOpacity testID="close-directions-button" onPress={mockClose}>
-          <Text>Close</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
+jest.mock('../src/components/SearchSheet', () => {
+  const { View, TouchableOpacity, Text } = require('react-native');
+  return ({ onPressBuilding }: any) => (
+    <View testID="search-sheet">
+      <TouchableOpacity
+        testID="press-building-in-search"
+        onPress={() =>
+          onPressBuilding({ id: 'found-building', name: 'Found Hall', polygons: [], campus: 'SGW' })
+        }
+      >
+        <Text>Select</Text>
+      </TouchableOpacity>
+    </View>
+  );
 });
 
 describe('BottomSheet', () => {
@@ -164,24 +195,144 @@ describe('BottomSheet', () => {
 
     // Optionally test closing DirectionDetails
     fireEvent.press(getByTestId('close-directions-button'));
+
     expect(mockClose).toHaveBeenCalled();
   });
 
   test('useEffect does NOT set destinationBuilding when selecting same building', () => {
     const ref = React.createRef<any>();
-
     const { getByTestId, rerender } = render(
       <BottomSlider ref={ref} selectedBuilding={mockBuildings[0]} />,
     );
-
     const directionDetailsButton = getByTestId('on-show-directions');
 
     fireEvent.press(directionDetailsButton);
 
-    // Re-select SAME building
     rerender(<BottomSlider ref={ref} selectedBuilding={mockBuildings[0]} />);
 
     const destinationBuildingID = getByTestId('destination-id').props.children;
+
     expect(destinationBuildingID).toBe('sgw-1');
+  });
+
+  test('setSnap calls snapToIndex via imperative handle', () => {
+    const ref = createRef<BottomSliderHandle>();
+    render(<BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} />);
+    ref.current?.setSnap(1);
+
+    expect(mockSnapToIndex).toHaveBeenCalledWith(1);
+  });
+
+  test('handleSheetClose calls revealSearchBar', () => {
+    const revealSearchBar = jest.fn();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={null}
+        revealSearchBar={revealSearchBar}
+      />,
+    );
+    fireEvent.press(getByTestId('trigger-on-close'));
+
+    expect(revealSearchBar).toHaveBeenCalled();
+  });
+
+  test('renders SearchSheet when mode is search', () => {
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="search" />,
+    );
+
+    expect(getByTestId('search-sheet')).toBeTruthy();
+  });
+
+  test('selecting a building in search mode calls passSelectedBuilding and onExitSearch', () => {
+    const passSelectedBuilding = jest.fn();
+    const onExitSearch = jest.fn();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={null}
+        mode="search"
+        passSelectedBuilding={passSelectedBuilding}
+        onExitSearch={onExitSearch}
+      />,
+    );
+
+    fireEvent.press(getByTestId('press-building-in-search'));
+
+    expect(passSelectedBuilding).toHaveBeenCalled();
+    expect(onExitSearch).toHaveBeenCalled();
+  });
+
+  test('pressing start in directions shows SearchSheet', () => {
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
+    );
+    fireEvent.press(getByTestId('on-show-directions'));
+    fireEvent.press(getByTestId('press-start'));
+
+    expect(getByTestId('search-sheet')).toBeTruthy();
+  });
+
+  test('pressing destination in directions shows SearchSheet', () => {
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions'));
+    fireEvent.press(getByTestId('press-destination'));
+
+    expect(getByTestId('search-sheet')).toBeTruthy();
+  });
+
+  test('selecting a building from internal search returns to directions view', () => {
+    const passSelectedBuilding = jest.fn();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[0]}
+        passSelectedBuilding={passSelectedBuilding}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions'));
+    fireEvent.press(getByTestId('press-start'));
+    fireEvent.press(getByTestId('press-building-in-search'));
+
+    expect(passSelectedBuilding).toHaveBeenCalled();
+    expect(getByTestId('direction-details')).toBeTruthy();
+  });
+
+  test('snaps to index 1 when mode switches to search', () => {
+    jest.useFakeTimers();
+
+    const { rerender } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="detail" />,
+    );
+
+    rerender(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="search" />,
+    );
+
+    jest.runAllTimers();
+    expect(mockSnapToIndex).toHaveBeenCalledWith(1);
+    jest.useRealTimers();
+  });
+
+  test('useEffect sets destinationBuilding when selectedBuilding changes in directions view', () => {
+    const { getByTestId, rerender } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions'));
+
+    rerender(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[1]} />,
+    );
+
+    expect(getByTestId('destination-id').props.children).toBe('loy-1');
   });
 });
