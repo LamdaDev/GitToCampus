@@ -33,7 +33,7 @@ describe('location utils', () => {
 
     const result = await getCurrentLocation();
 
-    expect(result).toEqual(mockPosition);
+    expect(result).toEqual({ latitude: 45.5, longitude: -73.57 });
     expect((locationMock as any).getCurrentPositionAsync).toHaveBeenCalledWith({
       accuracy: Location.Accuracy.Balanced,
     });

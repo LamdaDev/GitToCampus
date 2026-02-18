@@ -15,6 +15,8 @@ type DirectionDetailProps = {
   destinationBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
   currentBuilding: BuildingShape | null;
+  onPressStart?: () => void;
+  onPressDestination?: () => void;
 };
 
 /**
@@ -44,22 +46,13 @@ export default function DirectionDetails({
   onClose,
   userLocation,
   currentBuilding,
+  onPressStart,
+  onPressDestination,
 }: Readonly<DirectionDetailProps>) {
   const [activeIndex, setActiveIndex] = useState(0);
   const isSelected = (index: number) => activeIndex === index;
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
-
-  const onPressDestination = (): void => {
-    // Navigate to building selection or open a modal to select destination
-    // This would typically trigger navigation or state update to allow user to pick a building
-    console.log('Destination pressed');
-  };
-
-  const onPressStart = (): void => {
-    // Navigate to building selection or open a modal to select start location
-    console.log('Start location pressed');
-  };
 
   return (
     <>

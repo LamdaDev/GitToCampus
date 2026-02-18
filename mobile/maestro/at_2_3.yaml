@@ -1,0 +1,72 @@
+appId: host.exp.exponent
+---
+# Test: Automatic starting point detection based on user location
+# User Story: Set starting point automatically based on where I am
+# Acceptance Criteria:
+# 1. Clicking the walking figure sets current location as start
+# 2. Selected building becomes the destination
+# 3. "My Location" is displayed as starting point when available
+# 4. Manual "Set as starting point" still works as alternative
+
+- launchApp
+- openLink: 'exp://10.0.2.2:8081'
+
+# Wait for map to load and SGW campus to be visible
+- assertVisible:
+    text: 'SGW'
+    delay: 2000
+
+# Tap on a building polygon to select it
+- tapOn:
+    point: '50%,50%'
+
+# Wait for building details to appear
+- assertVisible: Henry F. Hall Building
+
+# Tap the walking figure icon (current location as start)
+- tapOn:
+    point: '33%,23%'
+
+# Verify directions modal appears
+- tapOn: 
+
+# Verify "My Location" is displayed as the starting point
+- assertVisible:
+    text: 'My Location'
+
+# Verify the selected building is shown as destination
+- assertVisible: Henry F. Hall Building
+
+# Close directions modal
+- tapOn: 
+
+# Verify bottom sheet closed
+- assertNotVisible:
+    text: 'Directions'
+
+# Now test the "Set as starting point" button as alternative
+- tapOn:
+    point: '50%,50%'
+
+# Wait for building details
+- assertVisible:
+    text: Henry F. Hall Building
+
+# Tap "Set as starting point" button
+- tapOn: " Set as starting point "
+
+# Verify directions modal appears
+- assertVisible: " Directions "
+
+# Verify the selected building is now the starting point
+- assertVisible:
+    text: Henry F. Hall Building
+
+# Verify we can select a destination
+- tapOn:
+    point: '50%,80%'
+
+# Verify destination is set
+- extendedWaitUntil:
+    visible: 'Set destination'
+    timeout: 1000

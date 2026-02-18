@@ -23,7 +23,7 @@ type MapScreenProps = {
   passUserLocation: React.Dispatch<React.SetStateAction<UserCoords | null>>;
   passCurrentBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
   openBottomSheet: () => void;
-  externalSelectedBuilding: BuildingShape | null;
+  externalSelectedBuilding?: BuildingShape | null;
 };
 
 export type UserCoords = { latitude: number; longitude: number };

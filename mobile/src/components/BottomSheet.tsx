@@ -165,6 +165,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               destinationBuilding={destinationBuilding}
               userLocation={userLocation}
               currentBuilding={currentBuilding}
+              onPressStart={() => setSearchFor('start')}
+              onPressDestination={() => setSearchFor('destination')}
             />
           )}
         </BottomSheetView>
