@@ -7,20 +7,35 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
+import type { UserCoords } from '../screens/MapScreen';
 
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
   onClose: () => void;
-  onShowDirections: (building: BuildingShape) => void;
+  onShowDirections: (building: BuildingShape, asDestination?: boolean) => void;
+  currentBuilding: BuildingShape | null;
+  userLocation: UserCoords | null;
 };
 
 export default function BuildingDetails({
   selectedBuilding,
   onClose,
   onShowDirections,
+  currentBuilding,
+  userLocation,
 }: Readonly<BuildingDetailProps>) {
   const hotspots = selectedBuilding?.hotspots;
   const services = selectedBuilding?.services;
+
+  /**
+   * Handle the walking figure button press.
+   * Sets the selected building as destination with current location as start.
+   */
+  const handleWalkingFigurePress = () => {
+    if (selectedBuilding) {
+      onShowDirections(selectedBuilding, true);
+    }
+  };
 
   /**
    * hotspotsSection & servicesSection loads any information if present, else it will render nothing
@@ -28,7 +43,11 @@ export default function BuildingDetails({
   const navigationSection = (
     <Section title="Navigation">
       <View style={buildingDetailsStyles.navigationSection}>
-        <TouchableOpacity style={buildingDetailsStyles.navigationButton}>
+        <TouchableOpacity
+          testID="walking-figure-button"
+          style={buildingDetailsStyles.navigationButton}
+          onPress={handleWalkingFigurePress}
+        >
           <Ionicons name="walk" size={25} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity
