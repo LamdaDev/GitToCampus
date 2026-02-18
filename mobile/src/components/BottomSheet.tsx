@@ -15,6 +15,8 @@ import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import BuildingDetails from './BuildingDetails';
 import DirectionDetails from './DirectionDetails';
 import type { BuildingShape } from '../types/BuildingShape';
+import type { UserCoords } from '../screens/MapScreen';
+
 import SearchSheet from './SearchSheet';
 export type BottomSliderHandle = {
   open: (index?: number) => void;
@@ -24,6 +26,9 @@ export type BottomSliderHandle = {
 
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
+  userLocation: UserCoords | null;
+  currentBuilding: BuildingShape | null;
+
   mode: 'detail' | 'search';
   revealSearchBar: () => void;
   buildings: BuildingShape[];
@@ -33,7 +38,16 @@ type BottomSheetProps = {
 
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
   (
-    { selectedBuilding, mode, revealSearchBar, buildings, onExitSearch, passSelectedBuilding },
+    {
+      selectedBuilding,
+      userLocation,
+      currentBuilding,
+      mode,
+      revealSearchBar,
+      buildings,
+      onExitSearch,
+      passSelectedBuilding,
+    },
     ref,
   ) => {
     const sheetRef = useRef<BottomSheet>(null);
@@ -54,9 +68,16 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
 
-    const showDirections = (building: BuildingShape) => {
-      setStartBuilding(building);
-      setDestinationBuilding(null);
+    const showDirections = (building: BuildingShape, asDestination?: boolean) => {
+      if (asDestination) {
+        // Walking figure: building is destination, start is current location
+        setStartBuilding(null);
+        setDestinationBuilding(building);
+      } else {
+        // "Set as starting point" button: building is start
+        setStartBuilding(building);
+        setDestinationBuilding(null);
+      }
       setActiveView('directions');
     };
 
@@ -108,36 +129,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setSnap: setSnapPoint,
     }));
 
-    const renderContent = () => {
-      if (searchFor) {
-        return <SearchSheet buildings={buildings} onPressBuilding={handleInternalSearch} />;
-      }
-
-      if (mode === 'search') {
-        return <SearchSheet buildings={buildings} onPressBuilding={closeSearchBuilding} />;
-      }
-
-      if (activeView === 'building') {
-        return (
-          <BuildingDetails
-            selectedBuilding={selectedBuilding}
-            onClose={closeSheet}
-            onShowDirections={showDirections}
-          />
-        );
-      }
-      if (activeView === 'directions')
-        return (
-          <DirectionDetails
-            onClose={closeSheet}
-            startBuilding={startBuilding}
-            destinationBuilding={destinationBuilding}
-            onPressStart={() => setSearchFor('start')}
-            onPressDestination={() => setSearchFor('destination')}
-          />
-        );
-    };
-
     return (
       <BottomSheet
         ref={sheetRef}
@@ -150,7 +141,35 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         enableDynamicSizing={false}
         onClose={handleSheetClose}
       >
-        <BottomSheetView style={buildingDetailsStyles.container}>{renderContent()}</BottomSheetView>
+        <BottomSheetView style={buildingDetailsStyles.container}>
+          {searchFor && (
+            <SearchSheet buildings={buildings} onPressBuilding={handleInternalSearch} />
+          )}
+          {mode === 'search' && (
+            <SearchSheet buildings={buildings} onPressBuilding={closeSearchBuilding} />
+          )}
+          {activeView === 'building' && (
+            <BuildingDetails
+              selectedBuilding={selectedBuilding}
+              onClose={closeSheet}
+              onShowDirections={showDirections}
+              currentBuilding={currentBuilding}
+              userLocation={userLocation}
+            />
+          )}
+          {activeView === 'directions' && (
+            <DirectionDetails
+              onClose={closeSheet}
+              startBuilding={startBuilding}
+              destinationBuilding={destinationBuilding}
+              userLocation={userLocation}
+              currentBuilding={currentBuilding}
+              onPressStart={() => setSearchFor('start')}
+              onPressDestination={() => setSearchFor('destination')}
+            />
+          )}
+        </BottomSheetView>
+        {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>
     );
   },

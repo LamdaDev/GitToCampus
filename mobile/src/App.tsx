@@ -1,8 +1,9 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { SafeAreaView, LogBox } from 'react-native';
+import { LogBox } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
-import MapScreen from './screens/MapScreen';
+import MapScreen, { UserCoords } from './screens/MapScreen';
 import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
@@ -21,6 +22,8 @@ LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into 
  */
 const App = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
+  const [userLocation, setUserLocation] = useState<UserCoords | null>(null);
+  const [currentBuilding, setCurrentBuilding] = useState<BuildingShape | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
   const [sheetMode, setSheetMode] = useState<SheetMode>('detail');
 
@@ -64,6 +67,8 @@ const App = () => {
       <SafeAreaView style={{ flex: 1 }}>
         <MapScreen
           passSelectedBuilding={setSelectedBuilding}
+          passUserLocation={setUserLocation}
+          passCurrentBuilding={setCurrentBuilding}
           openBottomSheet={openBuildingDetails}
           externalSelectedBuilding={selectedBuilding}
         />
@@ -71,6 +76,8 @@ const App = () => {
         {sheetOpen ? '' : <AppSearchBar openSearch={openSearchBuilding} />}
 
         <BottomSlider
+          userLocation={userLocation}
+          currentBuilding={currentBuilding}
           selectedBuilding={selectedBuilding}
           ref={bottomSheetRef}
           mode={sheetMode}

@@ -212,3 +212,38 @@ export const findClosestCampus = (userCoords: { latitude: number; longitude: num
 
   return distanceToSGW <= distanceToLoyola ? 'SGW' : 'LOYOLA';
 };
+
+/**
+ * Find the nearest building(s) to a given point.
+ * Returns an array sorted by distance (closest first).
+ * Useful for GPS drift scenarios where user is between buildings.
+ * Limit defaults to 5 to avoid overwhelming suggestions.
+ */
+export const findNearestBuildings = (
+  point: { latitude: number; longitude: number },
+  limit: number = 5,
+): Array<{ building: BuildingShape; distance: number }> => {
+  const closestCampus = findClosestCampus(point);
+  const campusBuildings = getCampusBuildingShapes(closestCampus);
+
+  const buildingsWithDistance = campusBuildings.map((building) => {
+    // Calculate distance to building's centroid
+    const centroid = building.polygons[0]
+      ? {
+          latitude:
+            building.polygons[0].reduce((sum, p) => sum + p.latitude, 0) /
+            building.polygons[0].length,
+          longitude:
+            building.polygons[0].reduce((sum, p) => sum + p.longitude, 0) /
+            building.polygons[0].length,
+        }
+      : null;
+
+    const distance = centroid ? getDistance(point, centroid) : Number.MAX_VALUE; // No valid polygon = far away
+
+    return { building, distance };
+  });
+
+  // Sort by distance and return top N
+  return buildingsWithDistance.sort((a, b) => a.distance - b.distance).slice(0, limit);
+};

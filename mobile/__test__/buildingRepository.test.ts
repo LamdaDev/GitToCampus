@@ -226,7 +226,12 @@ const baseAssets = (): Assets => ({
   campusOutlines: { type: 'FeatureCollection', features: [] },
 });
 
-const loadRepository = (assets: Assets) => {
+const loadRepository = (
+  assets: Assets,
+  options?: {
+    getFeaturePolygonsMock?: jest.Mock;
+  },
+) => {
   jest.resetModules();
 
   const getDistanceMock = jest.fn();
@@ -246,6 +251,9 @@ const loadRepository = (assets: Assets) => {
     return {
       ...actual,
       isPointInAnyPolygon: isPointInAnyPolygonMock,
+      ...(options?.getFeaturePolygonsMock
+        ? { getFeaturePolygons: options.getFeaturePolygonsMock }
+        : {}),
     };
   });
 
@@ -379,5 +387,63 @@ describe('buildingsRepository', () => {
 
     expect(building?.campus).toBe('LOYOLA');
     expect(mocks.getCampusRegionMock).toHaveBeenCalledWith('LOYOLA');
+  });
+
+  test('findNearestBuildings sorts by distance on the closest campus with default limit', () => {
+    const { repo, mocks } = loadRepository(baseAssets());
+    mocks.getDistanceMock
+      .mockReturnValueOnce(100) // findClosestCampus: SGW
+      .mockReturnValueOnce(600) // findClosestCampus: LOYOLA
+      .mockReturnValueOnce(250) // SGW building 1 centroid
+      .mockReturnValueOnce(90); // SGW building 4 centroid
+
+    const results = repo.findNearestBuildings({ latitude: 45.499, longitude: -73.579 });
+
+    expect(results).toHaveLength(2);
+    expect(results.map((r: { building: BuildingShape }) => r.building.id)).toEqual(['4', '1']);
+    expect(results.map((r: { distance: number }) => r.distance)).toEqual([90, 250]);
+  });
+
+  test('findNearestBuildings respects custom limit and nearest-campus selection', () => {
+    const { repo, mocks } = loadRepository(baseAssets());
+    mocks.getDistanceMock
+      .mockReturnValueOnce(700) // findClosestCampus: SGW
+      .mockReturnValueOnce(100) // findClosestCampus: LOYOLA
+      .mockReturnValueOnce(500) // LOYOLA building 2 centroid
+      .mockReturnValueOnce(80); // LOYOLA building 3 centroid
+
+    const results = repo.findNearestBuildings({ latitude: 45.458, longitude: -73.64 }, 1);
+
+    expect(results).toHaveLength(1);
+    expect(results[0].building.id).toBe('3');
+    expect(results[0].building.campus).toBe('LOYOLA');
+    expect(results[0].distance).toBe(80);
+  });
+
+  test('findNearestBuildings assigns MAX_VALUE when a building has no first polygon', () => {
+    const actualGeoJson = jest.requireActual('../src/utils/geoJson');
+    const getFeaturePolygonsMock = jest.fn((feature: any) => {
+      const id = feature?.properties?.unique_id;
+      if (id === '4') return [undefined];
+      return actualGeoJson.getFeaturePolygons(feature);
+    });
+
+    const { repo, mocks } = loadRepository(baseAssets(), { getFeaturePolygonsMock });
+    mocks.getDistanceMock
+      .mockReturnValueOnce(100) // findClosestCampus: SGW
+      .mockReturnValueOnce(600) // findClosestCampus: LOYOLA
+      .mockReturnValueOnce(120); // SGW building 1 centroid (only valid centroid call)
+
+    const results = repo.findNearestBuildings({ latitude: 45.499, longitude: -73.579 });
+    const byId = new Map(
+      results.map((r: { building: BuildingShape; distance: number }) => [
+        r.building.id,
+        r.distance,
+      ]),
+    );
+
+    expect(byId.get('1')).toBe(120);
+    expect(byId.get('4')).toBe(Number.MAX_VALUE);
+    expect(mocks.getDistanceMock).toHaveBeenCalledTimes(3);
   });
 });

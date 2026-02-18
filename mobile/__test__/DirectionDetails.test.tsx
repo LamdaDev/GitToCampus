@@ -43,6 +43,8 @@ describe('Direction Details', () => {
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[1]}
         onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
       />,
     );
 
@@ -52,11 +54,60 @@ describe('Direction Details', () => {
 
   test('renders default placeholders when no building is selected', () => {
     const { getByText } = render(
-      <DirectionDetails startBuilding={null} destinationBuilding={null} onClose={jest.fn()} />,
+      <DirectionDetails
+        startBuilding={null}
+        destinationBuilding={null}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+      />,
     );
 
     expect(getByText('Set as starting point')).toBeTruthy();
     expect(getByText('Set destination')).toBeTruthy();
+  });
+
+  test('displays "My Location" when user location is available but not in a building', () => {
+    const { getByText } = render(
+      <DirectionDetails
+        startBuilding={null}
+        destinationBuilding={null}
+        onClose={jest.fn()}
+        userLocation={{ latitude: 45.5, longitude: -73.57 }}
+        currentBuilding={null}
+      />,
+    );
+
+    expect(getByText('My Location')).toBeTruthy();
+  });
+
+  test('displays current building with "My Location" suffix when user is in a building', () => {
+    const { getByText } = render(
+      <DirectionDetails
+        startBuilding={null}
+        destinationBuilding={null}
+        onClose={jest.fn()}
+        userLocation={{ latitude: 45.5, longitude: -73.57 }}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    expect(getByText('FC Building (My Location)')).toBeTruthy();
+  });
+
+  test('prioritizes explicit start building over current location', () => {
+    const { getByText, queryByText } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[1]}
+        destinationBuilding={null}
+        onClose={jest.fn()}
+        userLocation={{ latitude: 45.5, longitude: -73.57 }}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    expect(getByText('EV Building')).toBeTruthy();
+    expect(queryByText('My Location')).toBeNull();
   });
 
   test('updates activeIndex when transportation buttons are pressed', () => {
@@ -65,6 +116,8 @@ describe('Direction Details', () => {
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[1]}
         onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
       />,
     );
 

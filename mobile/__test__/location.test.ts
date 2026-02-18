@@ -1,6 +1,10 @@
 import * as Linking from 'expo-linking';
 import * as Location from 'expo-location';
-import { getCurrentLocation } from '../src/utils/location';
+import {
+  getCurrentLocation,
+  getLocationPermissionStatus,
+  hasLocationPermission,
+} from '../src/utils/location';
 
 jest.mock('expo-linking', () => ({
   openSettings: jest.fn(),
@@ -33,7 +37,7 @@ describe('location utils', () => {
 
     const result = await getCurrentLocation();
 
-    expect(result).toEqual(mockPosition);
+    expect(result).toEqual({ latitude: 45.5, longitude: -73.57 });
     expect((locationMock as any).getCurrentPositionAsync).toHaveBeenCalledWith({
       accuracy: Location.Accuracy.Balanced,
     });
@@ -68,5 +72,65 @@ describe('location utils', () => {
     expect(result).toBeNull();
     expect(linkingMock.openSettings).toHaveBeenCalledTimes(1);
     expect((locationMock as any).getCurrentPositionAsync).not.toHaveBeenCalled();
+  });
+
+  test('getLocationPermissionStatus returns granted', async () => {
+    locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
+      status: 'granted',
+      granted: true,
+      canAskAgain: true,
+      expires: 'never',
+    } as any);
+
+    const result = await getLocationPermissionStatus();
+    expect(result).toBe('granted');
+  });
+
+  test('getLocationPermissionStatus returns denied', async () => {
+    locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
+      status: 'denied',
+      granted: false,
+      canAskAgain: true,
+      expires: 'never',
+    } as any);
+
+    const result = await getLocationPermissionStatus();
+    expect(result).toBe('denied');
+  });
+
+  test('getLocationPermissionStatus returns undetermined for non-granted/denied status', async () => {
+    locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
+      status: 'undetermined',
+      granted: false,
+      canAskAgain: true,
+      expires: 'never',
+    } as any);
+
+    const result = await getLocationPermissionStatus();
+    expect(result).toBe('undetermined');
+  });
+
+  test('hasLocationPermission returns true when status is granted', async () => {
+    locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
+      status: 'granted',
+      granted: true,
+      canAskAgain: true,
+      expires: 'never',
+    } as any);
+
+    const result = await hasLocationPermission();
+    expect(result).toBe(true);
+  });
+
+  test('hasLocationPermission returns false when status is denied', async () => {
+    locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
+      status: 'denied',
+      granted: false,
+      canAskAgain: true,
+      expires: 'never',
+    } as any);
+
+    const result = await hasLocationPermission();
+    expect(result).toBe(false);
   });
 });

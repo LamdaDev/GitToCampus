@@ -20,11 +20,13 @@ import MapControls from '../components/MapControls';
 
 type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
+  passUserLocation: React.Dispatch<React.SetStateAction<UserCoords | null>>;
+  passCurrentBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
   openBottomSheet: () => void;
-  externalSelectedBuilding: BuildingShape | null;
+  externalSelectedBuilding?: BuildingShape | null;
 };
 
-type UserCoords = { latitude: number; longitude: number };
+export type UserCoords = { latitude: number; longitude: number };
 
 const LOCATION_OPTIONS: Location.LocationOptions = {
   accuracy: Location.Accuracy.Balanced,
@@ -93,14 +95,28 @@ const renderPolygonItem = (
 
 export default function MapScreen({
   passSelectedBuilding,
+  passUserLocation,
+  passCurrentBuilding,
   openBottomSheet,
   externalSelectedBuilding,
-}: Readonly<MapScreenProps>) {
+}: MapScreenProps) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
+  const [currentBuildingId, setCurrentBuildingId] = useState<string | null>(null);
 
   const mapRef = useRef<any>(null);
+
+  // Pass user location to parent
+  useEffect(() => {
+    passUserLocation(userCoords);
+  }, [userCoords, passUserLocation]);
+
+  // Pass current building to parent
+  useEffect(() => {
+    const building = currentBuildingId ? getBuildingShapeById(currentBuildingId) : null;
+    passCurrentBuilding(building ?? null);
+  }, [currentBuildingId, passCurrentBuilding]);
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -124,10 +140,12 @@ export default function MapScreen({
 
       if (building) {
         setSelectedBuildingId(building.id);
+        setCurrentBuildingId(building.id);
         setSelectedCampus(building.campus);
       } else {
         // Clear that selection when user is no longer inside a building
         setSelectedBuildingId(null);
+        setCurrentBuildingId(null);
       }
     } catch (err) {
       // Don't crash on unexpected geometry errors
