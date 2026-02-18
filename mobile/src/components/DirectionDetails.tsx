@@ -28,16 +28,10 @@ const getStartDisplayText = (
   currentBuilding: BuildingShape | null,
   userLocation: UserCoords | null,
 ): string => {
-  if (startBuilding?.name) {
-    return startBuilding.name;
-  }
-  if (currentBuilding?.name) {
-    return `${currentBuilding.name} (My Location)`;
-  }
-  if (userLocation) {
-    return 'My Location';
-  }
-  return 'Set as starting point';
+  if (startBuilding?.name) return startBuilding.name;
+  if (currentBuilding?.name) return `${currentBuilding.name} (My Location)`;
+  if (userLocation) return 'My Location';
+  else return 'Set as starting point';
 };
 
 export default function DirectionDetails({
