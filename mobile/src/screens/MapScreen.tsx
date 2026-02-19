@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
-import MapView, { Marker, Polygon, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 import type { Campus } from '../types/Campus';
@@ -11,10 +11,11 @@ import {
   getBuildingShapeById,
   findBuildingAt,
 } from '../utils/buildingsRepository';
-import type { PolygonRenderItem } from '../types/Map';
+import type { OutdoorRouteOverlay, PolygonRenderItem } from '../types/Map';
 
 import { BuildingShape } from '../types/BuildingShape';
 import { centroidOfPolygon } from '../utils/geoJson';
+import { decodePolyline } from '../utils/polyline';
 
 import MapControls from '../components/MapControls';
 
@@ -24,6 +25,7 @@ type MapScreenProps = {
   passCurrentBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
   openBottomSheet: () => void;
   externalSelectedBuilding?: BuildingShape | null;
+  outdoorRoute?: OutdoorRouteOverlay | null;
 };
 
 export type UserCoords = { latitude: number; longitude: number };
@@ -99,6 +101,7 @@ export default function MapScreen({
   passCurrentBuilding,
   openBottomSheet,
   externalSelectedBuilding,
+  outdoorRoute,
 }: MapScreenProps) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -227,6 +230,11 @@ export default function MapScreen({
   const showSelectedMarker = Boolean(
     selectedBuildingId && selectedBuilding && selectedMarkerCoordinate,
   );
+  const routeCoordinates = useMemo(
+    () => decodePolyline(outdoorRoute?.encodedPolyline ?? ''),
+    [outdoorRoute?.encodedPolyline],
+  );
+  const showRoute = routeCoordinates.length > 1 && Boolean(outdoorRoute);
 
   const selectedMarker = showSelectedMarker ? (
     <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} />
@@ -254,6 +262,28 @@ export default function MapScreen({
       <MapView {...mapProps}>
         {renderedPolygons}
         {selectedMarker}
+        {showRoute && (
+          <>
+            <Polyline
+              testID="route-polyline"
+              coordinates={routeCoordinates}
+              strokeColor="#2F80ED"
+              strokeWidth={6}
+            />
+            <Marker
+              testID="route-start-marker"
+              coordinate={outdoorRoute!.start}
+              title="Route start"
+              pinColor="green"
+            />
+            <Marker
+              testID="route-end-marker"
+              coordinate={outdoorRoute!.destination}
+              title="Route destination"
+              pinColor="red"
+            />
+          </>
+        )}
       </MapView>
       <MapControls
         selectedCampus={selectedCampus}

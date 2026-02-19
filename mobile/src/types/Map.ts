@@ -11,3 +11,9 @@ export type PolygonRenderItem = {
   campus: Campus;
   coordinates: LatLng[];
 };
+
+export type OutdoorRouteOverlay = {
+  encodedPolyline: string;
+  start: LatLng;
+  destination: LatLng;
+};

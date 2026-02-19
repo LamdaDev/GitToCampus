@@ -27,6 +27,8 @@ jest.mock('react-native-maps', () => {
   });
 
   const MockPolygon = (props: any) => React.createElement(View, props, props.children);
+  const MockPolyline = (props: any) =>
+    React.createElement(View, { ...props, testID: props.testID ?? 'map-polyline' }, props.children);
   const MockMarker = (props: any) =>
     React.createElement(View, { ...props, testID: props.testID ?? 'map-marker' }, props.children);
 
@@ -35,6 +37,7 @@ jest.mock('react-native-maps', () => {
     default: MockMapView,
     Marker: MockMarker,
     Polygon: MockPolygon,
+    Polyline: MockPolyline,
     PROVIDER_GOOGLE: 'google',
   };
 });
@@ -459,5 +462,33 @@ describe('MapScreen', () => {
 
     unmount();
     expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  test('renders route polyline with start and end markers when outdoorRoute is provided', async () => {
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{
+          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+          start: { latitude: 45.5, longitude: -73.57 },
+          destination: { latitude: 45.49, longitude: -73.58 },
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline')).toBeTruthy();
+      expect(getByTestId('route-start-marker').props.coordinate).toEqual({
+        latitude: 45.5,
+        longitude: -73.57,
+      });
+      expect(getByTestId('route-end-marker').props.coordinate).toEqual({
+        latitude: 45.49,
+        longitude: -73.58,
+      });
+    });
   });
 });

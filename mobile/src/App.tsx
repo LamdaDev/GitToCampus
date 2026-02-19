@@ -9,6 +9,7 @@ import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
 import { getAllBuildingShapes } from './utils/buildingsRepository';
 import { SheetMode } from './types/SheetMode';
+import type { OutdoorRouteOverlay } from './types/Map';
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -24,6 +25,7 @@ const App = () => {
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
   const [userLocation, setUserLocation] = useState<UserCoords | null>(null);
   const [currentBuilding, setCurrentBuilding] = useState<BuildingShape | null>(null);
+  const [outdoorRoute, setOutdoorRoute] = useState<OutdoorRouteOverlay | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
   const [sheetMode, setSheetMode] = useState<SheetMode>('detail');
 
@@ -71,6 +73,7 @@ const App = () => {
           passCurrentBuilding={setCurrentBuilding}
           openBottomSheet={openBuildingDetails}
           externalSelectedBuilding={selectedBuilding}
+          outdoorRoute={outdoorRoute}
         />
 
         {sheetOpen ? '' : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -85,6 +88,7 @@ const App = () => {
           buildings={buildings}
           onExitSearch={exitSearchMode}
           passSelectedBuilding={setSelectedBuilding}
+          passOutdoorRoute={setOutdoorRoute}
         />
       </SafeAreaView>
     </GestureHandlerRootView>
