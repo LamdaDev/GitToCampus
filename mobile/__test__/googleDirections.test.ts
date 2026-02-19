@@ -3,10 +3,16 @@ import { DirectionsServiceError } from '../src/types/Directions';
 
 describe('googleDirections service', () => {
   const originalFetch = global.fetch;
+  const originalApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const baseRequest = {
+    origin: { latitude: 45.5, longitude: -73.57 },
+    destination: { latitude: 45.49, longitude: -73.58 },
+  };
 
   afterEach(() => {
     jest.restoreAllMocks();
     global.fetch = originalFetch;
+    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY = originalApiKey;
   });
 
   test('builds expected request URL', () => {
@@ -177,5 +183,269 @@ describe('googleDirections service', () => {
       code: 'NETWORK_ERROR',
       providerMessage: 'timeout',
     });
+  });
+
+  test('builds URL for driving mode without optional fields', () => {
+    const url = buildDirectionsApiUrl(baseRequest, 'abc123', 'driving');
+
+    expect(url).toContain('mode=driving');
+    expect(url).toContain('units=metric');
+    expect(url).not.toContain('language=');
+    expect(url).not.toContain('departure_time=');
+  });
+
+  test('builds URL for transit mode with imperial units', () => {
+    const url = buildDirectionsApiUrl(
+      {
+        ...baseRequest,
+        units: 'imperial',
+      },
+      'abc123',
+      'transit',
+    );
+
+    expect(url).toContain('mode=transit');
+    expect(url).toContain('units=imperial');
+  });
+
+  test('throws INVALID_COORDINATES when coordinates are not finite', async () => {
+    await expect(
+      fetchOutdoorDirections(
+        {
+          origin: { latitude: Number.NaN, longitude: -73.57 },
+          destination: { latitude: 45.49, longitude: -73.58 },
+        },
+        'abc123',
+      ),
+    ).rejects.toMatchObject<Partial<DirectionsServiceError>>({
+      code: 'INVALID_COORDINATES',
+    });
+  });
+
+  test('maps OVER_DAILY_LIMIT to OVER_QUERY_LIMIT', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OVER_DAILY_LIMIT',
+      }),
+    }) as unknown as typeof fetch;
+
+    await expect(fetchOutdoorDirections(baseRequest, 'abc123')).rejects.toMatchObject<
+      Partial<DirectionsServiceError>
+    >({
+      code: 'OVER_QUERY_LIMIT',
+      providerStatus: 'OVER_DAILY_LIMIT',
+    });
+  });
+
+  test('maps MAX_WAYPOINTS_EXCEEDED to INVALID_REQUEST', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'MAX_WAYPOINTS_EXCEEDED',
+      }),
+    }) as unknown as typeof fetch;
+
+    await expect(fetchOutdoorDirections(baseRequest, 'abc123')).rejects.toMatchObject<
+      Partial<DirectionsServiceError>
+    >({
+      code: 'INVALID_REQUEST',
+      providerStatus: 'MAX_WAYPOINTS_EXCEEDED',
+    });
+  });
+
+  test('maps UNKNOWN_ERROR to API_ERROR with fallback message', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'UNKNOWN_ERROR',
+      }),
+    }) as unknown as typeof fetch;
+
+    await expect(fetchOutdoorDirections(baseRequest, 'abc123')).rejects.toMatchObject<
+      Partial<DirectionsServiceError>
+    >({
+      code: 'API_ERROR',
+      providerStatus: 'UNKNOWN_ERROR',
+      message: 'Directions request failed.',
+    });
+  });
+
+  test('throws NO_ROUTE when route payload has no polyline points', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            legs: [
+              {
+                distance: { value: 1200 },
+                duration: { value: 840 },
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    await expect(fetchOutdoorDirections(baseRequest, 'abc123')).rejects.toMatchObject<
+      Partial<DirectionsServiceError>
+    >({
+      code: 'NO_ROUTE',
+    });
+  });
+
+  test('uses fallback formatter values when legs do not include text', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: { value: 500 },
+                duration: { value: 30 },
+              },
+              {
+                distance: { value: 600 },
+                duration: { value: 3600 },
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(baseRequest, 'abc123');
+
+    expect(route.distanceMeters).toBe(1100);
+    expect(route.durationSeconds).toBe(3630);
+    expect(route.distanceText).toBe('1.1 km');
+    expect(route.durationText).toBe('1 hr 1 min');
+    expect(route.bounds).toBeNull();
+  });
+
+  test('uses imperial fallback formatting and forwards driving mode query', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: { value: 1609.344 },
+                duration: { value: 3600 },
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(
+      {
+        ...baseRequest,
+        mode: 'driving',
+        units: 'imperial',
+      },
+      'abc123',
+    );
+
+    expect(route.distanceText).toBe('1.0 mi');
+    expect(route.durationText).toBe('1 hr');
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('mode=driving'));
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('units=imperial'));
+  });
+
+  test('uses default walking mode when URL builder mode parameter is omitted', () => {
+    const url = buildDirectionsApiUrl(baseRequest, 'abc123');
+    expect(url).toContain('mode=walking');
+  });
+
+  test('uses env API key when apiKey argument is omitted', async () => {
+    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY = 'env-key-123';
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: { text: '1 km', value: 1000 },
+                duration: { text: '10 mins', value: 600 },
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    await fetchOutdoorDirections(baseRequest);
+
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('key=env-key-123'));
+  });
+
+  test('uses unknown network message when rejection is not an Error instance', async () => {
+    global.fetch = jest.fn().mockRejectedValue('socket fail') as unknown as typeof fetch;
+
+    await expect(fetchOutdoorDirections(baseRequest, 'abc123')).rejects.toMatchObject<
+      Partial<DirectionsServiceError>
+    >({
+      code: 'NETWORK_ERROR',
+      providerMessage: 'Unknown network error',
+    });
+  });
+
+  test('uses short metric and minute fallback formatting paths', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: { value: 750 },
+                duration: { value: 120 },
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(baseRequest, 'abc123');
+
+    expect(route.distanceText).toBe('750 m');
+    expect(route.durationText).toBe('2 min');
+  });
+
+  test('handles route with empty legs by producing zero totals', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(baseRequest, 'abc123');
+
+    expect(route.distanceMeters).toBe(0);
+    expect(route.durationSeconds).toBe(0);
+    expect(route.distanceText).toBe('0 m');
+    expect(route.durationText).toBe('0 sec');
   });
 });
