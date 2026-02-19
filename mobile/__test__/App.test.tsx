@@ -4,6 +4,8 @@ import MapScreen from '../src/screens/MapScreen';
 import BottomSheet from '../src/components/BottomSheet';
 import App from '../src/App';
 
+const mockUseFonts = jest.fn(() => [true]);
+
 // Mock GestureHandlerView needed for BottomSheet
 jest.mock('react-native-gesture-handler', () => {
   const { View } = require('react-native');
@@ -14,7 +16,7 @@ jest.mock('react-native-gesture-handler', () => {
 
 // Mock fonts as they are loaded asynchronously and cause issues
 jest.mock('expo-font', () => ({
-  useFonts: () => [true],
+  useFonts: () => mockUseFonts(),
 }));
 
 jest.mock('../src/components/BottomSheet', () => {
@@ -90,6 +92,10 @@ jest.mock('../src/components/AppSearchBar', () => {
 });
 
 describe('App', () => {
+  beforeEach(() => {
+    mockUseFonts.mockReturnValue([true]);
+  });
+
   test('renders MapScreen inside SafeAreaView', () => {
     const { UNSAFE_getByType, getByTestId } = render(<App />);
     const mapScreen = UNSAFE_getByType(MapScreen);
@@ -151,5 +157,12 @@ describe('App', () => {
     const { getByTestId } = render(<App />);
 
     expect(() => fireEvent.press(getByTestId('select-building'))).not.toThrow();
+  });
+
+  test('returns null while fonts are loading', () => {
+    mockUseFonts.mockReturnValue([false]);
+
+    const { queryByTestId } = render(<App />);
+    expect(queryByTestId('map-screen')).toBeNull();
   });
 });

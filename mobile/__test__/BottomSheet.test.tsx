@@ -9,7 +9,13 @@ const mockClose = jest.fn();
 
 const mockBuildings: BuildingShape[] = [
   {
-    polygons: [],
+    polygons: [
+      [
+        { latitude: 45.458, longitude: -73.641 },
+        { latitude: 45.459, longitude: -73.641 },
+        { latitude: 45.459, longitude: -73.642 },
+      ],
+    ],
     id: 'sgw-1',
     campus: 'LOYOLA',
     name: 'FC Building',
@@ -23,7 +29,13 @@ const mockBuildings: BuildingShape[] = [
     address: '7141 Sherbrooke West',
   },
   {
-    polygons: [],
+    polygons: [
+      [
+        { latitude: 45.497, longitude: -73.579 },
+        { latitude: 45.498, longitude: -73.579 },
+        { latitude: 45.498, longitude: -73.58 },
+      ],
+    ],
     id: 'loy-1',
     campus: 'SGW',
     name: 'EV Building',
@@ -140,7 +152,18 @@ jest.mock('../src/components/SearchSheet', () => {
       <TouchableOpacity
         testID="press-building-in-search"
         onPress={() =>
-          onPressBuilding({ id: 'found-building', name: 'Found Hall', polygons: [], campus: 'SGW' })
+          onPressBuilding({
+            id: 'found-building',
+            name: 'Found Hall',
+            polygons: [
+              [
+                { latitude: 45.49, longitude: -73.58 },
+                { latitude: 45.491, longitude: -73.58 },
+                { latitude: 45.491, longitude: -73.581 },
+              ],
+            ],
+            campus: 'SGW',
+          })
         }
       >
         <Text>Select</Text>
@@ -424,5 +447,55 @@ describe('BottomSheet', () => {
         }),
       );
     });
+  });
+
+  test('clears route and skips fetch when start and destination are the same building', async () => {
+    const passOutdoorRoute = jest.fn();
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    fireEvent.press(getByTestId('press-start'));
+    fireEvent.press(getByTestId('press-building-in-search'));
+    fireEvent.press(getByTestId('press-destination'));
+    fireEvent.press(getByTestId('press-building-in-search'));
+
+    await waitFor(() => {
+      expect(passOutdoorRoute).toHaveBeenCalledWith(null);
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalled();
+    });
+  });
+
+  test('clears route and warns when directions fetch fails', async () => {
+    const passOutdoorRoute = jest.fn();
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(new Error('bad request'));
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith('Failed to fetch outdoor directions', expect.any(Error));
+      expect(passOutdoorRoute).toHaveBeenCalledWith(null);
+    });
+
+    warnSpy.mockRestore();
   });
 });

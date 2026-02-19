@@ -20,4 +20,8 @@ describe('decodePolyline', () => {
   test('returns empty array for empty input', () => {
     expect(decodePolyline('')).toEqual([]);
   });
+
+  test('decodes a zero-delta point polyline', () => {
+    expect(decodePolyline('??')).toEqual([{ latitude: 0, longitude: 0 }]);
+  });
 });

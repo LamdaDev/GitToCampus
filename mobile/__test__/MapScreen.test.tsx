@@ -491,4 +491,21 @@ describe('MapScreen', () => {
       });
     });
   });
+
+  test('applies external selected building to marker and campus region', async () => {
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        externalSelectedBuilding={mockBuildings[1]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('map-marker').props.title).toBe('Administration');
+      expect(mockAnimateToRegion).toHaveBeenCalledWith(getCampusRegion('LOYOLA'), 1000);
+    });
+  });
 });
