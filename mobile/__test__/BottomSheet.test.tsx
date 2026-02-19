@@ -1,14 +1,21 @@
 import React, { createRef } from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import BottomSlider, { BottomSliderHandle } from '../src/components/BottomSheet';
 import { BuildingShape } from '../src/types/BuildingShape';
+import * as directionsService from '../src/services/googleDirections';
 
 const mockSnapToIndex = jest.fn();
 const mockClose = jest.fn();
 
 const mockBuildings: BuildingShape[] = [
   {
-    polygons: [],
+    polygons: [
+      [
+        { latitude: 45.458, longitude: -73.641 },
+        { latitude: 45.459, longitude: -73.641 },
+        { latitude: 45.459, longitude: -73.642 },
+      ],
+    ],
     id: 'sgw-1',
     campus: 'LOYOLA',
     name: 'FC Building',
@@ -22,7 +29,13 @@ const mockBuildings: BuildingShape[] = [
     address: '7141 Sherbrooke West',
   },
   {
-    polygons: [],
+    polygons: [
+      [
+        { latitude: 45.497, longitude: -73.579 },
+        { latitude: 45.498, longitude: -73.579 },
+        { latitude: 45.498, longitude: -73.58 },
+      ],
+    ],
     id: 'loy-1',
     campus: 'SGW',
     name: 'EV Building',
@@ -36,9 +49,14 @@ const defaultProps = {
   buildings: mockBuildings,
   onExitSearch: jest.fn(),
   passSelectedBuilding: jest.fn(),
+  passOutdoorRoute: jest.fn(),
   userLocation: null,
   currentBuilding: null,
 };
+
+jest.mock('../src/services/googleDirections', () => ({
+  fetchOutdoorDirections: jest.fn(),
+}));
 
 jest.mock('@gorhom/bottom-sheet', () => {
   const React = require('react');
@@ -80,16 +98,26 @@ jest.mock('../src/components/BuildingDetails', () => {
 
   type MockProps = {
     onClose: () => void;
-    onShowDirections?: (building: any) => void;
+    onShowDirections?: (building: any, asDestination?: boolean) => void;
+    selectedBuilding?: any;
   };
 
-  const MockBuildingDetails: React.FC<MockProps> = ({ onClose, onShowDirections }) => (
+  const MockBuildingDetails: React.FC<MockProps> = ({
+    onClose,
+    onShowDirections,
+    selectedBuilding,
+  }) => (
     <View testID="building-details">
       <Button testID="close-button" title="Close" onPress={onClose} />
       <Button
         testID="on-show-directions"
         title="Directions"
         onPress={() => onShowDirections?.({ id: 'mock-building' })}
+      />
+      <Button
+        testID="on-show-directions-as-destination"
+        title="Directions as destination"
+        onPress={() => onShowDirections?.(selectedBuilding, true)}
       />
     </View>
   );
@@ -124,7 +152,18 @@ jest.mock('../src/components/SearchSheet', () => {
       <TouchableOpacity
         testID="press-building-in-search"
         onPress={() =>
-          onPressBuilding({ id: 'found-building', name: 'Found Hall', polygons: [], campus: 'SGW' })
+          onPressBuilding({
+            id: 'found-building',
+            name: 'Found Hall',
+            polygons: [
+              [
+                { latitude: 45.49, longitude: -73.58 },
+                { latitude: 45.491, longitude: -73.58 },
+                { latitude: 45.491, longitude: -73.581 },
+              ],
+            ],
+            campus: 'SGW',
+          })
         }
       >
         <Text>Select</Text>
@@ -134,6 +173,19 @@ jest.mock('../src/components/SearchSheet', () => {
 });
 
 describe('BottomSheet', () => {
+  const directionsServiceMock = directionsService as jest.Mocked<typeof directionsService>;
+
+  beforeEach(() => {
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 840,
+      durationText: '14 mins',
+      bounds: null,
+    });
+  });
+
   test('handles null selectedBuilding safely', () => {
     const ref = React.createRef<any>();
 
@@ -198,7 +250,7 @@ describe('BottomSheet', () => {
     expect(queryByTestId('direction-details')).toBeNull();
 
     // Press the onShowDirections button inside BuildingDetails
-    fireEvent.press(getByTestId('on-show-directions'));
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
 
     // Now DirectionDetails should be rendered
     expect(getByTestId('direction-details')).toBeTruthy();
@@ -281,7 +333,7 @@ describe('BottomSheet', () => {
     const { getByTestId } = render(
       <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
     );
-    fireEvent.press(getByTestId('on-show-directions'));
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
     fireEvent.press(getByTestId('press-start'));
 
     expect(getByTestId('search-sheet')).toBeTruthy();
@@ -292,7 +344,7 @@ describe('BottomSheet', () => {
       <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions'));
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
     fireEvent.press(getByTestId('press-destination'));
 
     expect(getByTestId('search-sheet')).toBeTruthy();
@@ -345,5 +397,105 @@ describe('BottomSheet', () => {
     );
 
     expect(getByTestId('destination-id').props.children).toBe('loy-1');
+  });
+
+  test('requests outdoor route and passes route overlay when directions are available', async () => {
+    const passOutdoorRoute = jest.fn();
+
+    const buildingsWithPolygons: BuildingShape[] = [
+      {
+        ...mockBuildings[0],
+        polygons: [
+          [
+            { latitude: 45.458, longitude: -73.641 },
+            { latitude: 45.459, longitude: -73.641 },
+            { latitude: 45.459, longitude: -73.642 },
+          ],
+        ],
+      },
+      {
+        ...mockBuildings[1],
+        polygons: [
+          [
+            { latitude: 45.497, longitude: -73.579 },
+            { latitude: 45.498, longitude: -73.579 },
+            { latitude: 45.498, longitude: -73.58 },
+          ],
+        ],
+      },
+    ];
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={buildingsWithPolygons[1]}
+        currentBuilding={buildingsWithPolygons[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalled();
+      expect(passOutdoorRoute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+          start: expect.any(Object),
+          destination: expect.any(Object),
+        }),
+      );
+    });
+  });
+
+  test('clears route and skips fetch when start and destination are the same building', async () => {
+    const passOutdoorRoute = jest.fn();
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    fireEvent.press(getByTestId('press-start'));
+    fireEvent.press(getByTestId('press-building-in-search'));
+    fireEvent.press(getByTestId('press-destination'));
+    fireEvent.press(getByTestId('press-building-in-search'));
+
+    await waitFor(() => {
+      expect(passOutdoorRoute).toHaveBeenCalledWith(null);
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalled();
+    });
+  });
+
+  test('clears route and warns when directions fetch fails', async () => {
+    const passOutdoorRoute = jest.fn();
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(new Error('bad request'));
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith('Failed to fetch outdoor directions', expect.any(Error));
+      expect(passOutdoorRoute).toHaveBeenCalledWith(null);
+    });
+
+    warnSpy.mockRestore();
   });
 });

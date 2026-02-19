@@ -16,6 +16,9 @@ import BuildingDetails from './BuildingDetails';
 import DirectionDetails from './DirectionDetails';
 import type { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
+import { centroidOfPolygons } from '../utils/geoJson';
+import { fetchOutdoorDirections } from '../services/googleDirections';
+import type { OutdoorRouteOverlay } from '../types/Map';
 
 import SearchSheet from './SearchSheet';
 export type BottomSliderHandle = {
@@ -34,6 +37,7 @@ type BottomSheetProps = {
   buildings: BuildingShape[];
   onExitSearch: () => void;
   passSelectedBuilding: (b: BuildingShape | null) => void;
+  passOutdoorRoute: (route: OutdoorRouteOverlay | null) => void;
 };
 
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
@@ -47,6 +51,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       buildings,
       onExitSearch,
       passSelectedBuilding,
+      passOutdoorRoute,
     },
     ref,
   ) => {
@@ -84,6 +89,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleSheetClose = () => {
       setActiveView('building');
       setSearchFor(null);
+      passOutdoorRoute(null);
       revealSearchBar();
     };
 
@@ -113,6 +119,73 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
       setDestinationBuilding(selectedBuilding);
     }, [selectedBuilding, activeView]);
+
+    const startCoords = useMemo(() => {
+      if (startBuilding) return centroidOfPolygons(startBuilding.polygons);
+      if (currentBuilding) return centroidOfPolygons(currentBuilding.polygons);
+      return userLocation;
+    }, [currentBuilding, startBuilding, userLocation]);
+
+    const destinationCoords = useMemo(() => {
+      if (!destinationBuilding) return null;
+      return centroidOfPolygons(destinationBuilding.polygons);
+    }, [destinationBuilding]);
+
+    useEffect(() => {
+      if (activeView !== 'directions') {
+        passOutdoorRoute(null);
+        return;
+      }
+      if (!startCoords || !destinationCoords) {
+        passOutdoorRoute(null);
+        return;
+      }
+      if (
+        startBuilding?.id &&
+        destinationBuilding?.id &&
+        startBuilding.id === destinationBuilding.id
+      ) {
+        passOutdoorRoute(null);
+        return;
+      }
+
+      let cancelled = false;
+
+      const loadRoute = async () => {
+        try {
+          const route = await fetchOutdoorDirections({
+            origin: startCoords,
+            destination: destinationCoords,
+            mode: 'walking',
+          });
+
+          if (cancelled) return;
+
+          passOutdoorRoute({
+            encodedPolyline: route.polyline,
+            start: startCoords,
+            destination: destinationCoords,
+          });
+        } catch (error) {
+          if (cancelled) return;
+          console.warn('Failed to fetch outdoor directions', error);
+          passOutdoorRoute(null);
+        }
+      };
+
+      void loadRoute();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [
+      activeView,
+      destinationBuilding?.id,
+      destinationCoords,
+      passOutdoorRoute,
+      startBuilding?.id,
+      startCoords,
+    ]);
 
     useEffect(() => {
       const isSearching = mode === 'search' || searchFor !== null;
