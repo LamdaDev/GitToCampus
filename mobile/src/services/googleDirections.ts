@@ -4,42 +4,11 @@ import {
   DirectionsRoute,
   DirectionsServiceError,
   DirectionsTravelMode,
-  DirectionsUnits,
 } from '../types/Directions';
+import type { GoogleDirectionsResponse, GoogleDirectionsStatus } from '../types/GoogleDirections';
+import { formatDistance, formatDuration } from '../utils/directionsFormatting';
 
 const DIRECTIONS_API_URL = 'https://maps.googleapis.com/maps/api/directions/json';
-
-type GoogleDirectionsStatus =
-  | 'OK'
-  | 'NOT_FOUND'
-  | 'ZERO_RESULTS'
-  | 'MAX_WAYPOINTS_EXCEEDED'
-  | 'MAX_ROUTE_LENGTH_EXCEEDED'
-  | 'INVALID_REQUEST'
-  | 'OVER_DAILY_LIMIT'
-  | 'OVER_QUERY_LIMIT'
-  | 'REQUEST_DENIED'
-  | 'UNKNOWN_ERROR';
-
-type GoogleDirectionsLeg = {
-  distance?: { text?: string; value?: number };
-  duration?: { text?: string; value?: number };
-};
-
-type GoogleDirectionsRoute = {
-  overview_polyline?: { points?: string };
-  bounds?: {
-    northeast?: { lat: number; lng: number };
-    southwest?: { lat: number; lng: number };
-  };
-  legs?: GoogleDirectionsLeg[];
-};
-
-type GoogleDirectionsResponse = {
-  status: GoogleDirectionsStatus;
-  error_message?: string;
-  routes?: GoogleDirectionsRoute[];
-};
 
 const isFiniteCoordinate = (point: LatLng) =>
   Number.isFinite(point.latitude) && Number.isFinite(point.longitude);
@@ -53,29 +22,6 @@ const mapTravelMode = (mode: DirectionsTravelMode) => {
     case 'transit':
       return 'transit';
   }
-};
-
-const formatDuration = (seconds: number) => {
-  if (seconds < 60) return `${seconds} sec`;
-
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes} min`;
-
-  const hours = Math.floor(minutes / 60);
-  const remMinutes = minutes % 60;
-  if (remMinutes === 0) return `${hours} hr`;
-
-  return `${hours} hr ${remMinutes} min`;
-};
-
-const formatDistance = (meters: number, units: DirectionsUnits) => {
-  if (units === 'imperial') {
-    const miles = meters / 1609.344;
-    return `${miles.toFixed(1)} mi`;
-  }
-
-  if (meters < 1000) return `${meters} m`;
-  return `${(meters / 1000).toFixed(1)} km`;
 };
 
 const mapStatusToErrorCode = (status: GoogleDirectionsStatus) => {
