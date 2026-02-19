@@ -53,20 +53,19 @@ appId: host.exp.exponent
     text: Henry F. Hall Building
 
 # Tap "Set as starting point" button
-- tapOn: " Set as starting point "
+- tapOn: ' Set as starting point '
 
 # Verify directions modal appears
-- assertVisible: " Directions "
+- assertVisible: ' Directions '
 
 # Verify the selected building is now the starting point
 - assertVisible:
     text: Henry F. Hall Building
 
 # Verify we can select a destination
-- tapOn:
-    point: '50%,80%'
+- tapOn: Set destination
+- tapOn: J.W. McConnell Building
 
 # Verify destination is set
-- extendedWaitUntil:
-    visible: 'Set destination'
-    timeout: 1000
+- assertVisible: ' Directions '
+- assertVisible: J.W. McConnell Building
