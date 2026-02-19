@@ -35,6 +35,11 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
    ```bash
    npm install
    ```
+4. Add environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   Then set `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` in `mobile/.env`.
 
 ### Running on Android
 
