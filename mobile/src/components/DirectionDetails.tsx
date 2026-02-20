@@ -15,6 +15,11 @@ type DirectionDetailProps = {
   destinationBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
   currentBuilding: BuildingShape | null;
+  isRouteLoading?: boolean;
+  routeErrorMessage?: string | null;
+  routeDistanceText?: string | null;
+  routeDurationText?: string | null;
+  routeDurationSeconds?: number | null;
   onPressStart?: () => void;
   onPressDestination?: () => void;
 };
@@ -34,12 +39,25 @@ const getStartDisplayText = (
   else return 'Set as starting point';
 };
 
+const getEtaText = (durationSeconds: number | null | undefined): string | null => {
+  if (!durationSeconds || durationSeconds < 1) return null;
+  const eta = new Date(Date.now() + durationSeconds * 1000);
+  const hours = eta.getHours() % 12 || 12;
+  const minutes = String(eta.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
 export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
   onClose,
   userLocation,
   currentBuilding,
+  isRouteLoading = false,
+  routeErrorMessage = null,
+  routeDistanceText = null,
+  routeDurationText = null,
+  routeDurationSeconds = null,
   onPressStart,
   onPressDestination,
 }: Readonly<DirectionDetailProps>) {
@@ -47,6 +65,7 @@ export default function DirectionDetails({
   const isSelected = (index: number) => activeIndex === index;
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
+  const routeEtaText = getEtaText(routeDurationSeconds);
 
   return (
     <>
@@ -141,6 +160,48 @@ export default function DirectionDetails({
             />
           </TouchableOpacity>
         </View>
+      </View>
+      <View style={directionDetailsStyles.routeMetaContainer}>
+        {isRouteLoading ? (
+          <Text testID="route-loading-text" style={directionDetailsStyles.routeMetaText}>
+            Loading route...
+          </Text>
+        ) : routeErrorMessage ? (
+          <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
+            {routeErrorMessage}
+          </Text>
+        ) : routeDistanceText && routeDurationText ? (
+          <View style={directionDetailsStyles.routeSummaryRow}>
+            <View style={directionDetailsStyles.routeSummaryTextWrap}>
+              <Text
+                testID="route-summary-text"
+                numberOfLines={1}
+                style={directionDetailsStyles.routePrimaryText}
+              >
+                {routeDurationText}
+              </Text>
+              <Text
+                testID="route-secondary-text"
+                numberOfLines={1}
+                style={directionDetailsStyles.routeSecondaryText}
+              >
+                {routeEtaText ? `${routeEtaText} ETA • ${routeDistanceText}` : routeDistanceText}
+              </Text>
+            </View>
+            <TouchableOpacity
+              testID="route-go-button"
+              disabled={true}
+              activeOpacity={1}
+              style={directionDetailsStyles.routeGoButton}
+            >
+              <Text style={directionDetailsStyles.routeGoText}>GO</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <Text testID="route-empty-text" style={directionDetailsStyles.routeMetaText}>
+            Select start and destination to view route details.
+          </Text>
+        )}
       </View>
     </>
   );

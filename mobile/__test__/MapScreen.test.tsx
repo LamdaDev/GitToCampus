@@ -13,6 +13,7 @@ const mockPassUserLocation = jest.fn();
 const mockPassCurrentBuilding = jest.fn();
 const mockOpenBottomSheet = jest.fn();
 const mockAnimateToRegion = jest.fn();
+const mockFitToCoordinates = jest.fn();
 let mockHasAnimateToRegion = true;
 
 jest.mock('react-native-maps', () => {
@@ -21,7 +22,9 @@ jest.mock('react-native-maps', () => {
 
   const MockMapView = React.forwardRef((props: any, ref: any) => {
     React.useImperativeHandle(ref, () =>
-      mockHasAnimateToRegion ? { animateToRegion: mockAnimateToRegion } : {},
+      mockHasAnimateToRegion
+        ? { animateToRegion: mockAnimateToRegion, fitToCoordinates: mockFitToCoordinates }
+        : {},
     );
     return React.createElement(View, props, props.children);
   });
@@ -96,6 +99,7 @@ describe('MapScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockHasAnimateToRegion = true;
+    mockFitToCoordinates.mockClear();
 
     repoMock.getCampusBuildingShapes.mockImplementation((campus: 'SGW' | 'LOYOLA') =>
       mockBuildings.filter((b) => b.campus === campus),
@@ -489,6 +493,13 @@ describe('MapScreen', () => {
         latitude: 45.49,
         longitude: -73.58,
       });
+      expect(mockFitToCoordinates).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.objectContaining({
+          animated: true,
+          edgePadding: expect.any(Object),
+        }),
+      );
     });
   });
 

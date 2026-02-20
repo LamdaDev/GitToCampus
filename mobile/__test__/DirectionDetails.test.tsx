@@ -143,4 +143,52 @@ describe('Direction Details', () => {
     expect(carButton.props.accessibilityState.selected).toBe(false);
     expect(busButton.props.accessibilityState.selected).toBe(true);
   });
+
+  test('shows loading state when route is loading', () => {
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isRouteLoading={true}
+      />,
+    );
+
+    expect(getByTestId('route-loading-text')).toBeTruthy();
+  });
+
+  test('shows route summary card when distance and duration are available', () => {
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+      />,
+    );
+
+    expect(getByTestId('route-summary-text').props.children).toBe('14 mins');
+    expect(getByTestId('route-secondary-text').props.children).toBe('1.2 km');
+    expect(getByTestId('route-go-button')).toBeTruthy();
+  });
+
+  test('shows route error text when route loading fails', () => {
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeErrorMessage="Unable to load route. Please try again."
+      />,
+    );
+
+    expect(getByTestId('route-error-text')).toBeTruthy();
+  });
 });
