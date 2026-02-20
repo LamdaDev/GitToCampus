@@ -191,4 +191,85 @@ describe('Direction Details', () => {
 
     expect(getByTestId('route-error-text')).toBeTruthy();
   });
+
+  test('shows route empty state when no route data is available', () => {
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+      />,
+    );
+
+    expect(getByTestId('route-empty-text')).toBeTruthy();
+  });
+
+  test('renders ETA in route secondary text when duration seconds are provided', () => {
+    const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(0);
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="5 mins"
+        routeDistanceText="350 m"
+        routeDurationSeconds={300}
+      />,
+    );
+
+    expect(getByTestId('route-secondary-text').props.children).toContain('ETA • 350 m');
+    nowSpy.mockRestore();
+  });
+
+  test('formats ETA hour as 12 when computed hour is 0', () => {
+    const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(0);
+    const hoursSpy = jest.spyOn(Date.prototype, 'getHours').mockReturnValue(0);
+    const minutesSpy = jest.spyOn(Date.prototype, 'getMinutes').mockReturnValue(7);
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="5 mins"
+        routeDistanceText="350 m"
+        routeDurationSeconds={300}
+      />,
+    );
+
+    expect(getByTestId('route-secondary-text').props.children).toContain('12:07 ETA • 350 m');
+    nowSpy.mockRestore();
+    hoursSpy.mockRestore();
+    minutesSpy.mockRestore();
+  });
+
+  test('calls close/start/destination handlers when corresponding buttons are pressed', () => {
+    const onClose = jest.fn();
+    const onPressStart = jest.fn();
+    const onPressDestination = jest.fn();
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={null}
+        destinationBuilding={null}
+        onClose={onClose}
+        userLocation={null}
+        currentBuilding={null}
+        onPressStart={onPressStart}
+        onPressDestination={onPressDestination}
+      />,
+    );
+
+    fireEvent.press(getByTestId('directions-close-button'));
+    fireEvent.press(getByTestId('start-location-button'));
+    fireEvent.press(getByTestId('destination-location-button'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onPressStart).toHaveBeenCalledTimes(1);
+    expect(onPressDestination).toHaveBeenCalledTimes(1);
+  });
 });

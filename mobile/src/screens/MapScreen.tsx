@@ -42,9 +42,7 @@ const ROUTE_FIT_EDGE_PADDING = {
   left: 70,
 };
 
-const ROUTE_LINE_HALO_COLOR = "rgba(195, 54, 22, 0.9)";
-const ROUTE_LINE_COLOR = "#0472f8";
-const ROUTE_LINE_HALO_WIDTH = 7;
+const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
 
 const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
@@ -286,18 +284,11 @@ export default function MapScreen({
         {selectedMarker}
         {showRoute && (
           <>
-            {/* <Polyline
-              coordinates={routeCoordinates}
-              strokeColor={ROUTE_LINE_HALO_COLOR}
-              strokeWidth={ROUTE_LINE_HALO_WIDTH}
-              zIndex={998}
-            /> */}
             <Polyline
               testID="route-polyline"
               coordinates={routeCoordinates}
               strokeColors={[ROUTE_LINE_COLOR]}
               strokeWidth={ROUTE_LINE_WIDTH}
-              
               lineCap="round"
               lineJoin="round"
               zIndex={999}

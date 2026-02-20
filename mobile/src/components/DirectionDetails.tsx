@@ -74,7 +74,11 @@ export default function DirectionDetails({
           <Text style={directionDetailsStyles.directionTitle}> Directions </Text>
         </View>
         <View style={directionDetailsStyles.headerIcons}>
-          <TouchableOpacity style={directionDetailsStyles.iconButton} onPress={onClose}>
+          <TouchableOpacity
+            testID="directions-close-button"
+            style={directionDetailsStyles.iconButton}
+            onPress={onClose}
+          >
             <Ionicons name="close-sharp" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -83,7 +87,11 @@ export default function DirectionDetails({
         <View style={directionDetailsStyles.header}>
           <View style={directionDetailsStyles.inlineHeader}>
             <Ionicons name="navigate" size={20} style={directionDetailsStyles.frontIcon} />
-            <TouchableOpacity style={directionDetailsStyles.locationButton} onPress={onPressStart}>
+            <TouchableOpacity
+              testID="start-location-button"
+              style={directionDetailsStyles.locationButton}
+              onPress={onPressStart}
+            >
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
                 {startDisplayText}
               </Text>
@@ -103,6 +111,7 @@ export default function DirectionDetails({
           <View style={directionDetailsStyles.inlineHeader}>
             <Ionicons name="location-outline" size={20} style={directionDetailsStyles.frontIcon} />
             <TouchableOpacity
+              testID="destination-location-button"
               style={directionDetailsStyles.locationButton}
               onPress={onPressDestination}
             >
