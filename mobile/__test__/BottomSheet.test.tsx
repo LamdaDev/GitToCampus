@@ -133,6 +133,7 @@ jest.mock('../src/components/DirectionDetails', () => {
     onClose,
     onPressStart,
     onPressDestination,
+    isCrossCampusRoute,
     isRouteLoading,
     routeErrorMessage,
     routeDurationText,
@@ -140,6 +141,7 @@ jest.mock('../src/components/DirectionDetails', () => {
   }: any) => (
     <View testID="direction-details">
       <Text testID="destination-id">{destinationBuilding ? destinationBuilding.id : 'none'}</Text>
+      <Text testID="cross-campus-state">{isCrossCampusRoute ? 'true' : 'false'}</Text>
       <Text testID="route-loading-state">{isRouteLoading ? 'true' : 'false'}</Text>
       <Text testID="route-error-state">{routeErrorMessage ?? 'none'}</Text>
       <Text testID="route-summary-state">
@@ -446,6 +448,54 @@ describe('BottomSheet', () => {
     );
 
     expect(getByTestId('destination-id').props.children).toBe('loy-1');
+  });
+
+  test('sets cross-campus flag when current and destination campuses differ', () => {
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    expect(getByTestId('cross-campus-state').props.children).toBe('true');
+  });
+
+  test('does not set cross-campus flag for same-campus routes', () => {
+    const sameCampusCurrent: BuildingShape = { ...mockBuildings[0], campus: 'SGW' };
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={sameCampusCurrent}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    expect(getByTestId('cross-campus-state').props.children).toBe('false');
+  });
+
+  test('does not set cross-campus flag when start campus is unknown', () => {
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={null}
+        userLocation={{ latitude: 45.5, longitude: -73.57 }}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    expect(getByTestId('cross-campus-state').props.children).toBe('false');
   });
 
   test('requests outdoor route and passes route overlay when directions are available', async () => {

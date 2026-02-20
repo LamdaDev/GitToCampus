@@ -152,6 +152,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       return centroidOfPolygons(destinationBuilding.polygons);
     }, [destinationBuilding]);
 
+    const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
+    const destinationCampus = destinationBuilding?.campus ?? null;
+    const isCrossCampusRoute = Boolean(
+      startCampus && destinationCampus && startCampus !== destinationCampus,
+    );
+
     useEffect(() => {
       // Not an error state: directions panel is not active, so route UI should be reset.
       if (activeView !== 'directions') {
@@ -268,6 +274,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               destinationBuilding={destinationBuilding}
               userLocation={userLocation}
               currentBuilding={currentBuilding}
+              isCrossCampusRoute={isCrossCampusRoute}
               isRouteLoading={isRouteLoading}
               routeErrorMessage={routeErrorMessage}
               routeDistanceText={routeDistanceText}

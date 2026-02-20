@@ -16,6 +16,7 @@ type DirectionDetailProps = {
   destinationBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
   currentBuilding: BuildingShape | null;
+  isCrossCampusRoute?: boolean;
   isRouteLoading?: boolean;
   routeErrorMessage?: string | null;
   routeDistanceText?: string | null;
@@ -46,6 +47,7 @@ export default function DirectionDetails({
   onClose,
   userLocation,
   currentBuilding,
+  isCrossCampusRoute = false,
   isRouteLoading = false,
   routeErrorMessage = null,
   routeDistanceText = null,
@@ -182,13 +184,28 @@ export default function DirectionDetails({
               >
                 {routeDurationText}
               </Text>
-              <Text
-                testID="route-secondary-text"
-                numberOfLines={1}
-                style={directionDetailsStyles.routeSecondaryText}
-              >
-                {routeEtaText ? `${routeEtaText} ETA • ${routeDistanceText}` : routeDistanceText}
-              </Text>
+              <View style={directionDetailsStyles.routeSecondaryInlineRow}>
+                <Text
+                  testID="route-secondary-text"
+                  numberOfLines={1}
+                  style={directionDetailsStyles.routeSecondaryText}
+                >
+                  {routeEtaText ? `${routeEtaText} ETA • ${routeDistanceText}` : routeDistanceText}
+                </Text>
+                {isCrossCampusRoute && (
+                  <>
+                    <Text style={directionDetailsStyles.routeSecondaryText}> • </Text>
+                    <View style={directionDetailsStyles.crossCampusContainer}>
+                      <Text
+                        testID="cross-campus-label"
+                        style={directionDetailsStyles.crossCampusText}
+                      >
+                        Cross-Campus
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </View>
             </View>
             <TouchableOpacity
               testID="route-go-button"
