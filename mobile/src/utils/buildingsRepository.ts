@@ -2,9 +2,8 @@ import { GEOJSON_ASSETS } from '../assets/geojson';
 import type { GeoJsonFeatureCollection } from '../types/GeoJson';
 import type { Campus } from '../types/Campus';
 import type { BuildingShape } from '../types/BuildingShape';
-import { getFeaturePolygons, normalizeCampusCode } from '../utils/geoJson';
+import { getFeaturePolygons, normalizeCampusCode, isPointInAnyPolygon } from '../utils/geoJson';
 import { getDistance } from 'geolib';
-import { isPointInAnyPolygon } from '../utils/geoJson';
 import { getCampusRegion } from '../constants/campuses';
 
 /**
@@ -40,16 +39,27 @@ const toStableId = (raw: unknown): string | null => {
 const getBestBuildingName = (props: BuildingListProps): string => {
   const longName = props['Building Long Name'];
   if (typeof longName === 'string' && longName.trim()) return longName.trim();
-
-  if (typeof props.BuildingName === 'string' && props.BuildingName.trim()) {
+  if (typeof props.BuildingName === 'string' && props.BuildingName.trim())
     return props.BuildingName.trim();
-  }
-
-  if (typeof props.Building === 'string' && props.Building.trim()) {
-    return props.Building.trim();
-  }
+  if (typeof props.Building === 'string' && props.Building.trim()) return props.Building.trim();
 
   return 'Unknown Building';
+};
+
+const getPolygonCentroid = (polygon: { latitude: number; longitude: number }[] | undefined) => {
+  if (!polygon?.length) return null;
+  return {
+    latitude: polygon.reduce((sum, p) => sum + p.latitude, 0) / polygon.length,
+    longitude: polygon.reduce((sum, p) => sum + p.longitude, 0) / polygon.length,
+  };
+};
+
+const getBuildingDistance = (
+  point: { latitude: number; longitude: number },
+  building: BuildingShape,
+): number => {
+  const centroid = getPolygonCentroid(building.polygons[0]);
+  return centroid ? getDistance(point, centroid) : Number.MAX_VALUE;
 };
 
 /**
@@ -57,66 +67,52 @@ const getBestBuildingName = (props: BuildingListProps): string => {
  */
 let cachedAllBuildings: BuildingShape[] | null = null;
 
-const buildAllBuildingsCache = (): BuildingShape[] => {
-  const buildingList =
-    GEOJSON_ASSETS.buildingList as unknown as GeoJsonFeatureCollection<BuildingListProps>;
-  const boundaries =
-    GEOJSON_ASSETS.buildingBoundaries as unknown as GeoJsonFeatureCollection<BuildingBoundaryProps>;
-
-  // 1) Build metadata map: unique_id -> { campus, name, ... }
-  const metaById = new Map<
-    string,
-    {
-      campus: Campus;
-      name: string;
-      shortCode?: string;
-      address?: string;
-      //TEMP added in by RJ for Sprint2: Task 1.5.2
-      hotspots?: Record<string, string>;
-      services?: Record<string, string>;
-    }
-  >();
-
+const buildMetadataMap = (
+  buildingList: GeoJsonFeatureCollection<BuildingListProps>,
+): Map<
+  string,
+  {
+    campus: Campus;
+    name: string;
+    shortCode?: string;
+    address?: string;
+    hotspots?: Record<string, string>;
+    services?: Record<string, string>;
+  }
+> => {
+  const metaById = new Map();
   for (const feature of buildingList.features) {
-    const props = (feature.properties ?? {}) as BuildingListProps;
-
+    const props = feature.properties ?? {};
     const id = toStableId(props.unique_id);
-    if (!id) continue;
-
     const campus = normalizeCampusCode(props.Campus);
-    if (!campus) continue;
-
+    if (!id || !campus) continue;
     metaById.set(id, {
       campus,
       name: getBestBuildingName(props),
       shortCode: typeof props.Building === 'string' ? props.Building : undefined,
       address: typeof props.Address === 'string' ? props.Address : undefined,
-      //TEMP: For Sprint 2 Task-1.5.2
       hotspots: props.Hotspots,
       services: props.Services,
     });
   }
+  return metaById;
+};
 
-  // 2) Walk boundaries and join by unique_id
+const joinBoundariesToMeta = (
+  boundaries: GeoJsonFeatureCollection<BuildingBoundaryProps>,
+  metaById: ReturnType<typeof buildMetadataMap>,
+): BuildingShape[] => {
   const results: BuildingShape[] = [];
-
   for (const feature of boundaries.features) {
-    const props = (feature.properties ?? {}) as BuildingBoundaryProps;
-
+    const props = feature.properties ?? {};
     const id = toStableId(props.unique_id);
     if (!id) continue;
 
     const meta = metaById.get(id);
-    if (!meta) {
-      // Graceful handling: boundary exists without metadata -> skip (no crash)
-      continue;
-    }
+    if (!meta) continue; // Boundary exists without metadata, skip gracefully
 
     const polygons = getFeaturePolygons(feature);
-    if (!polygons.length) {
-      // Graceful handling: invalid geometry -> skip (no crash)
-      continue;
-    }
+    if (!polygons.length) continue; // Invalid geometry, skip gracefully
 
     results.push({
       id,
@@ -125,13 +121,19 @@ const buildAllBuildingsCache = (): BuildingShape[] => {
       polygons,
       shortCode: meta.shortCode,
       address: meta.address,
-      //TEMP: For Sprint 2 Task-1.5.2
       hotspots: meta.hotspots,
       services: meta.services,
     });
   }
-
   return results;
+};
+
+const buildAllBuildingsCache = (): BuildingShape[] => {
+  const buildingList =
+    GEOJSON_ASSETS.buildingList as unknown as GeoJsonFeatureCollection<BuildingListProps>;
+  const boundaries =
+    GEOJSON_ASSETS.buildingBoundaries as unknown as GeoJsonFeatureCollection<BuildingBoundaryProps>;
+  return joinBoundariesToMeta(boundaries, buildMetadataMap(buildingList));
 };
 
 /**
@@ -139,7 +141,7 @@ const buildAllBuildingsCache = (): BuildingShape[] => {
  * Useful for debugging or future features.
  */
 export const getAllBuildingShapes = (): BuildingShape[] => {
-  if (!cachedAllBuildings) cachedAllBuildings = buildAllBuildingsCache();
+  cachedAllBuildings ??= buildAllBuildingsCache();
   return cachedAllBuildings;
 };
 
@@ -221,29 +223,17 @@ export const findClosestCampus = (userCoords: { latitude: number; longitude: num
  */
 export const findNearestBuildings = (
   point: { latitude: number; longitude: number },
-  limit: number = 5,
+  limit = 5,
 ): Array<{ building: BuildingShape; distance: number }> => {
   const closestCampus = findClosestCampus(point);
   const campusBuildings = getCampusBuildingShapes(closestCampus);
 
-  const buildingsWithDistance = campusBuildings.map((building) => {
-    // Calculate distance to building's centroid
-    const centroid = building.polygons[0]
-      ? {
-          latitude:
-            building.polygons[0].reduce((sum, p) => sum + p.latitude, 0) /
-            building.polygons[0].length,
-          longitude:
-            building.polygons[0].reduce((sum, p) => sum + p.longitude, 0) /
-            building.polygons[0].length,
-        }
-      : null;
+  const buildingsWithDistance = campusBuildings.map((building) => ({
+    building,
+    distance: getBuildingDistance(point, building),
+  }));
 
-    const distance = centroid ? getDistance(point, centroid) : Number.MAX_VALUE; // No valid polygon = far away
+  const sortedByDistance = buildingsWithDistance.toSorted((a, b) => a.distance - b.distance);
 
-    return { building, distance };
-  });
-
-  // Sort by distance and return top N
-  return buildingsWithDistance.sort((a, b) => a.distance - b.distance).slice(0, limit);
+  return sortedByDistance.slice(0, limit);
 };
