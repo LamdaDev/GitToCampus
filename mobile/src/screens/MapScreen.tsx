@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
+import type { SharedValue } from 'react-native-reanimated';
 
 import type { Campus } from '../types/Campus';
 import { getCampusRegion } from '../constants/campuses';
@@ -26,6 +27,7 @@ type MapScreenProps = {
   openBottomSheet: () => void;
   externalSelectedBuilding?: BuildingShape | null;
   outdoorRoute?: OutdoorRouteOverlay | null;
+  bottomSheetAnimatedPosition?: SharedValue<number>;
 };
 
 export type UserCoords = { latitude: number; longitude: number };
@@ -112,6 +114,7 @@ export default function MapScreen({
   openBottomSheet,
   externalSelectedBuilding,
   outdoorRoute,
+  bottomSheetAnimatedPosition,
 }: MapScreenProps) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -312,6 +315,7 @@ export default function MapScreen({
         selectedCampus={selectedCampus}
         onToggleCampus={handleToggleCampus}
         onRecenter={handleRecenter}
+        bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
       />
     </View>
   );

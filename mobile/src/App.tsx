@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { LogBox } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { LogBox, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
@@ -10,6 +10,7 @@ import AppSearchBar from './components/AppSearchBar';
 import { getAllBuildingShapes } from './utils/buildingsRepository';
 import { SheetMode } from './types/SheetMode';
 import type { OutdoorRouteOverlay } from './types/Map';
+import { useSharedValue } from 'react-native-reanimated';
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -22,6 +23,9 @@ LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into 
  * building_list.json
  */
 const App = () => {
+  const { height: windowHeight } = useWindowDimensions();
+  const bottomSheetAnimatedPosition = useSharedValue(windowHeight);
+
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingShape | null>(null);
   const [userLocation, setUserLocation] = useState<UserCoords | null>(null);
   const [currentBuilding, setCurrentBuilding] = useState<BuildingShape | null>(null);
@@ -31,6 +35,10 @@ const App = () => {
 
   // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  useEffect(() => {
+    bottomSheetAnimatedPosition.value = windowHeight;
+  }, [bottomSheetAnimatedPosition, windowHeight]);
 
   const toggleSearchBarState = () => {
     setSheetOpen(false);
@@ -74,6 +82,7 @@ const App = () => {
           openBottomSheet={openBuildingDetails}
           externalSelectedBuilding={selectedBuilding}
           outdoorRoute={outdoorRoute}
+          bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
         />
 
         {sheetOpen ? '' : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -89,6 +98,7 @@ const App = () => {
           onExitSearch={exitSearchMode}
           passSelectedBuilding={setSelectedBuilding}
           passOutdoorRoute={setOutdoorRoute}
+          animatedPosition={bottomSheetAnimatedPosition}
         />
       </SafeAreaView>
     </GestureHandlerRootView>
