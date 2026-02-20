@@ -35,6 +35,16 @@ const LOCATION_OPTIONS: Location.LocationOptions = {
   distanceInterval: 5,
 };
 
+const ROUTE_FIT_EDGE_PADDING = {
+  top: 110,
+  right: 70,
+  bottom: 220,
+  left: 70,
+};
+
+const ROUTE_LINE_COLOR = '#0472f8';
+const ROUTE_LINE_WIDTH = 6;
+
 const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
   latitude: pos.coords.latitude,
   longitude: pos.coords.longitude,
@@ -236,6 +246,16 @@ export default function MapScreen({
   );
   const showRoute = routeCoordinates.length > 1 && Boolean(outdoorRoute);
 
+  useEffect(() => {
+    if (!showRoute) return;
+    if (!mapRef.current?.fitToCoordinates) return;
+
+    mapRef.current.fitToCoordinates(routeCoordinates, {
+      edgePadding: ROUTE_FIT_EDGE_PADDING,
+      animated: true,
+    });
+  }, [routeCoordinates, showRoute]);
+
   const selectedMarker = showSelectedMarker ? (
     <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} />
   ) : null;
@@ -267,8 +287,11 @@ export default function MapScreen({
             <Polyline
               testID="route-polyline"
               coordinates={routeCoordinates}
-              strokeColor="#2F80ED"
-              strokeWidth={6}
+              strokeColors={[ROUTE_LINE_COLOR]}
+              strokeWidth={ROUTE_LINE_WIDTH}
+              lineCap="round"
+              lineJoin="round"
+              zIndex={999}
             />
             <Marker
               testID="route-start-marker"

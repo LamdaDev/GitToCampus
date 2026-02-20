@@ -66,7 +66,7 @@ export const buildingDetailsStyles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.7)',
     paddingLeft: 30,
     paddingRight: 30,
-    paddingTop: 20,
+    paddingTop: 25,
     paddingBottom: 20,
     elevation: 10,
     boxShadow: '0 3px 6px rgba(0, 0, 0, 0.4)',

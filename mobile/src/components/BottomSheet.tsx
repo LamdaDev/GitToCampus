@@ -2,6 +2,7 @@
  * to slot inside information into the BottomSheet**/
 
 import React, {
+  useCallback,
   forwardRef,
   useEffect,
   useImperativeHandle,
@@ -56,12 +57,29 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ref,
   ) => {
     const sheetRef = useRef<BottomSheet>(null);
-    const snapPoints = useMemo(() => ['36%', '75%'], []);
+    const snapPoints = useMemo(() => ['47%', '82%'], []);
 
     const [activeView, setActiveView] = useState<ViewType>('building');
 
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
+    const [isRouteLoading, setIsRouteLoading] = useState(false);
+    const [routeErrorMessage, setRouteErrorMessage] = useState<string | null>(null);
+    const [routeDistanceText, setRouteDistanceText] = useState<string | null>(null);
+    const [routeDurationText, setRouteDurationText] = useState<string | null>(null);
+    const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null);
+
+    const resetRouteState = useCallback(
+      (errorMessage: string | null = null) => {
+        setIsRouteLoading(false);
+        setRouteErrorMessage(errorMessage);
+        setRouteDistanceText(null);
+        setRouteDurationText(null);
+        setRouteDurationSeconds(null);
+        passOutdoorRoute(null);
+      },
+      [passOutdoorRoute],
+    );
 
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = (index: number = 0) => {
@@ -72,6 +90,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     };
 
     const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
+    const isInternalSearch = searchFor !== null;
+    const isGlobalSearch = mode === 'search';
+    const isSearchActive = isInternalSearch || isGlobalSearch;
 
     const showDirections = (building: BuildingShape, asDestination?: boolean) => {
       if (asDestination) {
@@ -89,7 +110,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleSheetClose = () => {
       setActiveView('building');
       setSearchFor(null);
-      passOutdoorRoute(null);
+      resetRouteState();
       revealSearchBar();
     };
 
@@ -132,26 +153,31 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [destinationBuilding]);
 
     useEffect(() => {
+      // Not an error state: directions panel is not active, so route UI should be reset.
       if (activeView !== 'directions') {
-        passOutdoorRoute(null);
+        resetRouteState();
         return;
       }
+      // Not an error state: route cannot be requested until both endpoints are available.
       if (!startCoords || !destinationCoords) {
-        passOutdoorRoute(null);
+        resetRouteState();
         return;
       }
+      // Validation error state: start and destination must be different buildings.
       if (
         startBuilding?.id &&
         destinationBuilding?.id &&
         startBuilding.id === destinationBuilding.id
       ) {
-        passOutdoorRoute(null);
+        resetRouteState('Start and destination cannot be the same.');
         return;
       }
 
       let cancelled = false;
 
       const loadRoute = async () => {
+        setIsRouteLoading(true);
+        setRouteErrorMessage(null);
         try {
           const route = await fetchOutdoorDirections({
             origin: startCoords,
@@ -161,15 +187,21 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
           if (cancelled) return;
 
+          setRouteDistanceText(route.distanceText);
+          setRouteDurationText(route.durationText);
+          setRouteDurationSeconds(route.durationSeconds);
+          setIsRouteLoading(false);
           passOutdoorRoute({
             encodedPolyline: route.polyline,
             start: startCoords,
             destination: destinationCoords,
+            distanceText: route.distanceText,
+            durationText: route.durationText,
           });
         } catch (error) {
           if (cancelled) return;
           console.warn('Failed to fetch outdoor directions', error);
-          passOutdoorRoute(null);
+          resetRouteState('Unable to load route. Please try again.');
         }
       };
 
@@ -183,6 +215,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       destinationBuilding?.id,
       destinationCoords,
       passOutdoorRoute,
+      resetRouteState,
       startBuilding?.id,
       startCoords,
     ]);
@@ -215,13 +248,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         onClose={handleSheetClose}
       >
         <BottomSheetView style={buildingDetailsStyles.container}>
-          {searchFor && (
-            <SearchSheet buildings={buildings} onPressBuilding={handleInternalSearch} />
-          )}
-          {mode === 'search' && (
-            <SearchSheet buildings={buildings} onPressBuilding={closeSearchBuilding} />
-          )}
-          {activeView === 'building' && (
+          {isSearchActive ? (
+            <SearchSheet
+              buildings={buildings}
+              onPressBuilding={isInternalSearch ? handleInternalSearch : closeSearchBuilding}
+            />
+          ) : activeView === 'building' ? (
             <BuildingDetails
               selectedBuilding={selectedBuilding}
               onClose={closeSheet}
@@ -229,14 +261,18 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               currentBuilding={currentBuilding}
               userLocation={userLocation}
             />
-          )}
-          {activeView === 'directions' && (
+          ) : (
             <DirectionDetails
               onClose={closeSheet}
               startBuilding={startBuilding}
               destinationBuilding={destinationBuilding}
               userLocation={userLocation}
               currentBuilding={currentBuilding}
+              isRouteLoading={isRouteLoading}
+              routeErrorMessage={routeErrorMessage}
+              routeDistanceText={routeDistanceText}
+              routeDurationText={routeDurationText}
+              routeDurationSeconds={routeDurationSeconds}
               onPressStart={() => setSearchFor('start')}
               onPressDestination={() => setSearchFor('destination')}
             />

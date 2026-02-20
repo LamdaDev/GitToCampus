@@ -22,3 +22,11 @@ export const formatDistance = (meters: number, units: DirectionsUnits) => {
   if (meters < 1000) return `${meters} m`;
   return `${(meters / 1000).toFixed(1)} km`;
 };
+
+export const formatEta = (durationSeconds: number | null | undefined): string | null => {
+  if (!durationSeconds || durationSeconds < 1) return null;
+  const eta = new Date(Date.now() + durationSeconds * 1000);
+  const hours = eta.getHours() % 12 || 12;
+  const minutes = String(eta.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};

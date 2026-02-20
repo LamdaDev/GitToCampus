@@ -16,4 +16,6 @@ export type OutdoorRouteOverlay = {
   encodedPolyline: string;
   start: LatLng;
   destination: LatLng;
+  distanceText?: string;
+  durationText?: string;
 };

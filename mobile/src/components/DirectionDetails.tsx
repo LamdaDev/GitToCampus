@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
+import { formatEta } from '../utils/directionsFormatting';
 
 type DirectionDetailProps = {
   onClose: () => void;
@@ -15,6 +16,11 @@ type DirectionDetailProps = {
   destinationBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
   currentBuilding: BuildingShape | null;
+  isRouteLoading?: boolean;
+  routeErrorMessage?: string | null;
+  routeDistanceText?: string | null;
+  routeDurationText?: string | null;
+  routeDurationSeconds?: number | null;
   onPressStart?: () => void;
   onPressDestination?: () => void;
 };
@@ -40,6 +46,11 @@ export default function DirectionDetails({
   onClose,
   userLocation,
   currentBuilding,
+  isRouteLoading = false,
+  routeErrorMessage = null,
+  routeDistanceText = null,
+  routeDurationText = null,
+  routeDurationSeconds = null,
   onPressStart,
   onPressDestination,
 }: Readonly<DirectionDetailProps>) {
@@ -47,6 +58,7 @@ export default function DirectionDetails({
   const isSelected = (index: number) => activeIndex === index;
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
+  const routeEtaText = formatEta(routeDurationSeconds);
 
   return (
     <>
@@ -55,7 +67,11 @@ export default function DirectionDetails({
           <Text style={directionDetailsStyles.directionTitle}> Directions </Text>
         </View>
         <View style={directionDetailsStyles.headerIcons}>
-          <TouchableOpacity style={directionDetailsStyles.iconButton} onPress={onClose}>
+          <TouchableOpacity
+            testID="directions-close-button"
+            style={directionDetailsStyles.iconButton}
+            onPress={onClose}
+          >
             <Ionicons name="close-sharp" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -64,7 +80,11 @@ export default function DirectionDetails({
         <View style={directionDetailsStyles.header}>
           <View style={directionDetailsStyles.inlineHeader}>
             <Ionicons name="navigate" size={20} style={directionDetailsStyles.frontIcon} />
-            <TouchableOpacity style={directionDetailsStyles.locationButton} onPress={onPressStart}>
+            <TouchableOpacity
+              testID="start-location-button"
+              style={directionDetailsStyles.locationButton}
+              onPress={onPressStart}
+            >
               <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
                 {startDisplayText}
               </Text>
@@ -84,6 +104,7 @@ export default function DirectionDetails({
           <View style={directionDetailsStyles.inlineHeader}>
             <Ionicons name="location-outline" size={20} style={directionDetailsStyles.frontIcon} />
             <TouchableOpacity
+              testID="destination-location-button"
               style={directionDetailsStyles.locationButton}
               onPress={onPressDestination}
             >
@@ -141,6 +162,48 @@ export default function DirectionDetails({
             />
           </TouchableOpacity>
         </View>
+      </View>
+      <View style={directionDetailsStyles.routeMetaContainer}>
+        {isRouteLoading ? (
+          <Text testID="route-loading-text" style={directionDetailsStyles.routeMetaText}>
+            Loading route...
+          </Text>
+        ) : routeErrorMessage ? (
+          <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
+            {routeErrorMessage}
+          </Text>
+        ) : routeDistanceText && routeDurationText ? (
+          <View style={directionDetailsStyles.routeSummaryRow}>
+            <View style={directionDetailsStyles.routeSummaryTextWrap}>
+              <Text
+                testID="route-summary-text"
+                numberOfLines={1}
+                style={directionDetailsStyles.routePrimaryText}
+              >
+                {routeDurationText}
+              </Text>
+              <Text
+                testID="route-secondary-text"
+                numberOfLines={1}
+                style={directionDetailsStyles.routeSecondaryText}
+              >
+                {routeEtaText ? `${routeEtaText} ETA • ${routeDistanceText}` : routeDistanceText}
+              </Text>
+            </View>
+            <TouchableOpacity
+              testID="route-go-button"
+              disabled={true}
+              activeOpacity={1}
+              style={directionDetailsStyles.routeGoButton}
+            >
+              <Text style={directionDetailsStyles.routeGoText}>GO</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <Text testID="route-empty-text" style={directionDetailsStyles.routeMetaText}>
+            Select start and destination to view route details.
+          </Text>
+        )}
       </View>
     </>
   );

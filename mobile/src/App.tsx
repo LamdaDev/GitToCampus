@@ -65,8 +65,8 @@ const App = () => {
   if (!fontsLoaded) return null;
 
   return (
-    <GestureHandlerRootView>
-      <SafeAreaView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
         <MapScreen
           passSelectedBuilding={setSelectedBuilding}
           passUserLocation={setUserLocation}
