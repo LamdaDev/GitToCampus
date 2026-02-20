@@ -71,35 +71,42 @@ jest.mock('@gorhom/bottom-sheet', () => {
 
     default: React.forwardRef(
       (
-        props: { children: any; onClose?: () => void; onAnimate?: (from: number, to: number) => void },
+        props: {
+          children: any;
+          onClose?: () => void;
+          onAnimate?: (from: number, to: number) => void;
+        },
         ref: any,
       ) => {
-      const React = require('react');
-      const { View, TouchableOpacity, Text } = require('react-native');
+        const React = require('react');
+        const { View, TouchableOpacity, Text } = require('react-native');
 
-      React.useImperativeHandle(ref, () => ({
-        snapToIndex: mockSnapToIndex,
-        close: mockClose,
-      }));
+        React.useImperativeHandle(ref, () => ({
+          snapToIndex: mockSnapToIndex,
+          close: mockClose,
+        }));
 
-      return (
-        <View testID="bottom-sheet">
-          <TouchableOpacity testID="trigger-on-close" onPress={props.onClose}>
-            <Text>Trigger Close</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="trigger-on-animate-close"
-            onPress={() => props.onAnimate?.(0, -1)}
-          >
-            <Text>Trigger Animate Close</Text>
-          </TouchableOpacity>
-          <TouchableOpacity testID="trigger-on-animate-open" onPress={() => props.onAnimate?.(0, 0)}>
-            <Text>Trigger Animate Open</Text>
-          </TouchableOpacity>
-          {props.children}
-        </View>
-      );
-    },
+        return (
+          <View testID="bottom-sheet">
+            <TouchableOpacity testID="trigger-on-close" onPress={props.onClose}>
+              <Text>Trigger Close</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="trigger-on-animate-close"
+              onPress={() => props.onAnimate?.(0, -1)}
+            >
+              <Text>Trigger Animate Close</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="trigger-on-animate-open"
+              onPress={() => props.onAnimate?.(0, 0)}
+            >
+              <Text>Trigger Animate Open</Text>
+            </TouchableOpacity>
+            {props.children}
+          </View>
+        );
+      },
     ),
     BottomSheetView: ({ children }: MockProps) => (
       <View testID="bottom-sheet-view">{children}</View>
