@@ -95,6 +95,28 @@ const renderPolygonItem = (
   );
 };
 
+const selectBuildingAtCoords = (
+  coords: UserCoords,
+  setSelectedBuildingId: (id: string | null) => void,
+  setCurrentBuildingId: (id: string | null) => void,
+  setSelectedCampus: (campus: Campus) => void,
+) => {
+  try {
+    const building = findBuildingAt(coords);
+    setSelectedBuildingId(building?.id ?? null);
+    setCurrentBuildingId(building?.id ?? null);
+    if (building) setSelectedCampus(building.campus);
+  } catch (err) {
+    console.warn('Error checking building containment', err);
+  }
+};
+
+const initLocationTracking = async (
+  onPositionUpdate: (coords: UserCoords) => void,
+): Promise<Location.LocationSubscription | null> => {
+  return watchUserLocation(onPositionUpdate);
+};
+
 export default function MapScreen({
   passSelectedBuilding,
   passUserLocation,
@@ -124,11 +146,9 @@ export default function MapScreen({
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
 
-    const initTracking = async () => {
-      subscription = await watchUserLocation(setUserCoords);
-    };
-
-    void initTracking();
+    void initLocationTracking(setUserCoords).then((sub) => {
+      subscription = sub;
+    });
 
     return () => {
       subscription?.remove();
@@ -137,23 +157,12 @@ export default function MapScreen({
 
   useEffect(() => {
     if (!userCoords) return;
-
-    try {
-      const building = findBuildingAt(userCoords);
-
-      if (building) {
-        setSelectedBuildingId(building.id);
-        setCurrentBuildingId(building.id);
-        setSelectedCampus(building.campus);
-      } else {
-        // Clear that selection when user is no longer inside a building
-        setSelectedBuildingId(null);
-        setCurrentBuildingId(null);
-      }
-    } catch (err) {
-      // Don't crash on unexpected geometry errors
-      console.warn('Error checking building containment', err);
-    }
+    selectBuildingAtCoords(
+      userCoords,
+      setSelectedBuildingId,
+      setCurrentBuildingId,
+      setSelectedCampus,
+    );
   }, [userCoords]);
 
   useEffect(() => {
