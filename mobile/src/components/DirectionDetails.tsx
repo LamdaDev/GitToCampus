@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
+import { formatEta } from '../utils/directionsFormatting';
 
 type DirectionDetailProps = {
   onClose: () => void;
@@ -39,14 +40,6 @@ const getStartDisplayText = (
   else return 'Set as starting point';
 };
 
-const getEtaText = (durationSeconds: number | null | undefined): string | null => {
-  if (!durationSeconds || durationSeconds < 1) return null;
-  const eta = new Date(Date.now() + durationSeconds * 1000);
-  const hours = eta.getHours() % 12 || 12;
-  const minutes = String(eta.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-};
-
 export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
@@ -65,7 +58,7 @@ export default function DirectionDetails({
   const isSelected = (index: number) => activeIndex === index;
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
-  const routeEtaText = getEtaText(routeDurationSeconds);
+  const routeEtaText = formatEta(routeDurationSeconds);
 
   return (
     <>
