@@ -145,6 +145,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [destinationBuilding]);
 
     useEffect(() => {
+      // Not an error state: directions panel is not active, so route UI should be reset.
       if (activeView !== 'directions') {
         setIsRouteLoading(false);
         setRouteErrorMessage(null);
@@ -154,6 +155,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         passOutdoorRoute(null);
         return;
       }
+      // Not an error state: route cannot be requested until both endpoints are available.
       if (!startCoords || !destinationCoords) {
         setIsRouteLoading(false);
         setRouteErrorMessage(null);
@@ -163,6 +165,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         passOutdoorRoute(null);
         return;
       }
+      // Validation error state: start and destination must be different buildings.
       if (
         startBuilding?.id &&
         destinationBuilding?.id &&
