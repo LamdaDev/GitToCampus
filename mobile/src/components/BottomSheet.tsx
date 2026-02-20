@@ -2,6 +2,7 @@
  * to slot inside information into the BottomSheet**/
 
 import React, {
+  useCallback,
   forwardRef,
   useEffect,
   useImperativeHandle,
@@ -68,6 +69,18 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [routeDurationText, setRouteDurationText] = useState<string | null>(null);
     const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null);
 
+    const resetRouteState = useCallback(
+      (errorMessage: string | null = null) => {
+        setIsRouteLoading(false);
+        setRouteErrorMessage(errorMessage);
+        setRouteDistanceText(null);
+        setRouteDurationText(null);
+        setRouteDurationSeconds(null);
+        passOutdoorRoute(null);
+      },
+      [passOutdoorRoute],
+    );
+
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = (index: number = 0) => {
       sheetRef.current?.snapToIndex(index);
@@ -97,12 +110,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleSheetClose = () => {
       setActiveView('building');
       setSearchFor(null);
-      setIsRouteLoading(false);
-      setRouteErrorMessage(null);
-      setRouteDistanceText(null);
-      setRouteDurationText(null);
-      setRouteDurationSeconds(null);
-      passOutdoorRoute(null);
+      resetRouteState();
       revealSearchBar();
     };
 
@@ -147,22 +155,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     useEffect(() => {
       // Not an error state: directions panel is not active, so route UI should be reset.
       if (activeView !== 'directions') {
-        setIsRouteLoading(false);
-        setRouteErrorMessage(null);
-        setRouteDistanceText(null);
-        setRouteDurationText(null);
-        setRouteDurationSeconds(null);
-        passOutdoorRoute(null);
+        resetRouteState();
         return;
       }
       // Not an error state: route cannot be requested until both endpoints are available.
       if (!startCoords || !destinationCoords) {
-        setIsRouteLoading(false);
-        setRouteErrorMessage(null);
-        setRouteDistanceText(null);
-        setRouteDurationText(null);
-        setRouteDurationSeconds(null);
-        passOutdoorRoute(null);
+        resetRouteState();
         return;
       }
       // Validation error state: start and destination must be different buildings.
@@ -171,12 +169,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         destinationBuilding?.id &&
         startBuilding.id === destinationBuilding.id
       ) {
-        setIsRouteLoading(false);
-        setRouteErrorMessage('Start and destination cannot be the same.');
-        setRouteDistanceText(null);
-        setRouteDurationText(null);
-        setRouteDurationSeconds(null);
-        passOutdoorRoute(null);
+        resetRouteState('Start and destination cannot be the same.');
         return;
       }
 
@@ -208,12 +201,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         } catch (error) {
           if (cancelled) return;
           console.warn('Failed to fetch outdoor directions', error);
-          setIsRouteLoading(false);
-          setRouteDistanceText(null);
-          setRouteDurationText(null);
-          setRouteDurationSeconds(null);
-          setRouteErrorMessage('Unable to load route. Please try again.');
-          passOutdoorRoute(null);
+          resetRouteState('Unable to load route. Please try again.');
         }
       };
 
@@ -227,6 +215,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       destinationBuilding?.id,
       destinationCoords,
       passOutdoorRoute,
+      resetRouteState,
       startBuilding?.id,
       startCoords,
     ]);
