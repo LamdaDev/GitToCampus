@@ -156,6 +156,7 @@ jest.mock('../src/components/DirectionDetails', () => {
     onPressStart,
     onPressDestination,
     onTravelModeChange,
+    onPressTransitGo,
     isCrossCampusRoute,
     isRouteLoading,
     routeErrorMessage,
@@ -169,7 +170,7 @@ jest.mock('../src/components/DirectionDetails', () => {
       <Text testID="route-error-state">{routeErrorMessage ?? 'none'}</Text>
       <Text testID="route-summary-state">
         {routeDurationText && routeDistanceText
-          ? `${routeDurationText} • ${routeDistanceText}`
+          ? `${routeDurationText} - ${routeDistanceText}`
           : 'none'}
       </Text>
       <TouchableOpacity testID="close-directions-button" onPress={onClose}>
@@ -190,6 +191,25 @@ jest.mock('../src/components/DirectionDetails', () => {
       </TouchableOpacity>
       <TouchableOpacity testID="transport-bus" onPress={() => onTravelModeChange?.('transit')}>
         <Text>Bus</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="route-go-button" onPress={onPressTransitGo}>
+        <Text>Go</Text>
+      </TouchableOpacity>
+    </View>
+  );
+});
+
+jest.mock('../src/components/TransitPlanDetails', () => {
+  const { View, Text, TouchableOpacity } = require('react-native');
+
+  return ({ routeTransitSteps, onBack, onClose }: any) => (
+    <View testID="transit-plan-details">
+      <Text testID="transit-steps-count">{(routeTransitSteps ?? []).length}</Text>
+      <TouchableOpacity testID="transit-back-button" onPress={onBack}>
+        <Text>Back</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="transit-close-button" onPress={onClose}>
+        <Text>Close</Text>
       </TouchableOpacity>
     </View>
   );
@@ -679,6 +699,61 @@ describe('BottomSheet', () => {
         expect.objectContaining({ mode: 'transit' }),
       );
     });
+  });
+
+  test('opens transit plan as a separate sheet when GO is pressed in transit mode', async () => {
+    directionsServiceMock.fetchOutdoorDirections.mockImplementation(async (request: any) => ({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 840,
+      durationText: '14 mins',
+      bounds: null,
+      ...(request.mode === 'transit'
+        ? {
+            transitInstructions: [
+              {
+                id: 'transit-0-1',
+                type: 'transit',
+                title: 'Board the 12 bus',
+              },
+            ],
+          }
+        : {}),
+    }));
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+    });
+
+    fireEvent.press(getByTestId('transport-bus'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
+        expect.objectContaining({ mode: 'transit' }),
+      );
+    });
+
+    fireEvent.press(getByTestId('route-go-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('transit-plan-details')).toBeTruthy();
+      expect(getByTestId('transit-steps-count').props.children).toBe(1);
+    });
+
+    fireEvent.press(getByTestId('transit-back-button'));
+    expect(getByTestId('direction-details')).toBeTruthy();
   });
 
   test('shows loading state while waiting for directions response', async () => {

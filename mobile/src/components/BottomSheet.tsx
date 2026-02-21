@@ -15,12 +15,17 @@ import { ViewType } from '../types/ViewType';
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import BuildingDetails from './BuildingDetails';
 import DirectionDetails from './DirectionDetails';
+import TransitPlanDetails from './TransitPlanDetails';
 import type { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
 import { centroidOfPolygons } from '../utils/geoJson';
 import { fetchOutdoorDirections } from '../services/googleDirections';
 import type { OutdoorRouteOverlay } from '../types/Map';
-import { DirectionsServiceError, type DirectionsTravelMode } from '../types/Directions';
+import {
+  DirectionsServiceError,
+  type DirectionsTravelMode,
+  type TransitInstruction,
+} from '../types/Directions';
 import type { SharedValue } from 'react-native-reanimated';
 
 import SearchSheet from './SearchSheet';
@@ -73,6 +78,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [routeDistanceText, setRouteDistanceText] = useState<string | null>(null);
     const [routeDurationText, setRouteDurationText] = useState<string | null>(null);
     const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null);
+    const [routeTransitSteps, setRouteTransitSteps] = useState<TransitInstruction[]>([]);
     const [travelMode, setTravelMode] = useState<DirectionsTravelMode>('walking');
 
     const resetRouteState = useCallback(
@@ -82,6 +88,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setRouteDistanceText(null);
         setRouteDurationText(null);
         setRouteDurationSeconds(null);
+        setRouteTransitSteps([]);
         passOutdoorRoute(null);
       },
       [passOutdoorRoute],
@@ -114,6 +121,16 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setDestinationBuilding(null);
       }
       setActiveView('directions');
+    };
+
+    const showTransitPlan = () => {
+      setActiveView('transit-plan');
+      sheetRef.current?.snapToIndex(1);
+    };
+
+    const showDirectionsPanel = () => {
+      setActiveView('directions');
+      sheetRef.current?.snapToIndex(0);
     };
 
     const handleSheetClose = () => {
@@ -184,10 +201,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     useEffect(() => {
       // Not an error state: directions panel is not active, so route UI should be reset.
-      if (activeView !== 'directions') {
+      if (activeView !== 'directions' && activeView !== 'transit-plan') {
         resetRouteState();
         return;
       }
+      if (activeView !== 'directions') return;
       // Not an error state: route cannot be requested until both endpoints are available.
       if (!startCoords || !destinationCoords) {
         resetRouteState();
@@ -220,6 +238,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           setRouteDistanceText(route.distanceText);
           setRouteDurationText(route.durationText);
           setRouteDurationSeconds(route.durationSeconds);
+          setRouteTransitSteps(route.transitInstructions ?? []);
           setIsRouteLoading(false);
           passOutdoorRoute({
             encodedPolyline: route.polyline,
@@ -304,6 +323,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               currentBuilding={currentBuilding}
               userLocation={userLocation}
             />
+          ) : activeView === 'transit-plan' ? (
+            <TransitPlanDetails
+              destinationBuilding={destinationBuilding}
+              routeTransitSteps={routeTransitSteps}
+              onBack={showDirectionsPanel}
+              onClose={closeSheet}
+            />
           ) : (
             <DirectionDetails
               onClose={closeSheet}
@@ -320,6 +346,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               onPressStart={() => setSearchFor('start')}
               onPressDestination={() => setSearchFor('destination')}
               onTravelModeChange={setTravelMode}
+              onPressTransitGo={showTransitPlan}
             />
           )}
         </BottomSheetView>

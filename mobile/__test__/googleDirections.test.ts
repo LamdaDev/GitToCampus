@@ -87,6 +87,86 @@ describe('googleDirections service', () => {
     expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('mode=walking'));
   });
 
+  test('extracts transit instructions with time and stop metadata', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: { text: '4.0 km', value: 4000 },
+                duration: { text: '26 mins', value: 1560 },
+                steps: [
+                  {
+                    travel_mode: 'WALKING',
+                    html_instructions: '<b>Walk</b> to <b>Guy-Concordia Station</b>',
+                    distance: { text: '300 m', value: 300 },
+                    duration: { text: '4 mins', value: 240 },
+                  },
+                  {
+                    travel_mode: 'TRANSIT',
+                    duration: { text: '22 mins', value: 1320 },
+                    transit_details: {
+                      departure_stop: { name: 'Guy-Concordia' },
+                      arrival_stop: { name: "De l'Eglise" },
+                      departure_time: { text: '3:09 PM', value: 0, time_zone: 'America/Montreal' },
+                      arrival_time: { text: '3:31 PM', value: 0, time_zone: 'America/Montreal' },
+                      headsign: 'Honore-Beaugrand',
+                      num_stops: 20,
+                      line: {
+                        short_name: '1',
+                        color: '#00985F',
+                        text_color: '#FFFFFF',
+                        vehicle: { type: 'SUBWAY', name: 'Subway' },
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(
+      {
+        origin: { latitude: 45.5, longitude: -73.57 },
+        destination: { latitude: 45.49, longitude: -73.58 },
+        mode: 'transit',
+      },
+      'abc123',
+    );
+
+    expect(route.transitInstructions).toEqual([
+      {
+        id: 'walk-0-0',
+        type: 'walk',
+        title: 'Walk to Guy-Concordia Station',
+        detail: '300 m, about 4 mins',
+      },
+      {
+        id: 'transit-0-1',
+        type: 'transit',
+        title: 'Board the 1 metro',
+        subtitle: 'Toward Honore-Beaugrand',
+        detail: 'Ride 20 stops, 22 mins',
+        departureTimeText: '3:09 PM',
+        arrivalTimeText: '3:31 PM',
+        departureStopName: 'Guy-Concordia',
+        arrivalStopName: "De l'Eglise",
+        lineShortName: '1',
+        lineColor: '#00985F',
+        lineTextColor: '#FFFFFF',
+        vehicleType: 'SUBWAY',
+      },
+    ]);
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('mode=transit'));
+  });
+
   test('throws when API key is missing', async () => {
     await expect(
       fetchOutdoorDirections(
