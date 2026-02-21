@@ -20,6 +20,7 @@ import type { UserCoords } from '../screens/MapScreen';
 import { centroidOfPolygons } from '../utils/geoJson';
 import { fetchOutdoorDirections } from '../services/googleDirections';
 import type { OutdoorRouteOverlay } from '../types/Map';
+import { DirectionsServiceError, type DirectionsTravelMode } from '../types/Directions';
 import type { SharedValue } from 'react-native-reanimated';
 
 import SearchSheet from './SearchSheet';
@@ -66,11 +67,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
+    const [startLocationSnapshot, setStartLocationSnapshot] = useState<UserCoords | null>(null);
     const [isRouteLoading, setIsRouteLoading] = useState(false);
     const [routeErrorMessage, setRouteErrorMessage] = useState<string | null>(null);
     const [routeDistanceText, setRouteDistanceText] = useState<string | null>(null);
     const [routeDurationText, setRouteDurationText] = useState<string | null>(null);
     const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null);
+    const [travelMode, setTravelMode] = useState<DirectionsTravelMode>('walking');
 
     const resetRouteState = useCallback(
       (errorMessage: string | null = null) => {
@@ -98,13 +101,16 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const isSearchActive = isInternalSearch || isGlobalSearch;
 
     const showDirections = (building: BuildingShape, asDestination?: boolean) => {
+      setTravelMode('walking');
       if (asDestination) {
         // Walking figure: building is destination, start is current location
-        setStartBuilding(null);
+        setStartBuilding(currentBuilding ?? null);
+        setStartLocationSnapshot(currentBuilding ? null : userLocation);
         setDestinationBuilding(building);
       } else {
         // "Set as starting point" button: building is start
         setStartBuilding(building);
+        setStartLocationSnapshot(null);
         setDestinationBuilding(null);
       }
       setActiveView('directions');
@@ -113,6 +119,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleSheetClose = () => {
       setActiveView('building');
       setSearchFor(null);
+      setTravelMode('walking');
+      setStartLocationSnapshot(null);
       resetRouteState();
     };
 
@@ -129,8 +137,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       passSelectedBuilding(chosenBuilding);
 
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
-      setStartBuilding(null);
+      setStartBuilding(currentBuilding ?? null);
+      setStartLocationSnapshot(currentBuilding ? null : userLocation);
       setDestinationBuilding(chosenBuilding);
+      setTravelMode('walking');
       setActiveView('directions');
       onExitSearch();
       sheetRef.current?.snapToIndex(0);
@@ -138,8 +148,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const handleInternalSearch = (building: BuildingShape) => {
       passSelectedBuilding(building);
-      if (searchFor === 'start') setStartBuilding(building);
-      else setDestinationBuilding(building);
+      if (searchFor === 'start') {
+        setStartBuilding(building);
+        setStartLocationSnapshot(null);
+      } else setDestinationBuilding(building);
       setSearchFor(null);
       sheetRef.current?.snapToIndex(0);
     };
@@ -154,9 +166,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const startCoords = useMemo(() => {
       if (startBuilding) return centroidOfPolygons(startBuilding.polygons);
+      if (startLocationSnapshot) return startLocationSnapshot;
       if (currentBuilding) return centroidOfPolygons(currentBuilding.polygons);
       return userLocation;
-    }, [currentBuilding, startBuilding, userLocation]);
+    }, [currentBuilding, startBuilding, startLocationSnapshot, userLocation]);
 
     const destinationCoords = useMemo(() => {
       if (!destinationBuilding) return null;
@@ -199,7 +212,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           const route = await fetchOutdoorDirections({
             origin: startCoords,
             destination: destinationCoords,
-            mode: 'walking',
+            mode: travelMode,
           });
 
           if (cancelled) return;
@@ -218,6 +231,16 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         } catch (error) {
           if (cancelled) return;
           console.warn('Failed to fetch outdoor directions', error);
+          if (error instanceof DirectionsServiceError) {
+            if (error.code === 'MISSING_API_KEY') {
+              resetRouteState('Google Directions API key is missing.');
+              return;
+            }
+            if (error.code === 'NO_ROUTE') {
+              resetRouteState('No route found for this start and destination.');
+              return;
+            }
+          }
           resetRouteState('Unable to load route. Please try again.');
         }
       };
@@ -235,6 +258,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       resetRouteState,
       startBuilding?.id,
       startCoords,
+      travelMode,
     ]);
 
     useEffect(() => {
@@ -295,6 +319,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               routeDurationSeconds={routeDurationSeconds}
               onPressStart={() => setSearchFor('start')}
               onPressDestination={() => setSearchFor('destination')}
+              onTravelModeChange={setTravelMode}
             />
           )}
         </BottomSheetView>

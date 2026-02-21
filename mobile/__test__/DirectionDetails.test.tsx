@@ -111,6 +111,7 @@ describe('Direction Details', () => {
   });
 
   test('updates activeIndex when transportation buttons are pressed', () => {
+    const onTravelModeChange = jest.fn();
     const { getByTestId } = render(
       <DirectionDetails
         startBuilding={mockBuildings[0]}
@@ -118,6 +119,7 @@ describe('Direction Details', () => {
         onClose={jest.fn()}
         userLocation={null}
         currentBuilding={null}
+        onTravelModeChange={onTravelModeChange}
       />,
     );
 
@@ -130,18 +132,21 @@ describe('Direction Details', () => {
     expect(walkButton.props.accessibilityState.selected).toBe(true);
     expect(carButton.props.accessibilityState.selected).toBe(false);
     expect(busButton.props.accessibilityState.selected).toBe(false);
+    expect(onTravelModeChange).toHaveBeenLastCalledWith('walking');
 
     // Press car button
     fireEvent.press(carButton);
     expect(walkButton.props.accessibilityState.selected).toBe(false);
     expect(carButton.props.accessibilityState.selected).toBe(true);
     expect(busButton.props.accessibilityState.selected).toBe(false);
+    expect(onTravelModeChange).toHaveBeenLastCalledWith('driving');
 
     // Press bus button
     fireEvent.press(busButton);
     expect(walkButton.props.accessibilityState.selected).toBe(false);
     expect(carButton.props.accessibilityState.selected).toBe(false);
     expect(busButton.props.accessibilityState.selected).toBe(true);
+    expect(onTravelModeChange).toHaveBeenCalledTimes(2);
   });
 
   test('shows loading state when route is loading', () => {

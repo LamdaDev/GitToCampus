@@ -3,6 +3,7 @@ import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
 import BottomSlider, { BottomSliderHandle } from '../src/components/BottomSheet';
 import { BuildingShape } from '../src/types/BuildingShape';
 import * as directionsService from '../src/services/googleDirections';
+import { DirectionsServiceError } from '../src/types/Directions';
 
 const mockSnapToIndex = jest.fn();
 const mockClose = jest.fn();
@@ -154,6 +155,7 @@ jest.mock('../src/components/DirectionDetails', () => {
     onClose,
     onPressStart,
     onPressDestination,
+    onTravelModeChange,
     isCrossCampusRoute,
     isRouteLoading,
     routeErrorMessage,
@@ -179,6 +181,15 @@ jest.mock('../src/components/DirectionDetails', () => {
       </TouchableOpacity>
       <TouchableOpacity testID="press-destination" onPress={onPressDestination}>
         <Text>Destination</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="transport-walk" onPress={() => onTravelModeChange?.('walking')}>
+        <Text>Walk</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="transport-car" onPress={() => onTravelModeChange?.('driving')}>
+        <Text>Car</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="transport-bus" onPress={() => {}}>
+        <Text>Bus</Text>
       </TouchableOpacity>
     </View>
   );
@@ -604,6 +615,9 @@ describe('BottomSheet', () => {
 
     await waitFor(() => {
       expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalled();
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalledWith(
+        expect.objectContaining({ mode: 'walking' }),
+      );
       expect(passOutdoorRoute).toHaveBeenCalledWith(
         expect.objectContaining({
           encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
@@ -612,6 +626,51 @@ describe('BottomSheet', () => {
         }),
       );
     });
+  });
+
+  test('requests driving directions when car transport is selected and does nothing for bus', async () => {
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 840,
+      durationText: '14 mins',
+      bounds: null,
+    });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalledWith(
+        expect.objectContaining({ mode: 'walking' }),
+      );
+    });
+
+    const initialCallCount = directionsServiceMock.fetchOutdoorDirections.mock.calls.length;
+
+    fireEvent.press(getByTestId('transport-car'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThan(
+        initialCallCount,
+      );
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
+        expect.objectContaining({ mode: 'driving' }),
+      );
+    });
+
+    const carCallCount = directionsServiceMock.fetchOutdoorDirections.mock.calls.length;
+    fireEvent.press(getByTestId('transport-bus'));
+    expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBe(carCallCount);
   });
 
   test('shows loading state while waiting for directions response', async () => {
@@ -703,6 +762,64 @@ describe('BottomSheet', () => {
       expect(getByTestId('route-error-state').props.children).toBe(
         'Unable to load route. Please try again.',
       );
+    });
+
+    warnSpy.mockRestore();
+  });
+
+  test('shows missing API key error when directions service reports MISSING_API_KEY', async () => {
+    const passOutdoorRoute = jest.fn();
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(
+      new DirectionsServiceError('MISSING_API_KEY', 'Missing key'),
+    );
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-error-state').props.children).toBe(
+        'Google Directions API key is missing.',
+      );
+      expect(passOutdoorRoute).toHaveBeenCalledWith(null);
+    });
+
+    warnSpy.mockRestore();
+  });
+
+  test('shows no-route error when directions service reports NO_ROUTE', async () => {
+    const passOutdoorRoute = jest.fn();
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(
+      new DirectionsServiceError('NO_ROUTE', 'No route'),
+    );
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-error-state').props.children).toBe(
+        'No route found for this start and destination.',
+      );
+      expect(passOutdoorRoute).toHaveBeenCalledWith(null);
     });
 
     warnSpy.mockRestore();

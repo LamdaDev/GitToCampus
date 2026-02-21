@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
+import type { DirectionsTravelMode } from '../types/Directions';
 import type { UserCoords } from '../screens/MapScreen';
 import { formatEta } from '../utils/directionsFormatting';
 
@@ -24,6 +25,7 @@ type DirectionDetailProps = {
   routeDurationSeconds?: number | null;
   onPressStart?: () => void;
   onPressDestination?: () => void;
+  onTravelModeChange?: (mode: DirectionsTravelMode) => void;
 };
 
 /**
@@ -55,9 +57,20 @@ export default function DirectionDetails({
   routeDurationSeconds = null,
   onPressStart,
   onPressDestination,
+  onTravelModeChange,
 }: Readonly<DirectionDetailProps>) {
   const [activeIndex, setActiveIndex] = useState(0);
   const isSelected = (index: number) => activeIndex === index;
+
+  const handleSelectWalk = () => {
+    setActiveIndex(0);
+    onTravelModeChange?.('walking');
+  };
+
+  const handleSelectCar = () => {
+    setActiveIndex(1);
+    onTravelModeChange?.('driving');
+  };
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
   const routeEtaText = formatEta(routeDurationSeconds);
@@ -129,7 +142,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected(0) && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={() => setActiveIndex(0)}
+            onPress={handleSelectWalk}
           >
             <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
           </TouchableOpacity>
@@ -140,7 +153,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected(1) && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={() => setActiveIndex(1)}
+            onPress={handleSelectCar}
           >
             <Ionicons
               name="car-outline"
