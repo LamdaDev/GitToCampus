@@ -78,7 +78,6 @@ export default function TransitPlanDetails({
       </View>
 
       <View testID="transit-itinerary-container" style={directionDetailsStyles.transitContainer}>
-      
         {routeTransitSteps.length === 0 ? (
           <Text testID="transit-empty-text" style={directionDetailsStyles.transitEmptyText}>
             Transit step details are currently unavailable for this route.
