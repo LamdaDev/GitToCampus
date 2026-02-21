@@ -72,6 +72,11 @@ export default function DirectionDetails({
     onTravelModeChange?.('driving');
   };
 
+  const handleSelectTransit = () => {
+    setActiveIndex(2);
+    onTravelModeChange?.('transit');
+  };
+
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
   const routeEtaText = formatEta(routeDurationSeconds);
 
@@ -168,7 +173,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected(2) && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={() => setActiveIndex(2)}
+            onPress={handleSelectTransit}
           >
             <Ionicons
               name="bus-outline"

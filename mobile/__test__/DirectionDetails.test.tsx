@@ -146,7 +146,8 @@ describe('Direction Details', () => {
     expect(walkButton.props.accessibilityState.selected).toBe(false);
     expect(carButton.props.accessibilityState.selected).toBe(false);
     expect(busButton.props.accessibilityState.selected).toBe(true);
-    expect(onTravelModeChange).toHaveBeenCalledTimes(2);
+    expect(onTravelModeChange).toHaveBeenLastCalledWith('transit');
+    expect(onTravelModeChange).toHaveBeenCalledTimes(3);
   });
 
   test('shows loading state when route is loading', () => {

@@ -188,7 +188,7 @@ jest.mock('../src/components/DirectionDetails', () => {
       <TouchableOpacity testID="transport-car" onPress={() => onTravelModeChange?.('driving')}>
         <Text>Car</Text>
       </TouchableOpacity>
-      <TouchableOpacity testID="transport-bus" onPress={() => {}}>
+      <TouchableOpacity testID="transport-bus" onPress={() => onTravelModeChange?.('transit')}>
         <Text>Bus</Text>
       </TouchableOpacity>
     </View>
@@ -628,7 +628,7 @@ describe('BottomSheet', () => {
     });
   });
 
-  test('requests driving directions when car transport is selected and does nothing for bus', async () => {
+  test('requests driving then transit directions when car and bus transport are selected', async () => {
     directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
       polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
       distanceMeters: 1200,
@@ -670,7 +670,15 @@ describe('BottomSheet', () => {
 
     const carCallCount = directionsServiceMock.fetchOutdoorDirections.mock.calls.length;
     fireEvent.press(getByTestId('transport-bus'));
-    expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBe(carCallCount);
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThan(
+        carCallCount,
+      );
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
+        expect.objectContaining({ mode: 'transit' }),
+      );
+    });
   });
 
   test('shows loading state while waiting for directions response', async () => {
