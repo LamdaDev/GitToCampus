@@ -69,24 +69,45 @@ jest.mock('@gorhom/bottom-sheet', () => {
   return {
     __esModule: true,
 
-    default: React.forwardRef((props: { children: any; onClose?: () => void }, ref: any) => {
-      const React = require('react');
-      const { View, TouchableOpacity, Text } = require('react-native');
+    default: React.forwardRef(
+      (
+        props: {
+          children: any;
+          onClose?: () => void;
+          onAnimate?: (from: number, to: number) => void;
+        },
+        ref: any,
+      ) => {
+        const React = require('react');
+        const { View, TouchableOpacity, Text } = require('react-native');
 
-      React.useImperativeHandle(ref, () => ({
-        snapToIndex: mockSnapToIndex,
-        close: mockClose,
-      }));
+        React.useImperativeHandle(ref, () => ({
+          snapToIndex: mockSnapToIndex,
+          close: mockClose,
+        }));
 
-      return (
-        <View testID="bottom-sheet">
-          <TouchableOpacity testID="trigger-on-close" onPress={props.onClose}>
-            <Text>Trigger Close</Text>
-          </TouchableOpacity>
-          {props.children}
-        </View>
-      );
-    }),
+        return (
+          <View testID="bottom-sheet">
+            <TouchableOpacity testID="trigger-on-close" onPress={props.onClose}>
+              <Text>Trigger Close</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="trigger-on-animate-close"
+              onPress={() => props.onAnimate?.(0, -1)}
+            >
+              <Text>Trigger Animate Close</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="trigger-on-animate-open"
+              onPress={() => props.onAnimate?.(0, 0)}
+            >
+              <Text>Trigger Animate Open</Text>
+            </TouchableOpacity>
+            {props.children}
+          </View>
+        );
+      },
+    ),
     BottomSheetView: ({ children }: MockProps) => (
       <View testID="bottom-sheet-view">{children}</View>
     ),
@@ -133,6 +154,7 @@ jest.mock('../src/components/DirectionDetails', () => {
     onClose,
     onPressStart,
     onPressDestination,
+    isCrossCampusRoute,
     isRouteLoading,
     routeErrorMessage,
     routeDurationText,
@@ -140,6 +162,7 @@ jest.mock('../src/components/DirectionDetails', () => {
   }: any) => (
     <View testID="direction-details">
       <Text testID="destination-id">{destinationBuilding ? destinationBuilding.id : 'none'}</Text>
+      <Text testID="cross-campus-state">{isCrossCampusRoute ? 'true' : 'false'}</Text>
       <Text testID="route-loading-state">{isRouteLoading ? 'true' : 'false'}</Text>
       <Text testID="route-error-state">{routeErrorMessage ?? 'none'}</Text>
       <Text testID="route-summary-state">
@@ -298,7 +321,7 @@ describe('BottomSheet', () => {
     expect(mockSnapToIndex).toHaveBeenCalledWith(1);
   });
 
-  test('handleSheetClose calls revealSearchBar', () => {
+  test('handleSheetAnimate calls revealSearchBar when the sheet closes', () => {
     const revealSearchBar = jest.fn();
     const { getByTestId } = render(
       <BottomSlider
@@ -308,9 +331,46 @@ describe('BottomSheet', () => {
         revealSearchBar={revealSearchBar}
       />,
     );
-    fireEvent.press(getByTestId('trigger-on-close'));
+    fireEvent.press(getByTestId('trigger-on-animate-close'));
 
     expect(revealSearchBar).toHaveBeenCalled();
+  });
+
+  test('handleSheetAnimate does not call revealSearchBar for non-close transitions', () => {
+    const revealSearchBar = jest.fn();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={null}
+        revealSearchBar={revealSearchBar}
+      />,
+    );
+    fireEvent.press(getByTestId('trigger-on-animate-open'));
+
+    expect(revealSearchBar).not.toHaveBeenCalled();
+  });
+
+  test('handleSheetClose resets active view and clears route overlay', async () => {
+    const passOutdoorRoute = jest.fn();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    expect(getByTestId('direction-details')).toBeTruthy();
+
+    fireEvent.press(getByTestId('trigger-on-close'));
+
+    await waitFor(() => {
+      expect(getByTestId('building-details')).toBeTruthy();
+      expect(passOutdoorRoute).toHaveBeenCalledWith(null);
+    });
   });
 
   test('renders SearchSheet when mode is search', () => {
@@ -446,6 +506,54 @@ describe('BottomSheet', () => {
     );
 
     expect(getByTestId('destination-id').props.children).toBe('loy-1');
+  });
+
+  test('sets cross-campus flag when current and destination campuses differ', () => {
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    expect(getByTestId('cross-campus-state').props.children).toBe('true');
+  });
+
+  test('does not set cross-campus flag for same-campus routes', () => {
+    const sameCampusCurrent: BuildingShape = { ...mockBuildings[0], campus: 'SGW' };
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={sameCampusCurrent}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    expect(getByTestId('cross-campus-state').props.children).toBe('false');
+  });
+
+  test('does not set cross-campus flag when start campus is unknown', () => {
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={null}
+        userLocation={{ latitude: 45.5, longitude: -73.57 }}
+      />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+
+    expect(getByTestId('cross-campus-state').props.children).toBe('false');
   });
 
   test('requests outdoor route and passes route overlay when directions are available', async () => {

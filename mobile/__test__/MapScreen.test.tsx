@@ -503,6 +503,30 @@ describe('MapScreen', () => {
     });
   });
 
+  test('skips route fitting when map ref does not expose fitToCoordinates', async () => {
+    mockHasAnimateToRegion = false;
+
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{
+          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+          start: { latitude: 45.5, longitude: -73.57 },
+          destination: { latitude: 45.49, longitude: -73.58 },
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline')).toBeTruthy();
+    });
+
+    expect(mockFitToCoordinates).not.toHaveBeenCalled();
+  });
+
   test('applies external selected building to marker and campus region', async () => {
     const { getByTestId } = render(
       <MapScreen

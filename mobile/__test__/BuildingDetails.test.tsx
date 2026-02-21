@@ -2,6 +2,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import BuildingDetails from '../src/components/BuildingDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import React from 'react';
+import { Linking } from 'react-native';
 
 const mockOnClose = jest.fn();
 const mockOnShowDirections = jest.fn();
@@ -119,5 +120,43 @@ describe('Building Details', () => {
 
     expect(mockOnShowDirections).toHaveBeenCalledWith(selectedBuilding, true);
     expect(mockOnShowDirections).toHaveBeenCalledTimes(1);
+  });
+
+  test('Pressing a hotspot opens its URL', () => {
+    const selectedBuilding = mockBuildings[0];
+    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValueOnce();
+
+    const { getByText } = render(
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    fireEvent.press(getByText('Loyola Chapel'));
+
+    expect(openUrlSpy).toHaveBeenCalledWith(
+      'https://www.concordia.ca/hospitality/venues/loyola-chapel.html',
+    );
+  });
+
+  test('navigation buttons do not call onShowDirections when selectedBuilding is null', () => {
+    const { getByTestId, getByText } = render(
+      <BuildingDetails
+        selectedBuilding={null}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    fireEvent.press(getByTestId('walking-figure-button'));
+    fireEvent.press(getByText('Set as starting point'));
+
+    expect(mockOnShowDirections).not.toHaveBeenCalled();
   });
 });

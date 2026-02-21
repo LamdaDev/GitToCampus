@@ -24,4 +24,12 @@ describe('decodePolyline', () => {
   test('decodes a zero-delta point polyline', () => {
     expect(decodePolyline('??')).toEqual([{ latitude: 0, longitude: 0 }]);
   });
+
+  test('decodes negative latitude deltas', () => {
+    expect(decodePolyline('@?')).toEqual([{ latitude: -0.00001, longitude: 0 }]);
+  });
+
+  test('returns empty array when longitude chunk is truncated', () => {
+    expect(decodePolyline('?')).toEqual([]);
+  });
 });

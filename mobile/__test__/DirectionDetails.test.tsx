@@ -192,6 +192,55 @@ describe('Direction Details', () => {
     expect(getByTestId('route-error-text')).toBeTruthy();
   });
 
+  test('shows cross-campus label when route spans different campuses and summary is shown', () => {
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+        isCrossCampusRoute={true}
+      />,
+    );
+
+    expect(getByTestId('cross-campus-label')).toBeTruthy();
+  });
+
+  test('hides cross-campus label for non cross-campus routes', () => {
+    const { queryByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[0]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+        isCrossCampusRoute={false}
+      />,
+    );
+
+    expect(queryByTestId('cross-campus-label')).toBeNull();
+  });
+
+  test('hides cross-campus label when no summary is available', () => {
+    const { queryByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+      />,
+    );
+
+    expect(queryByTestId('cross-campus-label')).toBeNull();
+  });
+
   test('shows route empty state when no route data is available', () => {
     const { getByTestId } = render(
       <DirectionDetails

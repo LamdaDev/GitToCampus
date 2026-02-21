@@ -20,6 +20,7 @@ import type { UserCoords } from '../screens/MapScreen';
 import { centroidOfPolygons } from '../utils/geoJson';
 import { fetchOutdoorDirections } from '../services/googleDirections';
 import type { OutdoorRouteOverlay } from '../types/Map';
+import type { SharedValue } from 'react-native-reanimated';
 
 import SearchSheet from './SearchSheet';
 export type BottomSliderHandle = {
@@ -39,6 +40,7 @@ type BottomSheetProps = {
   onExitSearch: () => void;
   passSelectedBuilding: (b: BuildingShape | null) => void;
   passOutdoorRoute: (route: OutdoorRouteOverlay | null) => void;
+  animatedPosition?: SharedValue<number>;
 };
 
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
@@ -53,6 +55,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onExitSearch,
       passSelectedBuilding,
       passOutdoorRoute,
+      animatedPosition,
     },
     ref,
   ) => {
@@ -111,8 +114,16 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setActiveView('building');
       setSearchFor(null);
       resetRouteState();
-      revealSearchBar();
     };
+
+    const handleSheetAnimate = useCallback(
+      (_fromIndex: number, toIndex: number) => {
+        if (toIndex === -1) {
+          revealSearchBar();
+        }
+      },
+      [revealSearchBar],
+    );
 
     const closeSearchBuilding = (chosenBuilding: BuildingShape) => {
       passSelectedBuilding(chosenBuilding);
@@ -151,6 +162,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       if (!destinationBuilding) return null;
       return centroidOfPolygons(destinationBuilding.polygons);
     }, [destinationBuilding]);
+
+    const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
+    const destinationCampus = destinationBuilding?.campus ?? null;
+    const isCrossCampusRoute = Boolean(
+      startCampus && destinationCampus && startCampus !== destinationCampus,
+    );
 
     useEffect(() => {
       // Not an error state: directions panel is not active, so route UI should be reset.
@@ -245,6 +262,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         enablePanDownToClose={true}
         enableContentPanningGesture={false}
         enableDynamicSizing={false}
+        animatedPosition={animatedPosition}
+        onAnimate={handleSheetAnimate}
         onClose={handleSheetClose}
       >
         <BottomSheetView style={buildingDetailsStyles.container}>
@@ -268,6 +287,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               destinationBuilding={destinationBuilding}
               userLocation={userLocation}
               currentBuilding={currentBuilding}
+              isCrossCampusRoute={isCrossCampusRoute}
               isRouteLoading={isRouteLoading}
               routeErrorMessage={routeErrorMessage}
               routeDistanceText={routeDistanceText}
