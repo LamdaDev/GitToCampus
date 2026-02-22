@@ -7,15 +7,9 @@ import type { TransitInstruction } from '../src/types/Directions';
 jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
   return {
-    Ionicons: ({
-      name,
-      color,
-      size,
-    }: {
-      name: string;
-      color?: string;
-      size?: number;
-    }) => <Text testID={`icon-${name}`}>{`${name}-${color ?? ''}-${size ?? ''}`}</Text>,
+    Ionicons: ({ name, color, size }: { name: string; color?: string; size?: number }) => (
+      <Text testID={`icon-${name}`}>{`${name}-${color ?? ''}-${size ?? ''}`}</Text>
+    ),
   };
 });
 
