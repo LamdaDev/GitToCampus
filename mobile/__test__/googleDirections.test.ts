@@ -167,6 +167,168 @@ describe('googleDirections service', () => {
     expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('mode=transit'));
   });
 
+  test('sanitizes walking instruction html with entities, nested tags, and malformed fragments', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: { text: '120 m', value: 120 },
+                duration: { text: '2 mins', value: 120 },
+                steps: [
+                  {
+                    travel_mode: 'WALKING',
+                    html_instructions:
+                      'Head&nbsp;<b>north</b> on Main &amp; 1st <div>toward</div> station <broken',
+                    distance: { text: '120 m', value: 120 },
+                    duration: { text: '2 mins', value: 120 },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(
+      {
+        ...baseRequest,
+        mode: 'transit',
+      },
+      'abc123',
+    );
+
+    expect(route.transitInstructions).toEqual([
+      {
+        id: 'walk-0-0',
+        type: 'walk',
+        title: 'Head north on Main & 1st toward station <broken',
+        detail: '120 m, about 2 mins',
+      },
+    ]);
+  });
+
+  test('handles transit instruction title/detail fallbacks and skips unsupported steps', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: { text: '5.0 km', value: 5000 },
+                duration: { text: '32 mins', value: 1920 },
+                steps: [
+                  {
+                    travel_mode: 'TRANSIT',
+                    duration: { text: '7 mins', value: 420 },
+                    transit_details: {
+                      num_stops: 1,
+                      headsign: 'Downtown',
+                      departure_stop: { name: 'A' },
+                      arrival_stop: { name: 'B' },
+                      line: {
+                        short_name: '24',
+                        vehicle: { type: 'BUS', name: 'Bus' },
+                      },
+                    },
+                  },
+                  {
+                    travel_mode: 'TRANSIT',
+                    transit_details: {
+                      line: {
+                        name: 'Green Line',
+                      },
+                    },
+                  },
+                  {
+                    travel_mode: 'TRANSIT',
+                    transit_details: {
+                      line: {
+                        vehicle: { type: 'SUBWAY', name: 'Subway' },
+                      },
+                    },
+                  },
+                  {
+                    travel_mode: 'TRANSIT',
+                    duration: { text: '5 mins', value: 300 },
+                  },
+                  {
+                    travel_mode: 'DRIVING',
+                    duration: { text: '3 mins', value: 180 },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(
+      {
+        ...baseRequest,
+        mode: 'transit',
+      },
+      'abc123',
+    );
+
+    expect(route.transitInstructions).toEqual([
+      {
+        id: 'transit-0-0',
+        type: 'transit',
+        title: 'Board the 24 bus',
+        subtitle: 'Toward Downtown',
+        detail: 'Ride 1 stop, 7 mins',
+        departureTimeText: null,
+        arrivalTimeText: null,
+        departureStopName: 'A',
+        arrivalStopName: 'B',
+        lineShortName: '24',
+        lineColor: null,
+        lineTextColor: null,
+        vehicleType: 'BUS',
+      },
+      {
+        id: 'transit-0-1',
+        type: 'transit',
+        title: 'Board Green Line',
+        subtitle: null,
+        detail: null,
+        departureTimeText: null,
+        arrivalTimeText: null,
+        departureStopName: null,
+        arrivalStopName: null,
+        lineShortName: null,
+        lineColor: null,
+        lineTextColor: null,
+        vehicleType: null,
+      },
+      {
+        id: 'transit-0-2',
+        type: 'transit',
+        title: 'Board metro',
+        subtitle: null,
+        detail: null,
+        departureTimeText: null,
+        arrivalTimeText: null,
+        departureStopName: null,
+        arrivalStopName: null,
+        lineShortName: null,
+        lineColor: null,
+        lineTextColor: null,
+        vehicleType: 'SUBWAY',
+      },
+    ]);
+  });
+
   test('throws when API key is missing', async () => {
     await expect(
       fetchOutdoorDirections(
@@ -315,6 +477,27 @@ describe('googleDirections service', () => {
     >({
       code: 'OVER_QUERY_LIMIT',
       providerStatus: 'OVER_DAILY_LIMIT',
+    });
+  });
+
+  test.each([
+    ['NOT_FOUND', 'INVALID_REQUEST'],
+    ['OVER_QUERY_LIMIT', 'OVER_QUERY_LIMIT'],
+    ['INVALID_REQUEST', 'INVALID_REQUEST'],
+    ['MAX_ROUTE_LENGTH_EXCEEDED', 'INVALID_REQUEST'],
+  ] as const)('maps %s to %s', async (status, code) => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status,
+      }),
+    }) as unknown as typeof fetch;
+
+    await expect(fetchOutdoorDirections(baseRequest, 'abc123')).rejects.toMatchObject<
+      Partial<DirectionsServiceError>
+    >({
+      code,
+      providerStatus: status,
     });
   });
 

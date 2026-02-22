@@ -58,12 +58,69 @@ const decodeHtmlEntities = (raw: string) =>
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>');
 
+const stripHtmlTags = (raw: string) => {
+  let output = '';
+  let inTag = false;
+  let pendingTag = '';
+
+  for (const char of raw) {
+    if (!inTag) {
+      if (char === '<') {
+        inTag = true;
+        pendingTag = '<';
+      } else {
+        output += char;
+      }
+      continue;
+    }
+
+    pendingTag += char;
+    if (char === '>') {
+      if (output.length > 0 && output[output.length - 1] !== ' ') {
+        output += ' ';
+      }
+      inTag = false;
+      pendingTag = '';
+    }
+  }
+
+  // Keep unmatched '<' content as text to mirror regex behavior.
+  if (pendingTag) {
+    output += pendingTag;
+  }
+
+  return output;
+};
+
+const collapseWhitespace = (raw: string) => {
+  let output = '';
+  let previousWasWhitespace = false;
+
+  for (const char of raw) {
+    const isWhitespace =
+      char === ' ' ||
+      char === '\n' ||
+      char === '\r' ||
+      char === '\t' ||
+      char === '\f' ||
+      char === '\v';
+    if (isWhitespace) {
+      if (!previousWasWhitespace) {
+        output += ' ';
+      }
+      previousWasWhitespace = true;
+      continue;
+    }
+    output += char;
+    previousWasWhitespace = false;
+  }
+
+  return output.trim();
+};
+
 const stripHtml = (raw?: string) => {
   if (!raw) return '';
-  return decodeHtmlEntities(raw)
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return collapseWhitespace(stripHtmlTags(decodeHtmlEntities(raw)));
 };
 
 const toTransitVehicleLabel = (vehicleName?: string) => {
