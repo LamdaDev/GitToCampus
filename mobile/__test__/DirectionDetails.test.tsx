@@ -111,6 +111,7 @@ describe('Direction Details', () => {
   });
 
   test('updates activeIndex when transportation buttons are pressed', () => {
+    const onTravelModeChange = jest.fn();
     const { getByTestId } = render(
       <DirectionDetails
         startBuilding={mockBuildings[0]}
@@ -118,6 +119,7 @@ describe('Direction Details', () => {
         onClose={jest.fn()}
         userLocation={null}
         currentBuilding={null}
+        onTravelModeChange={onTravelModeChange}
       />,
     );
 
@@ -130,18 +132,22 @@ describe('Direction Details', () => {
     expect(walkButton.props.accessibilityState.selected).toBe(true);
     expect(carButton.props.accessibilityState.selected).toBe(false);
     expect(busButton.props.accessibilityState.selected).toBe(false);
+    expect(onTravelModeChange).toHaveBeenLastCalledWith('walking');
 
     // Press car button
     fireEvent.press(carButton);
     expect(walkButton.props.accessibilityState.selected).toBe(false);
     expect(carButton.props.accessibilityState.selected).toBe(true);
     expect(busButton.props.accessibilityState.selected).toBe(false);
+    expect(onTravelModeChange).toHaveBeenLastCalledWith('driving');
 
     // Press bus button
     fireEvent.press(busButton);
     expect(walkButton.props.accessibilityState.selected).toBe(false);
     expect(carButton.props.accessibilityState.selected).toBe(false);
     expect(busButton.props.accessibilityState.selected).toBe(true);
+    expect(onTravelModeChange).toHaveBeenLastCalledWith('transit');
+    expect(onTravelModeChange).toHaveBeenCalledTimes(3);
   });
 
   test('shows loading state when route is loading', () => {
@@ -175,6 +181,33 @@ describe('Direction Details', () => {
     expect(getByTestId('route-summary-text').props.children).toBe('14 mins');
     expect(getByTestId('route-secondary-text').props.children).toBe('1.2 km');
     expect(getByTestId('route-go-button')).toBeTruthy();
+  });
+
+  test('GO callback only fires when transit is selected and route is available', () => {
+    const onPressTransitGo = jest.fn();
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="26 mins"
+        routeDistanceText="4.0 km"
+        onPressTransitGo={onPressTransitGo}
+      />,
+    );
+
+    fireEvent.press(getByTestId('route-go-button'));
+    expect(onPressTransitGo).not.toHaveBeenCalled();
+
+    fireEvent.press(getByTestId('transport-bus'));
+    fireEvent.press(getByTestId('route-go-button'));
+    expect(onPressTransitGo).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(getByTestId('transport-walk'));
+    fireEvent.press(getByTestId('route-go-button'));
+    expect(onPressTransitGo).toHaveBeenCalledTimes(1);
   });
 
   test('shows route error text when route loading fails', () => {
@@ -270,7 +303,7 @@ describe('Direction Details', () => {
       />,
     );
 
-    expect(getByTestId('route-secondary-text').props.children).toContain('ETA • 350 m');
+    expect(getByTestId('route-secondary-text').props.children).toContain('ETA - 350 m');
     nowSpy.mockRestore();
   });
 
@@ -291,7 +324,7 @@ describe('Direction Details', () => {
       />,
     );
 
-    expect(getByTestId('route-secondary-text').props.children).toContain('12:07 ETA • 350 m');
+    expect(getByTestId('route-secondary-text').props.children).toContain('12:07 ETA - 350 m');
     nowSpy.mockRestore();
     hoursSpy.mockRestore();
     minutesSpy.mockRestore();

@@ -262,7 +262,7 @@ describe('MapScreen', () => {
     warnSpy.mockRestore();
   });
 
-  test('auto-selects building based on location updates', async () => {
+  test('updates current building and campus based on location updates without forcing marker selection', async () => {
     let locationCallback: ((value: any) => void) | undefined;
     repoMock.findBuildingAt.mockReturnValue(mockBuildings[1]);
     locationMock.watchPositionAsync.mockImplementationOnce(async (_opts: any, cb: any) => {
@@ -289,12 +289,13 @@ describe('MapScreen', () => {
 
     await waitFor(() => {
       expect(repoMock.findBuildingAt).toHaveBeenCalledWith({ latitude: 45.52, longitude: -73.59 });
+      expect(mockPassCurrentBuilding).toHaveBeenLastCalledWith(mockBuildings[1]);
       expect(mockAnimateToRegion).toHaveBeenCalledWith(getCampusRegion('LOYOLA'), 1000);
-      expect(queryAllByTestId('map-marker')).toHaveLength(1);
+      expect(queryAllByTestId('map-marker')).toHaveLength(0);
     });
   });
 
-  test('clears selected building when user is not inside a building', async () => {
+  test('does not clear manually selected building marker when user is not inside a building', async () => {
     let locationCallback: ((value: any) => void) | undefined;
     repoMock.findBuildingAt.mockReturnValue(undefined);
     locationMock.watchPositionAsync.mockImplementationOnce(async (_opts: any, cb: any) => {
@@ -322,7 +323,8 @@ describe('MapScreen', () => {
     });
 
     await waitFor(() => {
-      expect(queryAllByTestId('map-marker')).toHaveLength(0);
+      expect(mockPassCurrentBuilding).toHaveBeenLastCalledWith(null);
+      expect(queryAllByTestId('map-marker')).toHaveLength(1);
     });
   });
 

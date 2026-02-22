@@ -18,6 +18,22 @@ export type DirectionsBounds = {
   southwest: LatLng;
 };
 
+export type TransitInstruction = {
+  id: string;
+  type: 'walk' | 'transit';
+  title: string;
+  subtitle?: string | null;
+  detail?: string | null;
+  departureTimeText?: string | null;
+  arrivalTimeText?: string | null;
+  departureStopName?: string | null;
+  arrivalStopName?: string | null;
+  lineShortName?: string | null;
+  lineColor?: string | null;
+  lineTextColor?: string | null;
+  vehicleType?: string | null;
+};
+
 export type DirectionsRoute = {
   polyline: string;
   distanceMeters: number;
@@ -25,6 +41,7 @@ export type DirectionsRoute = {
   durationSeconds: number;
   durationText: string;
   bounds: DirectionsBounds | null;
+  transitInstructions?: TransitInstruction[];
 };
 
 export type DirectionsErrorCode =

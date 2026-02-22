@@ -8,6 +8,12 @@ import { StyleSheet, Dimensions } from 'react-native';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export const directionDetailsStyles = StyleSheet.create({
+  contentScroll: {
+    maxHeight: '100%',
+  },
+  contentScrollContent: {
+    paddingBottom: 6,
+  },
   directionTitle: {
     maxWidth: SCREEN_WIDTH * 0.55,
     fontSize: 30,
@@ -83,6 +89,17 @@ export const directionDetailsStyles = StyleSheet.create({
   headerIcons: {
     flexDirection: 'row',
     gap: 10,
+  },
+  transitHeaderTextWrap: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  transitDestinationText: {
+    color: '#B5BBC4',
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: 'gabarito',
+    marginTop: 2,
   },
   crossCampusContainer: {
     alignSelf: 'center',
@@ -196,6 +213,9 @@ export const directionDetailsStyles = StyleSheet.create({
     justifyContent: 'center',
     boxShadow: '0 8px 12px rgba(0, 0, 0, 0.25)',
   },
+  routeGoButtonDisabled: {
+    opacity: 0.4,
+  },
   routeGoText: {
     color: '#FFFFFF',
     fontSize: 37,
@@ -203,5 +223,109 @@ export const directionDetailsStyles = StyleSheet.create({
     fontFamily: 'gabarito',
     fontWeight: '700',
     letterSpacing: 0.8,
+  },
+  transitContainer: {
+    marginTop: 2,
+    marginBottom: 10,
+    paddingTop: 10,
+    paddingBottom: 4,
+    borderRadius: 24,
+    backgroundColor: 'rgba(20, 22, 27, 0.92)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    boxShadow: '0 10px 18px rgba(0, 0, 0, 0.32)',
+  },
+  transitTitle: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontFamily: 'gabarito',
+    fontWeight: '700',
+    marginHorizontal: 16,
+    marginBottom: 6,
+  },
+  transitEmptyText: {
+    color: '#B5BBC4',
+    fontSize: 15,
+    lineHeight: 21,
+    fontFamily: 'gabarito',
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  transitStepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  transitStepRowWithDivider: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  transitLineBadge: {
+    minWidth: 36,
+    height: 36,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  transitLineBadgeText: {
+    fontSize: 18,
+    lineHeight: 20,
+    fontFamily: 'gabarito',
+    fontWeight: '700',
+  },
+  transitIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4E5968',
+  },
+  transitStepBody: {
+    flex: 1,
+  },
+  transitStepTitle: {
+    color: '#F4F6FA',
+    fontSize: 28,
+    lineHeight: 34,
+    fontFamily: 'gabarito',
+    fontWeight: '700',
+  },
+  transitStepSubtitle: {
+    color: '#B8C0CB',
+    fontSize: 14,
+    lineHeight: 19,
+    fontFamily: 'gabarito',
+    marginTop: 2,
+  },
+  transitStepDetail: {
+    color: '#2DA1FF',
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: 'gabarito',
+    marginTop: 4,
+  },
+  transitStepStopText: {
+    color: '#D4D8DE',
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'gabarito',
+    marginTop: 4,
+  },
+  transitTimeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 6,
+  },
+  transitStepTimeText: {
+    color: '#E5E8EE',
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'gabarito',
+    fontWeight: '600',
   },
 });

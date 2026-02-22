@@ -4,8 +4,13 @@ import {
   DirectionsRoute,
   DirectionsServiceError,
   DirectionsTravelMode,
+  TransitInstruction,
 } from '../types/Directions';
-import type { GoogleDirectionsResponse, GoogleDirectionsStatus } from '../types/GoogleDirections';
+import type {
+  GoogleDirectionsResponse,
+  GoogleDirectionsStatus,
+  GoogleDirectionsStep,
+} from '../types/GoogleDirections';
 import { formatDistance, formatDuration } from '../utils/directionsFormatting';
 
 const DIRECTIONS_API_URL = 'https://maps.googleapis.com/maps/api/directions/json';
@@ -42,6 +47,173 @@ const mapStatusToErrorCode = (status: GoogleDirectionsStatus) => {
     default:
       return 'API_ERROR' as const;
   }
+};
+
+const decodeHtmlEntities = (raw: string) =>
+  raw
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+
+const stripHtmlTags = (raw: string) => {
+  let output = '';
+  let inTag = false;
+  let pendingTag = '';
+
+  for (const char of raw) {
+    if (!inTag) {
+      if (char === '<') {
+        inTag = true;
+        pendingTag = '<';
+      } else {
+        output += char;
+      }
+      continue;
+    }
+
+    pendingTag += char;
+    if (char === '>') {
+      if (output.length > 0 && output[output.length - 1] !== ' ') {
+        output += ' ';
+      }
+      inTag = false;
+      pendingTag = '';
+    }
+  }
+
+  // Keep unmatched '<' content as text to mirror regex behavior.
+  if (pendingTag) {
+    output += pendingTag;
+  }
+
+  return output;
+};
+
+const collapseWhitespace = (raw: string) => {
+  let output = '';
+  let previousWasWhitespace = false;
+
+  for (const char of raw) {
+    const isWhitespace =
+      char === ' ' ||
+      char === '\n' ||
+      char === '\r' ||
+      char === '\t' ||
+      char === '\f' ||
+      char === '\v';
+    if (isWhitespace) {
+      if (!previousWasWhitespace) {
+        output += ' ';
+      }
+      previousWasWhitespace = true;
+      continue;
+    }
+    output += char;
+    previousWasWhitespace = false;
+  }
+
+  return output.trim();
+};
+
+const stripHtml = (raw?: string) => {
+  if (!raw) return '';
+  return collapseWhitespace(stripHtmlTags(decodeHtmlEntities(raw)));
+};
+
+const toTransitVehicleLabel = (vehicleName?: string) => {
+  if (!vehicleName) return null;
+  const normalized = vehicleName.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === 'subway') return 'metro';
+  return normalized;
+};
+
+const toWalkingInstruction = (
+  step: GoogleDirectionsStep,
+  legIndex: number,
+  stepIndex: number,
+): TransitInstruction => {
+  const detailParts: string[] = [];
+  if (step.distance?.text) detailParts.push(step.distance.text);
+  if (step.duration?.text) detailParts.push(`about ${step.duration.text}`);
+
+  return {
+    id: `walk-${legIndex}-${stepIndex}`,
+    type: 'walk',
+    title: stripHtml(step.html_instructions) || 'Walk',
+    detail: detailParts.length > 0 ? detailParts.join(', ') : null,
+  };
+};
+
+const toTransitInstruction = (
+  step: GoogleDirectionsStep,
+  legIndex: number,
+  stepIndex: number,
+): TransitInstruction => {
+  const details = step.transit_details;
+  const line = details?.line;
+  const lineShortName = line?.short_name?.trim() ?? null;
+  const lineName = line?.name?.trim() ?? null;
+  const vehicleLabel = toTransitVehicleLabel(line?.vehicle?.name);
+
+  const detailParts: string[] = [];
+  if (typeof details?.num_stops === 'number') {
+    detailParts.push(details.num_stops === 1 ? 'Ride 1 stop' : `Ride ${details.num_stops} stops`);
+  }
+  if (step.duration?.text) {
+    detailParts.push(step.duration.text);
+  }
+
+  let title = 'Board transit';
+  if (lineShortName) {
+    title = vehicleLabel
+      ? `Board the ${lineShortName} ${vehicleLabel}`
+      : `Board the ${lineShortName}`;
+  } else if (lineName) {
+    title = `Board ${lineName}`;
+  } else if (vehicleLabel) {
+    title = `Board ${vehicleLabel}`;
+  }
+
+  return {
+    id: `transit-${legIndex}-${stepIndex}`,
+    type: 'transit',
+    title,
+    subtitle: details?.headsign ? `Toward ${details.headsign}` : null,
+    detail: detailParts.length > 0 ? detailParts.join(', ') : null,
+    departureTimeText: details?.departure_time?.text ?? null,
+    arrivalTimeText: details?.arrival_time?.text ?? null,
+    departureStopName: details?.departure_stop?.name ?? null,
+    arrivalStopName: details?.arrival_stop?.name ?? null,
+    lineShortName,
+    lineColor: line?.color ?? null,
+    lineTextColor: line?.text_color ?? null,
+    vehicleType: line?.vehicle?.type ?? null,
+  };
+};
+
+const extractTransitInstructions = (
+  steps: GoogleDirectionsStep[] | undefined,
+  legIndex: number,
+): TransitInstruction[] => {
+  if (!steps || steps.length === 0) return [];
+
+  return steps.reduce<TransitInstruction[]>((instructions, step, stepIndex) => {
+    if (step.travel_mode === 'WALKING') {
+      instructions.push(toWalkingInstruction(step, legIndex, stepIndex));
+      return instructions;
+    }
+
+    if (step.travel_mode === 'TRANSIT' && step.transit_details) {
+      instructions.push(toTransitInstruction(step, legIndex, stepIndex));
+      return instructions;
+    }
+
+    return instructions;
+  }, []);
 };
 
 const toQueryString = (query: Record<string, string | number>) =>
@@ -150,6 +322,11 @@ export const fetchOutdoorDirections = async (
         }
       : null;
 
+  const transitInstructions =
+    mode === 'transit'
+      ? legs.flatMap((leg, legIndex) => extractTransitInstructions(leg.steps, legIndex))
+      : [];
+
   return {
     polyline: route.overview_polyline.points,
     distanceMeters,
@@ -157,5 +334,6 @@ export const fetchOutdoorDirections = async (
     durationSeconds,
     durationText,
     bounds,
+    ...(mode === 'transit' ? { transitInstructions } : {}),
   };
 };

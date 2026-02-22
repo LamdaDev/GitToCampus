@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
+import type { DirectionsTravelMode } from '../types/Directions';
 import type { UserCoords } from '../screens/MapScreen';
 import { formatEta } from '../utils/directionsFormatting';
 
@@ -24,6 +25,8 @@ type DirectionDetailProps = {
   routeDurationSeconds?: number | null;
   onPressStart?: () => void;
   onPressDestination?: () => void;
+  onTravelModeChange?: (mode: DirectionsTravelMode) => void;
+  onPressTransitGo?: () => void;
 };
 
 /**
@@ -55,9 +58,35 @@ export default function DirectionDetails({
   routeDurationSeconds = null,
   onPressStart,
   onPressDestination,
+  onTravelModeChange,
+  onPressTransitGo,
 }: Readonly<DirectionDetailProps>) {
   const [activeIndex, setActiveIndex] = useState(0);
   const isSelected = (index: number) => activeIndex === index;
+  const isTransitSelected = isSelected(2);
+  const hasRouteSummary = Boolean(routeDistanceText && routeDurationText);
+  const canShowTransitPlan =
+    hasRouteSummary && isTransitSelected && !isRouteLoading && !routeErrorMessage;
+
+  const handleSelectWalk = () => {
+    setActiveIndex(0);
+    onTravelModeChange?.('walking');
+  };
+
+  const handleSelectCar = () => {
+    setActiveIndex(1);
+    onTravelModeChange?.('driving');
+  };
+
+  const handleSelectTransit = () => {
+    setActiveIndex(2);
+    onTravelModeChange?.('transit');
+  };
+
+  const handlePressGo = () => {
+    if (!canShowTransitPlan) return;
+    onPressTransitGo?.();
+  };
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
   const routeEtaText = formatEta(routeDurationSeconds);
@@ -129,7 +158,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected(0) && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={() => setActiveIndex(0)}
+            onPress={handleSelectWalk}
           >
             <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
           </TouchableOpacity>
@@ -140,7 +169,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected(1) && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={() => setActiveIndex(1)}
+            onPress={handleSelectCar}
           >
             <Ionicons
               name="car-outline"
@@ -155,7 +184,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected(2) && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={() => setActiveIndex(2)}
+            onPress={handleSelectTransit}
           >
             <Ionicons
               name="bus-outline"
@@ -174,7 +203,7 @@ export default function DirectionDetails({
           <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
             {routeErrorMessage}
           </Text>
-        ) : routeDistanceText && routeDurationText ? (
+        ) : hasRouteSummary ? (
           <View style={directionDetailsStyles.routeSummaryRow}>
             <View style={directionDetailsStyles.routeSummaryTextWrap}>
               <Text
@@ -190,11 +219,11 @@ export default function DirectionDetails({
                   numberOfLines={1}
                   style={directionDetailsStyles.routeSecondaryText}
                 >
-                  {routeEtaText ? `${routeEtaText} ETA • ${routeDistanceText}` : routeDistanceText}
+                  {routeEtaText ? `${routeEtaText} ETA - ${routeDistanceText}` : routeDistanceText}
                 </Text>
                 {isCrossCampusRoute && (
                   <>
-                    <Text style={directionDetailsStyles.routeSecondaryText}> • </Text>
+                    <Text style={directionDetailsStyles.routeSecondaryText}> - </Text>
                     <View style={directionDetailsStyles.crossCampusContainer}>
                       <Text
                         testID="cross-campus-label"
@@ -209,9 +238,13 @@ export default function DirectionDetails({
             </View>
             <TouchableOpacity
               testID="route-go-button"
-              disabled={true}
-              activeOpacity={1}
-              style={directionDetailsStyles.routeGoButton}
+              disabled={!canShowTransitPlan}
+              activeOpacity={canShowTransitPlan ? 0.85 : 1}
+              onPress={handlePressGo}
+              style={[
+                directionDetailsStyles.routeGoButton,
+                !canShowTransitPlan && directionDetailsStyles.routeGoButtonDisabled,
+              ]}
             >
               <Text style={directionDetailsStyles.routeGoText}>GO</Text>
             </TouchableOpacity>
