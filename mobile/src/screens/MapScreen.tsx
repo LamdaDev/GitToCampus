@@ -109,13 +109,11 @@ const renderPolygonItem = (
 
 const selectBuildingAtCoords = (
   coords: UserCoords,
-  setSelectedBuildingId: (id: string | null) => void,
   setCurrentBuildingId: (id: string | null) => void,
   setSelectedCampus: (campus: Campus) => void,
 ) => {
   try {
     const building = findBuildingAt(coords);
-    setSelectedBuildingId(building?.id ?? null);
     setCurrentBuildingId(building?.id ?? null);
     if (building) setSelectedCampus(building.campus);
   } catch (err) {
@@ -170,12 +168,7 @@ export default function MapScreen({
 
   useEffect(() => {
     if (!userCoords) return;
-    selectBuildingAtCoords(
-      userCoords,
-      setSelectedBuildingId,
-      setCurrentBuildingId,
-      setSelectedCampus,
-    );
+    selectBuildingAtCoords(userCoords, setCurrentBuildingId, setSelectedCampus);
   }, [userCoords]);
 
   useEffect(() => {
