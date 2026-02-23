@@ -121,7 +121,10 @@ export default function ShuttleScheduleDetails({
       <View style={directionDetailsStyles.shuttleScheduleDetailsCard}>
         {shuttlePlan?.isServiceAvailable ? (
           <>
-            <Text testID="shuttle-schedule-next-bus-text" style={directionDetailsStyles.shuttlePrimaryText}>
+            <Text
+              testID="shuttle-schedule-next-bus-text"
+              style={directionDetailsStyles.shuttlePrimaryText}
+            >
               {shuttlePlan.nextDepartureInMinutes === null
                 ? 'Next bus time unavailable'
                 : shuttlePlan.nextDepartureInMinutes <= 1
@@ -129,12 +132,18 @@ export default function ShuttleScheduleDetails({
                   : `Next bus in ${shuttlePlan.nextDepartureInMinutes} mins`}
             </Text>
             <Text style={directionDetailsStyles.shuttleDirectionText}>{directionLabel}</Text>
-            <Text testID="shuttle-schedule-next-departures-text" style={directionDetailsStyles.shuttleSecondaryText}>
+            <Text
+              testID="shuttle-schedule-next-departures-text"
+              style={directionDetailsStyles.shuttleSecondaryText}
+            >
               Next departures: {shuttlePlan.nextDepartures.join(', ')}
             </Text>
           </>
         ) : (
-          <Text testID="shuttle-schedule-unavailable-text" style={directionDetailsStyles.shuttleUnavailableText}>
+          <Text
+            testID="shuttle-schedule-unavailable-text"
+            style={directionDetailsStyles.shuttleUnavailableText}
+          >
             {shuttlePlan?.message ?? DEFAULT_UNAVAILABLE_MESSAGE}
           </Text>
         )}
@@ -146,7 +155,10 @@ export default function ShuttleScheduleDetails({
       >
         <View style={directionDetailsStyles.shuttleScheduleDayCard}>
           <Text style={directionDetailsStyles.shuttleScheduleTitle}>Monday - Thursday</Text>
-          <View testID="shuttle-schedule-mon-thu-text" style={directionDetailsStyles.shuttleScheduleTimesWrap}>
+          <View
+            testID="shuttle-schedule-mon-thu-text"
+            style={directionDetailsStyles.shuttleScheduleTimesWrap}
+          >
             {mondayThursdaySchedule.map((time, index) => (
               <View
                 key={`shuttle-mon-thu-${time}-${index}`}
@@ -177,7 +189,10 @@ export default function ShuttleScheduleDetails({
 
         <View style={directionDetailsStyles.shuttleScheduleDayCard}>
           <Text style={directionDetailsStyles.shuttleScheduleTitle}>Friday</Text>
-          <View testID="shuttle-schedule-friday-text" style={directionDetailsStyles.shuttleScheduleTimesWrap}>
+          <View
+            testID="shuttle-schedule-friday-text"
+            style={directionDetailsStyles.shuttleScheduleTimesWrap}
+          >
             {fridaySchedule.map((time, index) => (
               <View
                 key={`shuttle-friday-${time}-${index}`}

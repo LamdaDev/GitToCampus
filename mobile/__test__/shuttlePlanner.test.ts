@@ -160,11 +160,7 @@ describe('shuttlePlanner service', () => {
       SGW: ['9:15***', '9:30'],
     };
 
-    const result = getNextShuttleDepartures(
-      new Date(2026, 1, 23, 9, 10, 0, 0),
-      'SGW_TO_LOYOLA',
-      2,
-    );
+    const result = getNextShuttleDepartures(new Date(2026, 1, 23, 9, 10, 0, 0), 'SGW_TO_LOYOLA', 2);
 
     expect(result.isServiceAvailable).toBe(true);
     expect(result.departures).toHaveLength(2);
@@ -217,11 +213,7 @@ describe('shuttlePlanner service', () => {
       SGW: ['9:15', '9:15', '25:00', 'bad-token', '9:45'],
     };
 
-    const result = getNextShuttleDepartures(
-      new Date(2026, 1, 23, 9, 10, 0, 0),
-      'SGW_TO_LOYOLA',
-      5,
-    );
+    const result = getNextShuttleDepartures(new Date(2026, 1, 23, 9, 10, 0, 0), 'SGW_TO_LOYOLA', 5);
 
     expect(result.isServiceAvailable).toBe(true);
     expect(result.departures).toHaveLength(2);

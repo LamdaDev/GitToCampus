@@ -60,7 +60,9 @@ const getRouteFitBottomPadding = (
   }
 
   const visibleSheetHeight = Math.max(0, windowHeight - bottomSheetTop);
-  return Math.round(Math.max(minVisibleSheetHeight, visibleSheetHeight) + ROUTE_FIT_EXTRA_BOTTOM_PADDING);
+  return Math.round(
+    Math.max(minVisibleSheetHeight, visibleSheetHeight) + ROUTE_FIT_EXTRA_BOTTOM_PADDING,
+  );
 };
 
 const flattenBuildingsByCampus = (

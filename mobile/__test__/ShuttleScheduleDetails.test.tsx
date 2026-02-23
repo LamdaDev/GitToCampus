@@ -47,7 +47,9 @@ describe('ShuttleScheduleDetails', () => {
     );
 
     expect(getByTestId('shuttle-schedule-details')).toBeTruthy();
-    expect(getByTestId('shuttle-schedule-next-bus-text').props.children).toBe('Next bus in 12 mins');
+    expect(getByTestId('shuttle-schedule-next-bus-text').props.children).toBe(
+      'Next bus in 12 mins',
+    );
     expect(getByText('Next departures: 9:30 AM, 9:45 AM, 10:00 AM')).toBeTruthy();
     expect(getByText('Monday - Thursday')).toBeTruthy();
     expect(getByText('Friday')).toBeTruthy();
