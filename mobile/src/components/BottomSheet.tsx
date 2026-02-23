@@ -18,6 +18,7 @@ import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import BuildingDetails from './BuildingDetails';
 import DirectionDetails from './DirectionDetails';
 import TransitPlanDetails from './TransitPlanDetails';
+import ShuttleScheduleDetails from './ShuttleScheduleDetails';
 import type { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
 import { centroidOfPolygons } from '../utils/geoJson';
@@ -32,6 +33,8 @@ import {
 import type { SharedValue } from 'react-native-reanimated';
 import { decodePolyline } from '../utils/polyline';
 import { formatEta } from '../utils/directionsFormatting';
+import { buildShuttlePlan } from '../services/shuttlePlanner';
+import type { ShuttlePlan } from '../types/Shuttle';
 
 import SearchSheet from './SearchSheet';
 
@@ -40,6 +43,15 @@ const SHEET_INDEX_PANEL = 2;
 const SHEET_INDEX_EXPANDED = 3;
 const NAVIGATION_SNAP_POINTS = ['22%', '26%'] as const;
 const DEFAULT_SNAP_POINTS = ['22%', '29%', '47%', '82%'] as const;
+const DIRECTIONS_SNAP_POINTS = Array.from({ length: 61 }, (_value, index) => `${22 + index}%`);
+const SHUTTLE_SCHEDULE_SNAP_POINTS = Array.from(
+  { length: 74 },
+  (_value, index) => `${22 + index}%`,
+);
+const DIRECTIONS_PANEL_SNAP_POINT = '52%';
+const DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT = '62%';
+const SEARCH_EXPANDED_SNAP_POINT = '82%';
+const SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT = '92%';
 
 const METERS_PER_DEGREE_LAT = 110540;
 const METERS_PER_DEGREE_LON_AT_EQUATOR = 111320;
@@ -146,6 +158,48 @@ const toInternalSnapIndex = (index: number) => {
   return index;
 };
 
+const isShuttleWeekdayDebugEnabled = () =>
+  (process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY ?? '').trim().toLowerCase() === 'true';
+
+const getShuttlePlanningDate = (now: Date) => {
+  if (!isShuttleWeekdayDebugEnabled()) return now;
+
+  const day = now.getDay();
+  if (day === 0) {
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds(),
+    );
+  }
+
+  if (day === 6) {
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 2,
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds(),
+    );
+  }
+
+  return now;
+};
+
+const getDirectionsPanelSnapPoint = (
+  travelMode: DirectionsTravelMode,
+  isCrossCampusRoute: boolean,
+) =>
+  travelMode === 'transit' && isCrossCampusRoute
+    ? DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT
+    : DIRECTIONS_PANEL_SNAP_POINT;
+
 export type BottomSliderHandle = {
   open: (index?: number) => void;
   close: () => void;
@@ -184,10 +238,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
   ) => {
     const sheetRef = useRef<BottomSheet>(null);
     const [activeView, setActiveView] = useState<ViewType>('building');
-    const snapPoints = useMemo(
-      () => (activeView === 'navigation' ? [...NAVIGATION_SNAP_POINTS] : [...DEFAULT_SNAP_POINTS]),
-      [activeView],
-    );
+    const snapPoints = useMemo(() => {
+      if (activeView === 'navigation') return [...NAVIGATION_SNAP_POINTS];
+      if (activeView === 'directions') return [...DIRECTIONS_SNAP_POINTS];
+      if (activeView === 'shuttle-schedule') return [...SHUTTLE_SCHEDULE_SNAP_POINTS];
+      return [...DEFAULT_SNAP_POINTS];
+    }, [activeView]);
 
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
@@ -203,6 +259,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [navigationProgressMeters, setNavigationProgressMeters] = useState(0);
     const [routeTransitSteps, setRouteTransitSteps] = useState<TransitInstruction[]>([]);
     const [travelMode, setTravelMode] = useState<DirectionsTravelMode>('walking');
+    const [shuttlePlan, setShuttlePlan] = useState<ShuttlePlan | null>(null);
+    const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
+    const destinationCampus = destinationBuilding?.campus ?? null;
+    const isCrossCampusRoute = Boolean(
+      startCampus && destinationCampus && startCampus !== destinationCampus,
+    );
 
     const resetRouteState = useCallback(
       (errorMessage: string | null = null) => {
@@ -222,11 +284,51 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = (index: number = 0) => {
+      if (activeView === 'directions') {
+        snapToDirectionsPanel(getDirectionsPanelSnapPoint(travelMode, isCrossCampusRoute));
+        return;
+      }
       sheetRef.current?.snapToIndex(toInternalSnapIndex(index));
     };
     const setSnapPoint = (index: number) => {
       sheetRef.current?.snapToIndex(toInternalSnapIndex(index));
     };
+    const snapToKnownPosition = useCallback(
+      (position: string, fallbackIndex: number) => {
+        if (sheetRef.current?.snapToPosition) {
+          sheetRef.current.snapToPosition(position);
+          return;
+        }
+
+        const fallbackPositionIndex = snapPoints.indexOf(position);
+        const safeFallbackIndex =
+          fallbackPositionIndex >= 0
+            ? fallbackPositionIndex
+            : Math.min(fallbackIndex, snapPoints.length - 1);
+        sheetRef.current?.snapToIndex(safeFallbackIndex);
+      },
+      [snapPoints],
+    );
+
+    const snapToDirectionsPanel = useCallback(
+      (position: string = DIRECTIONS_PANEL_SNAP_POINT) => {
+        requestAnimationFrame(() => {
+          snapToKnownPosition(position, SHEET_INDEX_EXPANDED);
+        });
+      },
+      [snapToKnownPosition],
+    );
+
+    const directionsPanelSnapPoint = useMemo(
+      () => getDirectionsPanelSnapPoint(travelMode, isCrossCampusRoute),
+      [travelMode, isCrossCampusRoute],
+    );
+
+    useEffect(() => {
+      if (activeView !== 'directions') return;
+
+      snapToDirectionsPanel(directionsPanelSnapPoint);
+    }, [activeView, directionsPanelSnapPoint, snapToDirectionsPanel]);
 
     const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
     const isInternalSearch = searchFor !== null;
@@ -249,7 +351,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setDestinationBuilding(null);
       }
       setActiveView('directions');
-      sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
+      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
     };
 
     const showTransitPlan = () => {
@@ -259,13 +361,21 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const showDirectionsPanel = () => {
       setActiveView('directions');
-      sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
+      snapToDirectionsPanel(directionsPanelSnapPoint);
     };
+
+    const showShuttleSchedule = useCallback(() => {
+      setActiveView('shuttle-schedule');
+      requestAnimationFrame(() => {
+        snapToKnownPosition(SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
+      });
+    }, [snapToKnownPosition]);
 
     const handleSheetClose = () => {
       setActiveView('building');
       setSearchFor(null);
       setTravelMode('walking');
+      setShuttlePlan(null);
       setRouteStartSource('current');
       setStartLocationSnapshot(null);
       resetRouteState();
@@ -291,7 +401,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setRouteStartSource('current');
       setActiveView('directions');
       onExitSearch();
-      sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
+      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
     };
 
     const handleInternalSearch = (building: BuildingShape) => {
@@ -302,7 +412,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartLocationSnapshot(null);
       } else setDestinationBuilding(building);
       setSearchFor(null);
-      sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
+      snapToDirectionsPanel(directionsPanelSnapPoint);
     };
 
     useEffect(() => {
@@ -324,12 +434,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       if (!destinationBuilding) return null;
       return centroidOfPolygons(destinationBuilding.polygons);
     }, [destinationBuilding]);
-
-    const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
-    const destinationCampus = destinationBuilding?.campus ?? null;
-    const isCrossCampusRoute = Boolean(
-      startCampus && destinationCampus && startCampus !== destinationCampus,
-    );
 
     const routeCoordinates = useMemo(
       () => decodePolyline(routeEncodedPolyline),
@@ -385,6 +489,27 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const canStartNavigationFromCurrentLocation = routeStartSource === 'current';
 
+    useEffect(() => {
+      const shouldComputeShuttlePlan =
+        (activeView === 'directions' || activeView === 'shuttle-schedule') &&
+        travelMode === 'transit' &&
+        isCrossCampusRoute;
+
+      if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus || !startCoords) {
+        setShuttlePlan(null);
+        return;
+      }
+
+      setShuttlePlan(
+        buildShuttlePlan({
+          startCampus,
+          destinationCampus,
+          startCoords,
+          now: getShuttlePlanningDate(new Date()),
+        }),
+      );
+    }, [activeView, destinationCampus, isCrossCampusRoute, startCampus, startCoords, travelMode]);
+
     const showNavigationSummary = useCallback(() => {
       setActiveView('navigation');
       sheetRef.current?.snapToIndex(SHEET_INDEX_NAVIGATION_MAX);
@@ -392,10 +517,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const endNavigation = useCallback(() => {
       setActiveView('directions');
-      requestAnimationFrame(() => {
-        sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
-      });
-    }, []);
+      snapToDirectionsPanel();
+    }, [snapToDirectionsPanel]);
 
     const handleDirectionsGo = useCallback(
       (mode: DirectionsTravelMode) => {
@@ -415,6 +538,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       if (
         activeView !== 'directions' &&
         activeView !== 'transit-plan' &&
+        activeView !== 'shuttle-schedule' &&
         activeView !== 'navigation'
       ) {
         resetRouteState();
@@ -504,10 +628,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       const isSearching = mode === 'search' || searchFor !== null;
       if (!isSearching) return;
 
-      requestAnimationFrame(() => {
-        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+      const frame = requestAnimationFrame(() => {
+        snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
       });
-    }, [mode, searchFor]);
+
+      return () => {
+        cancelAnimationFrame(frame);
+      };
+    }, [mode, searchFor, snapToKnownPosition]);
 
     useImperativeHandle(ref, () => ({
       open: openSheet,
@@ -523,6 +651,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         backgroundStyle={buildingDetailsStyles.sheetBackground}
         handleIndicatorStyle={buildingDetailsStyles.handle}
         enablePanDownToClose={true}
+        enableHandlePanningGesture={true}
         enableContentPanningGesture={false}
         enableDynamicSizing={false}
         animatedPosition={animatedPosition}
@@ -547,6 +676,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             <TransitPlanDetails
               destinationBuilding={destinationBuilding}
               routeTransitSteps={routeTransitSteps}
+              onBack={showDirectionsPanel}
+              onClose={closeSheet}
+            />
+          ) : activeView === 'shuttle-schedule' ? (
+            <ShuttleScheduleDetails
+              startBuilding={startBuilding}
+              destinationBuilding={destinationBuilding}
+              shuttlePlan={shuttlePlan}
               onBack={showDirectionsPanel}
               onClose={closeSheet}
             />
@@ -615,11 +752,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               routeDistanceText={routeDistanceText}
               routeDurationText={routeDurationText}
               routeDurationSeconds={routeDurationSeconds}
+              selectedTravelMode={travelMode}
+              shuttlePlan={shuttlePlan}
               canStartNavigation={canStartNavigationFromCurrentLocation}
               onPressStart={() => setSearchFor('start')}
               onPressDestination={() => setSearchFor('destination')}
               onTravelModeChange={setTravelMode}
               onPressGo={handleDirectionsGo}
+              onPressShuttleSchedule={showShuttleSchedule}
             />
           )}
         </BottomSheetView>
