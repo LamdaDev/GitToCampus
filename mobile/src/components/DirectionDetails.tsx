@@ -295,12 +295,22 @@ export default function DirectionDetails({
                 </Text>
               </>
             ) : (
-              <Text
-                testID="shuttle-unavailable-text"
-                style={directionDetailsStyles.shuttleUnavailableText}
-              >
-                {shuttlePlan?.message ?? SHUTTLE_UNAVAILABLE_MESSAGE}
-              </Text>
+              <View style={directionDetailsStyles.shuttleUnavailableCard}>
+                <View style={directionDetailsStyles.shuttleUnavailableIconWrap}>
+                  <Ionicons name="alert-circle-outline" size={18} color="#F4C15B" />
+                </View>
+                <View style={directionDetailsStyles.shuttleUnavailableTextWrap}>
+                  <Text style={directionDetailsStyles.shuttleUnavailableTitle}>
+                    Shuttle Unavailable
+                  </Text>
+                  <Text
+                    testID="shuttle-unavailable-text"
+                    style={directionDetailsStyles.shuttleUnavailableText}
+                  >
+                    {shuttlePlan?.message ?? SHUTTLE_UNAVAILABLE_MESSAGE}
+                  </Text>
+                </View>
+              </View>
             )}
           </View>
         </View>
