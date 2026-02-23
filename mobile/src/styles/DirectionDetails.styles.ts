@@ -239,16 +239,18 @@ export const directionDetailsStyles = StyleSheet.create({
     fontWeight: '500',
   },
   shuttleUnavailableCard: {
-    marginTop: 4,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
+    marginTop: 0,
     paddingVertical: 10,
     paddingHorizontal: 10,
     borderRadius: 12,
     backgroundColor: 'rgba(184, 138, 0, 0.12)',
     borderWidth: 1,
     borderColor: 'rgba(244, 193, 91, 0.35)',
+  },
+  shuttleUnavailableRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
   },
   shuttleUnavailableIconWrap: {
     width: 28,
@@ -260,6 +262,9 @@ export const directionDetailsStyles = StyleSheet.create({
   },
   shuttleUnavailableTextWrap: {
     flex: 1,
+  },
+  shuttleUnavailableButtonWrap: {
+    alignSelf: 'flex-start',
   },
   shuttleUnavailableTitle: {
     color: '#FFD98A',

@@ -143,6 +143,29 @@ export default function DirectionDetails({
         ? 'Next bus in 1 min'
         : `Next bus in ${nextDepartureInMinutes} mins`;
 
+  const scheduleMenuButton = (
+    <TouchableOpacity
+      testID="shuttle-full-schedule-button"
+      onPress={onPressShuttleSchedule}
+      style={directionDetailsStyles.shuttleScheduleButton}
+    >
+      <View style={directionDetailsStyles.shuttleScheduleIcon}>
+        <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+          <View style={directionDetailsStyles.shuttleScheduleDot} />
+          <View style={directionDetailsStyles.shuttleScheduleLine} />
+        </View>
+        <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+          <View style={directionDetailsStyles.shuttleScheduleDot} />
+          <View style={directionDetailsStyles.shuttleScheduleLine} />
+        </View>
+        <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+          <View style={directionDetailsStyles.shuttleScheduleDot} />
+          <View style={directionDetailsStyles.shuttleScheduleLine} />
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <>
       <View style={directionDetailsStyles.header}>
@@ -249,44 +272,27 @@ export default function DirectionDetails({
       {showShuttleCard ? (
         <View testID="shuttle-card-content" style={directionDetailsStyles.shuttleCardMetaContainer}>
           <View style={directionDetailsStyles.shuttleCardContainer}>
-            <View style={directionDetailsStyles.shuttleCardTopRow}>
-              {shuttlePlan?.isServiceAvailable ? (
-                <Text
-                  testID="shuttle-next-bus-text"
-                  style={directionDetailsStyles.shuttlePrimaryText}
-                >
-                  {shuttleDepartureSummary ?? 'Next bus time unavailable'}
-                </Text>
-              ) : (
-                <View style={directionDetailsStyles.shuttleHeaderSpacer} />
-              )}
-              <TouchableOpacity
-                testID="shuttle-full-schedule-button"
-                onPress={onPressShuttleSchedule}
-                style={directionDetailsStyles.shuttleScheduleButton}
-              >
-                <View style={directionDetailsStyles.shuttleScheduleIcon}>
-                  <View style={directionDetailsStyles.shuttleScheduleIconRow}>
-                    <View style={directionDetailsStyles.shuttleScheduleDot} />
-                    <View style={directionDetailsStyles.shuttleScheduleLine} />
-                  </View>
-                  <View style={directionDetailsStyles.shuttleScheduleIconRow}>
-                    <View style={directionDetailsStyles.shuttleScheduleDot} />
-                    <View style={directionDetailsStyles.shuttleScheduleLine} />
-                  </View>
-                  <View style={directionDetailsStyles.shuttleScheduleIconRow}>
-                    <View style={directionDetailsStyles.shuttleScheduleDot} />
-                    <View style={directionDetailsStyles.shuttleScheduleLine} />
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </View>
             {!shuttlePlan ? (
-              <Text testID="shuttle-loading-text" style={directionDetailsStyles.routeMetaText}>
-                Loading shuttle schedule...
-              </Text>
+              <>
+                <View style={directionDetailsStyles.shuttleCardTopRow}>
+                  <View style={directionDetailsStyles.shuttleHeaderSpacer} />
+                  {scheduleMenuButton}
+                </View>
+                <Text testID="shuttle-loading-text" style={directionDetailsStyles.routeMetaText}>
+                  Loading shuttle schedule...
+                </Text>
+              </>
             ) : shuttlePlan.isServiceAvailable ? (
               <>
+                <View style={directionDetailsStyles.shuttleCardTopRow}>
+                  <Text
+                    testID="shuttle-next-bus-text"
+                    style={directionDetailsStyles.shuttlePrimaryText}
+                  >
+                    {shuttleDepartureSummary ?? 'Next bus time unavailable'}
+                  </Text>
+                  {scheduleMenuButton}
+                </View>
                 <Text
                   testID="shuttle-direction-label"
                   style={directionDetailsStyles.shuttleDirectionText}
@@ -296,19 +302,24 @@ export default function DirectionDetails({
               </>
             ) : (
               <View style={directionDetailsStyles.shuttleUnavailableCard}>
-                <View style={directionDetailsStyles.shuttleUnavailableIconWrap}>
-                  <Ionicons name="alert-circle-outline" size={18} color="#F4C15B" />
-                </View>
-                <View style={directionDetailsStyles.shuttleUnavailableTextWrap}>
-                  <Text style={directionDetailsStyles.shuttleUnavailableTitle}>
-                    Shuttle Unavailable
-                  </Text>
-                  <Text
-                    testID="shuttle-unavailable-text"
-                    style={directionDetailsStyles.shuttleUnavailableText}
-                  >
-                    {shuttlePlan?.message ?? SHUTTLE_UNAVAILABLE_MESSAGE}
-                  </Text>
+                <View style={directionDetailsStyles.shuttleUnavailableRow}>
+                  <View style={directionDetailsStyles.shuttleUnavailableIconWrap}>
+                    <Ionicons name="alert-circle-outline" size={18} color="#F4C15B" />
+                  </View>
+                  <View style={directionDetailsStyles.shuttleUnavailableTextWrap}>
+                    <Text style={directionDetailsStyles.shuttleUnavailableTitle}>
+                      Shuttle Unavailable
+                    </Text>
+                    <Text
+                      testID="shuttle-unavailable-text"
+                      style={directionDetailsStyles.shuttleUnavailableText}
+                    >
+                      {shuttlePlan?.message ?? SHUTTLE_UNAVAILABLE_MESSAGE}
+                    </Text>
+                  </View>
+                  <View style={directionDetailsStyles.shuttleUnavailableButtonWrap}>
+                    {scheduleMenuButton}
+                  </View>
                 </View>
               </View>
             )}
