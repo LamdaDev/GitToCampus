@@ -225,7 +225,7 @@ jest.mock('../src/components/DirectionDetails', () => {
                 ? 'loading'
                 : shuttlePlan.isServiceAvailable
                   ? 'available'
-                  : shuttlePlan.message ?? 'unavailable'}
+                  : (shuttlePlan.message ?? 'unavailable')}
             </Text>
           ) : null}
           <TouchableOpacity testID="close-directions-button" onPress={onClose}>

@@ -56,15 +56,7 @@ const parseDeparture = (now: Date, rawDeparture: string): Date | null => {
   if (!Number.isInteger(hour) || !Number.isInteger(minute)) return null;
   if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
 
-  return new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    hour,
-    minute,
-    0,
-    0,
-  );
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0, 0);
 };
 
 const dedupeDepartures = (departures: Date[]): Date[] => {
@@ -208,7 +200,9 @@ export const buildShuttlePlan = ({
   count = DEFAULT_DEPARTURE_COUNT,
 }: BuildShuttlePlanParams): ShuttlePlan => {
   const direction =
-    startCampus && destinationCampus ? toDirection(startCampus, destinationCampus) : DEFAULT_DIRECTION;
+    startCampus && destinationCampus
+      ? toDirection(startCampus, destinationCampus)
+      : DEFAULT_DIRECTION;
 
   if (!startCampus || !destinationCampus || startCampus === destinationCampus) {
     return buildUnavailablePlan(direction, CROSS_CAMPUS_ONLY_MESSAGE);
@@ -232,7 +226,9 @@ export const buildShuttlePlan = ({
   const departuresLookup = getNextShuttleDepartures(now, direction, count);
   if (!departuresLookup.isServiceAvailable) {
     const unavailableMessage =
-      departuresLookup.reason === 'SCHEDULE_MISSING' ? SCHEDULE_MISSING_MESSAGE : NO_SERVICE_MESSAGE;
+      departuresLookup.reason === 'SCHEDULE_MISSING'
+        ? SCHEDULE_MISSING_MESSAGE
+        : NO_SERVICE_MESSAGE;
 
     return buildUnavailablePlan(direction, unavailableMessage, pickup, dropoff);
   }

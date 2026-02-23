@@ -440,14 +440,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           now: getShuttlePlanningDate(new Date()),
         }),
       );
-    }, [
-      activeView,
-      destinationCampus,
-      isCrossCampusRoute,
-      startCampus,
-      startCoords,
-      travelMode,
-    ]);
+    }, [activeView, destinationCampus, isCrossCampusRoute, startCampus, startCoords, travelMode]);
 
     const showNavigationSummary = useCallback(() => {
       setActiveView('navigation');

@@ -137,8 +137,10 @@ export default function DirectionDetails({
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
   const routeEtaText = formatEta(routeDurationSeconds);
   const nextDepartureInMinutes = shuttlePlan?.nextDepartureInMinutes ?? null;
-  const effectiveDirection = shuttlePlan?.direction ?? inferShuttleDirection(startBuilding, destinationBuilding);
-  const shuttleDirectionLabel = effectiveDirection === 'LOYOLA_TO_SGW' ? 'LOY -> SGW' : 'SGW -> LOY';
+  const effectiveDirection =
+    shuttlePlan?.direction ?? inferShuttleDirection(startBuilding, destinationBuilding);
+  const shuttleDirectionLabel =
+    effectiveDirection === 'LOYOLA_TO_SGW' ? 'LOY -> SGW' : 'SGW -> LOY';
   const scheduleCampusKey = effectiveDirection === 'LOYOLA_TO_SGW' ? 'LOY' : 'SGW';
   const mondayThursdaySchedule = ShuttleSchedule.schedule['Monday-Thursday'][scheduleCampusKey];
   const fridaySchedule = ShuttleSchedule.schedule.Friday[scheduleCampusKey];
@@ -307,11 +309,17 @@ export default function DirectionDetails({
                 style={directionDetailsStyles.shuttleScheduleContainer}
               >
                 <Text style={directionDetailsStyles.shuttleScheduleTitle}>Monday - Thursday</Text>
-                <Text testID="shuttle-schedule-mon-thu-text" style={directionDetailsStyles.shuttleScheduleText}>
+                <Text
+                  testID="shuttle-schedule-mon-thu-text"
+                  style={directionDetailsStyles.shuttleScheduleText}
+                >
                   {mondayThursdaySchedule.join(', ')}
                 </Text>
                 <Text style={directionDetailsStyles.shuttleScheduleTitle}>Friday</Text>
-                <Text testID="shuttle-schedule-friday-text" style={directionDetailsStyles.shuttleScheduleText}>
+                <Text
+                  testID="shuttle-schedule-friday-text"
+                  style={directionDetailsStyles.shuttleScheduleText}
+                >
                   {fridaySchedule.join(', ')}
                 </Text>
               </View>
