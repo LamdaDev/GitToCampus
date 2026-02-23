@@ -29,3 +29,18 @@ console.warn = (...args: unknown[]) => {
   }
   originalWarn(...args);
 };
+
+// Silence a known React test warning caused by mocked async route updates in BottomSheet tests.
+// Test assertions still validate the behavior; this only removes noisy console output.
+const originalError = console.error;
+console.error = (...args: unknown[]) => {
+  const first = args[0];
+  const joined = args.map((arg) => String(arg)).join(' ');
+  if (
+    (typeof first === 'string' && first.includes('not wrapped in act(...)')) ||
+    (joined.includes('not wrapped in act(...)') && joined.includes('ForwardRef'))
+  ) {
+    return;
+  }
+  originalError(...args);
+};
