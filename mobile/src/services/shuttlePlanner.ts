@@ -242,8 +242,11 @@ export const buildShuttlePlan = ({
     });
     pickup = selectedStops.pickup;
     dropoff = selectedStops.dropoff;
-  } catch (_error) {
-    return buildUnavailablePlan(direction, STOPS_MISSING_MESSAGE);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'SHUTTLE_STOPS_MISSING') {
+      return buildUnavailablePlan(direction, STOPS_MISSING_MESSAGE);
+    }
+    throw error;
   }
 
   const departuresLookup = getNextShuttleDepartures(now, direction, count);

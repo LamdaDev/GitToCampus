@@ -69,9 +69,9 @@ export const getDistanceMeters = (from: CoordinateLike, to: CoordinateLike): num
   const deltaLat = toLat - fromLat;
   const deltaLon = toLon - fromLon;
 
-  const a =
+  const haversineTerm =
     Math.sin(deltaLat / 2) ** 2 + Math.cos(fromLat) * Math.cos(toLat) * Math.sin(deltaLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const angularDistance = 2 * Math.atan2(Math.sqrt(haversineTerm), Math.sqrt(1 - haversineTerm));
 
-  return EARTH_RADIUS_METERS * c;
+  return EARTH_RADIUS_METERS * angularDistance;
 };
