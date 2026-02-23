@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import type { SharedValue } from 'react-native-reanimated';
@@ -245,6 +245,13 @@ export default function MapScreen({
   const showSelectedMarker = Boolean(
     selectedBuildingId && selectedBuilding && selectedMarkerCoordinate,
   );
+  const routePolylineStrokeProps = useMemo(
+    () =>
+      Platform.OS === 'ios'
+        ? { strokeColor: ROUTE_LINE_COLOR, strokeColors: [ROUTE_LINE_COLOR] }
+        : { strokeColor: ROUTE_LINE_COLOR },
+    [],
+  );
   const routeCoordinates = useMemo(
     () => decodePolyline(outdoorRoute?.encodedPolyline ?? ''),
     [outdoorRoute?.encodedPolyline],
@@ -292,7 +299,7 @@ export default function MapScreen({
             <Polyline
               testID="route-polyline"
               coordinates={routeCoordinates}
-              strokeColors={[ROUTE_LINE_COLOR]}
+              {...routePolylineStrokeProps}
               strokeWidth={ROUTE_LINE_WIDTH}
               lineCap="round"
               lineJoin="round"

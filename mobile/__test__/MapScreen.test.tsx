@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as Location from 'expo-location';
+import { Platform } from 'react-native';
 import { Polygon } from 'react-native-maps';
 import MapScreen from '../src/screens/MapScreen';
 import type { BuildingShape } from '../src/types/BuildingShape';
@@ -486,7 +487,13 @@ describe('MapScreen', () => {
     );
 
     await waitFor(() => {
-      expect(getByTestId('route-polyline')).toBeTruthy();
+      const routePolyline = getByTestId('route-polyline');
+      expect(routePolyline).toBeTruthy();
+      expect(routePolyline.props.strokeColor).toBe('#0472f8');
+      expect(routePolyline.props.strokeWidth).toBe(6);
+      if (Platform.OS === 'ios') {
+        expect(routePolyline.props.strokeColors).toEqual(['#0472f8']);
+      }
       expect(getByTestId('route-start-marker').props.coordinate).toEqual({
         latitude: 45.5,
         longitude: -73.57,
