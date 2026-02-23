@@ -11,6 +11,7 @@ const mockClose = jest.fn();
 const SNAP_INDEX_NAVIGATION_MAX = 1;
 const SNAP_INDEX_PANEL = 2;
 const SNAP_INDEX_EXPANDED = 3;
+const SNAP_INDEX_DIRECTIONS_PANEL = 7;
 
 const mockBuildings: BuildingShape[] = [
   {
@@ -1120,7 +1121,7 @@ describe('BottomSheet', () => {
       expect(getByTestId('destination-id').props.children).toBe('loy-1');
       expect(getByTestId('route-summary-state').props.children).toContain('14 mins');
       expect(getByTestId('can-start-navigation-state').props.children).toBe('true');
-      expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_PANEL);
+      expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_DIRECTIONS_PANEL);
     });
 
     rafSpy.mockRestore();

@@ -42,6 +42,8 @@ const SHEET_INDEX_PANEL = 2;
 const SHEET_INDEX_EXPANDED = 3;
 const NAVIGATION_SNAP_POINTS = ['22%', '26%'] as const;
 const DEFAULT_SNAP_POINTS = ['22%', '29%', '47%', '82%'] as const;
+const DIRECTIONS_SNAP_POINTS = Array.from({ length: 61 }, (_value, index) => `${22 + index}%`);
+const DIRECTIONS_PANEL_INDEX = 7; // 29%
 
 const METERS_PER_DEGREE_LAT = 110540;
 const METERS_PER_DEGREE_LON_AT_EQUATOR = 111320;
@@ -220,10 +222,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
   ) => {
     const sheetRef = useRef<BottomSheet>(null);
     const [activeView, setActiveView] = useState<ViewType>('building');
-    const snapPoints = useMemo(
-      () => (activeView === 'navigation' ? [...NAVIGATION_SNAP_POINTS] : [...DEFAULT_SNAP_POINTS]),
-      [activeView],
-    );
+    const snapPoints = useMemo(() => {
+      if (activeView === 'navigation') return [...NAVIGATION_SNAP_POINTS];
+      if (activeView === 'directions') return [...DIRECTIONS_SNAP_POINTS];
+      return [...DEFAULT_SNAP_POINTS];
+    }, [activeView]);
 
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
@@ -264,6 +267,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const setSnapPoint = (index: number) => {
       sheetRef.current?.snapToIndex(toInternalSnapIndex(index));
     };
+    const snapToDirectionsPanel = () => {
+      requestAnimationFrame(() => {
+        sheetRef.current?.snapToIndex(DIRECTIONS_PANEL_INDEX);
+      });
+    };
 
     const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
     const isInternalSearch = searchFor !== null;
@@ -286,7 +294,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setDestinationBuilding(null);
       }
       setActiveView('directions');
-      sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
+      snapToDirectionsPanel();
     };
 
     const showTransitPlan = () => {
@@ -296,7 +304,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const showDirectionsPanel = () => {
       setActiveView('directions');
-      sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
+      snapToDirectionsPanel();
     };
 
     const handleSheetClose = () => {
@@ -329,7 +337,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setRouteStartSource('current');
       setActiveView('directions');
       onExitSearch();
-      sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
+      snapToDirectionsPanel();
     };
 
     const handleInternalSearch = (building: BuildingShape) => {
@@ -340,7 +348,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartLocationSnapshot(null);
       } else setDestinationBuilding(building);
       setSearchFor(null);
-      sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
+      snapToDirectionsPanel();
     };
 
     useEffect(() => {
@@ -450,7 +458,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const endNavigation = useCallback(() => {
       setActiveView('directions');
       requestAnimationFrame(() => {
-        sheetRef.current?.snapToIndex(SHEET_INDEX_PANEL);
+        sheetRef.current?.snapToIndex(DIRECTIONS_PANEL_INDEX);
       });
     }, []);
 
@@ -580,6 +588,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         backgroundStyle={buildingDetailsStyles.sheetBackground}
         handleIndicatorStyle={buildingDetailsStyles.handle}
         enablePanDownToClose={true}
+        enableHandlePanningGesture={true}
         enableContentPanningGesture={false}
         enableDynamicSizing={false}
         animatedPosition={animatedPosition}

@@ -48,7 +48,19 @@ const getScheduleDayBucket = (now: Date): ShuttleScheduleDayBucket | null => {
 const toDepartureCampus = (direction: ShuttleDirection): ShuttleDepartureCampus =>
   direction === 'SGW_TO_LOYOLA' ? 'SGW' : 'LOY';
 
-const normalizeDepartureToken = (departure: string) => departure.trim().replace(/\*+$/, '');
+const STAR_CHAR_CODE = 42; // "*"
+
+const normalizeDepartureToken = (departure: string) => {
+  const trimmedDeparture = departure.trim();
+  let endIndex = trimmedDeparture.length;
+
+  while (endIndex > 0 && trimmedDeparture.charCodeAt(endIndex - 1) === STAR_CHAR_CODE) {
+    endIndex -= 1;
+  }
+
+  if (endIndex === trimmedDeparture.length) return trimmedDeparture;
+  return trimmedDeparture.slice(0, endIndex);
+};
 
 const parseDeparture = (now: Date, rawDeparture: string): Date | null => {
   const normalizedDeparture = normalizeDepartureToken(rawDeparture);

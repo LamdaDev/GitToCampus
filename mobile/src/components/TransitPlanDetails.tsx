@@ -52,7 +52,14 @@ export default function TransitPlanDetails({
     >
       <View style={directionDetailsStyles.header}>
         <View style={directionDetailsStyles.transitHeaderTextWrap}>
-          <Text style={directionDetailsStyles.directionTitle}>Public Transit</Text>
+          <Text
+            style={[
+              directionDetailsStyles.directionTitle,
+              directionDetailsStyles.transitHeaderTitleText,
+            ]}
+          >
+            Public Transit
+          </Text>
           {destinationBuilding?.name ? (
             <Text numberOfLines={1} style={directionDetailsStyles.transitDestinationText}>
               {destinationBuilding.name}

@@ -94,8 +94,11 @@ export const directionDetailsStyles = StyleSheet.create({
     flex: 1,
     paddingRight: 12,
   },
+  transitHeaderTitleText: {
+    color: '#FFFFFF',
+  },
   transitDestinationText: {
-    color: '#B5BBC4',
+    color: '#FFFFFF',
     fontSize: 15,
     lineHeight: 20,
     fontFamily: 'gabarito',
