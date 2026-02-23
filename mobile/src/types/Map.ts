@@ -18,4 +18,6 @@ export type OutdoorRouteOverlay = {
   destination: LatLng;
   distanceText?: string;
   durationText?: string;
+  distanceMeters?: number;
+  durationSeconds?: number;
 };

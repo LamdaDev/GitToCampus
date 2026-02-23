@@ -7,6 +7,9 @@ import { DirectionsServiceError } from '../src/types/Directions';
 
 const mockSnapToIndex = jest.fn();
 const mockClose = jest.fn();
+const SNAP_INDEX_NAVIGATION_MAX = 1;
+const SNAP_INDEX_PANEL = 2;
+const SNAP_INDEX_EXPANDED = 3;
 
 const mockBuildings: BuildingShape[] = [
   {
@@ -149,6 +152,7 @@ jest.mock('../src/components/BuildingDetails', () => {
 
 jest.mock('../src/components/DirectionDetails', () => {
   const { View, Text, TouchableOpacity } = require('react-native');
+  const React = require('react');
 
   return ({
     destinationBuilding,
@@ -157,46 +161,77 @@ jest.mock('../src/components/DirectionDetails', () => {
     onPressDestination,
     onTravelModeChange,
     onPressTransitGo,
+    onPressGo,
+    canStartNavigation,
     isCrossCampusRoute,
     isRouteLoading,
     routeErrorMessage,
     routeDurationText,
     routeDistanceText,
-  }: any) => (
-    <View testID="direction-details">
-      <Text testID="destination-id">{destinationBuilding ? destinationBuilding.id : 'none'}</Text>
-      <Text testID="cross-campus-state">{isCrossCampusRoute ? 'true' : 'false'}</Text>
-      <Text testID="route-loading-state">{isRouteLoading ? 'true' : 'false'}</Text>
-      <Text testID="route-error-state">{routeErrorMessage ?? 'none'}</Text>
-      <Text testID="route-summary-state">
-        {routeDurationText && routeDistanceText
-          ? `${routeDurationText} - ${routeDistanceText}`
-          : 'none'}
-      </Text>
-      <TouchableOpacity testID="close-directions-button" onPress={onClose}>
-        <Text>Close</Text>
-      </TouchableOpacity>
-      {/* NEW: exposes lines 137-138 */}
-      <TouchableOpacity testID="press-start" onPress={onPressStart}>
-        <Text>Start</Text>
-      </TouchableOpacity>
-      <TouchableOpacity testID="press-destination" onPress={onPressDestination}>
-        <Text>Destination</Text>
-      </TouchableOpacity>
-      <TouchableOpacity testID="transport-walk" onPress={() => onTravelModeChange?.('walking')}>
-        <Text>Walk</Text>
-      </TouchableOpacity>
-      <TouchableOpacity testID="transport-car" onPress={() => onTravelModeChange?.('driving')}>
-        <Text>Car</Text>
-      </TouchableOpacity>
-      <TouchableOpacity testID="transport-bus" onPress={() => onTravelModeChange?.('transit')}>
-        <Text>Bus</Text>
-      </TouchableOpacity>
-      <TouchableOpacity testID="route-go-button" onPress={onPressTransitGo}>
-        <Text>Go</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  }: any) =>
+    (() => {
+      const [selectedMode, setSelectedMode] = React.useState<'walking' | 'driving' | 'transit'>(
+        'walking',
+      );
+      const hasRouteSummary = Boolean(routeDurationText && routeDistanceText);
+      const showGoButton = hasRouteSummary && (selectedMode === 'transit' || canStartNavigation);
+
+      const handleSelectMode = (mode: 'walking' | 'driving' | 'transit') => {
+        setSelectedMode(mode);
+        onTravelModeChange?.(mode);
+      };
+
+      const handleGo = () => {
+        if (!showGoButton) return;
+        if (onPressGo) {
+          onPressGo(selectedMode);
+          return;
+        }
+        if (selectedMode === 'transit') onPressTransitGo?.();
+      };
+
+      return (
+        <View testID="direction-details">
+          <Text testID="destination-id">
+            {destinationBuilding ? destinationBuilding.id : 'none'}
+          </Text>
+          <Text testID="cross-campus-state">{isCrossCampusRoute ? 'true' : 'false'}</Text>
+          <Text testID="route-loading-state">{isRouteLoading ? 'true' : 'false'}</Text>
+          <Text testID="route-error-state">{routeErrorMessage ?? 'none'}</Text>
+          <Text testID="route-summary-state">
+            {routeDurationText && routeDistanceText
+              ? `${routeDurationText} - ${routeDistanceText}`
+              : 'none'}
+          </Text>
+          <Text testID="can-start-navigation-state">
+            {canStartNavigation === false ? 'false' : 'true'}
+          </Text>
+          <TouchableOpacity testID="close-directions-button" onPress={onClose}>
+            <Text>Close</Text>
+          </TouchableOpacity>
+          <TouchableOpacity testID="press-start" onPress={onPressStart}>
+            <Text>Start</Text>
+          </TouchableOpacity>
+          <TouchableOpacity testID="press-destination" onPress={onPressDestination}>
+            <Text>Destination</Text>
+          </TouchableOpacity>
+          <TouchableOpacity testID="transport-walk" onPress={() => handleSelectMode('walking')}>
+            <Text>Walk</Text>
+          </TouchableOpacity>
+          <TouchableOpacity testID="transport-car" onPress={() => handleSelectMode('driving')}>
+            <Text>Car</Text>
+          </TouchableOpacity>
+          <TouchableOpacity testID="transport-bus" onPress={() => handleSelectMode('transit')}>
+            <Text>Bus</Text>
+          </TouchableOpacity>
+          {showGoButton ? (
+            <TouchableOpacity testID="route-go-button" onPress={handleGo}>
+              <Text>Go</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      );
+    })();
 });
 
 jest.mock('../src/components/TransitPlanDetails', () => {
@@ -244,6 +279,12 @@ jest.mock('../src/components/SearchSheet', () => {
 
 describe('BottomSheet', () => {
   const directionsServiceMock = directionsService as jest.Mocked<typeof directionsService>;
+  const pressAndFlush = async (node: any) => {
+    await act(async () => {
+      fireEvent.press(node);
+      await Promise.resolve();
+    });
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -269,7 +310,7 @@ describe('BottomSheet', () => {
 
     // Check open and close events have been called
     ref.current?.open();
-    expect(mockSnapToIndex).toHaveBeenCalledWith(0);
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_PANEL);
 
     // Check Close has been fired from child
     fireEvent.press(getByTestId('close-button'));
@@ -349,7 +390,7 @@ describe('BottomSheet', () => {
     render(<BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} />);
     ref.current?.setSnap(1);
 
-    expect(mockSnapToIndex).toHaveBeenCalledWith(1);
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_EXPANDED);
   });
 
   test('handleSheetAnimate calls revealSearchBar when the sheet closes', () => {
@@ -393,7 +434,7 @@ describe('BottomSheet', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
     expect(getByTestId('direction-details')).toBeTruthy();
 
     fireEvent.press(getByTestId('trigger-on-close'));
@@ -447,22 +488,22 @@ describe('BottomSheet', () => {
     expect(onExitSearch).toHaveBeenCalled();
   });
 
-  test('pressing start in directions shows SearchSheet', () => {
+  test('pressing start in directions shows SearchSheet', async () => {
     const { getByTestId } = render(
       <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
     );
-    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
     fireEvent.press(getByTestId('press-start'));
 
     expect(getByTestId('search-sheet')).toBeTruthy();
   });
 
-  test('pressing destination in directions shows SearchSheet', () => {
+  test('pressing destination in directions shows SearchSheet', async () => {
     const { getByTestId } = render(
       <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
     fireEvent.press(getByTestId('press-destination'));
 
     expect(getByTestId('search-sheet')).toBeTruthy();
@@ -499,7 +540,7 @@ describe('BottomSheet', () => {
     );
 
     jest.runAllTimers();
-    expect(mockSnapToIndex).toHaveBeenCalledWith(1);
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_EXPANDED);
     jest.useRealTimers();
   });
 
@@ -677,7 +718,7 @@ describe('BottomSheet', () => {
 
     const initialCallCount = directionsServiceMock.fetchOutdoorDirections.mock.calls.length;
 
-    fireEvent.press(getByTestId('transport-car'));
+    await pressAndFlush(getByTestId('transport-car'));
 
     await waitFor(() => {
       expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThan(
@@ -689,7 +730,7 @@ describe('BottomSheet', () => {
     });
 
     const carCallCount = directionsServiceMock.fetchOutdoorDirections.mock.calls.length;
-    fireEvent.press(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('transport-bus'));
 
     await waitFor(() => {
       expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThan(
@@ -731,13 +772,13 @@ describe('BottomSheet', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
 
     await waitFor(() => {
       expect(getByTestId('direction-details')).toBeTruthy();
     });
 
-    fireEvent.press(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('transport-bus'));
 
     await waitFor(() => {
       expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
@@ -774,7 +815,7 @@ describe('BottomSheet', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
 
     await waitFor(() => {
       expect(getByTestId('route-loading-state').props.children).toBe('true');
@@ -810,7 +851,7 @@ describe('BottomSheet', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
     fireEvent.press(getByTestId('press-start'));
     fireEvent.press(getByTestId('press-building-in-search'));
     fireEvent.press(getByTestId('press-destination'));
@@ -837,7 +878,7 @@ describe('BottomSheet', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
 
     await waitFor(() => {
       expect(warnSpy).toHaveBeenCalledWith('Failed to fetch outdoor directions', expect.any(Error));
@@ -867,7 +908,7 @@ describe('BottomSheet', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
 
     await waitFor(() => {
       expect(getByTestId('route-error-state').props.children).toBe(
@@ -896,7 +937,7 @@ describe('BottomSheet', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
 
     await waitFor(() => {
       expect(getByTestId('route-error-state').props.children).toBe(
@@ -906,5 +947,135 @@ describe('BottomSheet', () => {
     });
 
     warnSpy.mockRestore();
+  });
+
+  test('walking GO opens navigation summary and shows End Navigation button', async () => {
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 840,
+      durationText: '14 mins',
+      bounds: null,
+    });
+
+    const { getByTestId, getByText, queryByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        userLocation={{ latitude: 45.4585, longitude: -73.6412 }}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-summary-state').props.children).toContain('14 mins');
+    });
+
+    fireEvent.press(getByTestId('route-go-button'));
+
+    await waitFor(() => {
+      expect(queryByTestId('direction-details')).toBeNull();
+      expect(getByText('arrival')).toBeTruthy();
+      expect(getByTestId('end-navigation-button')).toBeTruthy();
+      expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_NAVIGATION_MAX);
+    });
+  });
+
+  test('End Navigation returns to directions panel with the same selected route', async () => {
+    const rafSpy = jest
+      .spyOn(global, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 1;
+      });
+
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 840,
+      durationText: '14 mins',
+      bounds: null,
+    });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        userLocation={{ latitude: 45.4585, longitude: -73.6412 }}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-go-button')).toBeTruthy();
+    });
+
+    fireEvent.press(getByTestId('route-go-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('end-navigation-button')).toBeTruthy();
+    });
+
+    fireEvent.press(getByTestId('end-navigation-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(getByTestId('destination-id').props.children).toBe('loy-1');
+      expect(getByTestId('route-summary-state').props.children).toContain('14 mins');
+      expect(getByTestId('can-start-navigation-state').props.children).toBe('true');
+      expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_PANEL);
+    });
+
+    rafSpy.mockRestore();
+  });
+
+  test('manual start hides GO for walking and driving but keeps GO for transit', async () => {
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 840,
+      durationText: '14 mins',
+      bounds: null,
+      transitInstructions: [{ id: 'step-1', type: 'transit', title: 'Bus' }],
+    } as any);
+
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await waitFor(() => {
+      expect(getByTestId('route-summary-state').props.children).toContain('14 mins');
+      expect(getByTestId('route-go-button')).toBeTruthy();
+    });
+
+    fireEvent.press(getByTestId('press-start'));
+    await pressAndFlush(getByTestId('press-building-in-search'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(getByTestId('can-start-navigation-state').props.children).toBe('false');
+      expect(queryByTestId('route-go-button')).toBeNull();
+    });
+
+    fireEvent.press(getByTestId('transport-car'));
+    expect(queryByTestId('route-go-button')).toBeNull();
+
+    fireEvent.press(getByTestId('transport-bus'));
+    expect(getByTestId('route-go-button')).toBeTruthy();
   });
 });

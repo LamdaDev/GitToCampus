@@ -26,7 +26,9 @@ type DirectionDetailProps = {
   onPressStart?: () => void;
   onPressDestination?: () => void;
   onTravelModeChange?: (mode: DirectionsTravelMode) => void;
+  canStartNavigation?: boolean;
   onPressTransitGo?: () => void;
+  onPressGo?: (mode: DirectionsTravelMode) => void;
 };
 
 /**
@@ -59,14 +61,16 @@ export default function DirectionDetails({
   onPressStart,
   onPressDestination,
   onTravelModeChange,
+  canStartNavigation = true,
   onPressTransitGo,
+  onPressGo,
 }: Readonly<DirectionDetailProps>) {
   const [activeIndex, setActiveIndex] = useState(0);
   const isSelected = (index: number) => activeIndex === index;
   const isTransitSelected = isSelected(2);
   const hasRouteSummary = Boolean(routeDistanceText && routeDurationText);
-  const canShowTransitPlan =
-    hasRouteSummary && isTransitSelected && !isRouteLoading && !routeErrorMessage;
+  const showGoButton = hasRouteSummary && (isTransitSelected || canStartNavigation);
+  const canPressGo = showGoButton && !isRouteLoading && !routeErrorMessage;
 
   const handleSelectWalk = () => {
     setActiveIndex(0);
@@ -84,8 +88,19 @@ export default function DirectionDetails({
   };
 
   const handlePressGo = () => {
-    if (!canShowTransitPlan) return;
-    onPressTransitGo?.();
+    const selectedMode: DirectionsTravelMode =
+      activeIndex === 0 ? 'walking' : activeIndex === 1 ? 'driving' : 'transit';
+    const isNavigationMode = selectedMode === 'walking' || selectedMode === 'driving';
+
+    if (!canPressGo) return;
+    if (isNavigationMode && !canStartNavigation) return;
+
+    if (selectedMode === 'transit' && !onPressGo) {
+      onPressTransitGo?.();
+      return;
+    }
+
+    onPressGo?.(selectedMode);
   };
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
@@ -236,18 +251,20 @@ export default function DirectionDetails({
                 )}
               </View>
             </View>
-            <TouchableOpacity
-              testID="route-go-button"
-              disabled={!canShowTransitPlan}
-              activeOpacity={canShowTransitPlan ? 0.85 : 1}
-              onPress={handlePressGo}
-              style={[
-                directionDetailsStyles.routeGoButton,
-                !canShowTransitPlan && directionDetailsStyles.routeGoButtonDisabled,
-              ]}
-            >
-              <Text style={directionDetailsStyles.routeGoText}>GO</Text>
-            </TouchableOpacity>
+            {showGoButton ? (
+              <TouchableOpacity
+                testID="route-go-button"
+                disabled={!canPressGo}
+                activeOpacity={canPressGo ? 0.85 : 1}
+                onPress={handlePressGo}
+                style={[
+                  directionDetailsStyles.routeGoButton,
+                  !canPressGo && directionDetailsStyles.routeGoButtonDisabled,
+                ]}
+              >
+                <Text style={directionDetailsStyles.routeGoText}>GO</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : (
           <Text testID="route-empty-text" style={directionDetailsStyles.routeMetaText}>

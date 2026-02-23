@@ -354,4 +354,66 @@ describe('Direction Details', () => {
     expect(onPressStart).toHaveBeenCalledTimes(1);
     expect(onPressDestination).toHaveBeenCalledTimes(1);
   });
+
+  test('calls onPressGo with walking and driving when navigation is allowed', () => {
+    const onPressGo = jest.fn();
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+        onPressGo={onPressGo}
+      />,
+    );
+
+    fireEvent.press(getByTestId('route-go-button'));
+    fireEvent.press(getByTestId('transport-car'));
+    fireEvent.press(getByTestId('route-go-button'));
+
+    expect(onPressGo).toHaveBeenNthCalledWith(1, 'walking');
+    expect(onPressGo).toHaveBeenNthCalledWith(2, 'driving');
+  });
+
+  test('hides GO for walking when custom start disables navigation start', () => {
+    const { queryByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+        canStartNavigation={false}
+      />,
+    );
+
+    expect(queryByTestId('route-go-button')).toBeNull();
+  });
+
+  test('still shows GO for transit when custom start disables navigation start', () => {
+    const onPressGo = jest.fn();
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+        canStartNavigation={false}
+        onPressGo={onPressGo}
+      />,
+    );
+
+    fireEvent.press(getByTestId('transport-bus'));
+    fireEvent.press(getByTestId('route-go-button'));
+
+    expect(onPressGo).toHaveBeenCalledWith('transit');
+  });
 });
