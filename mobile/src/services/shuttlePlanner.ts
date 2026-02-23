@@ -21,6 +21,9 @@ const DEPARTURE_TIME_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   minute: '2-digit',
 });
 
+const isShuttleUnavailableDebugEnabled = () =>
+  (process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_UNAVAILABLE ?? '').trim().toLowerCase() === 'true';
+
 type SelectPickupDropoffParams = {
   startCampus: Campus;
   destinationCampus: Campus;
@@ -116,6 +119,14 @@ export const getNextShuttleDepartures = (
   direction: ShuttleDirection,
   count: number = DEFAULT_DEPARTURE_COUNT,
 ): ShuttleDepartureLookup => {
+  if (isShuttleUnavailableDebugEnabled()) {
+    return {
+      departures: [],
+      isServiceAvailable: false,
+      reason: 'NO_SERVICE_TODAY',
+    };
+  }
+
   const scheduleDayBucket = getScheduleDayBucket(now);
   if (!scheduleDayBucket) {
     return {

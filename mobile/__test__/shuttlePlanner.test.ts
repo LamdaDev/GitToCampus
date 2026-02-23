@@ -5,6 +5,20 @@ import {
 } from '../src/services/shuttlePlanner';
 
 describe('shuttlePlanner service', () => {
+  const originalForceUnavailable = process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_UNAVAILABLE;
+
+  beforeEach(() => {
+    delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_UNAVAILABLE;
+  });
+
+  afterAll(() => {
+    if (originalForceUnavailable === undefined) {
+      delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_UNAVAILABLE;
+    } else {
+      process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_UNAVAILABLE = originalForceUnavailable;
+    }
+  });
+
   test('returns LOY departures for LOY -> SGW on Monday-Thursday', () => {
     const mondayMorning = new Date(2026, 1, 23, 9, 10, 0, 0);
     const result = getNextShuttleDepartures(mondayMorning, 'LOYOLA_TO_SGW');
@@ -103,5 +117,15 @@ describe('shuttlePlanner service', () => {
 
     expect(plan.isServiceAvailable).toBe(false);
     expect(plan.message).toBe('Shuttle bus unavailable today. Try Public Transit.');
+  });
+
+  test('forces unavailable shuttle state when debug override is enabled', () => {
+    process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_UNAVAILABLE = 'true';
+
+    const result = getNextShuttleDepartures(new Date(2026, 1, 23, 9, 10, 0, 0), 'SGW_TO_LOYOLA');
+
+    expect(result.isServiceAvailable).toBe(false);
+    expect(result.reason).toBe('NO_SERVICE_TODAY');
+    expect(result.departures).toEqual([]);
   });
 });
