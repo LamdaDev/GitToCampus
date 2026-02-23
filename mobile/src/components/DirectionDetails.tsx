@@ -5,9 +5,11 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Divider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
+import ShuttleSchedule from '../constants/shuttleSchedule';
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
-import type { DirectionsTravelMode } from '../types/Directions';
+import type { RoutePlannerMode } from '../types/SheetMode';
+import type { ShuttleDirection, ShuttlePlan } from '../types/Shuttle';
 import type { UserCoords } from '../screens/MapScreen';
 import { formatEta } from '../utils/directionsFormatting';
 
@@ -25,10 +27,12 @@ type DirectionDetailProps = {
   routeDurationSeconds?: number | null;
   onPressStart?: () => void;
   onPressDestination?: () => void;
-  onTravelModeChange?: (mode: DirectionsTravelMode) => void;
+  onTravelModeChange?: (mode: RoutePlannerMode) => void;
+  selectedTravelMode?: RoutePlannerMode;
+  shuttlePlan?: ShuttlePlan | null;
   canStartNavigation?: boolean;
   onPressTransitGo?: () => void;
-  onPressGo?: (mode: DirectionsTravelMode) => void;
+  onPressGo?: (mode: RoutePlannerMode) => void;
 };
 
 /**
@@ -46,6 +50,20 @@ const getStartDisplayText = (
   else return 'Set as starting point';
 };
 
+const SHUTTLE_UNAVAILABLE_MESSAGE = 'Shuttle bus unavailable today. Try Public Transit.';
+
+const inferShuttleDirection = (
+  startBuilding: BuildingShape | null,
+  destinationBuilding: BuildingShape | null,
+): ShuttleDirection | null => {
+  const startCampus = startBuilding?.campus;
+  const destinationCampus = destinationBuilding?.campus;
+
+  if (startCampus === 'SGW' && destinationCampus === 'LOYOLA') return 'SGW_TO_LOYOLA';
+  if (startCampus === 'LOYOLA' && destinationCampus === 'SGW') return 'LOYOLA_TO_SGW';
+  return null;
+};
+
 export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
@@ -61,35 +79,48 @@ export default function DirectionDetails({
   onPressStart,
   onPressDestination,
   onTravelModeChange,
+  selectedTravelMode,
+  shuttlePlan = null,
   canStartNavigation = true,
   onPressTransitGo,
   onPressGo,
 }: Readonly<DirectionDetailProps>) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const isSelected = (index: number) => activeIndex === index;
-  const isTransitSelected = isSelected(2);
+  const [activeMode, setActiveMode] = useState<RoutePlannerMode>(selectedTravelMode ?? 'walking');
+  const [showFullSchedule, setShowFullSchedule] = useState(false);
+  const isSelected = (mode: RoutePlannerMode) => activeMode === mode;
+  const isTransitSelected = isSelected('transit');
+  const showShuttleCard = isTransitSelected && isCrossCampusRoute;
   const hasRouteSummary = Boolean(routeDistanceText && routeDurationText);
   const showGoButton = hasRouteSummary && (isTransitSelected || canStartNavigation);
   const canPressGo = showGoButton && !isRouteLoading && !routeErrorMessage;
 
+  React.useEffect(() => {
+    if (!selectedTravelMode) return;
+    setActiveMode(selectedTravelMode);
+  }, [selectedTravelMode]);
+
+  React.useEffect(() => {
+    if (showShuttleCard) return;
+    setShowFullSchedule(false);
+  }, [showShuttleCard]);
+
   const handleSelectWalk = () => {
-    setActiveIndex(0);
+    setActiveMode('walking');
     onTravelModeChange?.('walking');
   };
 
   const handleSelectCar = () => {
-    setActiveIndex(1);
+    setActiveMode('driving');
     onTravelModeChange?.('driving');
   };
 
   const handleSelectTransit = () => {
-    setActiveIndex(2);
+    setActiveMode('transit');
     onTravelModeChange?.('transit');
   };
 
   const handlePressGo = () => {
-    const selectedMode: DirectionsTravelMode =
-      activeIndex === 0 ? 'walking' : activeIndex === 1 ? 'driving' : 'transit';
+    const selectedMode: RoutePlannerMode = activeMode;
     const isNavigationMode = selectedMode === 'walking' || selectedMode === 'driving';
 
     if (!canPressGo) return;
@@ -105,6 +136,18 @@ export default function DirectionDetails({
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
   const routeEtaText = formatEta(routeDurationSeconds);
+  const nextDepartureInMinutes = shuttlePlan?.nextDepartureInMinutes ?? null;
+  const effectiveDirection = shuttlePlan?.direction ?? inferShuttleDirection(startBuilding, destinationBuilding);
+  const shuttleDirectionLabel = effectiveDirection === 'LOYOLA_TO_SGW' ? 'LOY -> SGW' : 'SGW -> LOY';
+  const scheduleCampusKey = effectiveDirection === 'LOYOLA_TO_SGW' ? 'LOY' : 'SGW';
+  const mondayThursdaySchedule = ShuttleSchedule.schedule['Monday-Thursday'][scheduleCampusKey];
+  const fridaySchedule = ShuttleSchedule.schedule.Friday[scheduleCampusKey];
+  const shuttleDepartureSummary =
+    nextDepartureInMinutes === null
+      ? null
+      : nextDepartureInMinutes <= 1
+        ? 'Next bus in 1 min'
+        : `Next bus in ${nextDepartureInMinutes} mins`;
 
   return (
     <>
@@ -168,10 +211,10 @@ export default function DirectionDetails({
         <View style={directionDetailsStyles.transportationSubHeader}>
           <TouchableOpacity
             testID="transport-walk"
-            accessibilityState={{ selected: isSelected(0) }}
+            accessibilityState={{ selected: isSelected('walking') }}
             style={[
               directionDetailsStyles.transportationButton,
-              isSelected(0) && directionDetailsStyles.activeTransportationButton,
+              isSelected('walking') && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={handleSelectWalk}
           >
@@ -179,10 +222,10 @@ export default function DirectionDetails({
           </TouchableOpacity>
           <TouchableOpacity
             testID="transport-car"
-            accessibilityState={{ selected: isSelected(1) }}
+            accessibilityState={{ selected: isSelected('driving') }}
             style={[
               directionDetailsStyles.transportationButton,
-              isSelected(1) && directionDetailsStyles.activeTransportationButton,
+              isSelected('driving') && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={handleSelectCar}
           >
@@ -194,10 +237,10 @@ export default function DirectionDetails({
           </TouchableOpacity>
           <TouchableOpacity
             testID="transport-bus"
-            accessibilityState={{ selected: isSelected(2) }}
+            accessibilityState={{ selected: isSelected('transit') }}
             style={[
               directionDetailsStyles.transportationButton,
-              isSelected(2) && directionDetailsStyles.activeTransportationButton,
+              isSelected('transit') && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={handleSelectTransit}
           >
@@ -209,6 +252,73 @@ export default function DirectionDetails({
           </TouchableOpacity>
         </View>
       </View>
+      {showShuttleCard ? (
+        <View testID="shuttle-card-content" style={directionDetailsStyles.shuttleCardMetaContainer}>
+          <View style={directionDetailsStyles.shuttleCardContainer}>
+            <View style={directionDetailsStyles.shuttleCardTopRow}>
+              {shuttlePlan?.isServiceAvailable ? (
+                <Text
+                  testID="shuttle-direction-label"
+                  style={directionDetailsStyles.shuttleDirectionText}
+                >
+                  {shuttleDirectionLabel}
+                </Text>
+              ) : (
+                <View />
+              )}
+              <TouchableOpacity
+                testID="shuttle-full-schedule-button"
+                onPress={() => setShowFullSchedule((prev) => !prev)}
+                style={directionDetailsStyles.shuttleScheduleButton}
+              >
+                <Text style={directionDetailsStyles.shuttleScheduleButtonText}>
+                  {showFullSchedule ? 'Hide Schedule' : 'Show Schedule'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {!shuttlePlan ? (
+              <Text testID="shuttle-loading-text" style={directionDetailsStyles.routeMetaText}>
+                Loading shuttle schedule...
+              </Text>
+            ) : shuttlePlan.isServiceAvailable ? (
+              <>
+                <Text
+                  testID="shuttle-next-bus-text"
+                  numberOfLines={1}
+                  style={directionDetailsStyles.shuttlePrimaryText}
+                >
+                  {shuttleDepartureSummary ?? 'Next bus time unavailable'}
+                </Text>
+                <Text style={directionDetailsStyles.shuttleSecondaryText}>
+                  Upcoming departures: {shuttlePlan.nextDepartures.join(', ')}
+                </Text>
+              </>
+            ) : (
+              <Text
+                testID="shuttle-unavailable-text"
+                style={directionDetailsStyles.shuttleUnavailableText}
+              >
+                {shuttlePlan?.message ?? SHUTTLE_UNAVAILABLE_MESSAGE}
+              </Text>
+            )}
+            {showFullSchedule ? (
+              <View
+                testID="shuttle-full-schedule-content"
+                style={directionDetailsStyles.shuttleScheduleContainer}
+              >
+                <Text style={directionDetailsStyles.shuttleScheduleTitle}>Monday - Thursday</Text>
+                <Text testID="shuttle-schedule-mon-thu-text" style={directionDetailsStyles.shuttleScheduleText}>
+                  {mondayThursdaySchedule.join(', ')}
+                </Text>
+                <Text style={directionDetailsStyles.shuttleScheduleTitle}>Friday</Text>
+                <Text testID="shuttle-schedule-friday-text" style={directionDetailsStyles.shuttleScheduleText}>
+                  {fridaySchedule.join(', ')}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
       <View style={directionDetailsStyles.routeMetaContainer}>
         {isRouteLoading ? (
           <Text testID="route-loading-text" style={directionDetailsStyles.routeMetaText}>

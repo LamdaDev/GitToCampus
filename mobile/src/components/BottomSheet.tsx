@@ -32,6 +32,8 @@ import {
 import type { SharedValue } from 'react-native-reanimated';
 import { decodePolyline } from '../utils/polyline';
 import { formatEta } from '../utils/directionsFormatting';
+import { buildShuttlePlan } from '../services/shuttlePlanner';
+import type { ShuttlePlan } from '../types/Shuttle';
 
 import SearchSheet from './SearchSheet';
 
@@ -146,6 +148,40 @@ const toInternalSnapIndex = (index: number) => {
   return index;
 };
 
+const isShuttleWeekdayDebugEnabled = () =>
+  (process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY ?? '').trim().toLowerCase() === 'true';
+
+const getShuttlePlanningDate = (now: Date) => {
+  if (!isShuttleWeekdayDebugEnabled()) return now;
+
+  const day = now.getDay();
+  if (day === 0) {
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds(),
+    );
+  }
+
+  if (day === 6) {
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 2,
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds(),
+    );
+  }
+
+  return now;
+};
+
 export type BottomSliderHandle = {
   open: (index?: number) => void;
   close: () => void;
@@ -203,6 +239,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [navigationProgressMeters, setNavigationProgressMeters] = useState(0);
     const [routeTransitSteps, setRouteTransitSteps] = useState<TransitInstruction[]>([]);
     const [travelMode, setTravelMode] = useState<DirectionsTravelMode>('walking');
+    const [shuttlePlan, setShuttlePlan] = useState<ShuttlePlan | null>(null);
 
     const resetRouteState = useCallback(
       (errorMessage: string | null = null) => {
@@ -266,6 +303,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setActiveView('building');
       setSearchFor(null);
       setTravelMode('walking');
+      setShuttlePlan(null);
       setRouteStartSource('current');
       setStartLocationSnapshot(null);
       resetRouteState();
@@ -384,6 +422,32 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ]);
 
     const canStartNavigationFromCurrentLocation = routeStartSource === 'current';
+
+    useEffect(() => {
+      const shouldComputeShuttlePlan =
+        activeView === 'directions' && travelMode === 'transit' && isCrossCampusRoute;
+
+      if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus || !startCoords) {
+        setShuttlePlan(null);
+        return;
+      }
+
+      setShuttlePlan(
+        buildShuttlePlan({
+          startCampus,
+          destinationCampus,
+          startCoords,
+          now: getShuttlePlanningDate(new Date()),
+        }),
+      );
+    }, [
+      activeView,
+      destinationCampus,
+      isCrossCampusRoute,
+      startCampus,
+      startCoords,
+      travelMode,
+    ]);
 
     const showNavigationSummary = useCallback(() => {
       setActiveView('navigation');
@@ -615,6 +679,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               routeDistanceText={routeDistanceText}
               routeDurationText={routeDurationText}
               routeDurationSeconds={routeDurationSeconds}
+              selectedTravelMode={travelMode}
+              shuttlePlan={shuttlePlan}
               canStartNavigation={canStartNavigationFromCurrentLocation}
               onPressStart={() => setSearchFor('start')}
               onPressDestination={() => setSearchFor('destination')}

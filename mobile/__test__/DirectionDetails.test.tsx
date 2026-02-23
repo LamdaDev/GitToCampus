@@ -150,6 +150,175 @@ describe('Direction Details', () => {
     expect(onTravelModeChange).toHaveBeenCalledTimes(3);
   });
 
+  test('keeps only three transport options (walk, car, transit)', () => {
+    const { queryByTestId, getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+      />,
+    );
+
+    expect(getByTestId('transport-walk')).toBeTruthy();
+    expect(getByTestId('transport-car')).toBeTruthy();
+    expect(getByTestId('transport-bus')).toBeTruthy();
+    expect(queryByTestId('transport-shuttle')).toBeNull();
+  });
+
+  test('renders shuttle card details when transit is selected on cross-campus routes', () => {
+    const onTravelModeChange = jest.fn();
+    const { getByTestId, queryByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+        shuttlePlan={{
+          direction: 'LOYOLA_TO_SGW',
+          pickup: {
+            id: 'loy-ad',
+            campus: 'LOYOLA',
+            name: 'Loyola Shuttle Stop (AD Building)',
+            coords: { latitude: 45.458317, longitude: -73.640225 },
+          },
+          dropoff: {
+            id: 'sgw-hall',
+            campus: 'SGW',
+            name: 'SGW Shuttle Stop (Hall Building)',
+            coords: { latitude: 45.497193, longitude: -73.578985 },
+          },
+          nextDepartures: ['9:20 AM', '9:40 AM'],
+          nextDepartureDates: [],
+          nextDepartureInMinutes: 10,
+          isServiceAvailable: true,
+        }}
+        onTravelModeChange={onTravelModeChange}
+      />,
+    );
+
+    fireEvent.press(getByTestId('transport-bus'));
+    expect(onTravelModeChange).toHaveBeenLastCalledWith('transit');
+    expect(getByTestId('shuttle-card-content')).toBeTruthy();
+    expect(getByTestId('shuttle-direction-label').props.children).toBe('LOY -> SGW');
+    expect(getByTestId('shuttle-next-bus-text').props.children).toContain('Next bus in 10');
+    expect(queryByTestId('shuttle-pickup-text')).toBeNull();
+    expect(queryByTestId('shuttle-dropoff-text')).toBeNull();
+    expect(getByTestId('route-summary-text').props.children).toBe('14 mins');
+    expect(getByTestId('route-go-button')).toBeTruthy();
+  });
+
+  test('hides shuttle card for same-campus transit', () => {
+    const { getByTestId, queryByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[0]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={false}
+        shuttlePlan={{
+          direction: 'LOYOLA_TO_SGW',
+          pickup: null,
+          dropoff: null,
+          nextDepartures: [],
+          nextDepartureDates: [],
+          nextDepartureInMinutes: null,
+          isServiceAvailable: false,
+          message: 'Shuttle service not available right now. Try Public Transit.',
+        }}
+      />,
+    );
+
+    fireEvent.press(getByTestId('transport-bus'));
+    expect(queryByTestId('shuttle-card-content')).toBeNull();
+  });
+
+  test('toggles full shuttle schedule when button is pressed', () => {
+    const { getByTestId, queryByTestId, getByText } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+        shuttlePlan={{
+          direction: 'LOYOLA_TO_SGW',
+          pickup: null,
+          dropoff: null,
+          nextDepartures: ['9:20 AM'],
+          nextDepartureDates: [],
+          nextDepartureInMinutes: 10,
+          isServiceAvailable: true,
+        }}
+      />,
+    );
+
+    fireEvent.press(getByTestId('transport-bus'));
+    expect(queryByTestId('shuttle-full-schedule-content')).toBeNull();
+
+    fireEvent.press(getByTestId('shuttle-full-schedule-button'));
+    expect(getByTestId('shuttle-full-schedule-content')).toBeTruthy();
+    expect(getByText('Monday - Thursday')).toBeTruthy();
+    expect(getByText('Friday')).toBeTruthy();
+    expect(getByTestId('shuttle-schedule-mon-thu-text')).toBeTruthy();
+    expect(getByTestId('shuttle-schedule-friday-text')).toBeTruthy();
+
+    fireEvent.press(getByTestId('shuttle-full-schedule-button'));
+    expect(queryByTestId('shuttle-full-schedule-content')).toBeNull();
+  });
+
+  test('shows only unavailable message when no shuttle buses are available', () => {
+    const { getByTestId, queryByTestId, getByText } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+        shuttlePlan={{
+          direction: 'LOYOLA_TO_SGW',
+          pickup: {
+            id: 'loy-ad',
+            campus: 'LOYOLA',
+            name: 'Loyola Shuttle Stop (AD Building)',
+            coords: { latitude: 45.458317, longitude: -73.640225 },
+          },
+          dropoff: {
+            id: 'sgw-hall',
+            campus: 'SGW',
+            name: 'SGW Shuttle Stop (Hall Building)',
+            coords: { latitude: 45.497193, longitude: -73.578985 },
+          },
+          nextDepartures: [],
+          nextDepartureDates: [],
+          nextDepartureInMinutes: null,
+          isServiceAvailable: false,
+          message: 'Shuttle bus unavailable today. Try Public Transit.',
+        }}
+      />,
+    );
+
+    fireEvent.press(getByTestId('transport-bus'));
+
+    expect(getByTestId('shuttle-unavailable-text').props.children).toBe(
+      'Shuttle bus unavailable today. Try Public Transit.',
+    );
+    expect(queryByTestId('shuttle-direction-label')).toBeNull();
+    expect(queryByTestId('shuttle-pickup-text')).toBeNull();
+    expect(queryByTestId('shuttle-dropoff-text')).toBeNull();
+    expect(getByText('14 mins')).toBeTruthy();
+  });
+
   test('shows loading state when route is loading', () => {
     const { getByTestId } = render(
       <DirectionDetails

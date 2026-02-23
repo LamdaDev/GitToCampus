@@ -4,6 +4,7 @@ import BottomSlider, { BottomSliderHandle } from '../src/components/BottomSheet'
 import { BuildingShape } from '../src/types/BuildingShape';
 import * as directionsService from '../src/services/googleDirections';
 import { DirectionsServiceError } from '../src/types/Directions';
+import * as shuttlePlannerService from '../src/services/shuttlePlanner';
 
 const mockSnapToIndex = jest.fn();
 const mockClose = jest.fn();
@@ -60,6 +61,10 @@ const defaultProps = {
 
 jest.mock('../src/services/googleDirections', () => ({
   fetchOutdoorDirections: jest.fn(),
+}));
+
+jest.mock('../src/services/shuttlePlanner', () => ({
+  buildShuttlePlan: jest.fn(),
 }));
 
 jest.mock('@gorhom/bottom-sheet', () => {
@@ -168,6 +173,8 @@ jest.mock('../src/components/DirectionDetails', () => {
     routeErrorMessage,
     routeDurationText,
     routeDistanceText,
+    selectedTravelMode,
+    shuttlePlan,
   }: any) =>
     (() => {
       const [selectedMode, setSelectedMode] = React.useState<'walking' | 'driving' | 'transit'>(
@@ -175,6 +182,12 @@ jest.mock('../src/components/DirectionDetails', () => {
       );
       const hasRouteSummary = Boolean(routeDurationText && routeDistanceText);
       const showGoButton = hasRouteSummary && (selectedMode === 'transit' || canStartNavigation);
+      const showShuttleCard = selectedMode === 'transit' && Boolean(isCrossCampusRoute);
+
+      React.useEffect(() => {
+        if (!selectedTravelMode) return;
+        setSelectedMode(selectedTravelMode);
+      }, [selectedTravelMode]);
 
       const handleSelectMode = (mode: 'walking' | 'driving' | 'transit') => {
         setSelectedMode(mode);
@@ -206,6 +219,15 @@ jest.mock('../src/components/DirectionDetails', () => {
           <Text testID="can-start-navigation-state">
             {canStartNavigation === false ? 'false' : 'true'}
           </Text>
+          {showShuttleCard ? (
+            <Text testID="shuttle-card-state">
+              {!shuttlePlan
+                ? 'loading'
+                : shuttlePlan.isServiceAvailable
+                  ? 'available'
+                  : shuttlePlan.message ?? 'unavailable'}
+            </Text>
+          ) : null}
           <TouchableOpacity testID="close-directions-button" onPress={onClose}>
             <Text>Close</Text>
           </TouchableOpacity>
@@ -279,6 +301,7 @@ jest.mock('../src/components/SearchSheet', () => {
 
 describe('BottomSheet', () => {
   const directionsServiceMock = directionsService as jest.Mocked<typeof directionsService>;
+  const shuttlePlannerMock = shuttlePlannerService as jest.Mocked<typeof shuttlePlannerService>;
   const pressAndFlush = async (node: any) => {
     await act(async () => {
       fireEvent.press(node);
@@ -291,6 +314,16 @@ describe('BottomSheet', () => {
     directionsServiceMock.fetchOutdoorDirections.mockImplementation(
       () => new Promise(() => undefined),
     );
+    shuttlePlannerMock.buildShuttlePlan.mockReturnValue({
+      direction: 'LOYOLA_TO_SGW',
+      pickup: null,
+      dropoff: null,
+      nextDepartures: [],
+      nextDepartureDates: [],
+      nextDepartureInMinutes: null,
+      isServiceAvailable: false,
+      message: 'Shuttle bus unavailable today. Try Public Transit.',
+    });
   });
 
   test('handles null selectedBuilding safely', () => {
@@ -626,6 +659,62 @@ describe('BottomSheet', () => {
     fireEvent.press(getByTestId('on-show-directions-as-destination'));
 
     expect(getByTestId('cross-campus-state').props.children).toBe('false');
+  });
+
+  test('cross-campus transit computes shuttle plan and exposes shuttle card content path', async () => {
+    shuttlePlannerMock.buildShuttlePlan.mockReturnValueOnce({
+      direction: 'LOYOLA_TO_SGW',
+      pickup: null,
+      dropoff: null,
+      nextDepartures: ['9:15 AM', '9:30 AM'],
+      nextDepartureDates: [],
+      nextDepartureInMinutes: 3,
+      isServiceAvailable: true,
+    });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-bus'));
+
+    await waitFor(() => {
+      expect(shuttlePlannerMock.buildShuttlePlan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startCampus: 'LOYOLA',
+          destinationCampus: 'SGW',
+          startCoords: expect.any(Object),
+        }),
+      );
+      expect(getByTestId('shuttle-card-state').props.children).toBe('available');
+    });
+  });
+
+  test('same-campus transit does not expose shuttle card content path', async () => {
+    const sameCampusCurrent: BuildingShape = { ...mockBuildings[0], campus: 'SGW' };
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={sameCampusCurrent}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-bus'));
+
+    await waitFor(() => {
+      expect(getByTestId('cross-campus-state').props.children).toBe('false');
+      expect(queryByTestId('shuttle-card-state')).toBeNull();
+      expect(shuttlePlannerMock.buildShuttlePlan).not.toHaveBeenCalled();
+    });
   });
 
   test('requests outdoor route and passes route overlay when directions are available', async () => {

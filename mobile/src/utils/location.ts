@@ -6,6 +6,11 @@ export type UserLocationCoords = {
   longitude: number;
 };
 
+type CoordinateLike = {
+  latitude: number;
+  longitude: number;
+};
+
 export type LocationPermissionStatus = 'granted' | 'denied' | 'undetermined';
 
 /**
@@ -50,3 +55,24 @@ export async function hasLocationPermission(): Promise<boolean> {
   const { status } = await Location.requestForegroundPermissionsAsync();
   return status === 'granted';
 }
+
+const EARTH_RADIUS_METERS = 6371000;
+
+const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+
+export const getDistanceMeters = (from: CoordinateLike, to: CoordinateLike): number => {
+  const fromLat = toRadians(from.latitude);
+  const fromLon = toRadians(from.longitude);
+  const toLat = toRadians(to.latitude);
+  const toLon = toRadians(to.longitude);
+
+  const deltaLat = toLat - fromLat;
+  const deltaLon = toLon - fromLon;
+
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(deltaLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return EARTH_RADIUS_METERS * c;
+};
