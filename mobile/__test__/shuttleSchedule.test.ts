@@ -1,6 +1,6 @@
 import ShuttleSchedule from '../src/constants/shuttleSchedule';
 
-const DEPARTURE_TOKEN_REGEX = /^(\d{1,2}):(\d{2})(\*)?$/;
+const DEPARTURE_TOKEN_REGEX = /^(\d{1,2}):(\d{2})$/;
 
 const parseDepartureToken = (token: string) => {
   const match = token.match(DEPARTURE_TOKEN_REGEX);
@@ -9,7 +9,6 @@ const parseDepartureToken = (token: string) => {
   return {
     hour: Number(match[1]),
     minute: Number(match[2]),
-    hasStar: Boolean(match[3]),
   };
 };
 
@@ -33,7 +32,7 @@ describe('shuttleSchedule constants', () => {
     }
   });
 
-  test('all departure tokens are valid H:MM or HH:MM values with optional star', () => {
+  test('all departure tokens are valid H:MM or HH:MM values', () => {
     const schedule = ShuttleSchedule.schedule;
     const dayBuckets = Object.keys(schedule) as Array<keyof typeof schedule>;
 
@@ -51,17 +50,28 @@ describe('shuttleSchedule constants', () => {
     }
   });
 
-  test('includes starred closing departures that should be treated as valid times', () => {
-    expect(ShuttleSchedule.schedule['Monday-Thursday'].LOY).toContain('18:30*');
-    expect(ShuttleSchedule.schedule['Monday-Thursday'].SGW).toContain('18:30*');
-    expect(ShuttleSchedule.schedule.Friday.LOY).toContain('18:15*');
-    expect(ShuttleSchedule.schedule.Friday.SGW).toContain('18:15*');
+  test('does not contain departures with a trailing star marker', () => {
+    const schedule = ShuttleSchedule.schedule;
+    const dayBuckets = Object.keys(schedule) as Array<keyof typeof schedule>;
+
+    for (const dayBucket of dayBuckets) {
+      for (const campus of ['LOY', 'SGW'] as const) {
+        const starredDeparture = schedule[dayBucket][campus].find((token) => token.endsWith('*'));
+        expect(starredDeparture).toBeUndefined();
+      }
+    }
   });
 
-  test('retains duplicate Friday Loyola departure entries from source timetable', () => {
-    const fridayLoyolaDepartures = ShuttleSchedule.schedule.Friday.LOY.filter(
-      (token) => token === '16:45',
-    );
-    expect(fridayLoyolaDepartures).toHaveLength(2);
+  test('does not contain duplicate departure tokens for any day and campus', () => {
+    const schedule = ShuttleSchedule.schedule;
+    const dayBuckets = Object.keys(schedule) as Array<keyof typeof schedule>;
+
+    for (const dayBucket of dayBuckets) {
+      for (const campus of ['LOY', 'SGW'] as const) {
+        const departures = schedule[dayBucket][campus];
+        const uniqueDepartures = new Set(departures);
+        expect(uniqueDepartures.size).toBe(departures.length);
+      }
+    }
   });
 });
