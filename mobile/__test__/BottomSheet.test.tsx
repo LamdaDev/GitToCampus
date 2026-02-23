@@ -734,6 +734,34 @@ describe('BottomSheet', () => {
     });
   });
 
+  test('cross-campus transit snaps to 62% and returns to 52% for walk/car', async () => {
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    await pressAndFlush(getByTestId('transport-bus'));
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenLastCalledWith('62%');
+    });
+
+    await pressAndFlush(getByTestId('transport-walk'));
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenLastCalledWith('52%');
+    });
+
+    await pressAndFlush(getByTestId('transport-car'));
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenLastCalledWith('52%');
+    });
+  });
+
   test('requests outdoor route and passes route overlay when directions are available', async () => {
     const passOutdoorRoute = jest.fn();
     directionsServiceMock.fetchOutdoorDirections.mockResolvedValueOnce({

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import type { SharedValue } from 'react-native-reanimated';
@@ -37,13 +37,10 @@ const LOCATION_OPTIONS: Location.LocationOptions = {
   distanceInterval: 5,
 };
 
-const ROUTE_PANEL_SNAP_RATIO = 0.52;
-const ROUTE_FIT_EDGE_PADDING = {
-  top: 110,
-  right: 70,
-  bottom: Math.round(Dimensions.get('window').height * ROUTE_PANEL_SNAP_RATIO) + 24,
-  left: 70,
-};
+const ROUTE_FIT_FALLBACK_PANEL_RATIO = 0.52;
+const ROUTE_FIT_EXTRA_BOTTOM_PADDING = 24;
+const ROUTE_FIT_HORIZONTAL_PADDING = 70;
+const ROUTE_FIT_TOP_PADDING = 110;
 
 const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
@@ -52,6 +49,19 @@ const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
   latitude: pos.coords.latitude,
   longitude: pos.coords.longitude,
 });
+
+const getRouteFitBottomPadding = (
+  windowHeight: number,
+  bottomSheetTop: number | null | undefined,
+): number => {
+  const minVisibleSheetHeight = windowHeight * ROUTE_FIT_FALLBACK_PANEL_RATIO;
+  if (typeof bottomSheetTop !== 'number' || !Number.isFinite(bottomSheetTop)) {
+    return Math.round(minVisibleSheetHeight + ROUTE_FIT_EXTRA_BOTTOM_PADDING);
+  }
+
+  const visibleSheetHeight = Math.max(0, windowHeight - bottomSheetTop);
+  return Math.round(Math.max(minVisibleSheetHeight, visibleSheetHeight) + ROUTE_FIT_EXTRA_BOTTOM_PADDING);
+};
 
 const flattenBuildingsByCampus = (
   campus: Campus,
@@ -141,6 +151,7 @@ export default function MapScreen({
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [currentBuildingId, setCurrentBuildingId] = useState<string | null>(null);
+  const { height: windowHeight } = useWindowDimensions();
 
   const mapRef = useRef<any>(null);
 
@@ -255,12 +266,19 @@ export default function MapScreen({
   useEffect(() => {
     if (!showRoute) return;
     if (!mapRef.current?.fitToCoordinates) return;
+    const bottomSheetTop = bottomSheetAnimatedPosition?.value ?? null;
+    const routeFitEdgePadding = {
+      top: ROUTE_FIT_TOP_PADDING,
+      right: ROUTE_FIT_HORIZONTAL_PADDING,
+      bottom: getRouteFitBottomPadding(windowHeight, bottomSheetTop),
+      left: ROUTE_FIT_HORIZONTAL_PADDING,
+    };
 
     mapRef.current.fitToCoordinates(routeCoordinates, {
-      edgePadding: ROUTE_FIT_EDGE_PADDING,
+      edgePadding: routeFitEdgePadding,
       animated: true,
     });
-  }, [routeCoordinates, showRoute]);
+  }, [bottomSheetAnimatedPosition, routeCoordinates, showRoute, windowHeight]);
 
   const selectedMarker = showSelectedMarker ? (
     <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} />

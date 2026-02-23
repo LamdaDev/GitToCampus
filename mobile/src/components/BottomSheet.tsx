@@ -44,6 +44,7 @@ const NAVIGATION_SNAP_POINTS = ['22%', '26%'] as const;
 const DEFAULT_SNAP_POINTS = ['22%', '29%', '47%', '82%'] as const;
 const DIRECTIONS_SNAP_POINTS = Array.from({ length: 61 }, (_value, index) => `${22 + index}%`);
 const DIRECTIONS_PANEL_SNAP_POINT = '52%';
+const DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT = '62%';
 const SEARCH_EXPANDED_SNAP_POINT = '82%';
 
 const METERS_PER_DEGREE_LAT = 110540;
@@ -185,6 +186,14 @@ const getShuttlePlanningDate = (now: Date) => {
   return now;
 };
 
+const getDirectionsPanelSnapPoint = (
+  travelMode: DirectionsTravelMode,
+  isCrossCampusRoute: boolean,
+) =>
+  travelMode === 'transit' && isCrossCampusRoute
+    ? DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT
+    : DIRECTIONS_PANEL_SNAP_POINT;
+
 export type BottomSliderHandle = {
   open: (index?: number) => void;
   close: () => void;
@@ -244,6 +253,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [routeTransitSteps, setRouteTransitSteps] = useState<TransitInstruction[]>([]);
     const [travelMode, setTravelMode] = useState<DirectionsTravelMode>('walking');
     const [shuttlePlan, setShuttlePlan] = useState<ShuttlePlan | null>(null);
+    const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
+    const destinationCampus = destinationBuilding?.campus ?? null;
+    const isCrossCampusRoute = Boolean(
+      startCampus && destinationCampus && startCampus !== destinationCampus,
+    );
 
     const resetRouteState = useCallback(
       (errorMessage: string | null = null) => {
@@ -264,7 +278,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = (index: number = 0) => {
       if (activeView === 'directions') {
-        snapToDirectionsPanel();
+        snapToDirectionsPanel(getDirectionsPanelSnapPoint(travelMode, isCrossCampusRoute));
         return;
       }
       sheetRef.current?.snapToIndex(toInternalSnapIndex(index));
@@ -289,11 +303,25 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       [snapPoints],
     );
 
-    const snapToDirectionsPanel = useCallback(() => {
-      requestAnimationFrame(() => {
-        snapToKnownPosition(DIRECTIONS_PANEL_SNAP_POINT, SHEET_INDEX_EXPANDED);
-      });
-    }, [snapToKnownPosition]);
+    const snapToDirectionsPanel = useCallback(
+      (position: string = DIRECTIONS_PANEL_SNAP_POINT) => {
+        requestAnimationFrame(() => {
+          snapToKnownPosition(position, SHEET_INDEX_EXPANDED);
+        });
+      },
+      [snapToKnownPosition],
+    );
+
+    const directionsPanelSnapPoint = useMemo(
+      () => getDirectionsPanelSnapPoint(travelMode, isCrossCampusRoute),
+      [travelMode, isCrossCampusRoute],
+    );
+
+    useEffect(() => {
+      if (activeView !== 'directions') return;
+
+      snapToDirectionsPanel(directionsPanelSnapPoint);
+    }, [activeView, directionsPanelSnapPoint, snapToDirectionsPanel]);
 
     const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
     const isInternalSearch = searchFor !== null;
@@ -316,7 +344,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setDestinationBuilding(null);
       }
       setActiveView('directions');
-      snapToDirectionsPanel();
+      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
     };
 
     const showTransitPlan = () => {
@@ -326,7 +354,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const showDirectionsPanel = () => {
       setActiveView('directions');
-      snapToDirectionsPanel();
+      snapToDirectionsPanel(directionsPanelSnapPoint);
     };
 
     const handleSheetClose = () => {
@@ -359,7 +387,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setRouteStartSource('current');
       setActiveView('directions');
       onExitSearch();
-      snapToDirectionsPanel();
+      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
     };
 
     const handleInternalSearch = (building: BuildingShape) => {
@@ -370,7 +398,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartLocationSnapshot(null);
       } else setDestinationBuilding(building);
       setSearchFor(null);
-      snapToDirectionsPanel();
+      snapToDirectionsPanel(directionsPanelSnapPoint);
     };
 
     useEffect(() => {
@@ -392,12 +420,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       if (!destinationBuilding) return null;
       return centroidOfPolygons(destinationBuilding.polygons);
     }, [destinationBuilding]);
-
-    const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
-    const destinationCampus = destinationBuilding?.campus ?? null;
-    const isCrossCampusRoute = Boolean(
-      startCampus && destinationCampus && startCampus !== destinationCampus,
-    );
 
     const routeCoordinates = useMemo(
       () => decodePolyline(routeEncodedPolyline),
