@@ -260,22 +260,33 @@ export default function DirectionDetails({
             <View style={directionDetailsStyles.shuttleCardTopRow}>
               {shuttlePlan?.isServiceAvailable ? (
                 <Text
-                  testID="shuttle-direction-label"
-                  style={directionDetailsStyles.shuttleDirectionText}
+                  testID="shuttle-next-bus-text"
+                  style={directionDetailsStyles.shuttlePrimaryText}
                 >
-                  {shuttleDirectionLabel}
+                  {shuttleDepartureSummary ?? 'Next bus time unavailable'}
                 </Text>
               ) : (
-                <View />
+                <View style={directionDetailsStyles.shuttleHeaderSpacer} />
               )}
               <TouchableOpacity
                 testID="shuttle-full-schedule-button"
                 onPress={() => setShowFullSchedule((prev) => !prev)}
                 style={directionDetailsStyles.shuttleScheduleButton}
               >
-                <Text style={directionDetailsStyles.shuttleScheduleButtonText}>
-                  {showFullSchedule ? 'Hide Schedule' : 'Show Schedule'}
-                </Text>
+                <View style={directionDetailsStyles.shuttleScheduleIcon}>
+                  <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+                    <View style={directionDetailsStyles.shuttleScheduleDot} />
+                    <View style={directionDetailsStyles.shuttleScheduleLine} />
+                  </View>
+                  <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+                    <View style={directionDetailsStyles.shuttleScheduleDot} />
+                    <View style={directionDetailsStyles.shuttleScheduleLine} />
+                  </View>
+                  <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+                    <View style={directionDetailsStyles.shuttleScheduleDot} />
+                    <View style={directionDetailsStyles.shuttleScheduleLine} />
+                  </View>
+                </View>
               </TouchableOpacity>
             </View>
             {!shuttlePlan ? (
@@ -285,14 +296,13 @@ export default function DirectionDetails({
             ) : shuttlePlan.isServiceAvailable ? (
               <>
                 <Text
-                  testID="shuttle-next-bus-text"
-                  numberOfLines={1}
-                  style={directionDetailsStyles.shuttlePrimaryText}
+                  testID="shuttle-direction-label"
+                  style={directionDetailsStyles.shuttleDirectionText}
                 >
-                  {shuttleDepartureSummary ?? 'Next bus time unavailable'}
+                  {shuttleDirectionLabel}
                 </Text>
                 <Text style={directionDetailsStyles.shuttleSecondaryText}>
-                  Upcoming departures: {shuttlePlan.nextDepartures.join(', ')}
+                  Next: {shuttlePlan.nextDepartures.join(', ')}
                 </Text>
               </>
             ) : (

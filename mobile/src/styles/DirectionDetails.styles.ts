@@ -156,7 +156,7 @@ export const directionDetailsStyles = StyleSheet.create({
     boxShadow: '0 10px 18px rgba(0, 0, 0, 0.32)',
   },
   shuttleDirectionText: {
-    color: '#9EC9FF',
+    color: '#AAB3C0',
     fontSize: 14,
     lineHeight: 18,
     fontFamily: 'gabarito',
@@ -169,13 +169,40 @@ export const directionDetailsStyles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  shuttleHeaderSpacer: {
+    flex: 1,
+  },
   shuttleScheduleButton: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    backgroundColor: 'rgba(18, 50, 95, 0.32)',
-    borderWidth: 1,
-    borderColor: 'rgba(158, 201, 255, 0.45)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
+  },
+  shuttleScheduleIcon: {
+    width: 24,
+    gap: 4,
+  },
+  shuttleScheduleIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  shuttleScheduleDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    color: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
+  },
+  shuttleScheduleLine: {
+    flex: 1,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#FFFFFF',
   },
   shuttleScheduleButtonText: {
     color: '#B7D8FF',
@@ -186,7 +213,8 @@ export const directionDetailsStyles = StyleSheet.create({
     letterSpacing: 0.15,
   },
   shuttlePrimaryText: {
-    marginTop: 2,
+    flex: 1,
+    marginTop: 0,
     color: '#FFFFFF',
     fontSize: 28,
     lineHeight: 34,
@@ -194,7 +222,7 @@ export const directionDetailsStyles = StyleSheet.create({
     fontWeight: '700',
   },
   shuttleSecondaryText: {
-    marginTop: 2,
+    marginTop: 3,
     color: '#D1D6DE',
     fontSize: 14,
     lineHeight: 19,
