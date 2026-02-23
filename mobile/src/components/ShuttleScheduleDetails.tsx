@@ -145,7 +145,9 @@ export default function ShuttleScheduleDetails({
               <Ionicons name="alert-circle-outline" size={18} color="#F4C15B" />
             </View>
             <View style={directionDetailsStyles.shuttleUnavailableTextWrap}>
-              <Text style={directionDetailsStyles.shuttleUnavailableTitle}>Shuttle Unavailable</Text>
+              <Text style={directionDetailsStyles.shuttleUnavailableTitle}>
+                Shuttle Unavailable
+              </Text>
               <Text
                 testID="shuttle-schedule-unavailable-text"
                 style={directionDetailsStyles.shuttleUnavailableText}
