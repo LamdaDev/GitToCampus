@@ -301,9 +301,14 @@ export default function DirectionDetails({
                 >
                   {shuttleDirectionLabel}
                 </Text>
-                <Text style={directionDetailsStyles.shuttleSecondaryText}>
-                  Next: {shuttlePlan.nextDepartures.join(', ')}
-                </Text>
+                {showFullSchedule ? (
+                  <Text
+                    testID="shuttle-next-departures-text"
+                    style={directionDetailsStyles.shuttleSecondaryText}
+                  >
+                    Next: {shuttlePlan.nextDepartures.join(', ')}
+                  </Text>
+                ) : null}
               </>
             ) : (
               <Text

@@ -262,9 +262,11 @@ describe('Direction Details', () => {
 
     fireEvent.press(getByTestId('transport-bus'));
     expect(queryByTestId('shuttle-full-schedule-content')).toBeNull();
+    expect(queryByTestId('shuttle-next-departures-text')).toBeNull();
 
     fireEvent.press(getByTestId('shuttle-full-schedule-button'));
     expect(getByTestId('shuttle-full-schedule-content')).toBeTruthy();
+    expect(getByText('Next: 9:20 AM')).toBeTruthy();
     expect(getByText('Monday - Thursday')).toBeTruthy();
     expect(getByText('Friday')).toBeTruthy();
     expect(getByTestId('shuttle-schedule-mon-thu-text')).toBeTruthy();
@@ -272,6 +274,7 @@ describe('Direction Details', () => {
 
     fireEvent.press(getByTestId('shuttle-full-schedule-button'));
     expect(queryByTestId('shuttle-full-schedule-content')).toBeNull();
+    expect(queryByTestId('shuttle-next-departures-text')).toBeNull();
   });
 
   test('shows only unavailable message when no shuttle buses are available', () => {
@@ -584,5 +587,124 @@ describe('Direction Details', () => {
     fireEvent.press(getByTestId('route-go-button'));
 
     expect(onPressGo).toHaveBeenCalledWith('transit');
+  });
+
+  test('syncs active transport mode from selectedTravelMode prop changes', () => {
+    const { getByTestId, queryByTestId, rerender } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+        selectedTravelMode="walking"
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+      />,
+    );
+
+    expect(getByTestId('transport-walk').props.accessibilityState.selected).toBe(true);
+    expect(getByTestId('transport-bus').props.accessibilityState.selected).toBe(false);
+    expect(queryByTestId('shuttle-card-content')).toBeNull();
+
+    rerender(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+        selectedTravelMode="transit"
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+      />,
+    );
+
+    expect(getByTestId('transport-bus').props.accessibilityState.selected).toBe(true);
+    expect(getByTestId('shuttle-card-content')).toBeTruthy();
+  });
+
+  test('shows singular minute text and inferred SGW -> LOY direction when shuttle direction is missing', () => {
+    const { getByTestId, getByText } = render(
+      <DirectionDetails
+        startBuilding={{ ...mockBuildings[1], campus: 'SGW' }}
+        destinationBuilding={{ ...mockBuildings[0], campus: 'LOYOLA' }}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+        shuttlePlan={
+          {
+            direction: undefined,
+            pickup: null,
+            dropoff: null,
+            nextDepartures: ['9:30 AM'],
+            nextDepartureDates: [],
+            nextDepartureInMinutes: 1,
+            isServiceAvailable: true,
+          } as any
+        }
+      />,
+    );
+
+    fireEvent.press(getByTestId('transport-bus'));
+
+    expect(getByTestId('shuttle-next-bus-text').props.children).toBe('Next bus in 1 min');
+    expect(getByText('SGW -> LOY')).toBeTruthy();
+  });
+
+  test('shows fallback next-bus text when service is available but minutes are missing', () => {
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+        shuttlePlan={{
+          direction: 'LOYOLA_TO_SGW',
+          pickup: null,
+          dropoff: null,
+          nextDepartures: ['9:30 AM'],
+          nextDepartureDates: [],
+          nextDepartureInMinutes: null,
+          isServiceAvailable: true,
+        }}
+      />,
+    );
+
+    fireEvent.press(getByTestId('transport-bus'));
+    expect(getByTestId('shuttle-next-bus-text').props.children).toBe('Next bus time unavailable');
+  });
+
+  test('uses default unavailable shuttle message when no custom message is provided', () => {
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+        shuttlePlan={{
+          direction: 'LOYOLA_TO_SGW',
+          pickup: null,
+          dropoff: null,
+          nextDepartures: [],
+          nextDepartureDates: [],
+          nextDepartureInMinutes: null,
+          isServiceAvailable: false,
+        }}
+      />,
+    );
+
+    fireEvent.press(getByTestId('transport-bus'));
+
+    expect(getByTestId('shuttle-unavailable-text').props.children).toBe(
+      'Shuttle bus unavailable today. Try Public Transit.',
+    );
   });
 });

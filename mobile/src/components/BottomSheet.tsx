@@ -43,7 +43,8 @@ const SHEET_INDEX_EXPANDED = 3;
 const NAVIGATION_SNAP_POINTS = ['22%', '26%'] as const;
 const DEFAULT_SNAP_POINTS = ['22%', '29%', '47%', '82%'] as const;
 const DIRECTIONS_SNAP_POINTS = Array.from({ length: 61 }, (_value, index) => `${22 + index}%`);
-const DIRECTIONS_PANEL_INDEX = 7; // 29%
+const DIRECTIONS_PANEL_SNAP_POINT = '52%';
+const SEARCH_EXPANDED_SNAP_POINT = '82%';
 
 const METERS_PER_DEGREE_LAT = 110540;
 const METERS_PER_DEGREE_LON_AT_EQUATOR = 111320;
@@ -262,16 +263,37 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = (index: number = 0) => {
+      if (activeView === 'directions') {
+        snapToDirectionsPanel();
+        return;
+      }
       sheetRef.current?.snapToIndex(toInternalSnapIndex(index));
     };
     const setSnapPoint = (index: number) => {
       sheetRef.current?.snapToIndex(toInternalSnapIndex(index));
     };
-    const snapToDirectionsPanel = () => {
+    const snapToKnownPosition = useCallback(
+      (position: string, fallbackIndex: number) => {
+        if (sheetRef.current?.snapToPosition) {
+          sheetRef.current.snapToPosition(position);
+          return;
+        }
+
+        const fallbackPositionIndex = snapPoints.indexOf(position);
+        const safeFallbackIndex =
+          fallbackPositionIndex >= 0
+            ? fallbackPositionIndex
+            : Math.min(fallbackIndex, snapPoints.length - 1);
+        sheetRef.current?.snapToIndex(safeFallbackIndex);
+      },
+      [snapPoints],
+    );
+
+    const snapToDirectionsPanel = useCallback(() => {
       requestAnimationFrame(() => {
-        sheetRef.current?.snapToIndex(DIRECTIONS_PANEL_INDEX);
+        snapToKnownPosition(DIRECTIONS_PANEL_SNAP_POINT, SHEET_INDEX_EXPANDED);
       });
-    };
+    }, [snapToKnownPosition]);
 
     const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
     const isInternalSearch = searchFor !== null;
@@ -457,10 +479,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const endNavigation = useCallback(() => {
       setActiveView('directions');
-      requestAnimationFrame(() => {
-        sheetRef.current?.snapToIndex(DIRECTIONS_PANEL_INDEX);
-      });
-    }, []);
+      snapToDirectionsPanel();
+    }, [snapToDirectionsPanel]);
 
     const handleDirectionsGo = useCallback(
       (mode: DirectionsTravelMode) => {
@@ -569,10 +589,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       const isSearching = mode === 'search' || searchFor !== null;
       if (!isSearching) return;
 
-      requestAnimationFrame(() => {
-        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+      const frame = requestAnimationFrame(() => {
+        snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
       });
-    }, [mode, searchFor]);
+
+      return () => {
+        cancelAnimationFrame(frame);
+      };
+    }, [mode, searchFor, snapToKnownPosition]);
 
     useImperativeHandle(ref, () => ({
       open: openSheet,

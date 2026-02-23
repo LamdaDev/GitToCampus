@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import type { SharedValue } from 'react-native-reanimated';
@@ -37,10 +37,11 @@ const LOCATION_OPTIONS: Location.LocationOptions = {
   distanceInterval: 5,
 };
 
+const ROUTE_PANEL_SNAP_RATIO = 0.52;
 const ROUTE_FIT_EDGE_PADDING = {
   top: 110,
   right: 70,
-  bottom: 220,
+  bottom: Math.round(Dimensions.get('window').height * ROUTE_PANEL_SNAP_RATIO) + 24,
   left: 70,
 };
 

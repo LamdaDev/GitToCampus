@@ -157,4 +157,41 @@ describe('TransitPlanDetails', () => {
     expect(getByTestId('icon-train-outline')).toBeTruthy();
     expect(getByTestId('icon-bus-outline')).toBeTruthy();
   });
+
+  test('renders departure-only and arrival-only time rows and metro rail icon mapping', () => {
+    const routeTransitSteps: TransitInstruction[] = [
+      createStep({
+        id: 'departure-only-step',
+        title: 'Board metro',
+        vehicleType: 'METRO_RAIL',
+        departureTimeText: '10:05 AM',
+      }),
+      createStep({
+        id: 'arrival-only-step',
+        title: 'Arrive downtown',
+        vehicleType: 'HEAVY_RAIL',
+        arrivalTimeText: '10:27 AM',
+      }),
+      createStep({
+        id: 'fallback-bus-step',
+        title: 'Board fallback bus',
+      }),
+    ];
+
+    const { getByText, queryByText, getAllByTestId } = render(
+      <TransitPlanDetails
+        destinationBuilding={destinationBuilding}
+        routeTransitSteps={routeTransitSteps}
+        onBack={jest.fn()}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(getAllByTestId('icon-subway-outline')).toHaveLength(2);
+    expect(getAllByTestId('icon-bus-outline')).toHaveLength(1);
+    expect(getByText('Departs 10:05 AM')).toBeTruthy();
+    expect(getByText('Arrives 10:27 AM')).toBeTruthy();
+    expect(queryByText('Arrives 10:05 AM')).toBeNull();
+    expect(queryByText('Departs 10:27 AM')).toBeNull();
+  });
 });

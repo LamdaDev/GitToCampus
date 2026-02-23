@@ -3,12 +3,36 @@ import {
   getNextShuttleDepartures,
   selectPickupDropoff,
 } from '../src/services/shuttlePlanner';
+import ShuttleSchedule from '../src/constants/shuttleSchedule';
+import { SHUTTLE_STOPS } from '../src/constants/shuttleStops';
 
 describe('shuttlePlanner service', () => {
   const originalForceUnavailable = process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_UNAVAILABLE;
+  const originalSchedule = JSON.parse(JSON.stringify(ShuttleSchedule.schedule));
+  const originalStops = SHUTTLE_STOPS.map((stop) => ({
+    ...stop,
+    coords: { ...stop.coords },
+  }));
 
   beforeEach(() => {
     delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_UNAVAILABLE;
+  });
+
+  afterEach(() => {
+    const mutableSchedule = ShuttleSchedule.schedule as any;
+    mutableSchedule['Monday-Thursday'] = JSON.parse(
+      JSON.stringify(originalSchedule['Monday-Thursday']),
+    );
+    mutableSchedule.Friday = JSON.parse(JSON.stringify(originalSchedule.Friday));
+
+    SHUTTLE_STOPS.splice(
+      0,
+      SHUTTLE_STOPS.length,
+      ...originalStops.map((stop) => ({
+        ...stop,
+        coords: { ...stop.coords },
+      })),
+    );
   });
 
   afterAll(() => {
@@ -127,5 +151,168 @@ describe('shuttlePlanner service', () => {
     expect(result.isServiceAvailable).toBe(false);
     expect(result.reason).toBe('NO_SERVICE_TODAY');
     expect(result.departures).toEqual([]);
+  });
+
+  test('parses starred departure tokens as valid times', () => {
+    const mutableSchedule = ShuttleSchedule.schedule as any;
+    mutableSchedule['Monday-Thursday'] = {
+      LOY: ['9:15'],
+      SGW: ['9:15***', '9:30'],
+    };
+
+    const result = getNextShuttleDepartures(
+      new Date(2026, 1, 23, 9, 10, 0, 0),
+      'SGW_TO_LOYOLA',
+      2,
+    );
+
+    expect(result.isServiceAvailable).toBe(true);
+    expect(result.departures).toHaveLength(2);
+    expect(result.departures[0].getHours()).toBe(9);
+    expect(result.departures[0].getMinutes()).toBe(15);
+    expect(result.departures[1].getHours()).toBe(9);
+    expect(result.departures[1].getMinutes()).toBe(30);
+  });
+
+  test('returns SCHEDULE_MISSING when day bucket schedule is missing', () => {
+    const mutableSchedule = ShuttleSchedule.schedule as any;
+    mutableSchedule['Monday-Thursday'] = undefined;
+
+    const result = getNextShuttleDepartures(new Date(2026, 1, 23, 9, 10, 0, 0), 'SGW_TO_LOYOLA');
+
+    expect(result.isServiceAvailable).toBe(false);
+    expect(result.reason).toBe('SCHEDULE_MISSING');
+  });
+
+  test('returns SCHEDULE_MISSING when campus departures list is malformed', () => {
+    const mutableSchedule = ShuttleSchedule.schedule as any;
+    mutableSchedule['Monday-Thursday'] = {
+      LOY: ['9:15'],
+      SGW: null,
+    };
+
+    const result = getNextShuttleDepartures(new Date(2026, 1, 23, 9, 10, 0, 0), 'SGW_TO_LOYOLA');
+
+    expect(result.isServiceAvailable).toBe(false);
+    expect(result.reason).toBe('SCHEDULE_MISSING');
+  });
+
+  test('returns NO_SERVICE_TODAY when departure list is empty', () => {
+    const mutableSchedule = ShuttleSchedule.schedule as any;
+    mutableSchedule['Monday-Thursday'] = {
+      LOY: ['9:15'],
+      SGW: [],
+    };
+
+    const result = getNextShuttleDepartures(new Date(2026, 1, 23, 9, 10, 0, 0), 'SGW_TO_LOYOLA');
+
+    expect(result.isServiceAvailable).toBe(false);
+    expect(result.reason).toBe('NO_SERVICE_TODAY');
+  });
+
+  test('ignores malformed departures and deduplicates valid times', () => {
+    const mutableSchedule = ShuttleSchedule.schedule as any;
+    mutableSchedule['Monday-Thursday'] = {
+      LOY: ['9:15'],
+      SGW: ['9:15', '9:15', '25:00', 'bad-token', '9:45'],
+    };
+
+    const result = getNextShuttleDepartures(
+      new Date(2026, 1, 23, 9, 10, 0, 0),
+      'SGW_TO_LOYOLA',
+      5,
+    );
+
+    expect(result.isServiceAvailable).toBe(true);
+    expect(result.departures).toHaveLength(2);
+    expect(result.departures[0].getHours()).toBe(9);
+    expect(result.departures[0].getMinutes()).toBe(15);
+    expect(result.departures[1].getHours()).toBe(9);
+    expect(result.departures[1].getMinutes()).toBe(45);
+  });
+
+  test('returns nextDepartureInMinutes as 0 when departure is at current time', () => {
+    const mutableSchedule = ShuttleSchedule.schedule as any;
+    mutableSchedule['Monday-Thursday'] = {
+      LOY: ['9:15'],
+      SGW: ['9:10'],
+    };
+
+    const plan = buildShuttlePlan({
+      startCampus: 'SGW',
+      destinationCampus: 'LOYOLA',
+      now: new Date(2026, 1, 23, 9, 10, 0, 0),
+    });
+
+    expect(plan.isServiceAvailable).toBe(true);
+    expect(plan.nextDepartureInMinutes).toBe(0);
+  });
+
+  test('selects the closest non-first stop candidate when start is nearer to another stop', () => {
+    const result = selectPickupDropoff({
+      startCampus: 'SGW',
+      destinationCampus: 'LOYOLA',
+      startCoords: { latitude: 45.49583, longitude: -73.579385 },
+    });
+
+    expect(result.pickup.id).toBe('sgw-gm');
+    expect(result.dropoff.campus).toBe('LOYOLA');
+  });
+
+  test('throws from selectPickupDropoff when stops are missing for either campus', () => {
+    SHUTTLE_STOPS.splice(0, SHUTTLE_STOPS.length);
+
+    expect(() =>
+      selectPickupDropoff({
+        startCampus: 'SGW',
+        destinationCampus: 'LOYOLA',
+        startCoords: { latitude: 45.497, longitude: -73.579 },
+      }),
+    ).toThrow('SHUTTLE_STOPS_MISSING');
+  });
+
+  test('returns safe fallback message when stop selection fails in buildShuttlePlan', () => {
+    SHUTTLE_STOPS.splice(0, SHUTTLE_STOPS.length);
+
+    const plan = buildShuttlePlan({
+      startCampus: 'SGW',
+      destinationCampus: 'LOYOLA',
+      now: new Date(2026, 1, 23, 9, 10, 0, 0),
+    });
+
+    expect(plan.isServiceAvailable).toBe(false);
+    expect(plan.message).toBe('Shuttle stop information is unavailable. Try Public Transit.');
+    expect(plan.nextDepartures).toEqual([]);
+  });
+
+  test('returns schedule-missing message in buildShuttlePlan when departures lookup is unavailable', () => {
+    const mutableSchedule = ShuttleSchedule.schedule as any;
+    mutableSchedule['Monday-Thursday'] = {
+      LOY: ['9:15'],
+      SGW: null,
+    };
+
+    const plan = buildShuttlePlan({
+      startCampus: 'SGW',
+      destinationCampus: 'LOYOLA',
+      now: new Date(2026, 1, 23, 9, 10, 0, 0),
+    });
+
+    expect(plan.isServiceAvailable).toBe(false);
+    expect(plan.message).toBe('Shuttle schedule is unavailable right now. Try Public Transit.');
+    expect(plan.pickup?.campus).toBe('SGW');
+    expect(plan.dropoff?.campus).toBe('LOYOLA');
+  });
+
+  test('uses default direction when campuses are missing in buildShuttlePlan', () => {
+    const plan = buildShuttlePlan({
+      startCampus: null,
+      destinationCampus: 'LOYOLA',
+      now: new Date(2026, 1, 23, 9, 10, 0, 0),
+    });
+
+    expect(plan.direction).toBe('SGW_TO_LOYOLA');
+    expect(plan.isServiceAvailable).toBe(false);
+    expect(plan.message).toBe('Shuttle service is only available for cross-campus routes.');
   });
 });
