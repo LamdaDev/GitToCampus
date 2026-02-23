@@ -239,8 +239,9 @@ describe('Direction Details', () => {
     expect(queryByTestId('shuttle-card-content')).toBeNull();
   });
 
-  test('toggles full shuttle schedule when button is pressed', () => {
-    const { getByTestId, queryByTestId, getByText } = render(
+  test('calls onPressShuttleSchedule when schedule button is pressed', () => {
+    const onPressShuttleSchedule = jest.fn();
+    const { getByTestId } = render(
       <DirectionDetails
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[1]}
@@ -248,6 +249,7 @@ describe('Direction Details', () => {
         userLocation={null}
         currentBuilding={null}
         isCrossCampusRoute={true}
+        onPressShuttleSchedule={onPressShuttleSchedule}
         shuttlePlan={{
           direction: 'LOYOLA_TO_SGW',
           pickup: null,
@@ -261,20 +263,8 @@ describe('Direction Details', () => {
     );
 
     fireEvent.press(getByTestId('transport-bus'));
-    expect(queryByTestId('shuttle-full-schedule-content')).toBeNull();
-    expect(queryByTestId('shuttle-next-departures-text')).toBeNull();
-
     fireEvent.press(getByTestId('shuttle-full-schedule-button'));
-    expect(getByTestId('shuttle-full-schedule-content')).toBeTruthy();
-    expect(getByText('Next: 9:20 AM')).toBeTruthy();
-    expect(getByText('Monday - Thursday')).toBeTruthy();
-    expect(getByText('Friday')).toBeTruthy();
-    expect(getByTestId('shuttle-schedule-mon-thu-text')).toBeTruthy();
-    expect(getByTestId('shuttle-schedule-friday-text')).toBeTruthy();
-
-    fireEvent.press(getByTestId('shuttle-full-schedule-button'));
-    expect(queryByTestId('shuttle-full-schedule-content')).toBeNull();
-    expect(queryByTestId('shuttle-next-departures-text')).toBeNull();
+    expect(onPressShuttleSchedule).toHaveBeenCalledTimes(1);
   });
 
   test('shows only unavailable message when no shuttle buses are available', () => {

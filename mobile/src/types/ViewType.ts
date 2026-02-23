@@ -1,1 +1,1 @@
-export type ViewType = 'building' | 'directions' | 'transit-plan' | 'navigation';
+export type ViewType = 'building' | 'directions' | 'transit-plan' | 'shuttle-schedule' | 'navigation';

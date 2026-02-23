@@ -167,6 +167,7 @@ jest.mock('../src/components/DirectionDetails', () => {
     onPressStart,
     onPressDestination,
     onTravelModeChange,
+    onPressShuttleSchedule,
     onPressTransitGo,
     onPressGo,
     canStartNavigation,
@@ -222,13 +223,21 @@ jest.mock('../src/components/DirectionDetails', () => {
             {canStartNavigation === false ? 'false' : 'true'}
           </Text>
           {showShuttleCard ? (
-            <Text testID="shuttle-card-state">
-              {!shuttlePlan
-                ? 'loading'
-                : shuttlePlan.isServiceAvailable
-                  ? 'available'
-                  : (shuttlePlan.message ?? 'unavailable')}
-            </Text>
+            <>
+              <Text testID="shuttle-card-state">
+                {!shuttlePlan
+                  ? 'loading'
+                  : shuttlePlan.isServiceAvailable
+                    ? 'available'
+                    : (shuttlePlan.message ?? 'unavailable')}
+              </Text>
+              <TouchableOpacity
+                testID="shuttle-full-schedule-button"
+                onPress={onPressShuttleSchedule}
+              >
+                <Text>Open shuttle schedule</Text>
+              </TouchableOpacity>
+            </>
           ) : null}
           <TouchableOpacity testID="close-directions-button" onPress={onClose}>
             <Text>Close</Text>
@@ -268,6 +277,28 @@ jest.mock('../src/components/TransitPlanDetails', () => {
         <Text>Back</Text>
       </TouchableOpacity>
       <TouchableOpacity testID="transit-close-button" onPress={onClose}>
+        <Text>Close</Text>
+      </TouchableOpacity>
+    </View>
+  );
+});
+
+jest.mock('../src/components/ShuttleScheduleDetails', () => {
+  const { View, Text, TouchableOpacity } = require('react-native');
+
+  return ({ onBack, onClose, shuttlePlan }: any) => (
+    <View testID="shuttle-schedule-details">
+      <Text testID="shuttle-schedule-state">
+        {!shuttlePlan
+          ? 'loading'
+          : shuttlePlan.isServiceAvailable
+            ? 'available'
+            : (shuttlePlan.message ?? 'unavailable')}
+      </Text>
+      <TouchableOpacity testID="shuttle-schedule-back-button" onPress={onBack}>
+        <Text>Back</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="shuttle-schedule-close-button" onPress={onClose}>
         <Text>Close</Text>
       </TouchableOpacity>
     </View>
@@ -710,6 +741,45 @@ describe('BottomSheet', () => {
         }),
       );
       expect(getByTestId('shuttle-card-state').props.children).toBe('available');
+    });
+  });
+
+  test('opens shuttle schedule view from shuttle card and returns to directions with back arrow', async () => {
+    shuttlePlannerMock.buildShuttlePlan.mockReturnValue({
+      direction: 'LOYOLA_TO_SGW',
+      pickup: null,
+      dropoff: null,
+      nextDepartures: ['9:15 AM', '9:30 AM'],
+      nextDepartureDates: [],
+      nextDepartureInMinutes: 4,
+      isServiceAvailable: true,
+    });
+
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('shuttle-full-schedule-button'));
+
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenCalledWith('92%');
+      expect(getByTestId('shuttle-schedule-details')).toBeTruthy();
+      expect(getByTestId('shuttle-schedule-state').props.children).toBe('available');
+      expect(queryByTestId('direction-details')).toBeNull();
+    });
+
+    fireEvent.press(getByTestId('shuttle-schedule-back-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(queryByTestId('shuttle-schedule-details')).toBeNull();
     });
   });
 

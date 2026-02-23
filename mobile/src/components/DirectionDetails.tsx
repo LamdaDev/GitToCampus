@@ -5,7 +5,6 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Divider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
-import ShuttleSchedule from '../constants/shuttleSchedule';
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 import type { RoutePlannerMode } from '../types/SheetMode';
@@ -33,6 +32,7 @@ type DirectionDetailProps = {
   canStartNavigation?: boolean;
   onPressTransitGo?: () => void;
   onPressGo?: (mode: RoutePlannerMode) => void;
+  onPressShuttleSchedule?: () => void;
 };
 
 /**
@@ -84,9 +84,9 @@ export default function DirectionDetails({
   canStartNavigation = true,
   onPressTransitGo,
   onPressGo,
+  onPressShuttleSchedule,
 }: Readonly<DirectionDetailProps>) {
   const [activeMode, setActiveMode] = useState<RoutePlannerMode>(selectedTravelMode ?? 'walking');
-  const [showFullSchedule, setShowFullSchedule] = useState(false);
   const isSelected = (mode: RoutePlannerMode) => activeMode === mode;
   const isTransitSelected = isSelected('transit');
   const showShuttleCard = isTransitSelected && isCrossCampusRoute;
@@ -98,11 +98,6 @@ export default function DirectionDetails({
     if (!selectedTravelMode) return;
     setActiveMode(selectedTravelMode);
   }, [selectedTravelMode]);
-
-  React.useEffect(() => {
-    if (showShuttleCard) return;
-    setShowFullSchedule(false);
-  }, [showShuttleCard]);
 
   const handleSelectWalk = () => {
     setActiveMode('walking');
@@ -141,9 +136,6 @@ export default function DirectionDetails({
     shuttlePlan?.direction ?? inferShuttleDirection(startBuilding, destinationBuilding);
   const shuttleDirectionLabel =
     effectiveDirection === 'LOYOLA_TO_SGW' ? 'LOY -> SGW' : 'SGW -> LOY';
-  const scheduleCampusKey = effectiveDirection === 'LOYOLA_TO_SGW' ? 'LOY' : 'SGW';
-  const mondayThursdaySchedule = ShuttleSchedule.schedule['Monday-Thursday'][scheduleCampusKey];
-  const fridaySchedule = ShuttleSchedule.schedule.Friday[scheduleCampusKey];
   const shuttleDepartureSummary =
     nextDepartureInMinutes === null
       ? null
@@ -270,7 +262,7 @@ export default function DirectionDetails({
               )}
               <TouchableOpacity
                 testID="shuttle-full-schedule-button"
-                onPress={() => setShowFullSchedule((prev) => !prev)}
+                onPress={onPressShuttleSchedule}
                 style={directionDetailsStyles.shuttleScheduleButton}
               >
                 <View style={directionDetailsStyles.shuttleScheduleIcon}>
@@ -301,14 +293,6 @@ export default function DirectionDetails({
                 >
                   {shuttleDirectionLabel}
                 </Text>
-                {showFullSchedule ? (
-                  <Text
-                    testID="shuttle-next-departures-text"
-                    style={directionDetailsStyles.shuttleSecondaryText}
-                  >
-                    Next: {shuttlePlan.nextDepartures.join(', ')}
-                  </Text>
-                ) : null}
               </>
             ) : (
               <Text
@@ -318,27 +302,6 @@ export default function DirectionDetails({
                 {shuttlePlan?.message ?? SHUTTLE_UNAVAILABLE_MESSAGE}
               </Text>
             )}
-            {showFullSchedule ? (
-              <View
-                testID="shuttle-full-schedule-content"
-                style={directionDetailsStyles.shuttleScheduleContainer}
-              >
-                <Text style={directionDetailsStyles.shuttleScheduleTitle}>Monday - Thursday</Text>
-                <Text
-                  testID="shuttle-schedule-mon-thu-text"
-                  style={directionDetailsStyles.shuttleScheduleText}
-                >
-                  {mondayThursdaySchedule.join(', ')}
-                </Text>
-                <Text style={directionDetailsStyles.shuttleScheduleTitle}>Friday</Text>
-                <Text
-                  testID="shuttle-schedule-friday-text"
-                  style={directionDetailsStyles.shuttleScheduleText}
-                >
-                  {fridaySchedule.join(', ')}
-                </Text>
-              </View>
-            ) : null}
           </View>
         </View>
       ) : null}

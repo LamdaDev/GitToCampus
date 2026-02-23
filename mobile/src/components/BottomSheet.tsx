@@ -18,6 +18,7 @@ import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import BuildingDetails from './BuildingDetails';
 import DirectionDetails from './DirectionDetails';
 import TransitPlanDetails from './TransitPlanDetails';
+import ShuttleScheduleDetails from './ShuttleScheduleDetails';
 import type { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
 import { centroidOfPolygons } from '../utils/geoJson';
@@ -43,9 +44,14 @@ const SHEET_INDEX_EXPANDED = 3;
 const NAVIGATION_SNAP_POINTS = ['22%', '26%'] as const;
 const DEFAULT_SNAP_POINTS = ['22%', '29%', '47%', '82%'] as const;
 const DIRECTIONS_SNAP_POINTS = Array.from({ length: 61 }, (_value, index) => `${22 + index}%`);
+const SHUTTLE_SCHEDULE_SNAP_POINTS = Array.from(
+  { length: 74 },
+  (_value, index) => `${22 + index}%`,
+);
 const DIRECTIONS_PANEL_SNAP_POINT = '52%';
 const DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT = '62%';
 const SEARCH_EXPANDED_SNAP_POINT = '82%';
+const SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT = '92%';
 
 const METERS_PER_DEGREE_LAT = 110540;
 const METERS_PER_DEGREE_LON_AT_EQUATOR = 111320;
@@ -235,6 +241,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const snapPoints = useMemo(() => {
       if (activeView === 'navigation') return [...NAVIGATION_SNAP_POINTS];
       if (activeView === 'directions') return [...DIRECTIONS_SNAP_POINTS];
+      if (activeView === 'shuttle-schedule') return [...SHUTTLE_SCHEDULE_SNAP_POINTS];
       return [...DEFAULT_SNAP_POINTS];
     }, [activeView]);
 
@@ -357,6 +364,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       snapToDirectionsPanel(directionsPanelSnapPoint);
     };
 
+    const showShuttleSchedule = useCallback(() => {
+      setActiveView('shuttle-schedule');
+      requestAnimationFrame(() => {
+        snapToKnownPosition(SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
+      });
+    }, [snapToKnownPosition]);
+
     const handleSheetClose = () => {
       setActiveView('building');
       setSearchFor(null);
@@ -477,7 +491,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     useEffect(() => {
       const shouldComputeShuttlePlan =
-        activeView === 'directions' && travelMode === 'transit' && isCrossCampusRoute;
+        (activeView === 'directions' || activeView === 'shuttle-schedule') &&
+        travelMode === 'transit' &&
+        isCrossCampusRoute;
 
       if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus || !startCoords) {
         setShuttlePlan(null);
@@ -522,6 +538,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       if (
         activeView !== 'directions' &&
         activeView !== 'transit-plan' &&
+        activeView !== 'shuttle-schedule' &&
         activeView !== 'navigation'
       ) {
         resetRouteState();
@@ -662,6 +679,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               onBack={showDirectionsPanel}
               onClose={closeSheet}
             />
+          ) : activeView === 'shuttle-schedule' ? (
+            <ShuttleScheduleDetails
+              startBuilding={startBuilding}
+              destinationBuilding={destinationBuilding}
+              shuttlePlan={shuttlePlan}
+              onBack={showDirectionsPanel}
+              onClose={closeSheet}
+            />
           ) : activeView === 'navigation' ? (
             <>
               <View style={directionDetailsStyles.navigationSummaryCard}>
@@ -734,6 +759,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               onPressDestination={() => setSearchFor('destination')}
               onTravelModeChange={setTravelMode}
               onPressGo={handleDirectionsGo}
+              onPressShuttleSchedule={showShuttleSchedule}
             />
           )}
         </BottomSheetView>
