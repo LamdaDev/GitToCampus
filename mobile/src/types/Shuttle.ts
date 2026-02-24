@@ -27,3 +27,11 @@ export type ShuttlePlan = {
   isServiceAvailable: boolean;
   message?: string;
 };
+
+export type ShuttlePlanRequest = {
+  startCampus: Campus | null;
+  destinationCampus: Campus | null;
+  startCoords?: LatLng | null;
+  now?: Date;
+  count?: number;
+};

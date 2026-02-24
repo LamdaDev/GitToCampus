@@ -97,6 +97,21 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
 - For Android, Android Studio is required for emulator; physical devices work with USB debugging.
 - No custom native modules; stick to Expo SDK.
 
+## Routing Strategy Architecture
+
+The routing services use a Strategy Pattern to keep mode-specific behavior isolated while preserving existing app interfaces.
+
+- `src/services/googleDirections.ts` remains the compatibility facade (`fetchOutdoorDirections`, `buildDirectionsApiUrl`).
+- Google mode selection is handled through `DirectionsStrategy` implementations:
+  - walk strategy
+  - driving strategy
+  - transit strategy
+- The strategy selector/factory picks a strategy from the requested mode (`walking`, `driving`, `transit`).
+- Shared Google API request/parsing logic lives in `src/services/directions/googleDirectionsCore.ts` to avoid duplicate parsing code across strategies.
+- Shuttle planning is isolated behind a separate `ShuttlePlanStrategy` layer and continues to preserve cross-campus constraints and existing schedule behavior.
+
+This structure improves extensibility (new modes/route types), testability (strategy-level tests), and maintainability without changing UI behavior.
+
 ## Testing (Jest + React Native Testing Library)
 
 This project uses Jest with `jest-expo` and `@testing-library/react-native`.
