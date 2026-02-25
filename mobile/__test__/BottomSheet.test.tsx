@@ -4,8 +4,10 @@ import BottomSlider, { BottomSliderHandle } from '../src/components/BottomSheet'
 import { BuildingShape } from '../src/types/BuildingShape';
 import * as directionsService from '../src/services/googleDirections';
 import { DirectionsServiceError } from '../src/types/Directions';
+import * as shuttlePlannerService from '../src/services/shuttlePlanner';
 
 const mockSnapToIndex = jest.fn();
+const mockSnapToPosition = jest.fn();
 const mockClose = jest.fn();
 const SNAP_INDEX_NAVIGATION_MAX = 1;
 const SNAP_INDEX_PANEL = 2;
@@ -62,6 +64,10 @@ jest.mock('../src/services/googleDirections', () => ({
   fetchOutdoorDirections: jest.fn(),
 }));
 
+jest.mock('../src/services/shuttlePlanner', () => ({
+  buildShuttlePlan: jest.fn(),
+}));
+
 jest.mock('@gorhom/bottom-sheet', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -87,6 +93,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
 
         React.useImperativeHandle(ref, () => ({
           snapToIndex: mockSnapToIndex,
+          snapToPosition: mockSnapToPosition,
           close: mockClose,
         }));
 
@@ -160,6 +167,7 @@ jest.mock('../src/components/DirectionDetails', () => {
     onPressStart,
     onPressDestination,
     onTravelModeChange,
+    onPressShuttleSchedule,
     onPressTransitGo,
     onPressGo,
     canStartNavigation,
@@ -168,6 +176,8 @@ jest.mock('../src/components/DirectionDetails', () => {
     routeErrorMessage,
     routeDurationText,
     routeDistanceText,
+    selectedTravelMode,
+    shuttlePlan,
   }: any) =>
     (() => {
       const [selectedMode, setSelectedMode] = React.useState<'walking' | 'driving' | 'transit'>(
@@ -175,6 +185,12 @@ jest.mock('../src/components/DirectionDetails', () => {
       );
       const hasRouteSummary = Boolean(routeDurationText && routeDistanceText);
       const showGoButton = hasRouteSummary && (selectedMode === 'transit' || canStartNavigation);
+      const showShuttleCard = selectedMode === 'transit' && Boolean(isCrossCampusRoute);
+
+      React.useEffect(() => {
+        if (!selectedTravelMode) return;
+        setSelectedMode(selectedTravelMode);
+      }, [selectedTravelMode]);
 
       const handleSelectMode = (mode: 'walking' | 'driving' | 'transit') => {
         setSelectedMode(mode);
@@ -206,6 +222,23 @@ jest.mock('../src/components/DirectionDetails', () => {
           <Text testID="can-start-navigation-state">
             {canStartNavigation === false ? 'false' : 'true'}
           </Text>
+          {showShuttleCard ? (
+            <>
+              <Text testID="shuttle-card-state">
+                {!shuttlePlan
+                  ? 'loading'
+                  : shuttlePlan.isServiceAvailable
+                    ? 'available'
+                    : (shuttlePlan.message ?? 'unavailable')}
+              </Text>
+              <TouchableOpacity
+                testID="shuttle-full-schedule-button"
+                onPress={onPressShuttleSchedule}
+              >
+                <Text>Open shuttle schedule</Text>
+              </TouchableOpacity>
+            </>
+          ) : null}
           <TouchableOpacity testID="close-directions-button" onPress={onClose}>
             <Text>Close</Text>
           </TouchableOpacity>
@@ -250,6 +283,28 @@ jest.mock('../src/components/TransitPlanDetails', () => {
   );
 });
 
+jest.mock('../src/components/ShuttleScheduleDetails', () => {
+  const { View, Text, TouchableOpacity } = require('react-native');
+
+  return ({ onBack, onClose, shuttlePlan }: any) => (
+    <View testID="shuttle-schedule-details">
+      <Text testID="shuttle-schedule-state">
+        {!shuttlePlan
+          ? 'loading'
+          : shuttlePlan.isServiceAvailable
+            ? 'available'
+            : (shuttlePlan.message ?? 'unavailable')}
+      </Text>
+      <TouchableOpacity testID="shuttle-schedule-back-button" onPress={onBack}>
+        <Text>Back</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="shuttle-schedule-close-button" onPress={onClose}>
+        <Text>Close</Text>
+      </TouchableOpacity>
+    </View>
+  );
+});
+
 jest.mock('../src/components/SearchSheet', () => {
   const { View, TouchableOpacity, Text } = require('react-native');
   return ({ onPressBuilding }: any) => (
@@ -279,6 +334,8 @@ jest.mock('../src/components/SearchSheet', () => {
 
 describe('BottomSheet', () => {
   const directionsServiceMock = directionsService as jest.Mocked<typeof directionsService>;
+  const shuttlePlannerMock = shuttlePlannerService as jest.Mocked<typeof shuttlePlannerService>;
+  const originalShuttleWeekdayDebug = process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
   const pressAndFlush = async (node: any) => {
     await act(async () => {
       fireEvent.press(node);
@@ -288,9 +345,30 @@ describe('BottomSheet', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
+    delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
     directionsServiceMock.fetchOutdoorDirections.mockImplementation(
       () => new Promise(() => undefined),
     );
+    shuttlePlannerMock.buildShuttlePlan.mockReturnValue({
+      direction: 'LOYOLA_TO_SGW',
+      pickup: null,
+      dropoff: null,
+      nextDepartures: [],
+      nextDepartureDates: [],
+      nextDepartureInMinutes: null,
+      isServiceAvailable: false,
+      message: 'Shuttle bus unavailable today. Try Public Transit.',
+    });
+  });
+
+  afterAll(() => {
+    if (originalShuttleWeekdayDebug === undefined) {
+      delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
+    } else {
+      process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY = originalShuttleWeekdayDebug;
+    }
+    jest.useRealTimers();
   });
 
   test('handles null selectedBuilding safely', () => {
@@ -509,7 +587,7 @@ describe('BottomSheet', () => {
     expect(getByTestId('search-sheet')).toBeTruthy();
   });
 
-  test('selecting a building from internal search returns to directions view', () => {
+  test('selecting a building from internal search returns to directions view and keeps panel at 52%', async () => {
     const passSelectedBuilding = jest.fn();
     const { getByTestId } = render(
       <BottomSlider
@@ -522,13 +600,16 @@ describe('BottomSheet', () => {
 
     fireEvent.press(getByTestId('on-show-directions'));
     fireEvent.press(getByTestId('press-start'));
-    fireEvent.press(getByTestId('press-building-in-search'));
+    await pressAndFlush(getByTestId('press-building-in-search'));
 
     expect(passSelectedBuilding).toHaveBeenCalled();
     expect(getByTestId('direction-details')).toBeTruthy();
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenCalledWith('52%');
+    });
   });
 
-  test('snaps to index 1 when mode switches to search', () => {
+  test('snaps to expanded position when mode switches to search', () => {
     jest.useFakeTimers();
 
     const { rerender } = render(
@@ -540,7 +621,7 @@ describe('BottomSheet', () => {
     );
 
     jest.runAllTimers();
-    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_EXPANDED);
+    expect(mockSnapToPosition).toHaveBeenCalledWith('82%');
     jest.useRealTimers();
   });
 
@@ -626,6 +707,129 @@ describe('BottomSheet', () => {
     fireEvent.press(getByTestId('on-show-directions-as-destination'));
 
     expect(getByTestId('cross-campus-state').props.children).toBe('false');
+  });
+
+  test('cross-campus transit computes shuttle plan and exposes shuttle card content path', async () => {
+    shuttlePlannerMock.buildShuttlePlan.mockReturnValueOnce({
+      direction: 'LOYOLA_TO_SGW',
+      pickup: null,
+      dropoff: null,
+      nextDepartures: ['9:15 AM', '9:30 AM'],
+      nextDepartureDates: [],
+      nextDepartureInMinutes: 3,
+      isServiceAvailable: true,
+    });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-bus'));
+
+    await waitFor(() => {
+      expect(shuttlePlannerMock.buildShuttlePlan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startCampus: 'LOYOLA',
+          destinationCampus: 'SGW',
+          startCoords: expect.any(Object),
+        }),
+      );
+      expect(getByTestId('shuttle-card-state').props.children).toBe('available');
+    });
+  });
+
+  test('opens shuttle schedule view from shuttle card and returns to directions with back arrow', async () => {
+    shuttlePlannerMock.buildShuttlePlan.mockReturnValue({
+      direction: 'LOYOLA_TO_SGW',
+      pickup: null,
+      dropoff: null,
+      nextDepartures: ['9:15 AM', '9:30 AM'],
+      nextDepartureDates: [],
+      nextDepartureInMinutes: 4,
+      isServiceAvailable: true,
+    });
+
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('shuttle-full-schedule-button'));
+
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenCalledWith('92%');
+      expect(getByTestId('shuttle-schedule-details')).toBeTruthy();
+      expect(getByTestId('shuttle-schedule-state').props.children).toBe('available');
+      expect(queryByTestId('direction-details')).toBeNull();
+    });
+
+    fireEvent.press(getByTestId('shuttle-schedule-back-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(queryByTestId('shuttle-schedule-details')).toBeNull();
+    });
+  });
+
+  test('same-campus transit does not expose shuttle card content path', async () => {
+    const sameCampusCurrent: BuildingShape = { ...mockBuildings[0], campus: 'SGW' };
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={sameCampusCurrent}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-bus'));
+
+    await waitFor(() => {
+      expect(getByTestId('cross-campus-state').props.children).toBe('false');
+      expect(queryByTestId('shuttle-card-state')).toBeNull();
+      expect(shuttlePlannerMock.buildShuttlePlan).not.toHaveBeenCalled();
+    });
+  });
+
+  test('cross-campus transit snaps to 62% and returns to 52% for walk/car', async () => {
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    await pressAndFlush(getByTestId('transport-bus'));
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenLastCalledWith('62%');
+    });
+
+    await pressAndFlush(getByTestId('transport-walk'));
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenLastCalledWith('52%');
+    });
+
+    await pressAndFlush(getByTestId('transport-car'));
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenLastCalledWith('52%');
+    });
   });
 
   test('requests outdoor route and passes route overlay when directions are available', async () => {
@@ -1031,7 +1235,7 @@ describe('BottomSheet', () => {
       expect(getByTestId('destination-id').props.children).toBe('loy-1');
       expect(getByTestId('route-summary-state').props.children).toContain('14 mins');
       expect(getByTestId('can-start-navigation-state').props.children).toBe('true');
-      expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_PANEL);
+      expect(mockSnapToPosition).toHaveBeenCalledWith('52%');
     });
 
     rafSpy.mockRestore();
@@ -1077,5 +1281,159 @@ describe('BottomSheet', () => {
 
     fireEvent.press(getByTestId('transport-bus'));
     expect(getByTestId('route-go-button')).toBeTruthy();
+  });
+
+  test('open(index > 1) uses the provided snap index directly', () => {
+    const ref = createRef<BottomSliderHandle>();
+    render(<BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} />);
+
+    ref.current?.open(3);
+
+    expect(mockSnapToIndex).toHaveBeenCalledWith(3);
+  });
+
+  test('open() keeps directions view snapped at 52% instead of dropping down', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    ref.current?.open(0);
+
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenCalledWith('52%');
+    });
+  });
+
+  test('formats long navigation duration with hour text in navigation summary', async () => {
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 7260,
+      durationText: '2 h 1 min',
+      bounds: null,
+    });
+
+    const { getByTestId, getByText } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-summary-state').props.children).toContain('2 h 1 min');
+    });
+
+    fireEvent.press(getByTestId('route-go-button'));
+
+    await waitFor(() => {
+      expect(getByText('2h 1m')).toBeTruthy();
+    });
+  });
+
+  test('formats whole-hour navigation duration without minutes suffix', async () => {
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 7200,
+      durationText: '2 h',
+      bounds: null,
+    });
+
+    const { getByTestId, getByText } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-summary-state').props.children).toContain('2 h');
+    });
+
+    fireEvent.press(getByTestId('route-go-button'));
+
+    await waitFor(() => {
+      expect(getByText('2h')).toBeTruthy();
+    });
+  });
+
+  test('shuttle weekday debug shifts Sunday planning to Monday', async () => {
+    process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY = 'true';
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 1, 22, 10, 20, 0, 0)); // Sunday
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-bus'));
+
+    const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
+    expect(shuttlePlanArgs).toBeTruthy();
+    expect(shuttlePlanArgs.now).toEqual(new Date(2026, 1, 23, 10, 20, 0, 0));
+  });
+
+  test('shuttle weekday debug shifts Saturday planning to Monday', async () => {
+    process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY = 'true';
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 1, 21, 9, 45, 0, 0)); // Saturday
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-bus'));
+
+    const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
+    expect(shuttlePlanArgs).toBeTruthy();
+    expect(shuttlePlanArgs.now).toEqual(new Date(2026, 1, 23, 9, 45, 0, 0));
+  });
+
+  test('shuttle weekday debug keeps weekday planning date unchanged', async () => {
+    process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY = 'true';
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 1, 24, 8, 5, 0, 0)); // Tuesday
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-bus'));
+
+    const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
+    expect(shuttlePlanArgs).toBeTruthy();
+    expect(shuttlePlanArgs.now).toEqual(new Date(2026, 1, 24, 8, 5, 0, 0));
   });
 });

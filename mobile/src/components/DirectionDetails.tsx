@@ -7,7 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
-import type { DirectionsTravelMode } from '../types/Directions';
+import type { RoutePlannerMode } from '../types/SheetMode';
+import type { ShuttleDirection, ShuttlePlan } from '../types/Shuttle';
 import type { UserCoords } from '../screens/MapScreen';
 import { formatEta } from '../utils/directionsFormatting';
 
@@ -25,10 +26,13 @@ type DirectionDetailProps = {
   routeDurationSeconds?: number | null;
   onPressStart?: () => void;
   onPressDestination?: () => void;
-  onTravelModeChange?: (mode: DirectionsTravelMode) => void;
+  onTravelModeChange?: (mode: RoutePlannerMode) => void;
+  selectedTravelMode?: RoutePlannerMode;
+  shuttlePlan?: ShuttlePlan | null;
   canStartNavigation?: boolean;
   onPressTransitGo?: () => void;
-  onPressGo?: (mode: DirectionsTravelMode) => void;
+  onPressGo?: (mode: RoutePlannerMode) => void;
+  onPressShuttleSchedule?: () => void;
 };
 
 /**
@@ -46,6 +50,20 @@ const getStartDisplayText = (
   else return 'Set as starting point';
 };
 
+const SHUTTLE_UNAVAILABLE_MESSAGE = 'Shuttle bus unavailable today. Try Public Transit.';
+
+const inferShuttleDirection = (
+  startBuilding: BuildingShape | null,
+  destinationBuilding: BuildingShape | null,
+): ShuttleDirection | null => {
+  const startCampus = startBuilding?.campus;
+  const destinationCampus = destinationBuilding?.campus;
+
+  if (startCampus === 'SGW' && destinationCampus === 'LOYOLA') return 'SGW_TO_LOYOLA';
+  if (startCampus === 'LOYOLA' && destinationCampus === 'SGW') return 'LOYOLA_TO_SGW';
+  return null;
+};
+
 export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
@@ -61,35 +79,43 @@ export default function DirectionDetails({
   onPressStart,
   onPressDestination,
   onTravelModeChange,
+  selectedTravelMode,
+  shuttlePlan = null,
   canStartNavigation = true,
   onPressTransitGo,
   onPressGo,
+  onPressShuttleSchedule,
 }: Readonly<DirectionDetailProps>) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const isSelected = (index: number) => activeIndex === index;
-  const isTransitSelected = isSelected(2);
+  const [activeMode, setActiveMode] = useState<RoutePlannerMode>(selectedTravelMode ?? 'walking');
+  const isSelected = (mode: RoutePlannerMode) => activeMode === mode;
+  const isTransitSelected = isSelected('transit');
+  const showShuttleCard = isTransitSelected && isCrossCampusRoute;
   const hasRouteSummary = Boolean(routeDistanceText && routeDurationText);
   const showGoButton = hasRouteSummary && (isTransitSelected || canStartNavigation);
   const canPressGo = showGoButton && !isRouteLoading && !routeErrorMessage;
 
+  React.useEffect(() => {
+    if (!selectedTravelMode) return;
+    setActiveMode(selectedTravelMode);
+  }, [selectedTravelMode]);
+
   const handleSelectWalk = () => {
-    setActiveIndex(0);
+    setActiveMode('walking');
     onTravelModeChange?.('walking');
   };
 
   const handleSelectCar = () => {
-    setActiveIndex(1);
+    setActiveMode('driving');
     onTravelModeChange?.('driving');
   };
 
   const handleSelectTransit = () => {
-    setActiveIndex(2);
+    setActiveMode('transit');
     onTravelModeChange?.('transit');
   };
 
   const handlePressGo = () => {
-    const selectedMode: DirectionsTravelMode =
-      activeIndex === 0 ? 'walking' : activeIndex === 1 ? 'driving' : 'transit';
+    const selectedMode: RoutePlannerMode = activeMode;
     const isNavigationMode = selectedMode === 'walking' || selectedMode === 'driving';
 
     if (!canPressGo) return;
@@ -105,6 +131,40 @@ export default function DirectionDetails({
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
   const routeEtaText = formatEta(routeDurationSeconds);
+  const nextDepartureInMinutes = shuttlePlan?.nextDepartureInMinutes ?? null;
+  const effectiveDirection =
+    shuttlePlan?.direction ?? inferShuttleDirection(startBuilding, destinationBuilding);
+  const shuttleDirectionLabel =
+    effectiveDirection === 'LOYOLA_TO_SGW' ? 'LOY -> SGW' : 'SGW -> LOY';
+  const shuttleDepartureSummary =
+    nextDepartureInMinutes === null
+      ? null
+      : nextDepartureInMinutes <= 1
+        ? 'Next bus in 1 min'
+        : `Next bus in ${nextDepartureInMinutes} mins`;
+
+  const scheduleMenuButton = (
+    <TouchableOpacity
+      testID="shuttle-full-schedule-button"
+      onPress={onPressShuttleSchedule}
+      style={directionDetailsStyles.shuttleScheduleButton}
+    >
+      <View style={directionDetailsStyles.shuttleScheduleIcon}>
+        <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+          <View style={directionDetailsStyles.shuttleScheduleDot} />
+          <View style={directionDetailsStyles.shuttleScheduleLine} />
+        </View>
+        <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+          <View style={directionDetailsStyles.shuttleScheduleDot} />
+          <View style={directionDetailsStyles.shuttleScheduleLine} />
+        </View>
+        <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+          <View style={directionDetailsStyles.shuttleScheduleDot} />
+          <View style={directionDetailsStyles.shuttleScheduleLine} />
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <>
@@ -168,10 +228,10 @@ export default function DirectionDetails({
         <View style={directionDetailsStyles.transportationSubHeader}>
           <TouchableOpacity
             testID="transport-walk"
-            accessibilityState={{ selected: isSelected(0) }}
+            accessibilityState={{ selected: isSelected('walking') }}
             style={[
               directionDetailsStyles.transportationButton,
-              isSelected(0) && directionDetailsStyles.activeTransportationButton,
+              isSelected('walking') && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={handleSelectWalk}
           >
@@ -179,10 +239,10 @@ export default function DirectionDetails({
           </TouchableOpacity>
           <TouchableOpacity
             testID="transport-car"
-            accessibilityState={{ selected: isSelected(1) }}
+            accessibilityState={{ selected: isSelected('driving') }}
             style={[
               directionDetailsStyles.transportationButton,
-              isSelected(1) && directionDetailsStyles.activeTransportationButton,
+              isSelected('driving') && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={handleSelectCar}
           >
@@ -194,10 +254,10 @@ export default function DirectionDetails({
           </TouchableOpacity>
           <TouchableOpacity
             testID="transport-bus"
-            accessibilityState={{ selected: isSelected(2) }}
+            accessibilityState={{ selected: isSelected('transit') }}
             style={[
               directionDetailsStyles.transportationButton,
-              isSelected(2) && directionDetailsStyles.activeTransportationButton,
+              isSelected('transit') && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={handleSelectTransit}
           >
@@ -209,6 +269,63 @@ export default function DirectionDetails({
           </TouchableOpacity>
         </View>
       </View>
+      {showShuttleCard ? (
+        <View testID="shuttle-card-content" style={directionDetailsStyles.shuttleCardMetaContainer}>
+          <View style={directionDetailsStyles.shuttleCardContainer}>
+            {!shuttlePlan ? (
+              <>
+                <View style={directionDetailsStyles.shuttleCardTopRow}>
+                  <View style={directionDetailsStyles.shuttleHeaderSpacer} />
+                  {scheduleMenuButton}
+                </View>
+                <Text testID="shuttle-loading-text" style={directionDetailsStyles.routeMetaText}>
+                  Loading shuttle schedule...
+                </Text>
+              </>
+            ) : shuttlePlan.isServiceAvailable ? (
+              <>
+                <View style={directionDetailsStyles.shuttleCardTopRow}>
+                  <Text
+                    testID="shuttle-next-bus-text"
+                    style={directionDetailsStyles.shuttlePrimaryText}
+                  >
+                    {shuttleDepartureSummary ?? 'Next bus time unavailable'}
+                  </Text>
+                  {scheduleMenuButton}
+                </View>
+                <Text
+                  testID="shuttle-direction-label"
+                  style={directionDetailsStyles.shuttleDirectionText}
+                >
+                  {shuttleDirectionLabel}
+                </Text>
+              </>
+            ) : (
+              <View style={directionDetailsStyles.shuttleUnavailableCard}>
+                <View style={directionDetailsStyles.shuttleUnavailableRow}>
+                  <View style={directionDetailsStyles.shuttleUnavailableIconWrap}>
+                    <Ionicons name="alert-circle-outline" size={18} color="#F4C15B" />
+                  </View>
+                  <View style={directionDetailsStyles.shuttleUnavailableTextWrap}>
+                    <Text style={directionDetailsStyles.shuttleUnavailableTitle}>
+                      Shuttle Unavailable
+                    </Text>
+                    <Text
+                      testID="shuttle-unavailable-text"
+                      style={directionDetailsStyles.shuttleUnavailableText}
+                    >
+                      {shuttlePlan?.message ?? SHUTTLE_UNAVAILABLE_MESSAGE}
+                    </Text>
+                  </View>
+                  <View style={directionDetailsStyles.shuttleUnavailableButtonWrap}>
+                    {scheduleMenuButton}
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      ) : null}
       <View style={directionDetailsStyles.routeMetaContainer}>
         {isRouteLoading ? (
           <Text testID="route-loading-text" style={directionDetailsStyles.routeMetaText}>
