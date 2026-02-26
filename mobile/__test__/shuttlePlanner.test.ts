@@ -100,9 +100,10 @@ describe('shuttlePlanner service', () => {
       startCoords: { latitude: 45.4972, longitude: -73.579 },
     });
 
-    expect(result.pickup.campus).toBe('SGW');
-    expect(result.dropoff.campus).toBe('LOYOLA');
-    expect(result.pickup.id).toBe('sgw-hall');
+    expect(result).not.toBeNull();
+    expect(result?.pickup.campus).toBe('SGW');
+    expect(result?.dropoff.campus).toBe('LOYOLA');
+    expect(result?.pickup.id).toBe('sgw-hall');
   });
 
   test('builds a valid shuttle plan for cross-campus trips', () => {
@@ -247,20 +248,21 @@ describe('shuttlePlanner service', () => {
       startCoords: { latitude: 45.49583, longitude: -73.579385 },
     });
 
-    expect(result.pickup.id).toBe('sgw-gm');
-    expect(result.dropoff.campus).toBe('LOYOLA');
+    expect(result).not.toBeNull();
+    expect(result?.pickup.id).toBe('sgw-gm');
+    expect(result?.dropoff.campus).toBe('LOYOLA');
   });
 
-  test('throws from selectPickupDropoff when stops are missing for either campus', () => {
+  test('returns null from selectPickupDropoff when stops are missing for either campus', () => {
     SHUTTLE_STOPS.splice(0, SHUTTLE_STOPS.length);
 
-    expect(() =>
+    expect(
       selectPickupDropoff({
         startCampus: 'SGW',
         destinationCampus: 'LOYOLA',
         startCoords: { latitude: 45.497, longitude: -73.579 },
       }),
-    ).toThrow('SHUTTLE_STOPS_MISSING');
+    ).toBeNull();
   });
 
   test('returns safe fallback message when stop selection fails in buildShuttlePlan', () => {
