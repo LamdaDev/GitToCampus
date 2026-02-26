@@ -194,12 +194,12 @@ export const selectPickupDropoff = ({
   startCampus,
   destinationCampus,
   startCoords,
-}: SelectPickupDropoffParams): { pickup: ShuttleStop; dropoff: ShuttleStop } => {
+}: SelectPickupDropoffParams): { pickup: ShuttleStop; dropoff: ShuttleStop } | null => {
   const pickupCandidates = getCampusStops(startCampus);
   const dropoffCandidates = getCampusStops(destinationCampus);
 
   if (pickupCandidates.length === 0 || dropoffCandidates.length === 0) {
-    throw new Error('SHUTTLE_STOPS_MISSING');
+    return null;
   }
 
   const pickup =
@@ -228,23 +228,18 @@ export const buildDefaultShuttlePlan = ({
     return buildUnavailablePlan(direction, CROSS_CAMPUS_ONLY_MESSAGE);
   }
 
-  let pickup: ShuttleStop | null = null;
-  let dropoff: ShuttleStop | null = null;
+  const selectedStops = selectPickupDropoff({
+    startCampus,
+    destinationCampus,
+    startCoords: startCoords ?? null,
+  });
 
-  try {
-    const selectedStops = selectPickupDropoff({
-      startCampus,
-      destinationCampus,
-      startCoords: startCoords ?? null,
-    });
-    pickup = selectedStops.pickup;
-    dropoff = selectedStops.dropoff;
-  } catch (error) {
-    if (error instanceof Error && error.message === 'SHUTTLE_STOPS_MISSING') {
-      return buildUnavailablePlan(direction, STOPS_MISSING_MESSAGE);
-    }
-    throw error;
+  if (!selectedStops) {
+    return buildUnavailablePlan(direction, STOPS_MISSING_MESSAGE);
   }
+
+  const pickup = selectedStops.pickup;
+  const dropoff = selectedStops.dropoff;
 
   const departuresLookup = getNextShuttleDepartures(now, direction, count);
   if (!departuresLookup.isServiceAvailable) {
