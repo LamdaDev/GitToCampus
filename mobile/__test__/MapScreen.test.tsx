@@ -647,7 +647,9 @@ describe('MapScreen', () => {
     const windowHeight = ReactNative.Dimensions.get('window').height;
     const minVisibleSheetHeight = windowHeight * 0.52;
     const visibleSheetHeight = Math.max(0, windowHeight - 100);
-    const expectedBottomPadding = Math.round(Math.max(minVisibleSheetHeight, visibleSheetHeight) + 24);
+    const expectedBottomPadding = Math.round(
+      Math.max(minVisibleSheetHeight, visibleSheetHeight) + 24,
+    );
 
     const fitCall = mockFitToCoordinates.mock.calls.at(-1);
     expect(fitCall?.[1]?.edgePadding?.bottom).toBe(expectedBottomPadding);
