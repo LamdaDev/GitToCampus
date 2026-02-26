@@ -30,17 +30,6 @@ type FetchTransitRouteOptions = {
 const isFiniteCoordinate = (point: LatLng) =>
   Number.isFinite(point.latitude) && Number.isFinite(point.longitude);
 
-const mapTravelMode = (mode: DirectionsTravelMode) => {
-  switch (mode) {
-    case 'walking':
-      return 'walking';
-    case 'driving':
-      return 'driving';
-    case 'transit':
-      return 'transit';
-  }
-};
-
 const mapStatusToErrorCode = (status: GoogleDirectionsStatus) => {
   switch (status) {
     case 'ZERO_RESULTS':
@@ -243,7 +232,7 @@ export const buildDirectionsApiUrl = (
   const query: Record<string, string | number> = {
     origin: toLatLngParam(request.origin),
     destination: toLatLngParam(request.destination),
-    mode: mapTravelMode(mode),
+    mode,
     units: request.units ?? 'metric',
     key: apiKey,
   };
