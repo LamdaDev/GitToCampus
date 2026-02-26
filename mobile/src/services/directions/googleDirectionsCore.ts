@@ -264,10 +264,7 @@ type ParsedDirectionsCoreResult = {
   legs: GoogleDirectionsLeg[];
 };
 
-const fetchGoogleDirectionsCore = async (
-  request: DirectionsRequest,
-  { apiKey, mode, fetchImpl }: FetchRouteOptions,
-): Promise<ParsedDirectionsCoreResult> => {
+const resolveApiKey = (apiKey: string) => {
   const trimmedApiKey = apiKey.trim();
   if (!trimmedApiKey) {
     throw new DirectionsServiceError(
@@ -275,13 +272,19 @@ const fetchGoogleDirectionsCore = async (
       'Google Directions API key is missing. Set EXPO_PUBLIC_GOOGLE_MAPS_API_KEY.',
     );
   }
+  return trimmedApiKey;
+};
 
+const validateDirectionsRequest = (request: DirectionsRequest) => {
   if (!isFiniteCoordinate(request.origin) || !isFiniteCoordinate(request.destination)) {
     throw new DirectionsServiceError('INVALID_COORDINATES', 'Origin or destination is invalid.');
   }
+};
 
-  const units = request.units ?? 'metric';
-  const url = buildDirectionsApiUrl(request, trimmedApiKey, mode);
+const requestDirectionsJson = async (
+  url: string,
+  fetchImpl?: typeof fetch,
+): Promise<GoogleDirectionsResponse> => {
   const directionsFetch = fetchImpl ?? fetch;
 
   let response: Response;
@@ -305,7 +308,13 @@ const fetchGoogleDirectionsCore = async (
     );
   }
 
-  const data = (await response.json()) as GoogleDirectionsResponse;
+  return (await response.json()) as GoogleDirectionsResponse;
+};
+
+const parseDirectionsRoute = (
+  data: GoogleDirectionsResponse,
+  units: DirectionsRequest['units'] = 'metric',
+): ParsedDirectionsCoreResult => {
   if (data.status !== 'OK') {
     const code = mapStatusToErrorCode(data.status);
     throw new DirectionsServiceError(code, data.error_message ?? `Directions request failed.`, {
@@ -350,6 +359,17 @@ const fetchGoogleDirectionsCore = async (
     },
     legs,
   };
+};
+
+const fetchGoogleDirectionsCore = async (
+  request: DirectionsRequest,
+  { apiKey, mode, fetchImpl }: FetchRouteOptions,
+): Promise<ParsedDirectionsCoreResult> => {
+  const trimmedApiKey = resolveApiKey(apiKey);
+  validateDirectionsRequest(request);
+  const url = buildDirectionsApiUrl(request, trimmedApiKey, mode);
+  const data = await requestDirectionsJson(url, fetchImpl);
+  return parseDirectionsRoute(data, request.units ?? 'metric');
 };
 
 export const fetchGoogleDirectionsRoute = async (
