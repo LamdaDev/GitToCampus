@@ -7,6 +7,7 @@ import {
   TransitInstruction,
 } from '../../types/Directions';
 import type {
+  GoogleDirectionsLeg,
   GoogleDirectionsResponse,
   GoogleDirectionsStatus,
   GoogleDirectionsStep,
@@ -18,7 +19,11 @@ const DIRECTIONS_API_URL = 'https://maps.googleapis.com/maps/api/directions/json
 type FetchRouteOptions = {
   apiKey: string;
   mode: DirectionsTravelMode;
-  includeTransitInstructions?: boolean;
+  fetchImpl?: typeof fetch;
+};
+
+type FetchTransitRouteOptions = {
+  apiKey: string;
   fetchImpl?: typeof fetch;
 };
 
@@ -254,10 +259,15 @@ export const buildDirectionsApiUrl = (
   return `${DIRECTIONS_API_URL}?${toQueryString(query)}`;
 };
 
-export const fetchGoogleDirectionsRoute = async (
+type ParsedDirectionsCoreResult = {
+  route: DirectionsRoute;
+  legs: GoogleDirectionsLeg[];
+};
+
+const fetchGoogleDirectionsCore = async (
   request: DirectionsRequest,
-  { apiKey, mode, includeTransitInstructions = false, fetchImpl }: FetchRouteOptions,
-): Promise<DirectionsRoute> => {
+  { apiKey, mode, fetchImpl }: FetchRouteOptions,
+): Promise<ParsedDirectionsCoreResult> => {
   const trimmedApiKey = apiKey.trim();
   if (!trimmedApiKey) {
     throw new DirectionsServiceError(
@@ -329,17 +339,43 @@ export const fetchGoogleDirectionsRoute = async (
         }
       : null;
 
-  const transitInstructions = includeTransitInstructions
-    ? legs.flatMap((leg, legIndex) => extractTransitInstructions(leg.steps, legIndex))
-    : [];
+  return {
+    route: {
+      polyline: route.overview_polyline.points,
+      distanceMeters,
+      distanceText,
+      durationSeconds,
+      durationText,
+      bounds,
+    },
+    legs,
+  };
+};
+
+export const fetchGoogleDirectionsRoute = async (
+  request: DirectionsRequest,
+  options: FetchRouteOptions,
+): Promise<DirectionsRoute> => {
+  const result = await fetchGoogleDirectionsCore(request, options);
+  return result.route;
+};
+
+export const fetchGoogleTransitRoute = async (
+  request: DirectionsRequest,
+  { apiKey, fetchImpl }: FetchTransitRouteOptions,
+): Promise<DirectionsRoute> => {
+  const result = await fetchGoogleDirectionsCore(request, {
+    apiKey,
+    mode: 'transit',
+    fetchImpl,
+  });
+
+  const transitInstructions = result.legs.flatMap((leg, legIndex) =>
+    extractTransitInstructions(leg.steps, legIndex),
+  );
 
   return {
-    polyline: route.overview_polyline.points,
-    distanceMeters,
-    distanceText,
-    durationSeconds,
-    durationText,
-    bounds,
-    ...(includeTransitInstructions ? { transitInstructions } : {}),
+    ...result.route,
+    transitInstructions,
   };
 };

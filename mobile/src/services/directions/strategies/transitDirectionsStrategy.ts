@@ -1,5 +1,5 @@
 import type { DirectionsRequest, DirectionsRoute } from '../../../types/Directions';
-import { fetchGoogleDirectionsRoute } from '../googleDirectionsCore';
+import { fetchGoogleTransitRoute } from '../googleDirectionsCore';
 import type { DirectionsStrategy, DirectionsStrategyContext } from './DirectionsStrategy';
 
 export class TransitDirectionsStrategy implements DirectionsStrategy {
@@ -9,10 +9,8 @@ export class TransitDirectionsStrategy implements DirectionsStrategy {
     request: DirectionsRequest,
     context: DirectionsStrategyContext,
   ): Promise<DirectionsRoute> {
-    return fetchGoogleDirectionsRoute(request, {
+    return fetchGoogleTransitRoute(request, {
       apiKey: context.apiKey,
-      mode: this.mode,
-      includeTransitInstructions: true,
       fetchImpl: context.fetchImpl,
     });
   }
