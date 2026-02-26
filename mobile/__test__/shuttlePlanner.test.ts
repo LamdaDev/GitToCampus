@@ -5,6 +5,7 @@ import {
 } from '../src/services/shuttlePlanner';
 import ShuttleSchedule from '../src/constants/shuttleSchedule';
 import { SHUTTLE_STOPS } from '../src/constants/shuttleStops';
+import * as locationUtils from '../src/utils/location';
 
 describe('shuttlePlanner service', () => {
   const originalForceUnavailable = process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_UNAVAILABLE;
@@ -308,5 +309,35 @@ describe('shuttlePlanner service', () => {
     expect(plan.direction).toBe('SGW_TO_LOYOLA');
     expect(plan.isServiceAvailable).toBe(false);
     expect(plan.message).toBe('Shuttle service is only available for cross-campus routes.');
+  });
+
+  test('rethrows unexpected stop-selection errors in buildShuttlePlan', () => {
+    jest.spyOn(locationUtils, 'getDistanceMeters').mockImplementation(() => {
+      throw new Error('DISTANCE_FAIL');
+    });
+
+    expect(() =>
+      buildShuttlePlan({
+        startCampus: 'SGW',
+        destinationCampus: 'LOYOLA',
+        startCoords: { latitude: 45.4972, longitude: -73.579 },
+        now: new Date(2026, 1, 23, 9, 10, 0, 0),
+      }),
+    ).toThrow('DISTANCE_FAIL');
+  });
+
+  test('uses default current time when now is omitted', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 1, 23, 9, 10, 0, 0));
+
+    const plan = buildShuttlePlan({
+      startCampus: 'SGW',
+      destinationCampus: 'LOYOLA',
+    });
+
+    expect(plan.isServiceAvailable).toBe(true);
+    expect(plan.nextDepartures.length).toBeGreaterThan(0);
+
+    jest.useRealTimers();
   });
 });

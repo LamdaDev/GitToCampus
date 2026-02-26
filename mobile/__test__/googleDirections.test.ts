@@ -711,4 +711,151 @@ describe('googleDirections service', () => {
     expect(route.distanceText).toBe('0 m');
     expect(route.durationText).toBe('0 sec');
   });
+
+  test('uses fallback empty API key when env key is unset and apiKey argument is omitted', async () => {
+    delete process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+    await expect(fetchOutdoorDirections(baseRequest)).rejects.toMatchObject<
+      Partial<DirectionsServiceError>
+    >({
+      code: 'MISSING_API_KEY',
+    });
+  });
+
+  test('uses walking title/detail fallbacks when walking step metadata is missing', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: { text: '500 m', value: 500 },
+                duration: { text: '6 mins', value: 360 },
+                steps: [{ travel_mode: 'WALKING' }],
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(
+      {
+        ...baseRequest,
+        mode: 'transit',
+      },
+      'abc123',
+    );
+
+    expect(route.transitInstructions).toEqual([
+      {
+        id: 'walk-0-0',
+        type: 'walk',
+        title: 'Walk',
+        detail: null,
+      },
+    ]);
+  });
+
+  test('falls back to line short name text when transit vehicle label is blank', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: { text: '1 km', value: 1000 },
+                duration: { text: '10 mins', value: 600 },
+                steps: [
+                  {
+                    travel_mode: 'TRANSIT',
+                    transit_details: {
+                      line: {
+                        short_name: '55',
+                        vehicle: { type: 'BUS', name: '   ' },
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(
+      {
+        ...baseRequest,
+        mode: 'transit',
+      },
+      'abc123',
+    );
+
+    expect(route.transitInstructions).toEqual([
+      expect.objectContaining({
+        id: 'transit-0-0',
+        type: 'transit',
+        title: 'Board the 55',
+      }),
+    ]);
+  });
+
+  test('uses default transit title and numeric fallbacks when legs contain missing values', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        routes: [
+          {
+            overview_polyline: { points: 'encoded-polyline' },
+            legs: [
+              {
+                distance: {},
+                duration: {},
+                steps: undefined,
+              },
+              {
+                distance: { text: '250 m', value: 250 },
+                duration: { text: '4 mins', value: 240 },
+                steps: [
+                  {
+                    travel_mode: 'TRANSIT',
+                    transit_details: {
+                      line: {
+                        vehicle: { name: '   ' },
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    const route = await fetchOutdoorDirections(
+      {
+        ...baseRequest,
+        mode: 'transit',
+      },
+      'abc123',
+    );
+
+    expect(route.distanceMeters).toBe(250);
+    expect(route.durationSeconds).toBe(240);
+    expect(route.transitInstructions).toEqual([
+      expect.objectContaining({
+        id: 'transit-1-0',
+        title: 'Board transit',
+      }),
+    ]);
+  });
 });

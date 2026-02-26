@@ -1,6 +1,8 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as Location from 'expo-location';
+import { Platform } from 'react-native';
+import * as ReactNative from 'react-native';
 import { Polygon } from 'react-native-maps';
 import MapScreen from '../src/screens/MapScreen';
 import type { BuildingShape } from '../src/types/BuildingShape';
@@ -15,6 +17,20 @@ const mockOpenBottomSheet = jest.fn();
 const mockAnimateToRegion = jest.fn();
 const mockFitToCoordinates = jest.fn();
 let mockHasAnimateToRegion = true;
+const originalPlatformOSDescriptor = Object.getOwnPropertyDescriptor(Platform, 'OS');
+
+const mockPlatformOS = (os: 'ios' | 'android') => {
+  Object.defineProperty(Platform, 'OS', {
+    configurable: true,
+    get: () => os,
+  });
+};
+
+const restorePlatformOS = () => {
+  if (originalPlatformOSDescriptor) {
+    Object.defineProperty(Platform, 'OS', originalPlatformOSDescriptor);
+  }
+};
 
 jest.mock('react-native-maps', () => {
   const React = require('react');
@@ -486,7 +502,13 @@ describe('MapScreen', () => {
     );
 
     await waitFor(() => {
-      expect(getByTestId('route-polyline')).toBeTruthy();
+      const routePolyline = getByTestId('route-polyline');
+      expect(routePolyline).toBeTruthy();
+      expect(routePolyline.props.strokeColor).toBe('#0472f8');
+      expect(routePolyline.props.strokeWidth).toBe(6);
+      if (Platform.OS === 'ios') {
+        expect(routePolyline.props.strokeColors).toEqual(['#0472f8']);
+      }
       expect(getByTestId('route-start-marker').props.coordinate).toEqual({
         latitude: 45.5,
         longitude: -73.57,
@@ -544,5 +566,119 @@ describe('MapScreen', () => {
       expect(getByTestId('map-marker').props.title).toBe('Administration');
       expect(mockAnimateToRegion).toHaveBeenCalledWith(getCampusRegion('LOYOLA'), 1000);
     });
+  });
+
+  test('uses iOS route stroke props for route polyline', async () => {
+    mockPlatformOS('ios');
+
+    try {
+      const { getByTestId } = render(
+        <MapScreen
+          passSelectedBuilding={mockPassSelectedBuilding}
+          passUserLocation={mockPassUserLocation}
+          passCurrentBuilding={mockPassCurrentBuilding}
+          openBottomSheet={mockOpenBottomSheet}
+          outdoorRoute={{
+            encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+            start: { latitude: 45.5, longitude: -73.57 },
+            destination: { latitude: 45.49, longitude: -73.58 },
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        const routePolyline = getByTestId('route-polyline');
+        expect(routePolyline.props.strokeColor).toBe('#0472f8');
+        expect(routePolyline.props.strokeColors).toEqual(['#0472f8']);
+      });
+    } finally {
+      restorePlatformOS();
+    }
+  });
+
+  test('uses Android route stroke props for route polyline', async () => {
+    mockPlatformOS('android');
+
+    try {
+      const { getByTestId } = render(
+        <MapScreen
+          passSelectedBuilding={mockPassSelectedBuilding}
+          passUserLocation={mockPassUserLocation}
+          passCurrentBuilding={mockPassCurrentBuilding}
+          openBottomSheet={mockOpenBottomSheet}
+          outdoorRoute={{
+            encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+            start: { latitude: 45.5, longitude: -73.57 },
+            destination: { latitude: 45.49, longitude: -73.58 },
+          }}
+        />,
+      );
+
+      await waitFor(() => {
+        const routePolyline = getByTestId('route-polyline');
+        expect(routePolyline.props.strokeColor).toBe('#0472f8');
+        expect(routePolyline.props.strokeColors).toBeUndefined();
+      });
+    } finally {
+      restorePlatformOS();
+    }
+  });
+
+  test('uses visible sheet height branch for route bottom padding when bottomSheetTop is finite', async () => {
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        bottomSheetAnimatedPosition={{ value: 100 } as any}
+        outdoorRoute={{
+          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+          start: { latitude: 45.5, longitude: -73.57 },
+          destination: { latitude: 45.49, longitude: -73.58 },
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline')).toBeTruthy();
+    });
+
+    const windowHeight = ReactNative.Dimensions.get('window').height;
+    const minVisibleSheetHeight = windowHeight * 0.52;
+    const visibleSheetHeight = Math.max(0, windowHeight - 100);
+    const expectedBottomPadding = Math.round(
+      Math.max(minVisibleSheetHeight, visibleSheetHeight) + 24,
+    );
+
+    const fitCall = mockFitToCoordinates.mock.calls.at(-1);
+    expect(fitCall?.[1]?.edgePadding?.bottom).toBe(expectedBottomPadding);
+  });
+
+  test('uses fallback route bottom padding when bottomSheetTop is not finite', async () => {
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        bottomSheetAnimatedPosition={{ value: Number.NaN } as any}
+        outdoorRoute={{
+          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+          start: { latitude: 45.5, longitude: -73.57 },
+          destination: { latitude: 45.49, longitude: -73.58 },
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline')).toBeTruthy();
+    });
+
+    const windowHeight = ReactNative.Dimensions.get('window').height;
+    const expectedBottomPadding = Math.round(windowHeight * 0.52 + 24);
+
+    const fitCall = mockFitToCoordinates.mock.calls.at(-1);
+    expect(fitCall?.[1]?.edgePadding?.bottom).toBe(expectedBottomPadding);
   });
 });
