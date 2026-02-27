@@ -221,12 +221,12 @@ describe('Direction Details', () => {
     expect(getByTestId('shuttle-next-bus-text').props.children).toContain('Next bus in 10');
     expect(queryByTestId('shuttle-pickup-text')).toBeNull();
     expect(queryByTestId('shuttle-dropoff-text')).toBeNull();
-    expect(getByTestId('route-summary-text').props.children).toBe('14 mins');
-    expect(getByTestId('route-go-button')).toBeTruthy();
+    expect(queryByTestId('route-summary-text')).toBeNull();
+    expect(queryByTestId('route-go-button')).toBeNull();
   });
 
-  test('hides shuttle card for same-campus shuttle routes', () => {
-    const { getByTestId, queryByTestId } = render(
+  test('shows Shuttle Unavailable card for same-campus shuttle routes', () => {
+    const { getByTestId } = render(
       <DirectionDetails
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[0]}
@@ -248,7 +248,11 @@ describe('Direction Details', () => {
     );
 
     fireEvent.press(getByTestId('transport-shuttle'));
-    expect(queryByTestId('shuttle-card-content')).toBeNull();
+    expect(getByTestId('shuttle-card-content')).toBeTruthy();
+    expect(getByTestId('shuttle-unavailable-text').props.children).toBe(
+      'Shuttle service not available right now. Try Public Transit.',
+    );
+    expect(getByTestId('shuttle-full-schedule-button')).toBeTruthy();
   });
 
   test('calls onPressShuttleSchedule when schedule button is pressed', () => {
@@ -280,7 +284,7 @@ describe('Direction Details', () => {
   });
 
   test('shows only unavailable message when no shuttle buses are available', () => {
-    const { getByTestId, queryByTestId, getByText } = render(
+    const { getByTestId, queryByTestId } = render(
       <DirectionDetails
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[1]}
@@ -321,7 +325,8 @@ describe('Direction Details', () => {
     expect(queryByTestId('shuttle-direction-label')).toBeNull();
     expect(queryByTestId('shuttle-pickup-text')).toBeNull();
     expect(queryByTestId('shuttle-dropoff-text')).toBeNull();
-    expect(getByText('14 mins')).toBeTruthy();
+    expect(queryByTestId('route-summary-text')).toBeNull();
+    expect(queryByTestId('route-go-button')).toBeNull();
   });
 
   test('shows loading state when route is loading', () => {

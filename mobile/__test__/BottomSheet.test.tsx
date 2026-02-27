@@ -187,7 +187,7 @@ jest.mock('../src/components/DirectionDetails', () => {
       const showGoButton =
         hasRouteSummary &&
         (selectedMode === 'transit' || selectedMode === 'shuttle' || canStartNavigation);
-      const showShuttleCard = selectedMode === 'shuttle' && Boolean(isCrossCampusRoute);
+      const showShuttleCard = selectedMode === 'shuttle';
 
       React.useEffect(() => {
         if (!selectedTravelMode) return;
@@ -792,9 +792,9 @@ describe('BottomSheet', () => {
     });
   });
 
-  test('same-campus shuttle mode does not expose shuttle card content path', async () => {
+  test('same-campus shuttle mode shows unavailable shuttle card content path', async () => {
     const sameCampusCurrent: BuildingShape = { ...mockBuildings[0], campus: 'SGW' };
-    const { getByTestId, queryByTestId } = render(
+    const { getByTestId } = render(
       <BottomSlider
         {...defaultProps}
         ref={createRef()}
@@ -808,8 +808,15 @@ describe('BottomSheet', () => {
 
     await waitFor(() => {
       expect(getByTestId('cross-campus-state').props.children).toBe('false');
-      expect(queryByTestId('shuttle-card-state')).toBeNull();
-      expect(shuttlePlannerMock.buildShuttlePlan).not.toHaveBeenCalled();
+      expect(getByTestId('shuttle-card-state').props.children).toBe(
+        'Shuttle bus unavailable today. Try Public Transit.',
+      );
+      expect(shuttlePlannerMock.buildShuttlePlan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startCampus: 'SGW',
+          destinationCampus: 'SGW',
+        }),
+      );
     });
   });
 

@@ -90,10 +90,9 @@ export default function DirectionDetails({
   const isSelected = (mode: RoutePlannerMode) => activeMode === mode;
   const isTransitSelected = isSelected('transit');
   const isShuttleSelected = isSelected('shuttle');
-  const showShuttleCard = isShuttleSelected && isCrossCampusRoute;
+  const showShuttleCard = isShuttleSelected;
   const hasRouteSummary = Boolean(routeDistanceText && routeDurationText);
-  const showGoButton =
-    hasRouteSummary && (isTransitSelected || isShuttleSelected || canStartNavigation);
+  const showGoButton = hasRouteSummary && (isTransitSelected || canStartNavigation);
   const canPressGo = showGoButton && !isRouteLoading && !routeErrorMessage;
 
   React.useEffect(() => {
@@ -300,15 +299,39 @@ export default function DirectionDetails({
         <View testID="shuttle-card-content" style={directionDetailsStyles.shuttleCardMetaContainer}>
           <View style={directionDetailsStyles.shuttleCardContainer}>
             {!shuttlePlan ? (
-              <>
-                <View style={directionDetailsStyles.shuttleCardTopRow}>
-                  <View style={directionDetailsStyles.shuttleHeaderSpacer} />
-                  {scheduleMenuButton}
+              isCrossCampusRoute ? (
+                <>
+                  <View style={directionDetailsStyles.shuttleCardTopRow}>
+                    <View style={directionDetailsStyles.shuttleHeaderSpacer} />
+                    {scheduleMenuButton}
+                  </View>
+                  <Text testID="shuttle-loading-text" style={directionDetailsStyles.routeMetaText}>
+                    Loading shuttle schedule...
+                  </Text>
+                </>
+              ) : (
+                <View style={directionDetailsStyles.shuttleUnavailableCard}>
+                  <View style={directionDetailsStyles.shuttleUnavailableRow}>
+                    <View style={directionDetailsStyles.shuttleUnavailableIconWrap}>
+                      <Ionicons name="alert-circle-outline" size={18} color="#F4C15B" />
+                    </View>
+                    <View style={directionDetailsStyles.shuttleUnavailableTextWrap}>
+                      <Text style={directionDetailsStyles.shuttleUnavailableTitle}>
+                        Shuttle Unavailable
+                      </Text>
+                      <Text
+                        testID="shuttle-unavailable-text"
+                        style={directionDetailsStyles.shuttleUnavailableText}
+                      >
+                        {SHUTTLE_UNAVAILABLE_MESSAGE}
+                      </Text>
+                    </View>
+                    <View style={directionDetailsStyles.shuttleUnavailableButtonWrap}>
+                      {scheduleMenuButton}
+                    </View>
+                  </View>
                 </View>
-                <Text testID="shuttle-loading-text" style={directionDetailsStyles.routeMetaText}>
-                  Loading shuttle schedule...
-                </Text>
-              </>
+              )
             ) : shuttlePlan.isServiceAvailable ? (
               <>
                 <View style={directionDetailsStyles.shuttleCardTopRow}>
@@ -353,69 +376,71 @@ export default function DirectionDetails({
           </View>
         </View>
       ) : null}
-      <View style={directionDetailsStyles.routeMetaContainer}>
-        {isRouteLoading ? (
-          <Text testID="route-loading-text" style={directionDetailsStyles.routeMetaText}>
-            Loading route...
-          </Text>
-        ) : routeErrorMessage ? (
-          <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
-            {routeErrorMessage}
-          </Text>
-        ) : hasRouteSummary ? (
-          <View style={directionDetailsStyles.routeSummaryRow}>
-            <View style={directionDetailsStyles.routeSummaryTextWrap}>
-              <Text
-                testID="route-summary-text"
-                numberOfLines={1}
-                style={directionDetailsStyles.routePrimaryText}
-              >
-                {routeDurationText}
-              </Text>
-              <View style={directionDetailsStyles.routeSecondaryInlineRow}>
+      {!isShuttleSelected ? (
+        <View style={directionDetailsStyles.routeMetaContainer}>
+          {isRouteLoading ? (
+            <Text testID="route-loading-text" style={directionDetailsStyles.routeMetaText}>
+              Loading route...
+            </Text>
+          ) : routeErrorMessage ? (
+            <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
+              {routeErrorMessage}
+            </Text>
+          ) : hasRouteSummary ? (
+            <View style={directionDetailsStyles.routeSummaryRow}>
+              <View style={directionDetailsStyles.routeSummaryTextWrap}>
                 <Text
-                  testID="route-secondary-text"
+                  testID="route-summary-text"
                   numberOfLines={1}
-                  style={directionDetailsStyles.routeSecondaryText}
+                  style={directionDetailsStyles.routePrimaryText}
                 >
-                  {routeEtaText ? `${routeEtaText} ETA - ${routeDistanceText}` : routeDistanceText}
+                  {routeDurationText}
                 </Text>
-                {isCrossCampusRoute && (
-                  <>
-                    <Text style={directionDetailsStyles.routeSecondaryText}> - </Text>
-                    <View style={directionDetailsStyles.crossCampusContainer}>
-                      <Text
-                        testID="cross-campus-label"
-                        style={directionDetailsStyles.crossCampusText}
-                      >
-                        Cross-Campus
-                      </Text>
-                    </View>
-                  </>
-                )}
+                <View style={directionDetailsStyles.routeSecondaryInlineRow}>
+                  <Text
+                    testID="route-secondary-text"
+                    numberOfLines={1}
+                    style={directionDetailsStyles.routeSecondaryText}
+                  >
+                    {routeEtaText ? `${routeEtaText} ETA - ${routeDistanceText}` : routeDistanceText}
+                  </Text>
+                  {isCrossCampusRoute && (
+                    <>
+                      <Text style={directionDetailsStyles.routeSecondaryText}> - </Text>
+                      <View style={directionDetailsStyles.crossCampusContainer}>
+                        <Text
+                          testID="cross-campus-label"
+                          style={directionDetailsStyles.crossCampusText}
+                        >
+                          Cross-Campus
+                        </Text>
+                      </View>
+                    </>
+                  )}
+                </View>
               </View>
+              {showGoButton ? (
+                <TouchableOpacity
+                  testID="route-go-button"
+                  disabled={!canPressGo}
+                  activeOpacity={canPressGo ? 0.85 : 1}
+                  onPress={handlePressGo}
+                  style={[
+                    directionDetailsStyles.routeGoButton,
+                    !canPressGo && directionDetailsStyles.routeGoButtonDisabled,
+                  ]}
+                >
+                  <Text style={directionDetailsStyles.routeGoText}>GO</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
-            {showGoButton ? (
-              <TouchableOpacity
-                testID="route-go-button"
-                disabled={!canPressGo}
-                activeOpacity={canPressGo ? 0.85 : 1}
-                onPress={handlePressGo}
-                style={[
-                  directionDetailsStyles.routeGoButton,
-                  !canPressGo && directionDetailsStyles.routeGoButtonDisabled,
-                ]}
-              >
-                <Text style={directionDetailsStyles.routeGoText}>GO</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        ) : (
-          <Text testID="route-empty-text" style={directionDetailsStyles.routeMetaText}>
-            Select start and destination to view route details.
-          </Text>
-        )}
-      </View>
+          ) : (
+            <Text testID="route-empty-text" style={directionDetailsStyles.routeMetaText}>
+              Select start and destination to view route details.
+            </Text>
+          )}
+        </View>
+      ) : null}
     </>
   );
 }

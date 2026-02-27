@@ -496,10 +496,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     useEffect(() => {
       const shouldComputeShuttlePlan =
         (activeView === 'directions' || activeView === 'shuttle-schedule') &&
-        travelMode === 'shuttle' &&
-        isCrossCampusRoute;
+        travelMode === 'shuttle';
 
-      if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus || !startCoords) {
+      if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus) {
         setShuttlePlan(null);
         return;
       }
@@ -508,11 +507,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         buildShuttlePlan({
           startCampus,
           destinationCampus,
-          startCoords,
+          startCoords: startCoords ?? null,
           now: getShuttlePlanningDate(new Date()),
         }),
       );
-    }, [activeView, destinationCampus, isCrossCampusRoute, startCampus, startCoords, travelMode]);
+    }, [activeView, destinationCampus, startCampus, startCoords, travelMode]);
 
     const showNavigationSummary = useCallback(() => {
       setActiveView('navigation');
