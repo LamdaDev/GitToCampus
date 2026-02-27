@@ -50,7 +50,7 @@ const SHUTTLE_SCHEDULE_SNAP_POINTS = Array.from(
   (_value, index) => `${22 + index}%`,
 );
 const DIRECTIONS_PANEL_SNAP_POINT = '52%';
-const DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT = '62%';
+const DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT = '52%';
 const SEARCH_EXPANDED_SNAP_POINT = '82%';
 const SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT = '92%';
 
@@ -162,7 +162,18 @@ const toInternalSnapIndex = (index: number) => {
 const isShuttleWeekdayDebugEnabled = () =>
   (process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY ?? '').trim().toLowerCase() === 'true';
 
+const getForcedShuttlePlanningDate = (): Date | null => {
+  const raw = (process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME ?? '').trim();
+  if (!raw) return null;
+
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const getShuttlePlanningDate = (now: Date) => {
+  const forcedPlanningDate = getForcedShuttlePlanningDate();
+  if (forcedPlanningDate) return forcedPlanningDate;
+
   if (!isShuttleWeekdayDebugEnabled()) return now;
 
   const day = now.getDay();

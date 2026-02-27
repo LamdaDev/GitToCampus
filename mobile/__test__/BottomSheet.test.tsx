@@ -345,6 +345,8 @@ describe('BottomSheet', () => {
   const directionsServiceMock = directionsService as jest.Mocked<typeof directionsService>;
   const shuttlePlannerMock = shuttlePlannerService as jest.Mocked<typeof shuttlePlannerService>;
   const originalShuttleWeekdayDebug = process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
+  const originalShuttleForcedPlanningTime =
+    process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;
   const pressAndFlush = async (node: any) => {
     await act(async () => {
       fireEvent.press(node);
@@ -356,6 +358,7 @@ describe('BottomSheet', () => {
     jest.clearAllMocks();
     jest.useRealTimers();
     delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
+    delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;
     directionsServiceMock.fetchOutdoorDirections.mockImplementation(
       () => new Promise(() => undefined),
     );
@@ -376,6 +379,11 @@ describe('BottomSheet', () => {
       delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
     } else {
       process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY = originalShuttleWeekdayDebug;
+    }
+    if (originalShuttleForcedPlanningTime === undefined) {
+      delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;
+    } else {
+      process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME = originalShuttleForcedPlanningTime;
     }
     jest.useRealTimers();
   });
@@ -820,7 +828,7 @@ describe('BottomSheet', () => {
     });
   });
 
-  test('cross-campus shuttle snaps to 62% and returns to 52% for walk/car', async () => {
+  test('cross-campus shuttle keeps directions panel at 52% (same as walk/car)', async () => {
     const { getByTestId } = render(
       <BottomSlider
         {...defaultProps}
@@ -831,10 +839,13 @@ describe('BottomSheet', () => {
     );
 
     await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await waitFor(() => {
+      expect(getByTestId('cross-campus-state').props.children).toBe('true');
+    });
 
     await pressAndFlush(getByTestId('transport-shuttle'));
     await waitFor(() => {
-      expect(mockSnapToPosition).toHaveBeenLastCalledWith('62%');
+      expect(mockSnapToPosition).toHaveBeenLastCalledWith('52%');
     });
 
     await pressAndFlush(getByTestId('transport-walk'));
