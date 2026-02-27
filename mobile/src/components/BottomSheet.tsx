@@ -503,6 +503,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ]);
 
     const canStartNavigationFromCurrentLocation = routeStartSource === 'current';
+    const shuttlePickupCoords =
+      travelMode === 'shuttle' &&
+      shuttlePlan?.isServiceAvailable &&
+      shuttlePlan.nextDepartureInMinutes !== null
+        ? shuttlePlan.pickup?.coords ?? null
+        : null;
+    const routeDestinationCoords = shuttlePickupCoords ?? destinationCoords;
+    const routeRequestMode: DirectionsTravelMode =
+      shuttlePickupCoords !== null ? 'walking' : toDirectionsTravelMode(travelMode);
 
     useEffect(() => {
       const shouldComputeShuttlePlan =
@@ -563,8 +572,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         return;
       }
       if (activeView !== 'directions') return;
+      if (travelMode === 'shuttle' && !shuttlePickupCoords) {
+        resetRouteState();
+        return;
+      }
+      const targetDestination = routeDestinationCoords;
       // Not an error state: route cannot be requested until both endpoints are available.
-      if (!startCoords || !destinationCoords) {
+      if (!startCoords || !targetDestination) {
         resetRouteState();
         return;
       }
@@ -586,8 +600,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         try {
           const route = await fetchOutdoorDirections({
             origin: startCoords,
-            destination: destinationCoords,
-            mode: toDirectionsTravelMode(travelMode),
+            destination: targetDestination,
+            mode: routeRequestMode,
           });
 
           if (cancelled) return;
@@ -603,7 +617,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           passOutdoorRoute({
             encodedPolyline: route.polyline,
             start: startCoords,
-            destination: destinationCoords,
+            destination: targetDestination,
             distanceText: route.distanceText,
             durationText: route.durationText,
             distanceMeters: route.distanceMeters,
@@ -634,9 +648,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [
       activeView,
       destinationBuilding?.id,
-      destinationCoords,
       passOutdoorRoute,
       resetRouteState,
+      routeDestinationCoords,
+      routeRequestMode,
+      shuttlePickupCoords,
       startBuilding?.id,
       startCoords,
       travelMode,

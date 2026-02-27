@@ -761,6 +761,75 @@ describe('BottomSheet', () => {
     });
   });
 
+  test('shuttle mode routes map path to pickup stop when next bus is available', async () => {
+    const passOutdoorRoute = jest.fn();
+    const shuttlePickupCoords = { latitude: 45.458317, longitude: -73.640225 };
+
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 450,
+      distanceText: '450 m',
+      durationSeconds: 360,
+      durationText: '6 mins',
+      bounds: null,
+    });
+    shuttlePlannerMock.buildShuttlePlan.mockReturnValueOnce({
+      direction: 'LOYOLA_TO_SGW',
+      pickup: {
+        id: 'loy-ad',
+        campus: 'LOYOLA',
+        name: 'Loyola Shuttle Stop (AD Building)',
+        coords: shuttlePickupCoords,
+      },
+      dropoff: {
+        id: 'sgw-hall',
+        campus: 'SGW',
+        name: 'SGW Shuttle Stop (Hall Building)',
+        coords: { latitude: 45.497193, longitude: -73.578985 },
+      },
+      nextDepartures: ['10:15 AM', '10:30 AM'],
+      nextDepartureDates: [],
+      nextDepartureInMinutes: 2,
+      isServiceAvailable: true,
+    });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalled();
+    });
+
+    const initialCallCount = directionsServiceMock.fetchOutdoorDirections.mock.calls.length;
+    await pressAndFlush(getByTestId('transport-shuttle'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThan(
+        initialCallCount,
+      );
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          mode: 'walking',
+          destination: shuttlePickupCoords,
+        }),
+      );
+      expect(passOutdoorRoute).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+          destination: shuttlePickupCoords,
+        }),
+      );
+    });
+  });
+
   test('opens shuttle schedule view from shuttle mode and returns to directions with back arrow', async () => {
     shuttlePlannerMock.buildShuttlePlan.mockReturnValue({
       direction: 'LOYOLA_TO_SGW',

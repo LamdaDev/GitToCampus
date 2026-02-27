@@ -194,10 +194,10 @@ describe('Direction Details', () => {
         shuttlePlan={{
           direction: 'LOYOLA_TO_SGW',
           pickup: {
-            id: 'loy-sherbrooke',
+            id: 'loy-ad',
             campus: 'LOYOLA',
-            name: 'Loyola Shuttle Stop (Sherbrooke / Terrebonne)',
-            coords: { latitude: 45.458908, longitude: -73.641169 },
+            name: 'Loyola Shuttle Stop (AD Building)',
+            coords: { latitude: 45.458317, longitude: -73.640225 },
           },
           dropoff: {
             id: 'sgw-hall',
@@ -297,10 +297,10 @@ describe('Direction Details', () => {
         shuttlePlan={{
           direction: 'LOYOLA_TO_SGW',
           pickup: {
-            id: 'loy-sherbrooke',
+            id: 'loy-ad',
             campus: 'LOYOLA',
-            name: 'Loyola Shuttle Stop (Sherbrooke / Terrebonne)',
-            coords: { latitude: 45.458908, longitude: -73.641169 },
+            name: 'Loyola Shuttle Stop (AD Building)',
+            coords: { latitude: 45.458317, longitude: -73.640225 },
           },
           dropoff: {
             id: 'sgw-hall',

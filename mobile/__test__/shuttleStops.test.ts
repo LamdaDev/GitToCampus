@@ -39,6 +39,6 @@ describe('shuttleStops constants', () => {
     const ids = new Set(SHUTTLE_STOPS.map((stop) => stop.id));
 
     expect(ids.has('sgw-hall')).toBe(true);
-    expect(ids.has('loy-sherbrooke')).toBe(true);
+    expect(ids.has('loy-ad')).toBe(true);
   });
 });

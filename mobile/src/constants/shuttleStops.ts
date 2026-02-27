@@ -17,9 +17,9 @@ export const SHUTTLE_STOPS: ShuttleStop[] = [
     coords: { latitude: 45.497193, longitude: -73.578985 },
   },
   {
-    id: 'loy-sherbrooke',
+    id: 'loy-ad',
     campus: 'LOYOLA',
-    name: 'Loyola Shuttle Stop (Sherbrooke / Terrebonne)',
-    coords: { latitude: 45.458908, longitude: -73.641169 },
+    name: 'Loyola Shuttle Stop (AD Building)',
+    coords: { latitude: 45.458317, longitude: -73.640225 },
   },
 ];
