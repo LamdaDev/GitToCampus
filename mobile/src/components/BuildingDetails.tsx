@@ -1,9 +1,8 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
-import { Divider } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
@@ -24,16 +23,21 @@ export default function BuildingDetails({
   currentBuilding: _currentBuilding,
   userLocation: _userLocation,
 }: Readonly<BuildingDetailProps>) {
-  const hotspots = selectedBuilding?.hotspots;
   const services = selectedBuilding?.services;
 
   /**
    * Handle the walking figure button press.
    * Sets the selected building as destination with current location as start.
    */
-  const handleWalkingFigurePress = () => {
+  const handleDirectionsToPress = () => {
     if (selectedBuilding) {
       onShowDirections(selectedBuilding, true);
+    }
+  };
+
+  const handleStartFromPress = () => {
+    if (selectedBuilding) {
+      onShowDirections(selectedBuilding, false);
     }
   };
 
@@ -41,49 +45,35 @@ export default function BuildingDetails({
    * hotspotsSection & servicesSection loads any information if present, else it will render nothing
    */
   const navigationSection = (
-    <Section title="Navigation">
-      <View style={buildingDetailsStyles.navigationSection}>
-        <TouchableOpacity
-          testID="walking-figure-button"
-          style={buildingDetailsStyles.navigationButton}
-          onPress={handleWalkingFigurePress}
-        >
-          <Ionicons name="walk" size={25} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={buildingDetailsStyles.navigationButton}
-          onPress={() => {
-            if (selectedBuilding) {
-              onShowDirections(selectedBuilding);
-            }
-          }}
-        >
-          <Text style={{ fontSize: 15, color: 'white' }}> Set as starting point </Text>
-        </TouchableOpacity>
-      </View>
-    </Section>
+    <View style={buildingDetailsStyles.navigationSection}>
+      <TouchableOpacity
+        testID="walking-figure-button"
+        style={buildingDetailsStyles.navigationButton}
+        onPress={handleDirectionsToPress}
+      >
+        <Feather name="corner-down-right" size={20} color="#fff" />
+        <Text style={buildingDetailsStyles.navigationButtonText}>Directions To</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={buildingDetailsStyles.navigationButton}
+        onPress={handleStartFromPress}
+      >
+        <Ionicons name="navigate-outline" size={20} color="#fff" />
+        <Text style={buildingDetailsStyles.navigationButtonText}>Start From</Text>
+      </TouchableOpacity>
+    </View>
   );
-
-  const hotspotsSection =
-    hotspots && Object.keys(hotspots).length > 0 ? (
-      <Section title="Hotspots">
-        <Divider style={{ backgroundColor: '#9B9B9B', height: 1.5, marginVertical: 8 }} />
-        {Object.entries(hotspots).map(([name, url]) => (
-          <Bullet key={name} name={name} link={url} />
-        ))}
-      </Section>
-    ) : null;
 
   const servicesSection =
     services && Object.keys(services).length > 0 ? (
-      <Section title="Services">
-        <Divider style={{ backgroundColor: '#9B9B9B', height: 1.5, marginVertical: 8 }} />
+      <View>
+        <Text style={buildingDetailsStyles.servicesTitle}>Services</Text>
         {services
           ? Object.entries(services).map(([name, url]) => (
               <Bullet key={name} name={name} link={url} />
             ))
           : ''}
-      </Section>
+      </View>
     ) : null;
 
   return (
@@ -92,9 +82,7 @@ export default function BuildingDetails({
       <View style={buildingDetailsStyles.header}>
         <View>
           <Text style={buildingDetailsStyles.title}>{selectedBuilding?.name}</Text>
-          <Text style={buildingDetailsStyles.subtitle}>
-            {'(' + selectedBuilding?.shortCode + ') ' + selectedBuilding?.address}
-          </Text>
+          <Text style={buildingDetailsStyles.subtitle}>{selectedBuilding?.address}</Text>
         </View>
         <View style={buildingDetailsStyles.headerIcons}>
           <TouchableOpacity style={buildingDetailsStyles.iconButton}>
@@ -107,20 +95,15 @@ export default function BuildingDetails({
       </View>
       {/* Navigation Section */}
       {navigationSection}
-      {/* Building Hotspots */}
-      {hotspotsSection}
-      {/* Building Services*/}
-      {servicesSection}
+      <View style={buildingDetailsStyles.servicesContainer}>
+        {/* Building Services*/}
+        {servicesSection}
+      </View>
     </>
   );
 }
 
 /* ---------- Types ---------- */
-
-type SectionProps = {
-  title: string;
-  children: ReactNode;
-};
 
 type BulletProps = {
   name: string;
@@ -128,17 +111,6 @@ type BulletProps = {
 };
 
 /* ---------- Reusable Components ---------- */
-
-const Section = ({ title, children }: SectionProps) => {
-  return (
-    <View style={buildingDetailsStyles.section}>
-      <View style={buildingDetailsStyles.sectionHeader}>
-        <Text style={buildingDetailsStyles.sectionTitle}>{title}</Text>
-      </View>
-      {children}
-    </View>
-  );
-};
 
 const Bullet = ({ name, link }: BulletProps) => {
   return (

@@ -2,7 +2,6 @@ import { render, fireEvent } from '@testing-library/react-native';
 import BuildingDetails from '../src/components/BuildingDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import React from 'react';
-import { Linking } from 'react-native';
 
 const mockOnClose = jest.fn();
 const mockOnShowDirections = jest.fn();
@@ -13,9 +12,6 @@ const mockBuildings: BuildingShape[] = [
     id: 'sgw-1',
     campus: 'LOYOLA',
     name: 'FC Building',
-    hotspots: {
-      'Loyola Chapel': 'https://www.concordia.ca/hospitality/venues/loyola-chapel.html',
-    },
     services: {
       'Concordia Multi-Faith and Spirituality Centre':
         'https://www.concordia.ca/equity/spirituality.html',
@@ -36,6 +32,7 @@ const mockBuildings: BuildingShape[] = [
 jest.mock('@expo/vector-icons', () => {
   return {
     Ionicons: (props: any) => <span {...props} />,
+    Feather: (props: any) => <span {...props} />,
     MaterialIcons: (props: any) => <span {...props} />,
     FontAwesome: (props: any) => <span {...props} />,
   };
@@ -60,11 +57,10 @@ describe('Building Details', () => {
     );
 
     expect(getByText('FC Building')).toBeTruthy();
-    expect(getByText('Loyola Chapel')).toBeTruthy();
-    expect(getByText('(FC) 7141 Sherbrooke West')).toBeTruthy();
+    expect(getByText('7141 Sherbrooke West')).toBeTruthy();
   });
 
-  test('Hotspots and Services are absent when the building has none', () => {
+  test('Services are absent when the building has none', () => {
     const selectedBuilding = mockBuildings[1];
 
     const { getByText, queryByText } = render(
@@ -78,11 +74,10 @@ describe('Building Details', () => {
     );
 
     expect(getByText('EV Building')).toBeTruthy();
-    expect(queryByText('HotSpots')).toBeNull();
     expect(queryByText('Services')).toBeNull();
   });
 
-  test('"Set as starting point" button calls onShowDirections with building as start', () => {
+  test('"Start From" button calls onShowDirections with building as start', () => {
     const selectedBuilding = mockBuildings[0];
 
     const { getByText } = render(
@@ -95,37 +90,16 @@ describe('Building Details', () => {
       />,
     );
 
-    const setStartButton = getByText('Set as starting point');
+    const setStartButton = getByText('Start From');
     fireEvent.press(setStartButton);
 
-    expect(mockOnShowDirections).toHaveBeenCalledWith(selectedBuilding);
+    expect(mockOnShowDirections).toHaveBeenCalledWith(selectedBuilding, false);
     expect(mockOnShowDirections).toHaveBeenCalledTimes(1);
   });
 
   test('Walking figure button calls onShowDirections with building as destination', () => {
     const selectedBuilding = mockBuildings[0];
 
-    const { getByTestId } = render(
-      <BuildingDetails
-        selectedBuilding={selectedBuilding}
-        onClose={mockOnClose}
-        onShowDirections={mockOnShowDirections}
-        currentBuilding={null}
-        userLocation={null}
-      />,
-    );
-
-    const walkingButton = getByTestId('walking-figure-button');
-    fireEvent.press(walkingButton);
-
-    expect(mockOnShowDirections).toHaveBeenCalledWith(selectedBuilding, true);
-    expect(mockOnShowDirections).toHaveBeenCalledTimes(1);
-  });
-
-  test('Pressing a hotspot opens its URL', () => {
-    const selectedBuilding = mockBuildings[0];
-    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValueOnce();
-
     const { getByText } = render(
       <BuildingDetails
         selectedBuilding={selectedBuilding}
@@ -136,15 +110,14 @@ describe('Building Details', () => {
       />,
     );
 
-    fireEvent.press(getByText('Loyola Chapel'));
+    fireEvent.press(getByText('Directions To'));
 
-    expect(openUrlSpy).toHaveBeenCalledWith(
-      'https://www.concordia.ca/hospitality/venues/loyola-chapel.html',
-    );
+    expect(mockOnShowDirections).toHaveBeenCalledWith(selectedBuilding, true);
+    expect(mockOnShowDirections).toHaveBeenCalledTimes(1);
   });
 
   test('navigation buttons do not call onShowDirections when selectedBuilding is null', () => {
-    const { getByTestId, getByText } = render(
+    const { getByText } = render(
       <BuildingDetails
         selectedBuilding={null}
         onClose={mockOnClose}
@@ -154,8 +127,8 @@ describe('Building Details', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('walking-figure-button'));
-    fireEvent.press(getByText('Set as starting point'));
+    fireEvent.press(getByText('Directions To'));
+    fireEvent.press(getByText('Start From'));
 
     expect(mockOnShowDirections).not.toHaveBeenCalled();
   });
