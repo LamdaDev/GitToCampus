@@ -89,9 +89,11 @@ export default function DirectionDetails({
   const [activeMode, setActiveMode] = useState<RoutePlannerMode>(selectedTravelMode ?? 'walking');
   const isSelected = (mode: RoutePlannerMode) => activeMode === mode;
   const isTransitSelected = isSelected('transit');
-  const showShuttleCard = isTransitSelected && isCrossCampusRoute;
+  const isShuttleSelected = isSelected('shuttle');
+  const showShuttleCard = isShuttleSelected && isCrossCampusRoute;
   const hasRouteSummary = Boolean(routeDistanceText && routeDurationText);
-  const showGoButton = hasRouteSummary && (isTransitSelected || canStartNavigation);
+  const showGoButton =
+    hasRouteSummary && (isTransitSelected || isShuttleSelected || canStartNavigation);
   const canPressGo = showGoButton && !isRouteLoading && !routeErrorMessage;
 
   React.useEffect(() => {
@@ -114,6 +116,11 @@ export default function DirectionDetails({
     onTravelModeChange?.('transit');
   };
 
+  const handleSelectShuttle = () => {
+    setActiveMode('shuttle');
+    onTravelModeChange?.('shuttle');
+  };
+
   const handlePressGo = () => {
     const selectedMode: RoutePlannerMode = activeMode;
     const isNavigationMode = selectedMode === 'walking' || selectedMode === 'driving';
@@ -123,6 +130,11 @@ export default function DirectionDetails({
 
     if (selectedMode === 'transit' && !onPressGo) {
       onPressTransitGo?.();
+      return;
+    }
+
+    if (selectedMode === 'shuttle' && !onPressGo) {
+      onPressShuttleSchedule?.();
       return;
     }
 
@@ -260,6 +272,21 @@ export default function DirectionDetails({
               isSelected('transit') && directionDetailsStyles.activeTransportationButton,
             ]}
             onPress={handleSelectTransit}
+          >
+            <Ionicons
+              name="train-outline"
+              size={30}
+              style={directionDetailsStyles.transportationIcon}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="transport-shuttle"
+            accessibilityState={{ selected: isSelected('shuttle') }}
+            style={[
+              directionDetailsStyles.transportationButton,
+              isSelected('shuttle') && directionDetailsStyles.activeTransportationButton,
+            ]}
+            onPress={handleSelectShuttle}
           >
             <Ionicons
               name="bus-outline"

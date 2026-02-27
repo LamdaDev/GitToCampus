@@ -30,6 +30,7 @@ import {
   type DirectionsTravelMode,
   type TransitInstruction,
 } from '../types/Directions';
+import type { RoutePlannerMode } from '../types/SheetMode';
 import type { SharedValue } from 'react-native-reanimated';
 import { decodePolyline } from '../utils/polyline';
 import { formatEta } from '../utils/directionsFormatting';
@@ -193,12 +194,15 @@ const getShuttlePlanningDate = (now: Date) => {
 };
 
 const getDirectionsPanelSnapPoint = (
-  travelMode: DirectionsTravelMode,
+  travelMode: RoutePlannerMode,
   isCrossCampusRoute: boolean,
 ) =>
-  travelMode === 'transit' && isCrossCampusRoute
+  travelMode === 'shuttle' && isCrossCampusRoute
     ? DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT
     : DIRECTIONS_PANEL_SNAP_POINT;
+
+const toDirectionsTravelMode = (travelMode: RoutePlannerMode): DirectionsTravelMode =>
+  travelMode === 'shuttle' ? 'transit' : travelMode;
 
 export type BottomSliderHandle = {
   open: (index?: number) => void;
@@ -258,7 +262,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [routeEncodedPolyline, setRouteEncodedPolyline] = useState<string>('');
     const [navigationProgressMeters, setNavigationProgressMeters] = useState(0);
     const [routeTransitSteps, setRouteTransitSteps] = useState<TransitInstruction[]>([]);
-    const [travelMode, setTravelMode] = useState<DirectionsTravelMode>('walking');
+    const [travelMode, setTravelMode] = useState<RoutePlannerMode>('walking');
     const [shuttlePlan, setShuttlePlan] = useState<ShuttlePlan | null>(null);
     const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
     const destinationCampus = destinationBuilding?.campus ?? null;
@@ -492,7 +496,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     useEffect(() => {
       const shouldComputeShuttlePlan =
         (activeView === 'directions' || activeView === 'shuttle-schedule') &&
-        travelMode === 'transit' &&
+        travelMode === 'shuttle' &&
         isCrossCampusRoute;
 
       if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus || !startCoords) {
@@ -521,16 +525,20 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [snapToDirectionsPanel]);
 
     const handleDirectionsGo = useCallback(
-      (mode: DirectionsTravelMode) => {
+      (mode: RoutePlannerMode) => {
         if (mode === 'transit') {
           showTransitPlan();
+          return;
+        }
+        if (mode === 'shuttle') {
+          showShuttleSchedule();
           return;
         }
         if (!canStartNavigationFromCurrentLocation) return;
 
         showNavigationSummary();
       },
-      [canStartNavigationFromCurrentLocation, showNavigationSummary],
+      [canStartNavigationFromCurrentLocation, showNavigationSummary, showShuttleSchedule],
     );
 
     useEffect(() => {
@@ -569,7 +577,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           const route = await fetchOutdoorDirections({
             origin: startCoords,
             destination: destinationCoords,
-            mode: travelMode,
+            mode: toDirectionsTravelMode(travelMode),
           });
 
           if (cancelled) return;
