@@ -618,6 +618,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             encodedPolyline: route.polyline,
             start: startCoords,
             destination: targetDestination,
+            isWalkingRoute: routeRequestMode === 'walking',
+            routeSegments: route.routeSegments?.map((segment) => ({
+              encodedPolyline: segment.polyline,
+              requiresWalking: segment.mode === 'walking',
+            })),
             distanceText: route.distanceText,
             durationText: route.durationText,
             distanceMeters: route.distanceMeters,
