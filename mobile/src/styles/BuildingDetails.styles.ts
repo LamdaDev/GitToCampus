@@ -84,33 +84,6 @@ export const buildingDetailsStyles = StyleSheet.create({
     elevation: 10,
     boxShadow: 'inset 0 -3.5px 4px rgba(0, 0, 0, 0.4)',
   },
-  badge: {
-    backgroundColor: '#6A6A6A',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 12,
-  },
-  bulletRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  bullet: {
-    color: '#fff',
-    marginRight: 6,
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  bulletText: {
-    color: '#FFFFFF',
-    textDecorationLine: 'underline',
-    fontFamily: 'gabarito',
-    fontSize: 13,
-    flex: 1,
-  },
   servicesContainer: {
     marginTop: 10,
     marginBottom: 10,
@@ -127,5 +100,28 @@ export const buildingDetailsStyles = StyleSheet.create({
   servicesTitle: {
     fontSize: 20,
     color: '#FFFFFF',
+    marginBottom: 9,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 5,
+    gap: 5,
+  },
+  uniqueServiceContainer: {
+    width: '32%',
+    padding: 10,
+    borderRadius: 8,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(45, 10, 16, 0.70)',
+    borderColor: 'rgba(243, 235, 235, 0.32)',
+    borderWidth: 1,
+  },
+  serviceText: {
+    color: '#fff',
+    fontSize: 10,
+    textAlign: 'center',
   },
 });

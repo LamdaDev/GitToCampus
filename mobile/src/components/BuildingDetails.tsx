@@ -7,6 +7,7 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
@@ -47,7 +48,6 @@ export default function BuildingDetails({
   const navigationSection = (
     <View style={buildingDetailsStyles.navigationSection}>
       <TouchableOpacity
-        testID="walking-figure-button"
         style={buildingDetailsStyles.navigationButton}
         onPress={handleDirectionsToPress}
       >
@@ -64,15 +64,34 @@ export default function BuildingDetails({
     </View>
   );
 
-  const servicesSection =
+  const servicesSection = (row: { name: string; url: string }[]) =>
     services && Object.keys(services).length > 0 ? (
       <View>
         <Text style={buildingDetailsStyles.servicesTitle}>Services</Text>
-        {services
-          ? Object.entries(services).map(([name, url]) => (
-              <Bullet key={name} name={name} link={url} />
-            ))
-          : ''}
+        {/* Loop over services and create rows */}
+        {Object.entries(services)
+          .reduce(
+            (rows, [name, url], index) => {
+              // Create a new row for every 3 items
+              if (index % 3 === 0) rows.push([]);
+              rows[rows.length - 1].push({ name, url });
+              return rows;
+            },
+            [] as { name: string; url: string }[][],
+          )
+          .map((row, rowIndex) => (
+            <View key={rowIndex} style={buildingDetailsStyles.row}>
+              {row.map((service, serviceIndex) => (
+                <TouchableOpacity
+                  key={serviceIndex}
+                  style={buildingDetailsStyles.uniqueServiceContainer}
+                  onPress={() => Linking.openURL(service.url)}
+                >
+                  <Text style={buildingDetailsStyles.serviceText}>{service.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
       </View>
     ) : null;
 
@@ -93,32 +112,17 @@ export default function BuildingDetails({
           </TouchableOpacity>
         </View>
       </View>
-      {/* Navigation Section */}
       {navigationSection}
-      <View style={buildingDetailsStyles.servicesContainer}>
-        {/* Building Services*/}
-        {servicesSection}
-      </View>
+      {services && Object.keys(services).length > 0 ? (
+        <View style={[buildingDetailsStyles.servicesContainer, { maxHeight: 400 }]}>
+          <BottomSheetFlatList
+            data={servicesSection} // Pass rows as data
+            renderItem={({ item }) => servicesSection([item])}
+            keyExtractor={(item, index) => index.toString()}
+            showsVerticalScrollIndicator={true}
+          />
+        </View>
+      ) : null}
     </>
   );
 }
-
-/* ---------- Types ---------- */
-
-type BulletProps = {
-  name: string;
-  link: string;
-};
-
-/* ---------- Reusable Components ---------- */
-
-const Bullet = ({ name, link }: BulletProps) => {
-  return (
-    <View style={buildingDetailsStyles.bulletRow}>
-      <Text style={buildingDetailsStyles.bullet}>•</Text>
-      <Text style={buildingDetailsStyles.bulletText} onPress={() => Linking.openURL(`${link}`)}>
-        {name}
-      </Text>
-    </View>
-  );
-};

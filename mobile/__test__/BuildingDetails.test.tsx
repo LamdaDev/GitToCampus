@@ -38,6 +38,21 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
+jest.mock('@gorhom/bottom-sheet', () => {
+  const actual = jest.requireActual('@gorhom/bottom-sheet');
+  return {
+    ...actual,
+    BottomSheetFlatList: ({ data, renderItem }) => {
+      // Simulate rendering each item without throwing
+      if (Array.isArray(data)) {
+        return data.map((item, index) => renderItem({ item, index, separators: {} }));
+      }
+      return null;
+    },
+    useBottomSheetInternal: jest.fn(() => ({})), // prevents hook error
+  };
+});
+
 describe('Building Details', () => {
   beforeEach(() => {
     jest.clearAllMocks();

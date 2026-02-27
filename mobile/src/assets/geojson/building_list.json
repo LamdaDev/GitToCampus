@@ -397,9 +397,9 @@
         "Building Long Name": "Grey Nuns Building",
         "Services": {
           "Grey Nuns Garden": "https://www.concordia.ca/maps/buildings/gg.html",
-          "Concordia Daycare (1185 St-Mathieu St.)": "https://cpeconcordia.ca/",
-          "Concordia University Student Parents Centre (CUSP): 1175 St-Mathieu St.": "https://www.concordia.ca/students/student-parents-centre.html",
-          "Grey Nuns Reading Room & Group Study Rooms (1190 Guy St.)": "https://www.concordia.ca/gradstudies/about/grey-nuns-grad-space.html",
+          "Concordia Daycare": "https://cpeconcordia.ca/",
+          "Concordia University Student Parents Centre": "https://www.concordia.ca/students/student-parents-centre.html",
+          "Grey Nuns Reading Room & Group Study Rooms": "https://www.concordia.ca/gradstudies/about/grey-nuns-grad-space.html",
           "Residences": "https://www.concordia.ca/students/housing/residences/grey-nuns.html",
           "Summer accommodations": "https://www.concordia.ca/summer/accommodations.html/greynunsresidence/"
         },
