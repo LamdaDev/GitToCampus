@@ -402,7 +402,9 @@ export default function DirectionDetails({
                     numberOfLines={1}
                     style={directionDetailsStyles.routeSecondaryText}
                   >
-                    {routeEtaText ? `${routeEtaText} ETA - ${routeDistanceText}` : routeDistanceText}
+                    {routeEtaText
+                      ? `${routeEtaText} ETA - ${routeDistanceText}`
+                      : routeDistanceText}
                   </Text>
                   {isCrossCampusRoute && (
                     <>

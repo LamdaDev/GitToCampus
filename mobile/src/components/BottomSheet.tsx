@@ -204,10 +204,7 @@ const getShuttlePlanningDate = (now: Date) => {
   return now;
 };
 
-const getDirectionsPanelSnapPoint = (
-  travelMode: RoutePlannerMode,
-  isCrossCampusRoute: boolean,
-) =>
+const getDirectionsPanelSnapPoint = (travelMode: RoutePlannerMode, isCrossCampusRoute: boolean) =>
   travelMode === 'shuttle' && isCrossCampusRoute
     ? DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT
     : DIRECTIONS_PANEL_SNAP_POINT;
@@ -507,7 +504,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       travelMode === 'shuttle' &&
       shuttlePlan?.isServiceAvailable &&
       shuttlePlan.nextDepartureInMinutes !== null
-        ? shuttlePlan.pickup?.coords ?? null
+        ? (shuttlePlan.pickup?.coords ?? null)
         : null;
     const routeDestinationCoords = shuttlePickupCoords ?? destinationCoords;
     const routeRequestMode: DirectionsTravelMode =

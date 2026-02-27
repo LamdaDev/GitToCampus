@@ -260,10 +260,7 @@ jest.mock('../src/components/DirectionDetails', () => {
           <TouchableOpacity testID="transport-bus" onPress={() => handleSelectMode('transit')}>
             <Text>Bus</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            testID="transport-shuttle"
-            onPress={() => handleSelectMode('shuttle')}
-          >
+          <TouchableOpacity testID="transport-shuttle" onPress={() => handleSelectMode('shuttle')}>
             <Text>Shuttle</Text>
           </TouchableOpacity>
           {showGoButton ? (
