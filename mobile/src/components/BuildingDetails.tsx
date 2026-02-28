@@ -66,11 +66,11 @@ export default function BuildingDetails({
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
-    const onScroll = (event) => {
-      const contentOffsetX = event.nativeEvent.contentOffset.x;
-      const index = Math.floor(contentOffsetX / 540);
-      setCurrentIndex(index);
-    };
+  const onScroll = (event) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.floor(contentOffsetX / 540);
+    setCurrentIndex(index);
+  };
 
   const carouselSection = (
     <View style={buildingDetailsStyles.carouselContainer}>

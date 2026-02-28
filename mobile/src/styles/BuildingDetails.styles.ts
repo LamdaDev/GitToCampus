@@ -86,7 +86,7 @@ export const buildingDetailsStyles = StyleSheet.create({
   },
   carouselContainer: {
     width: '100%',
-    height: 300,  // Adjust based on the image height
+    height: 300, // Adjust based on the image height
     justifyContent: 'center',
     alignItems: 'center',
   },
