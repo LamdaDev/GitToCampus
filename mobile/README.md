@@ -40,6 +40,10 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
    cp .env.example .env
    ```
    Then set `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` in `mobile/.env`.
+   For Google Calendar sync, also set:
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID`
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID`
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID` (used for web or as fallback)
 
 ### Running on Android
 
@@ -111,6 +115,29 @@ The routing services use a Strategy Pattern to keep mode-specific behavior isola
 - Shuttle planning is isolated behind a separate `ShuttlePlanStrategy` layer and continues to preserve cross-campus constraints and existing schedule behavior.
 
 This structure improves extensibility (new modes/route types), testability (strategy-level tests), and maintainability without changing UI behavior.
+
+## Google Calendar OAuth (US-3.1 / TASK-3.1.1)
+
+### Integration approach
+
+- The `SearchSheet` includes a clear `Connect Google Calendar` / `Reconnect Google Calendar` action.
+- OAuth is implemented with `expo-auth-session` using Authorization Code + PKCE.
+- Google Calendar access is requested with the read-only scope:
+  - `https://www.googleapis.com/auth/calendar.readonly`
+
+### Token storage
+
+- Auth session data (access token metadata + expiry) is stored in `expo-secure-store`.
+- Storage key: `gittocampus.googleCalendar.session.v1`.
+- No OAuth client IDs or secrets are hardcoded in source; client IDs are read from `EXPO_PUBLIC_*` env vars.
+
+### Session expiry and reconnect behavior
+
+- On app load, stored session data is validated and expiry-checked.
+- Expired or malformed session data is cleared from secure storage.
+- UI status is shown as `Connected`, `Not connected`, or `Session expired`.
+- If sign-in is canceled/denied/fails, the app remains usable and shows a clear message.
+- If a session expires while the app is open, UI switches to `Session expired` and prompts reconnect.
 
 ## Testing (Jest + React Native Testing Library)
 

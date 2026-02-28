@@ -1,8 +1,9 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import SearchSheet from '../src/components/SearchSheet';
 import { Campus } from '../src/types/Campus';
 import { BuildingShape } from '../src/types/BuildingShape';
+import * as googleCalendarAuth from '../src/services/googleCalendarAuth';
 
 const mockBuildings: BuildingShape[] = [
   {
@@ -31,7 +32,7 @@ const mockBuildings: BuildingShape[] = [
 jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
   return {
-    Ionicons: ({ name }) => <Text>{name}</Text>,
+    Ionicons: ({ name }: { name: string }) => <Text>{name}</Text>,
   };
 });
 
@@ -64,7 +65,29 @@ jest.mock('@gorhom/bottom-sheet', () => {
   };
 });
 
+jest.mock('../src/services/googleCalendarAuth', () => ({
+  connectGoogleCalendarAsync: jest.fn(async () => ({ type: 'cancel' })),
+  getStoredGoogleCalendarSessionState: jest.fn(async () => ({
+    status: 'not_connected',
+    session: null,
+  })),
+  clearGoogleCalendarSession: jest.fn(async () => {}),
+}));
+
 describe('SearchSheet', () => {
+  const getStoredSessionStateMock =
+    googleCalendarAuth.getStoredGoogleCalendarSessionState as jest.Mock;
+  const connectGoogleCalendarMock = googleCalendarAuth.connectGoogleCalendarAsync as jest.Mock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getStoredSessionStateMock.mockResolvedValue({
+      status: 'not_connected',
+      session: null,
+    });
+    connectGoogleCalendarMock.mockResolvedValue({ type: 'cancel' });
+  });
+
   test('renders without crashing', () => {
     const { getByTestId } = render(<SearchSheet buildings={mockBuildings} />);
     expect(getByTestId('search-bar')).toBeTruthy();
@@ -109,5 +132,62 @@ describe('SearchSheet', () => {
     );
     fireEvent.press(getByText('Hall Building'));
     expect(onPressBuilding).toHaveBeenCalledWith(mockBuildings[0]);
+  });
+
+  test('shows connection status as not connected on initial load', async () => {
+    const { getByTestId } = render(<SearchSheet buildings={mockBuildings} />);
+
+    await waitFor(() =>
+      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
+        'Calendar status: Not connected',
+      ),
+    );
+  });
+
+  test('shows a clear denied-permission message when auth is denied', async () => {
+    connectGoogleCalendarMock.mockResolvedValueOnce({ type: 'denied' });
+    const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
+
+    await waitFor(() =>
+      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
+        'Calendar status: Not connected',
+      ),
+    );
+    fireEvent.press(getByTestId('connect-google-calendar-button'));
+
+    await waitFor(() => expect(connectGoogleCalendarMock).toHaveBeenCalledTimes(1));
+
+    expect(
+      await findByText(
+        'Calendar permission was denied. You can continue using the app and connect later.',
+      ),
+    ).toBeTruthy();
+  });
+
+  test('shows connected state after successful calendar sign-in', async () => {
+    connectGoogleCalendarMock.mockResolvedValueOnce({
+      type: 'success',
+      session: {
+        accessToken: 'token-1',
+        tokenType: 'Bearer',
+        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      },
+    });
+    const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
+
+    await waitFor(() =>
+      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
+        'Calendar status: Not connected',
+      ),
+    );
+    fireEvent.press(getByTestId('connect-google-calendar-button'));
+
+    await waitFor(() => expect(connectGoogleCalendarMock).toHaveBeenCalledTimes(1));
+
+    expect(await findByText('Google Calendar connected.')).toBeTruthy();
+    expect(getByTestId('calendar-connection-status')).toHaveTextContent(
+      'Calendar status: Connected',
+    );
   });
 });
