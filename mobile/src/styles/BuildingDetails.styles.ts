@@ -84,6 +84,22 @@ export const buildingDetailsStyles = StyleSheet.create({
     elevation: 10,
     boxShadow: 'inset 0 -3.5px 4px rgba(0, 0, 0, 0.4)',
   },
+  carouselContainer: {
+    width: '100%',
+    height: 300,  // Adjust based on the image height
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  carousel: {
+    flexDirection: 'row',
+  },
+
+  carouselImage: {
+    width: 300,
+    height: 200,
+    resizeMode: 'cover',
+  },
   servicesContainer: {
     marginTop: 10,
     marginBottom: 10,

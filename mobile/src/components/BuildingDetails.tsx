@@ -1,7 +1,7 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
-import React from 'react';
-import { View, Text, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Linking, ScrollView, Image } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
@@ -64,6 +64,43 @@ export default function BuildingDetails({
     </View>
   );
 
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+    const onScroll = (event) => {
+      const contentOffsetX = event.nativeEvent.contentOffset.x;
+      const index = Math.floor(contentOffsetX / 540);
+      setCurrentIndex(index);
+    };
+
+  const carouselSection = (
+    <View style={buildingDetailsStyles.carouselContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={true}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentOffset={{ x: currentIndex * 200, y: 0 }}
+        style={buildingDetailsStyles.carousel}
+      >
+        <Image
+          key={1}
+          source={require('../../assets/favicon.png')}
+          style={buildingDetailsStyles.carouselImage}
+        />
+        <Image
+          key={2}
+          source={require('../../assets/favicon.png')}
+          style={buildingDetailsStyles.carouselImage}
+        />
+        <Image
+          key={3}
+          source={require('../../assets/favicon.png')}
+          style={buildingDetailsStyles.carouselImage}
+        />
+      </ScrollView>
+    </View>
+  );
+
   const servicesSection = (row: { name: string; url: string }[]) =>
     services && Object.keys(services).length > 0 ? (
       <View>
@@ -113,6 +150,7 @@ export default function BuildingDetails({
         </View>
       </View>
       {navigationSection}
+      {carouselSection}
       {services && Object.keys(services).length > 0 ? (
         <View style={[buildingDetailsStyles.servicesContainer, { maxHeight: 400 }]}>
           <BottomSheetFlatList
