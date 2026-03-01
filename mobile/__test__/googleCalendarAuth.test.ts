@@ -8,6 +8,8 @@ import {
   saveGoogleCalendarSession,
 } from '../src/services/googleCalendarAuth';
 
+const STORAGE_KEY = 'gittocampus.googleCalendar.session.v1';
+
 jest.mock('expo-web-browser', () => ({
   maybeCompleteAuthSession: jest.fn(),
 }));
@@ -52,6 +54,7 @@ describe('googleCalendarAuth', () => {
   const webBrowserMock = WebBrowser as unknown as {
     maybeCompleteAuthSession: jest.Mock;
   };
+  let consoleInfoSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -60,6 +63,12 @@ describe('googleCalendarAuth', () => {
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID = 'android-client-id';
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID = 'ios-client-id';
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID = 'web-client-id';
+    process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID = '';
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleInfoSpy.mockRestore();
   });
 
   test('returns connected state for a valid stored session', async () => {
@@ -91,6 +100,56 @@ describe('googleCalendarAuth', () => {
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledTimes(1);
   });
 
+  test('returns not connected and clears storage for invalid stored json', async () => {
+    secureStoreMock.__mockStore.set(STORAGE_KEY, '{this-is-invalid-json');
+
+    const state = await getStoredGoogleCalendarSessionState();
+
+    expect(state).toEqual({ status: 'not_connected', session: null });
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledTimes(1);
+  });
+
+  test('returns not connected and clears storage for invalid refresh token shape', async () => {
+    secureStoreMock.__mockStore.set(
+      STORAGE_KEY,
+      JSON.stringify({
+        accessToken: 'token',
+        tokenType: 'Bearer',
+        scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+        expiresAt: Date.now() + 100_000,
+        refreshToken: '   ',
+      }),
+    );
+
+    const state = await getStoredGoogleCalendarSessionState();
+
+    expect(state).toEqual({ status: 'not_connected', session: null });
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledTimes(1);
+  });
+
+  test('returns not connected when secure store read fails', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockRejectedValueOnce(new Error('read failed'));
+
+    const state = await getStoredGoogleCalendarSessionState();
+
+    expect(state).toEqual({ status: 'not_connected', session: null });
+  });
+
+  test('returns error when oauth client id is missing', async () => {
+    process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID = '';
+    process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID = '';
+    process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID = '';
+    process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID = '';
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message:
+        'Google Calendar OAuth client ID is missing. Configure EXPO_PUBLIC_GOOGLE_CALENDAR_*_CLIENT_ID.',
+    });
+  });
+
   test('returns cancel when the auth prompt is canceled', async () => {
     authSessionMock.loadAsync.mockResolvedValueOnce({
       codeVerifier: 'verifier',
@@ -101,6 +160,31 @@ describe('googleCalendarAuth', () => {
 
     expect(result).toEqual({ type: 'cancel' });
     expect(webBrowserMock.maybeCompleteAuthSession).toHaveBeenCalledTimes(1);
+  });
+
+  test('returns cancel when the auth prompt is dismissed', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({ type: 'dismiss' })),
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result).toEqual({ type: 'cancel' });
+  });
+
+  test('returns error when auth prompt is locked', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({ type: 'locked' })),
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Google sign-in is already active. Please wait and try again.',
+    });
   });
 
   test('returns denied when permissions are denied', async () => {
@@ -118,6 +202,118 @@ describe('googleCalendarAuth', () => {
     expect(result).toEqual({ type: 'denied' });
   });
 
+  test('returns oauth error description from response params', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({
+        type: 'error',
+        params: {
+          error: 'invalid_request',
+          error_description: 'Custom oauth error',
+        },
+        error: null,
+      })),
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Custom oauth error',
+    });
+  });
+
+  test('maps auth error code to denied calendar message', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({
+        type: 'error',
+        params: {
+          error: 'invalid_request',
+          error_description: '   ',
+        },
+        error: {
+          code: 'access_denied',
+        },
+      })),
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Calendar access was denied.',
+    });
+  });
+
+  test('maps auth error description and message fallback values', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({
+        type: 'error',
+        params: {
+          error: 'invalid_request',
+          error_description: '   ',
+        },
+        error: {
+          description: 'Auth description',
+          message: 'Auth message',
+        },
+      })),
+    });
+
+    const descriptionResult = await connectGoogleCalendarAsync();
+
+    expect(descriptionResult).toEqual({
+      type: 'error',
+      message: 'Auth description',
+    });
+
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({
+        type: 'error',
+        params: {
+          error: 'invalid_request',
+          error_description: '   ',
+        },
+        error: {
+          description: '   ',
+          message: 'Auth message',
+        },
+      })),
+    });
+
+    const messageResult = await connectGoogleCalendarAsync();
+
+    expect(messageResult).toEqual({
+      type: 'error',
+      message: 'Auth message',
+    });
+
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({
+        type: 'error',
+        params: {
+          error: 'invalid_request',
+          error_description: '   ',
+        },
+        error: {
+          description: '   ',
+          message: '   ',
+        },
+      })),
+    });
+
+    const fallbackResult = await connectGoogleCalendarAsync();
+
+    expect(fallbackResult).toEqual({
+      type: 'error',
+      message: 'Google authentication failed. Please try again.',
+    });
+  });
+
   test('returns error when running in Expo Go redirect flow', async () => {
     authSessionMock.makeRedirectUri.mockReturnValueOnce('exp://127.0.0.1:8081/--/oauthredirect');
 
@@ -130,6 +326,38 @@ describe('googleCalendarAuth', () => {
     });
     expect(authSessionMock.loadAsync).not.toHaveBeenCalled();
     expect(webBrowserMock.maybeCompleteAuthSession).not.toHaveBeenCalled();
+  });
+
+  test('returns error when prompt result type is unexpected', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({ type: 'opened' as any })),
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Google sign-in did not complete. Please try again.',
+    });
+  });
+
+  test('returns error when success payload is missing auth code', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({
+        type: 'success',
+        params: {},
+        authentication: null,
+      })),
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Google authentication completed without an authorization code.',
+    });
   });
 
   test('exchanges auth code and stores session on successful sign-in', async () => {
@@ -169,5 +397,74 @@ describe('googleCalendarAuth', () => {
     const storedState = await getStoredGoogleCalendarSessionState();
     expect(storedState.status).toBe('connected');
     expect(storedState.session?.accessToken).toBe('access-token-123');
+  });
+
+  test('exchanges auth code without code_verifier when request has no verifier', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      promptAsync: jest.fn(async () => ({
+        type: 'success',
+        params: { code: 'auth-code-abc' },
+        authentication: null,
+      })),
+    });
+
+    authSessionMock.exchangeCodeAsync.mockResolvedValueOnce({
+      accessToken: 'access-token-abc',
+      tokenType: 'Bearer',
+      expiresIn: 1200,
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result.type).toBe('success');
+    expect(authSessionMock.exchangeCodeAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'auth-code-abc',
+        extraParams: undefined,
+      }),
+      expect.any(Object),
+    );
+  });
+
+  test('uses prompt authentication response directly with fallback ttl and scope', async () => {
+    const before = Date.now();
+
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({
+        type: 'success',
+        params: {},
+        authentication: {
+          accessToken: 'direct-token',
+          tokenType: 'Bearer',
+        },
+      })),
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result.type).toBe('success');
+    if (result.type !== 'success') throw new Error('Expected success result');
+    expect(result.session.scope).toBe(GOOGLE_CALENDAR_READONLY_SCOPE);
+    expect(result.session.expiresAt).toBeGreaterThanOrEqual(before + 3_599_000);
+    expect(result.session.expiresAt).toBeLessThanOrEqual(before + 3_601_000);
+    expect(authSessionMock.exchangeCodeAsync).not.toHaveBeenCalled();
+  });
+
+  test('returns mapped message for thrown errors and unknown rejections', async () => {
+    authSessionMock.loadAsync.mockRejectedValueOnce(new Error('OAuth exploded'));
+    const errorResult = await connectGoogleCalendarAsync();
+    expect(errorResult).toEqual({
+      type: 'error',
+      message: 'OAuth exploded',
+    });
+
+    authSessionMock.loadAsync.mockRejectedValueOnce('raw failure');
+    const fallbackResult = await connectGoogleCalendarAsync();
+    expect(fallbackResult).toEqual({
+      type: 'error',
+      message: 'Unable to connect Google Calendar right now. Please try again.',
+    });
   });
 });
