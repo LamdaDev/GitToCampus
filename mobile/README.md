@@ -127,6 +127,41 @@ This structure improves extensibility (new modes/route types), testability (stra
 - Google Calendar access is requested with the read-only scope:
   - `https://www.googleapis.com/auth/calendar.readonly`
 
+### Android setup and commands
+
+Use this flow for Android Google Calendar sign-in.
+
+1. Verify app signing fingerprint:
+
+   ```bash
+   cd mobile/android
+   .\gradlew.bat signingReport
+   ```
+
+   Use `app -> Variant: debug -> SHA1` in Google Cloud.
+
+2. Configure Google Cloud OAuth Android client:
+   - Application type: `Android`
+   - Package name: `com.anonymous.mobile`
+   - SHA-1: value from `signingReport`
+   - Advanced settings: enable `Custom URI scheme`
+
+3. Set env vars in `mobile/.env`:
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID=<android-client-id>.apps.googleusercontent.com`
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID=<ios-client-id>.apps.googleusercontent.com`
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID=<web-client-id>.apps.googleusercontent.com`
+
+4. Ensure OAuth test users are allowed:
+   - Google Auth Platform -> Audience -> add all tester emails.
+
+5. Build and run dev client (not Expo Go):
+   ```bash
+   cd mobile
+   npx expo run:android
+   npx expo start --dev-client -c
+   ```
+   Open the installed dev app (`com.anonymous.mobile`) and connect Google Calendar from the app UI.
+
 ### Token storage
 
 - Auth session data (access token metadata + expiry) is stored in `expo-secure-store`.
