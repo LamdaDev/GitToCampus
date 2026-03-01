@@ -12,6 +12,10 @@ jest.mock('expo-web-browser', () => ({
   maybeCompleteAuthSession: jest.fn(),
 }));
 
+jest.mock('expo-application', () => ({
+  applicationId: 'com.anonymous.mobile',
+}));
+
 jest.mock('expo-auth-session', () => ({
   ResponseType: {
     Code: 'code',
@@ -40,6 +44,7 @@ describe('googleCalendarAuth', () => {
   const authSessionMock = AuthSession as unknown as {
     loadAsync: jest.Mock;
     exchangeCodeAsync: jest.Mock;
+    makeRedirectUri: jest.Mock;
   };
   const secureStoreMock = SecureStore as typeof SecureStore & {
     __mockStore: Map<string, string>;
@@ -51,6 +56,7 @@ describe('googleCalendarAuth', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     secureStoreMock.__mockStore.clear();
+    authSessionMock.makeRedirectUri.mockReturnValue('gittocampus://oauthredirect');
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID = 'android-client-id';
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID = 'ios-client-id';
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID = 'web-client-id';
@@ -110,6 +116,20 @@ describe('googleCalendarAuth', () => {
     const result = await connectGoogleCalendarAsync();
 
     expect(result).toEqual({ type: 'denied' });
+  });
+
+  test('returns error when running in Expo Go redirect flow', async () => {
+    authSessionMock.makeRedirectUri.mockReturnValueOnce('exp://127.0.0.1:8081/--/oauthredirect');
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message:
+        'Google Calendar sign-in is not supported in Expo Go. Use a development build and try again.',
+    });
+    expect(authSessionMock.loadAsync).not.toHaveBeenCalled();
+    expect(webBrowserMock.maybeCompleteAuthSession).not.toHaveBeenCalled();
   });
 
   test('exchanges auth code and stores session on successful sign-in', async () => {

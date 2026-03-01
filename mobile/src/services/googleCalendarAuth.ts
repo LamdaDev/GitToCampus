@@ -1,4 +1,5 @@
 import * as AuthSession from 'expo-auth-session';
+import * as Application from 'expo-application';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
@@ -7,6 +8,9 @@ const GOOGLE_CALENDAR_STORAGE_KEY = 'gittocampus.googleCalendar.session.v1';
 const GOOGLE_CALENDAR_KEYCHAIN_SERVICE = 'gittocampus.googleCalendar';
 const TOKEN_EXPIRY_GRACE_MS = 60_000;
 const FALLBACK_ACCESS_TOKEN_TTL_SECONDS = 3600;
+const GOOGLE_CALENDAR_REDIRECT_PATH = 'oauthredirect';
+const APP_SCHEME = 'gittocampus';
+const ANDROID_PACKAGE_FALLBACK = 'com.anonymous.mobile';
 
 const GOOGLE_CALENDAR_DISCOVERY = {
   authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -89,10 +93,19 @@ const getConfiguredClientId = (): string => {
   return (platformClientId ?? fallbackClientId ?? '').trim();
 };
 
+const getRedirectScheme = (): string =>
+  Platform.OS === 'android'
+    ? (Application.applicationId ?? ANDROID_PACKAGE_FALLBACK).trim()
+    : APP_SCHEME;
+
 const createRedirectUri = () =>
   AuthSession.makeRedirectUri({
-    path: 'oauthredirect',
+    // Google OAuth for installed apps expects a native redirect URI.
+    native: `${getRedirectScheme()}:/${GOOGLE_CALENDAR_REDIRECT_PATH}`,
+    path: GOOGLE_CALENDAR_REDIRECT_PATH,
   });
+
+const isExpoGoRedirectUri = (redirectUri: string) => redirectUri.startsWith('exp://');
 
 const toSession = (tokenResponse: AuthSession.TokenResponse): GoogleCalendarSession => {
   const expiresInSeconds = tokenResponse.expiresIn ?? FALLBACK_ACCESS_TOKEN_TTL_SECONDS;
@@ -179,6 +192,21 @@ export const connectGoogleCalendarAsync = async (): Promise<GoogleCalendarConnec
   }
 
   const redirectUri = createRedirectUri();
+  if (__DEV__) {
+    console.info('[GoogleCalendarAuth] OAuth request config', {
+      clientId,
+      redirectUri,
+      platform: Platform.OS,
+    });
+  }
+
+  if (isExpoGoRedirectUri(redirectUri)) {
+    return {
+      type: 'error',
+      message:
+        'Google Calendar sign-in is not supported in Expo Go. Use a development build and try again.',
+    };
+  }
 
   try {
     WebBrowser.maybeCompleteAuthSession();
@@ -212,9 +240,10 @@ export const connectGoogleCalendarAsync = async (): Promise<GoogleCalendarConnec
         return { type: 'denied' };
       }
 
+      const oauthErrorDescription = (promptResult.params.error_description ?? '').trim();
       return {
         type: 'error',
-        message: mapPromptErrorToMessage(promptResult.error),
+        message: oauthErrorDescription || mapPromptErrorToMessage(promptResult.error),
       };
     }
 

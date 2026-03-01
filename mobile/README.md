@@ -40,6 +40,7 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
    cp .env.example .env
    ```
    Then set `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` in `mobile/.env`.
+   This key is used for both Directions API requests and native Android/iOS map initialization.
    For Google Calendar sync, also set:
    - `EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID`
    - `EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID`
@@ -122,6 +123,7 @@ This structure improves extensibility (new modes/route types), testability (stra
 
 - The `SearchSheet` includes a clear `Connect Google Calendar` / `Reconnect Google Calendar` action.
 - OAuth is implemented with `expo-auth-session` using Authorization Code + PKCE.
+- Google OAuth is not supported in Expo Go for this flow. Use a development build (`npx expo run:android` or `npx expo run:ios`) when testing Google sign-in.
 - Google Calendar access is requested with the read-only scope:
   - `https://www.googleapis.com/auth/calendar.readonly`
 
