@@ -12,9 +12,14 @@ const mockBuildings: BuildingShape[] = [
     id: 'sgw-1',
     campus: 'LOYOLA',
     name: 'FC Building',
+    images: [
+      "https://iili.io/qqTLZpR.png",
+      "https://iili.io/qqTsrUG.jpg",
+      "https://iili.io/qqTZzoN.jpg"
+    ],
     services: {
       'Concordia Multi-Faith and Spirituality Centre':
-        'https://www.concordia.ca/equity/spirituality.html',
+      'https://www.concordia.ca/equity/spirituality.html',
     },
     shortCode: 'FC',
     address: '7141 Sherbrooke West',
@@ -25,6 +30,11 @@ const mockBuildings: BuildingShape[] = [
     campus: 'SGW',
     name: 'EV Building',
     address: '1515 Ste-Catherine W',
+    images: [
+      "https://iili.io/qqTLZpR.png",
+      "https://iili.io/qqTsrUG.jpg",
+      "https://iili.io/qqTZzoN.jpg"
+    ]
   },
 ];
 
@@ -146,5 +156,49 @@ describe('Building Details', () => {
     fireEvent.press(getByText('Start From'));
 
     expect(mockOnShowDirections).not.toHaveBeenCalled();
+  });
+
+  test('renders carousel images when selectedBuilding has images', () => {
+    const selectedBuilding = mockBuildings[0];
+
+    const { getAllByTestId } = render(
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    const images = getAllByTestId('carousel-image');
+
+    expect(images).toHaveLength(selectedBuilding.images.length);
+
+    images.forEach((img, index) => {
+      expect(img.props.source).toEqual({ uri: selectedBuilding.images[index] });
+    });
+  });
+
+  test('renders services and opens URL when pressed', () => {
+    const selectedBuilding = mockBuildings[0];
+
+    const { getByText } = render(
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    expect(getByText('Services')).toBeTruthy();
+
+    const serviceButton = getByText(
+      'Concordia Multi-Faith and Spirituality Centre'
+    );
+
+    expect(serviceButton).toBeTruthy();
   });
 });

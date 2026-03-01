@@ -70,41 +70,24 @@ export default function BuildingDetails({
       >
         {selectedBuilding?.images?.map((imgUrl, index) => (
           <View key={index} style={buildingDetailsStyles.imageWrapper}>
-            <Image source={{ uri: imgUrl }} style={buildingDetailsStyles.carouselImage} />
+            <Image testID="carousel-image" source={{ uri: imgUrl }} style={buildingDetailsStyles.carouselImage} />
           </View>
         ))}
       </ScrollView>
     </View>
   );
 
-  const servicesSection = (row: { name: string; url: string }[]) =>
-    services && Object.keys(services).length > 0 ? (
-      <View>
-        <Text style={buildingDetailsStyles.servicesTitle}>Services</Text>
-        {Object.entries(services)
-          .reduce(
-            (rows, [name, url], index) => {
-              if (index % 3 === 0) rows.push([]);
-              rows[rows.length - 1].push({ name, url });
-              return rows;
-            },
-            [] as { name: string; url: string }[][],
-          )
-          .map((row, rowIndex) => (
-            <View key={rowIndex} style={buildingDetailsStyles.row}>
-              {row.map((service, serviceIndex) => (
-                <TouchableOpacity
-                  key={serviceIndex}
-                  style={buildingDetailsStyles.uniqueServiceContainer}
-                  onPress={() => Linking.openURL(service.url)}
-                >
-                  <Text style={buildingDetailsStyles.serviceText}>{service.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ))}
-      </View>
-    ) : null;
+  const servicesSection = (services: { name: string; url: string }[]) => {
+    if (!services || services.length === 0) return []; // Return empty array if no services
+    
+    // Group services into rows of 3
+    return Object.entries(services)
+      .reduce((rows, [name, url], index) => {
+        if (index % 3 === 0) rows.push([]); // Start a new row after every 3 items
+        rows[rows.length - 1].push({ name, url });
+        return rows;
+      }, [] as { name: string; url: string }[][]); // Return the grouped rows
+  };
 
   return (
     <>
@@ -126,9 +109,22 @@ export default function BuildingDetails({
       {carouselSection}
       {services && Object.keys(services).length > 0 ? (
         <View style={[buildingDetailsStyles.servicesContainer, { maxHeight: 300 }]}>
+          <Text style={buildingDetailsStyles.servicesTitle}>Services</Text>
           <BottomSheetFlatList
-            data={servicesSection}
-            renderItem={({ item }) => servicesSection([item])}
+            data={servicesSection(services)}
+            renderItem={({ item }) => (
+              <View style={buildingDetailsStyles.row}>
+                {item.map((service, serviceIndex) => (
+                  <TouchableOpacity
+                    key={serviceIndex}
+                    style={buildingDetailsStyles.uniqueServiceContainer}
+                    onPress={() => Linking.openURL(service.url)}
+                  >
+                    <Text style={buildingDetailsStyles.serviceText}>{service.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
             keyExtractor={(item, index) => index.toString()}
             showsVerticalScrollIndicator={true}
           />
