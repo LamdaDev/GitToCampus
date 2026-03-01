@@ -15,8 +15,19 @@ if (!googleMapsApiKey) {
 module.exports = {
   ...expo,
   scheme,
+  extra: {
+    ...(expo.extra ?? {}),
+    eas: {
+      ...(expo.extra?.eas ?? {}),
+      projectId: 'd9559f2e-76d4-44c9-9aaf-65fca4a5a6c8',
+    },
+  },
   ios: {
     ...expo.ios,
+    infoPlist: {
+      ...(expo.ios?.infoPlist ?? {}),
+      ITSAppUsesNonExemptEncryption: false,
+    },
     config: {
       ...(expo.ios?.config ?? {}),
       googleMapsApiKey,
