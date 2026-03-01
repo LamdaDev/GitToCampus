@@ -95,7 +95,7 @@ export default function SearchSheet({ buildings, onPressBuilding }: Readonly<Sea
     if (result.type === 'success') {
       setCalendarStatus('connected');
       setSessionExpiresAt(result.session.expiresAt);
-      setCalendarMessage('Google Calendar connected.');
+      setCalendarMessage(null);
       return;
     }
 
@@ -130,7 +130,7 @@ export default function SearchSheet({ buildings, onPressBuilding }: Readonly<Sea
   }, []);
 
   const helperText = useMemo(() => {
-    if (calendarStatus === 'connected') return 'Google Calendar sync is enabled.';
+    if (calendarStatus === 'connected') return '';
     if (calendarStatus === 'expired') return 'Google Calendar session expired.';
     return 'Sign in below to sync your calendar';
   }, [calendarStatus]);
@@ -171,7 +171,7 @@ export default function SearchSheet({ buildings, onPressBuilding }: Readonly<Sea
         searchIcon={{ name: 'search', type: 'ionicon', size: 25, color: '#d7c9cf' }}
       />
 
-      <Text style={searchBuilding.helperText}>{helperText}</Text>
+      {helperText ? <Text style={searchBuilding.helperText}>{helperText}</Text> : null}
       <Text
         testID="calendar-connection-status"
         style={[

@@ -174,7 +174,7 @@ describe('SearchSheet', () => {
         expiresAt: Date.now() + 10 * 60 * 1000,
       },
     });
-    const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
+    const { getByTestId, queryByText } = render(<SearchSheet buildings={mockBuildings} />);
 
     await waitFor(() =>
       expect(getByTestId('calendar-connection-status')).toHaveTextContent(
@@ -185,7 +185,7 @@ describe('SearchSheet', () => {
 
     await waitFor(() => expect(connectGoogleCalendarMock).toHaveBeenCalledTimes(1));
 
-    expect(await findByText('Google Calendar connected.')).toBeTruthy();
+    expect(queryByText('Google Calendar connected.')).toBeNull();
     expect(getByTestId('calendar-connection-status')).toHaveTextContent(
       'Calendar status: Connected',
     );
