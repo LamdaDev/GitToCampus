@@ -13,13 +13,13 @@ const mockBuildings: BuildingShape[] = [
     campus: 'LOYOLA',
     name: 'FC Building',
     images: [
-      "https://iili.io/qqTLZpR.png",
-      "https://iili.io/qqTsrUG.jpg",
-      "https://iili.io/qqTZzoN.jpg"
+      'https://iili.io/qqTLZpR.png',
+      'https://iili.io/qqTsrUG.jpg',
+      'https://iili.io/qqTZzoN.jpg',
     ],
     services: {
       'Concordia Multi-Faith and Spirituality Centre':
-      'https://www.concordia.ca/equity/spirituality.html',
+        'https://www.concordia.ca/equity/spirituality.html',
     },
     shortCode: 'FC',
     address: '7141 Sherbrooke West',
@@ -31,10 +31,10 @@ const mockBuildings: BuildingShape[] = [
     name: 'EV Building',
     address: '1515 Ste-Catherine W',
     images: [
-      "https://iili.io/qqTLZpR.png",
-      "https://iili.io/qqTsrUG.jpg",
-      "https://iili.io/qqTZzoN.jpg"
-    ]
+      'https://iili.io/qqTLZpR.png',
+      'https://iili.io/qqTsrUG.jpg',
+      'https://iili.io/qqTZzoN.jpg',
+    ],
   },
 ];
 
@@ -195,9 +195,7 @@ describe('Building Details', () => {
 
     expect(getByText('Services')).toBeTruthy();
 
-    const serviceButton = getByText(
-      'Concordia Multi-Faith and Spirituality Centre'
-    );
+    const serviceButton = getByText('Concordia Multi-Faith and Spirituality Centre');
 
     expect(serviceButton).toBeTruthy();
   });

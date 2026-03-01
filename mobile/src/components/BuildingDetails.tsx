@@ -70,7 +70,11 @@ export default function BuildingDetails({
       >
         {selectedBuilding?.images?.map((imgUrl, index) => (
           <View key={index} style={buildingDetailsStyles.imageWrapper}>
-            <Image testID="carousel-image" source={{ uri: imgUrl }} style={buildingDetailsStyles.carouselImage} />
+            <Image
+              testID="carousel-image"
+              source={{ uri: imgUrl }}
+              style={buildingDetailsStyles.carouselImage}
+            />
           </View>
         ))}
       </ScrollView>
@@ -79,14 +83,16 @@ export default function BuildingDetails({
 
   const servicesSection = (services: { name: string; url: string }[]) => {
     if (!services || services.length === 0) return []; // Return empty array if no services
-    
+
     // Group services into rows of 3
-    return Object.entries(services)
-      .reduce((rows, [name, url], index) => {
+    return Object.entries(services).reduce(
+      (rows, [name, url], index) => {
         if (index % 3 === 0) rows.push([]); // Start a new row after every 3 items
         rows[rows.length - 1].push({ name, url });
         return rows;
-      }, [] as { name: string; url: string }[][]); // Return the grouped rows
+      },
+      [] as { name: string; url: string }[][],
+    ); // Return the grouped rows
   };
 
   return (
