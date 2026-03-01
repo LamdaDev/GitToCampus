@@ -10,8 +10,13 @@
         "Building": "SB",
         "BuildingName": "SB Building",
         "Building Long Name": "Samuel Bronfman Building",
+        "Images": [
+          "https://iili.io/qqxhC1s.png",
+          "https://iili.io/qqowaaf.png",
+          "https://iili.io/qqxvzPI.png"
+        ],
         "Services": {
-          "Arts and Science Research Groups": "https://www.concordia.ca/artsci/research/centres.html"
+          "Arts & Science Research Groups": "https://www.concordia.ca/artsci/research/centres.html"
         },
         "Address": "1590 Doctor Penfield",
         "Latitude": 45.4966,
@@ -28,6 +33,11 @@
         "Building": "VA",
         "BuildingName": "VA Building",
         "Building Long Name": "Visual Arts Building",
+        "Images": [
+          "https://iili.io/qqIHnZx.png",
+          "https://iili.io/qqzybsV.png",
+          "https://iili.io/qqId3mu.png"
+        ],
         "Services": {
           "VAV Gallery": "https://www.vavgallery.ca/",
           "4TH SPACE": ""
@@ -49,12 +59,12 @@
         "Building Long Name": "J.W. McConnell Building",
         "Services": {
           "4TH SPACE": "https://www.concordia.ca/next-gen/4th-space.html",
-          "Leonard and Bina Ellen Art Gallery": "https://ellengallery.concordia.ca/news/?lang=en",
+          "Leonard & Bina Ellen Art Gallery": "https://ellengallery.concordia.ca/news/?lang=en",
           "Birks Student Service Centre": "https://www.concordia.ca/students/birks.html",
           "Concordia Book Stop": "https://www.bkstr.com/concordiastore/home",
           "Concordia Print Services": "https://www.concordia.ca/print.html",
           "First Stop": "https://www.concordia.ca/students/first-stop.html",
-          "Instructional and Information Technology Services (IITS)": "https://www.concordia.ca/it.html",
+          "Instructional & Information Technology Services (IITS)": "https://www.concordia.ca/it.html",
           "J.A. De Sève Cinema": "https://www.concordia.ca/it/cinemas/deseve-cinema.html",
           "R. Howard Webster Library": "https://library.concordia.ca/locations/",
           "SHIFT Centre for Social Transformation": "https://www.concordia.ca/about/shift.html",
@@ -75,19 +85,24 @@
         "Building": "H",
         "BuildingName": "H Building",
         "Building Long Name": "Henry F. Hall Building",
+        "Images": [
+          "https://iili.io/qqoKrrB.png",
+          "https://iili.io/qqonjDX.png",
+          "https://iili.io/qqoEmDg.png"
+        ],
         "Services": {
           "Concordia Theatre": "https://www.concordia.ca/arts/venues/db-clarke-theatre.html",
           "Reggies": "https://reggies.ca/",
-          "Sir George Williams University Alumni Auditorium": "https://www.concordia.ca/maps/buildings/concordia-panoramas/h-h110.html",
-          "Campus Safety and Prevention Services": "https://www.concordia.ca/campus-life/security.html",
-          "Concordia Student Union (CSU)": "https://www.csu.qc.ca/",
+          "SGW University Alumni Auditorium": "https://www.concordia.ca/maps/buildings/concordia-panoramas/h-h110.html",
+          "Campus Safety & Prevention Services": "https://www.concordia.ca/campus-life/security.html",
+          "Concordia Student Union": "https://www.csu.qc.ca/",
           "First Stop": "https://www.concordia.ca/students/first-stop.html",
           "Espace Franco": "https://www.concordia.ca/fr/etudiants/espace-franco.html",
           "IT Service Desk": "https://www.concordia.ca/it.html",
           "NouLa Black Student Centre": "https://www.concordia.ca/students/noula.html",
-          "Office of Student Life and Engagement": "https://www.concordia.ca/students/life/engagement.html",
+          "Student Life & Engagement Office": "https://www.concordia.ca/students/life/engagement.html",
           "Otsenhákta Student Centre": "https://www.concordia.ca/students/otsenhakta.html",
-          "Sexual Assault Resource Centre (SARC)": "https://www.concordia.ca/conduct/sexual-assault.html",
+          "Sexual Assault Resource Centre": "https://www.concordia.ca/conduct/sexual-assault.html",
           "Student Success Centre": "https://www.concordia.ca/students/success.html",
           "Welcome Crew Office": "https://www.concordia.ca/students/new/mentoring.html",
           "Zen Den": "https://www.concordia.ca/health/cuwellness.html"
@@ -172,7 +187,7 @@
         "BuildingName": "PR Building",
         "Building Long Name": "PR Annex",
         "Services": {
-          "Concordia University Library Employees' Union (CULEU)": "https://www.concordia.ca/hr/labour-agreements/culeu.html"
+          "Library Employees Union": "https://www.concordia.ca/hr/labour-agreements/culeu.html"
         },
         "Address": "2100 Mackay Street",
         "Latitude": 45.497066,
@@ -222,7 +237,7 @@
         "BuildingName": "GS Building",
         "Building Long Name": "Guy-Sherbrooke Building",
         "Services": {
-          "Concordia University Part-time Faculty Association (CUPFA)": "https://www.cupfa.org/en_CA/"
+          "Part-time Faculty Association": "https://www.cupfa.org/en_CA/"
         },
         "Address": "1538, Sherbrooke W",
         "Latitude": 45.496673,
@@ -249,9 +264,9 @@
           "Institute for Co-operative Education": "https://www.concordia.ca/academics/co-op.html",
           "International Students Office": "https://www.concordia.ca/students/international.html",
           "Office of the President and Vice-Chancellor": "https://www.concordia.ca/about/administration-governance/president.html",
-          "Office of the Provost and Vice-President, Academic": "https://www.concordia.ca/provost.html",
-          "Office of the Vice-President, Research, Innovation and Impact": "https://www.concordia.ca/about/administration-governance/office-vp-research-innovation-impact.html",
-          "Office of the Vice-President, Services and Sustainability": "https://www.concordia.ca/about/administration-governance/office-vp-services-sustainability.html",
+          "Office of the Provost & Vice-President, Academic": "https://www.concordia.ca/provost.html",
+          "Office of the Vice-President, Research, Innovation & Impact": "https://www.concordia.ca/about/administration-governance/office-vp-research-innovation-impact.html",
+          "Office of the Vice-President, Services & Sustainability": "https://www.concordia.ca/about/administration-governance/office-vp-services-sustainability.html",
           "Ombuds Office": "https://www.concordia.ca/offices/ombuds.html",
           "University Communications Services": "https://www.concordia.ca/about/administration-governance/office-chief-communications-officer.html",
           "Zen Den": "https://www.concordia.ca/health/cuwellness.html"
@@ -272,7 +287,7 @@
         "BuildingName": "MB Building",
         "Building Long Name": "John Molson Building",
         "Services": {
-          "Concordia Conference Centre, 9th Floor": "https://www.concordia.ca/hospitality/venues/concordia-conference-centre.html",
+          "Concordia Conference Centre": "https://www.concordia.ca/hospitality/venues/concordia-conference-centre.html",
           "Cloud Deck": "https://www.concordia.ca/maps/buildings/concordia-panoramas/mb-3-130.html",
           "Career Management Services": "https://www.concordia.ca/jmsb/career.html",
           "First Stop": "https://www.concordia.ca/students/first-stop.html",
@@ -312,7 +327,7 @@
         "BuildingName": "FG Building",
         "Building Long Name": "Faubourg Ste-Catherine Building",
         "Services": {
-          "Records Management and Archives (RMA) Research Room and Vault": "https://www.concordia.ca/offices/archives.html"
+          "Records Management and Archives": "https://www.concordia.ca/offices/archives.html"
         },
         "Address": "1610 Ste-Catherine",
         "Latitude": 45.494381,
@@ -437,7 +452,7 @@
         "BuildingName": "PS Building",
         "Building Long Name": "Physical Services Building",
         "Services": {
-          "Environmental Health and Safety": "https://www.concordia.ca/campus-life/safety.html",
+          "Environmental Health & Safety": "https://www.concordia.ca/campus-life/safety.html",
           "Facilities Management": "https://www.concordia.ca/offices/facilities.html"
         },
         "Address": "7141 Sherbrooke W",
@@ -531,7 +546,7 @@
         "BuildingName": "GE Building",
         "Building Long Name": "Centre for Structural and Functional Genomics",
         "Services": {
-          "Centre for Structural and Functional Genomics": "https://www.concordia.ca/research/genomics.html"
+          "Centre for Structural & Functional Genomics": "https://www.concordia.ca/research/genomics.html"
         },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.457017,
@@ -603,7 +618,7 @@
         "BuildingName": "SP Building",
         "Building Long Name": "Richard J. Renaud Science Complex",
         "Services": {
-          "Campus Safety and Prevention Services": "https://www.concordia.ca/campus-life/security.html",
+          "Campus Safety & Prevention Services": "https://www.concordia.ca/campus-life/security.html",
           "First Stop": "https://www.concordia.ca/students/first-stop.html",
           "Science College": "https://www.concordia.ca/artsci/science-college.html"
         },
@@ -640,7 +655,7 @@
         "Building Long Name": "Loyola Jesuit Hall and Conference Centre",
         "Services": {
           "Conference services": "https://www.concordia.ca/hospitality.html",
-          "Loyola Jesuit Hall and Conference Centre": "https://www.concordia.ca/hospitality/venues/loyola-jesuit-hall-conference-centre.html"
+          "Jesuit Hall & Conference Centre": "https://www.concordia.ca/hospitality/venues/loyola-jesuit-hall-conference-centre.html"
         },
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.458489,
@@ -675,7 +690,7 @@
         "Building Long Name": "Central Building",
         "Services": {
           "Concordia Student Union": "https://www.csu.qc.ca/",
-          "Loyola College for Diversity and Sustainability and Loyola": "https://www.concordia.ca/artsci/loyola-college-diversity-sustainability.html",
+          "Loyola College for Diversity & Sustainability": "https://www.concordia.ca/artsci/loyola-college-diversity-sustainability.html",
           "Zen Den": "https://www.concordia.ca/health/cuwellness.html"
         },
         "Address": "7141 Sherbrooke West",
@@ -695,13 +710,13 @@
         "Building Long Name": "Administration Building",
         "Services": {
           "Access Centre for Students with Disabilities": "https://www.concordia.ca/students/accessibility.html",
-          "Centre for Teaching and Learning": "https://www.concordia.ca/ctl.html",
-          "Counselling and Psychological Services": "https://www.concordia.ca/health/mental-health/counselling.html",
+          "Centre for Teaching & Learning": "https://www.concordia.ca/ctl.html",
+          "Counselling & Psychological Services": "https://www.concordia.ca/health/mental-health/counselling.html",
           "Health Services": "https://www.concordia.ca/health/medical/clinic.html",
-          "Loyola College for Diversity and Sustainability": "https://www.concordia.ca/artsci/loyola-college-diversity-sustainability.html",
+          "Loyola College for Diversity & Sustainability": "https://www.concordia.ca/artsci/loyola-college-diversity-sustainability.html",
           "Loyola Landing": "https://www.concordia.ca/students/services/loyola.html",
-          "Office of the Provost and Vice-President, Academic": "https://www.concordia.ca/provost.html",
-          "Office of Student Life and Engagement": "https://www.concordia.ca/students/life.html",
+          "Office of the Provost & Vice-President, Academic": "https://www.concordia.ca/provost.html",
+          "Office of Student Life & Engagement": "https://www.concordia.ca/students/life.html",
           "Welcome Crew Office": "https://www.concordia.ca/students/new/mentoring.html"
         },
         "Address": "7141, Sherbrooke West",
@@ -721,7 +736,7 @@
         "Building Long Name": "F.C. Smith Building",
         "Services": {
           "Loyola Chapel": "https://www.concordia.ca/hospitality/venues/loyola-chapel.html",
-          "Concordia Multi-Faith and Spirituality Centre": "https://www.concordia.ca/equity/spirituality.html"
+          "Concordia Multi-Faith & Spirituality Centre": "https://www.concordia.ca/equity/spirituality.html"
         },
         "Address": "7141 Sherbrooke West",
         "Latitude": 45.458493,
@@ -865,7 +880,7 @@
         "BuildingName": "HB Building",
         "Building Long Name": "Hingston Hall, wing HB",
         "Services": {
-          "Concordia University Faculty Association (CUFA)": "https://cufa.net/",
+          "Concordia University Faculty Association": "https://cufa.net/",
           "Student Residence": "https://www.concordia.ca/students/housing/residences/loyola-residences.html"
         },
         "Address": "7141 Sherbrooke West",
@@ -939,12 +954,12 @@
         "Building Long Name": "Faubourg Building",
         "Services": {
           "District 3 Innovation Hub": "https://www.concordia.ca/research/d3.html",
-          "Enrolment Services / Office of the Registrar / Student Recruitment": "https://www.concordia.ca/offices/registrar.html",
-          "Environmental Health and Safety": "https://www.concordia.ca/maps/buildings/fb.html",
+          "Office of the Registrar": "https://www.concordia.ca/offices/registrar.html",
+          "Environmental Health & Safety": "https://www.concordia.ca/maps/buildings/fb.html",
           "Examinations Office": "https://www.concordia.ca/students/exams.html",
           "Human Resources": "https://www.concordia.ca/hr.html",
           "Office of Sustainability": "https://www.concordia.ca/sustainability.html",
-          "Records Management and Archives (RMA) Office": "https://www.concordia.ca/offices/archives.html",
+          "Records Management and Archives": "https://www.concordia.ca/offices/archives.html",
           "Senior non-credit program": "https://www.concordia.ca/lifelong-learning/seniors.html",
           "Study Hub": "https://www.concordia.ca/students/success/superb-study-spots-at-concordia.html#study-spots"
         },

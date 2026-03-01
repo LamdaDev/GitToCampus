@@ -1,6 +1,6 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, Linking, ScrollView, Image } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 
@@ -26,10 +26,6 @@ export default function BuildingDetails({
 }: Readonly<BuildingDetailProps>) {
   const services = selectedBuilding?.services;
 
-  /**
-   * Handle the walking figure button press.
-   * Sets the selected building as destination with current location as start.
-   */
   const handleDirectionsToPress = () => {
     if (selectedBuilding) {
       onShowDirections(selectedBuilding, true);
@@ -64,39 +60,19 @@ export default function BuildingDetails({
     </View>
   );
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const onScroll = (event) => {
-    const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.floor(contentOffsetX / 540);
-    setCurrentIndex(index);
-  };
-
   const carouselSection = (
     <View style={buildingDetailsStyles.carouselContainer}>
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={true}
-        onScroll={onScroll}
+        showsHorizontalScrollIndicator
         scrollEventThrottle={16}
-        contentOffset={{ x: currentIndex * 200, y: 0 }}
         style={buildingDetailsStyles.carousel}
       >
-        <Image
-          key={1}
-          source={require('../../assets/favicon.png')}
-          style={buildingDetailsStyles.carouselImage}
-        />
-        <Image
-          key={2}
-          source={require('../../assets/favicon.png')}
-          style={buildingDetailsStyles.carouselImage}
-        />
-        <Image
-          key={3}
-          source={require('../../assets/favicon.png')}
-          style={buildingDetailsStyles.carouselImage}
-        />
+        {selectedBuilding?.images?.map((imgUrl, index) => (
+          <View key={index} style={buildingDetailsStyles.imageWrapper}>
+            <Image source={{ uri: imgUrl }} style={buildingDetailsStyles.carouselImage} />
+          </View>
+        ))}
       </ScrollView>
     </View>
   );
@@ -105,11 +81,9 @@ export default function BuildingDetails({
     services && Object.keys(services).length > 0 ? (
       <View>
         <Text style={buildingDetailsStyles.servicesTitle}>Services</Text>
-        {/* Loop over services and create rows */}
         {Object.entries(services)
           .reduce(
             (rows, [name, url], index) => {
-              // Create a new row for every 3 items
               if (index % 3 === 0) rows.push([]);
               rows[rows.length - 1].push({ name, url });
               return rows;
@@ -134,7 +108,6 @@ export default function BuildingDetails({
 
   return (
     <>
-      {/* Header */}
       <View style={buildingDetailsStyles.header}>
         <View>
           <Text style={buildingDetailsStyles.title}>{selectedBuilding?.name}</Text>
@@ -152,15 +125,21 @@ export default function BuildingDetails({
       {navigationSection}
       {carouselSection}
       {services && Object.keys(services).length > 0 ? (
-        <View style={[buildingDetailsStyles.servicesContainer, { maxHeight: 400 }]}>
+        <View style={[buildingDetailsStyles.servicesContainer, { maxHeight: 300 }]}>
           <BottomSheetFlatList
-            data={servicesSection} // Pass rows as data
+            data={servicesSection}
             renderItem={({ item }) => servicesSection([item])}
             keyExtractor={(item, index) => index.toString()}
             showsVerticalScrollIndicator={true}
           />
         </View>
-      ) : null}
+      ) : (
+        <View style={buildingDetailsStyles.servicesContainer}>
+          <Text style={[buildingDetailsStyles.servicesTitle, { textAlign: 'center' }]}>
+            No services available
+          </Text>
+        </View>
+      )}
     </>
   );
 }

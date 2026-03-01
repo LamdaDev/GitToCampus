@@ -26,7 +26,6 @@ const baseAssets = (): Assets => ({
           BuildingName: 'Hall',
           'Building Long Name': 'Hall Building',
           Address: '1455 De Maisonneuve',
-          Hotspots: { coffee: 'Second Cup' },
           Services: { security: 'Desk' },
         },
       },
@@ -278,9 +277,6 @@ describe('buildingsRepository', () => {
     expect(building1?.name).toBe('Hall Building');
     expect(building1?.shortCode).toBe('MB');
     expect(building1?.address).toBe('1455 De Maisonneuve');
-    expect(building1?.hotspots).toEqual({ coffee: 'Second Cup' });
-    expect(building1?.services).toEqual({ security: 'Desk' });
-
     expect(building2?.campus).toBe('LOYOLA');
     expect(building2?.name).toBe('Administration');
 

@@ -67,6 +67,8 @@ export const buildingDetailsStyles = StyleSheet.create({
     paddingRight: 10,
     paddingTop: 10,
     paddingBottom: 10,
+    marginTop: -10,
+    marginBottom: 10,
     elevation: 10,
     boxShadow: '0 3px 6px rgba(0, 0, 0, 0.4)',
   },
@@ -86,7 +88,7 @@ export const buildingDetailsStyles = StyleSheet.create({
   },
   carouselContainer: {
     width: '100%',
-    height: 300, // Adjust based on the image height
+    height: 135,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -95,9 +97,18 @@ export const buildingDetailsStyles = StyleSheet.create({
     flexDirection: 'row',
   },
 
+  imageWrapper: {
+    width: 170,
+    height: 125,
+    borderRadius: 16,
+    borderColor: 'rgba(255, 255, 255, 0.32)',
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginHorizontal: 5,
+  },
   carouselImage: {
-    width: 300,
-    height: 200,
+    width: '100%',
+    height: '100%',
     resizeMode: 'cover',
   },
   servicesContainer: {
@@ -116,7 +127,7 @@ export const buildingDetailsStyles = StyleSheet.create({
   servicesTitle: {
     fontSize: 20,
     color: '#FFFFFF',
-    marginBottom: 9,
+    marginBottom: 3,
   },
   row: {
     flexDirection: 'row',

@@ -18,7 +18,7 @@ type BuildingListProps = Record<string, unknown> & {
   'Building Long Name'?: string;
   Address?: string;
   //TEMP: Sprint 2: used for building details
-  Hotspots?: Record<string, string>;
+  Images?: string[]; // Array of image URLs
   Services?: Record<string, string>;
 };
 
@@ -76,7 +76,7 @@ const buildMetadataMap = (
     name: string;
     shortCode?: string;
     address?: string;
-    hotspots?: Record<string, string>;
+    images: string[];
     services?: Record<string, string>;
   }
 > => {
@@ -91,7 +91,7 @@ const buildMetadataMap = (
       name: getBestBuildingName(props),
       shortCode: typeof props.Building === 'string' ? props.Building : undefined,
       address: typeof props.Address === 'string' ? props.Address : undefined,
-      hotspots: props.Hotspots,
+      images: props.Images ?? [],
       services: props.Services,
     });
   }
@@ -121,7 +121,7 @@ const joinBoundariesToMeta = (
       polygons,
       shortCode: meta.shortCode,
       address: meta.address,
-      hotspots: meta.hotspots,
+      images: meta.images,
       services: meta.services,
     });
   }
