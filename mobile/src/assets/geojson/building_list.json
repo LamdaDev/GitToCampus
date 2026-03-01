@@ -57,6 +57,11 @@
         "Building": "LB",
         "BuildingName": "LB Building",
         "Building Long Name": "J.W. McConnell Building",
+        "Images": [
+          "https://iili.io/qqItsln.jpg",
+          "https://iili.io/qqIizKb.jpg",
+          "https://iili.io/qqIpkqN.png"
+        ],
         "Services": {
           "4TH SPACE": "https://www.concordia.ca/next-gen/4th-space.html",
           "Leonard & Bina Ellen Art Gallery": "https://ellengallery.concordia.ca/news/?lang=en",
@@ -122,6 +127,11 @@
         "Building": "K",
         "BuildingName": "K Building",
         "Building Long Name": "K Annex",
+        "Images": [
+          "https://iili.io/qqTdDOX.png",
+          "https://iili.io/qqT93wG.jpg",
+          "https://iili.io/qqTKE1j.png"
+        ],
         "Services": {},
         "Address": "2150 Bishop Street",
         "Latitude": 45.497777,
@@ -138,6 +148,11 @@
         "Building": "MU",
         "BuildingName": "MU Building",
         "Building Long Name": "MU Annex",
+        "Images": [
+          "https://iili.io/qqTowIp.png",
+          "https://iili.io/qqTq2AN.jpg",
+          "https://iili.io/qqTxLAv.png"
+        ],
         "Services": {},
         "Address": "2170 Bishop Street",
         "Latitude": 45.497963,
@@ -154,6 +169,11 @@
         "Building": "S",
         "BuildingName": "S Building",
         "Building Long Name": "S Annex",
+        "Images": [
+          "https://iili.io/qqTRwS1.png",
+          "https://iili.io/qqTu6sp.jpg",
+          "https://iili.io/qqTRmil.png"
+        ],
         "Services": {},
         "Address": "2145 Mackay Street",
         "Latitude": 45.497423,
@@ -170,6 +190,11 @@
         "Building": "FA",
         "BuildingName": "FA Building",
         "Building Long Name": "FA Annex",
+        "Images": [
+          "https://iili.io/qqTlVVa.png",
+          "https://iili.io/qqTcIEv.jpg",
+          "https://iili.io/qqT0MeS.png"
+        ],
         "Services": {},
         "Address": "2060 Mackay Street",
         "Latitude": 45.496874,
@@ -186,6 +211,11 @@
         "Building": "PR",
         "BuildingName": "PR Building",
         "Building Long Name": "PR Annex",
+        "Images": [
+          "https://iili.io/qqTe1n4.png",
+          "https://iili.io/qqTEjlj.jpg",
+          "https://iili.io/qqTOAmb.png"
+        ],
         "Services": {
           "Library Employees Union": "https://www.concordia.ca/hr/labour-agreements/culeu.html"
         },
@@ -204,6 +234,11 @@
         "Building": "ER",
         "BuildingName": "ER Building",
         "Building Long Name": "ER Building",
+        "Images": [
+          "https://iili.io/qqTLZpR.png",
+          "https://iili.io/qqTsrUG.jpg",
+          "https://iili.io/qqTZzoN.jpg"
+        ],
         "Services": {},
         "Address": "2155 Guy Street",
         "Latitude": 45.496428,
@@ -220,6 +255,11 @@
         "Building": "LS",
         "BuildingName": "Learning Square",
         "Building Long Name": "Learning Square LS Building",
+        "Images": [
+          "https://iili.io/qqTm4Bp.png",
+          "https://iili.io/qqTtgQ2.jpg",
+          "https://iili.io/qqTphwG.png"
+        ],
         "Services": {},
         "Address": "1535 De Maisonneuve Blvd. W.",
         "Latitude": 45.49633,
@@ -236,6 +276,11 @@
         "Building": "GS",
         "BuildingName": "GS Building",
         "Building Long Name": "Guy-Sherbrooke Building",
+        "Images": [
+          "https://iili.io/qquHrAX.png",
+          "https://iili.io/qqTydVR.jpg",
+          "https://iili.io/qquJJob.png"
+        ],
         "Services": {
           "Part-time Faculty Association": "https://www.cupfa.org/en_CA/"
         },
@@ -254,6 +299,11 @@
         "Building": "GM",
         "BuildingName": "GM Building",
         "Building Long Name": "Guy-De Maisonneuve Building",
+        "Images": [
+          "https://iili.io/qquFRQn.png",
+          "https://iili.io/qqu2Tap.jpg",
+          "https://iili.io/qquKMSR.jpg"
+        ],
         "Services": {
           "Access Centre for Students with Disabilities": "https://www.concordia.ca/students/accessibility.html",
           "Facilities Management": "https://www.concordia.ca/offices/facilities.html",
@@ -286,6 +336,11 @@
         "Building": "MB",
         "BuildingName": "MB Building",
         "Building Long Name": "John Molson Building",
+        "Images": [
+          "https://iili.io/qquqzkQ.png",
+          "https://iili.io/qquf8LF.jpg",
+          "https://iili.io/qquB2cJ.png"
+        ],
         "Services": {
           "Concordia Conference Centre": "https://www.concordia.ca/hospitality/venues/concordia-conference-centre.html",
           "Cloud Deck": "https://www.concordia.ca/maps/buildings/concordia-panoramas/mb-3-130.html",
@@ -310,6 +365,11 @@
         "Building": "TD",
         "BuildingName": "TD Building",
         "Building Long Name": "Toronto-Dominion Building",
+        "Images": [
+          "https://iili.io/qquo8le.jpg",
+          "https://iili.io/qqun0Yb.jpg",
+          "https://iili.io/qqux2sI.jpg"
+        ],
         "Services": {},
         "Address": "1410 Guy Street",
         "Latitude": 45.495103,
@@ -326,6 +386,11 @@
         "Building": "FG",
         "BuildingName": "FG Building",
         "Building Long Name": "Faubourg Ste-Catherine Building",
+        "Images": [
+          "https://iili.io/qquzWZl.jpg",
+          "https://iili.io/qquxXrF.jpg",
+          "https://iili.io/qquIOVp.jpg"
+        ],
         "Services": {
           "Records Management and Archives": "https://www.concordia.ca/offices/archives.html"
         },
@@ -344,6 +409,11 @@
         "Building": "CL",
         "BuildingName": "CL Building",
         "Building Long Name": "CL Annex",
+        "Images": [
+          "https://iili.io/qquTPYF.jpg",
+          "https://iili.io/qquTces.jpg",
+          "https://iili.io/qquu3TG.jpg"
+        ],
         "Services": {},
         "Address": "1665 Ste-Catherine W",
         "Latitude": 45.494259,
@@ -360,6 +430,11 @@
         "Building": "MM",
         "BuildingName": "MM Building",
         "Building Long Name": "MM Annex",
+        "Images": [
+          "https://iili.io/qqu7EfR.png",
+          "https://iili.io/qquYspt.png",
+          "https://iili.io/qqucoVs.png"
+        ],
         "Services": {},
         "Address": "1209 Guy Street",
         "Latitude": 45.494665,
@@ -376,6 +451,11 @@
         "Building": "MT",
         "BuildingName": "MT Building",
         "Building Long Name": "Montefiore Building",
+        "Images": [
+          "https://iili.io/qqu0jMg.png",
+          "https://iili.io/qqulckN.png",
+          "https://iili.io/qqulp6J.png"
+        ],
         "Services": {},
         "Address": "1195 Guy Street",
         "Latitude": 45.494442,
@@ -392,6 +472,11 @@
         "Building": "LD",
         "BuildingName": "LD Building",
         "Building Long Name": "LD Building",
+        "Images": [
+          "https://iili.io/qquV1Tl.png",
+          "https://iili.io/qquETQ9.jpg",
+          "https://iili.io/qqujCPI.png"
+        ],
         "Services": {
           "CSU Daycare & Nursery": "https://csudaycarenursery.ca/"
         },
@@ -410,6 +495,11 @@
         "Building": "GNA",
         "BuildingName": "GN Building - wing A",
         "Building Long Name": "Grey Nuns Building",
+        "Images": [
+          "https://iili.io/qquwZBV.jpg",
+          "https://iili.io/qquwHs2.jpg",
+          "https://iili.io/qquN1Tb.jpg"
+        ],
         "Services": {
           "Grey Nuns Garden": "https://www.concordia.ca/maps/buildings/gg.html",
           "Concordia Daycare": "https://cpeconcordia.ca/",
@@ -433,6 +523,11 @@
         "Building": "BH",
         "BuildingName": "BH Building",
         "Building Long Name": "BB-BH Annex",
+        "Images": [
+          "https://i.postimg.cc/zX2r853T/1754505255461.jpg",
+          "https://i.postimg.cc/Y025ByHb/unnamed.jpg",
+          "https://i.postimg.cc/VL6x7T4r/thumbnail.jpg"
+        ],
         "Services": {
           "CPE Les P'tits Profs Daycare": "https://lesptitsprofs.wordpress.com/"
         },
@@ -451,6 +546,11 @@
         "Building": "PS",
         "BuildingName": "PS Building",
         "Building Long Name": "Physical Services Building",
+        "Images": [
+          "https://i.postimg.cc/JnxFxckk/1753211858581.jpg",
+          "https://i.postimg.cc/KvRW7Tv1/thumbnail.jpg",
+          "https://i.postimg.cc/44FL33by/1733507329282.jpg"
+        ],
         "Services": {
           "Environmental Health & Safety": "https://www.concordia.ca/campus-life/safety.html",
           "Facilities Management": "https://www.concordia.ca/offices/facilities.html"
@@ -470,6 +570,11 @@
         "Building": "DO",
         "BuildingName": "Stinger Dome",
         "Building Long Name": "Stinger Dome Seasonal",
+        "Images": [
+          "https://i.postimg.cc/HxkzYGry/1750702189668.jpg",
+          "https://i.postimg.cc/x8kPmKyf/unnamed.jpg",
+          "https://i.postimg.cc/d04RSW5Y/download.jpg"
+        ],
         "Services": {
           "Concordia Stingers": "https://stingers.ca/"
         },
@@ -504,6 +609,11 @@
         "Building": "RA",
         "BuildingName": "RA Building",
         "Building Long Name": "Recreation and Athletics Complex",
+        "Images": [
+          "https://i.postimg.cc/hGjMgWzS/1753387180607.jpg",
+          "https://i.postimg.cc/PrQMwr1W/unnamed.jpg",
+          "https://i.postimg.cc/vZPL0qq4/unnamed.jpg"
+        ],
         "Services": {
           "Concordia Stadium": "https://www.concordia.ca/campus-life/recreation/facilities/athletic-complex.html",
           "Ed Meagher Arena": "https://www.concordia.ca/campus-life/recreation/facilities/arena.html",
@@ -524,6 +634,11 @@
         "Building": "PC",
         "BuildingName": "PC Building",
         "Building Long Name": "PERFORM centre",
+        "Images": [
+          "https://i.postimg.cc/dthyqs4k/1754056606860.jpg",
+          "https://i.postimg.cc/YqCJ0VWr/unnamed.jpg",
+          "https://i.postimg.cc/gk7BJ0pn/1765806445242.jpg"
+        ],
         "Services": {
           "Athletic Therapy Clinic": "https://www.concordia.ca/schoolofhealth/for-public/assessment-rehabilitation.html",
           "Nutrition Centre": "https://www.concordia.ca/schoolofhealth/for-public/nutrition.html",
@@ -545,6 +660,11 @@
         "Building": "GE",
         "BuildingName": "GE Building",
         "Building Long Name": "Centre for Structural and Functional Genomics",
+        "Images": [
+          "https://i.postimg.cc/50fsGY5X/1752776070279.jpg",
+          "https://i.postimg.cc/nzLvBvYM/unnamed.jpg",
+          "https://i.postimg.cc/FzMcMwtL/1652105396822.jpg"
+        ],
         "Services": {
           "Centre for Structural & Functional Genomics": "https://www.concordia.ca/research/genomics.html"
         },
@@ -563,6 +683,11 @@
         "Building": "CJA",
         "BuildingName": "CJ Building - wing A",
         "Building Long Name": "Communication Studies and Journalism Building",
+        "Images": [
+          "https://i.postimg.cc/jjx3532c/1750702027234.jpg",
+          "https://i.postimg.cc/8zHwqd4c/unnamed.jpg",
+          "https://i.postimg.cc/Znpxj60N/1770043429139.jpg"
+        ],
         "Services": {
           "Book Stop": "https://www.bkstr.com/concordiastore/home"
         },
@@ -581,6 +706,11 @@
         "Building": "CJN",
         "BuildingName": "CJ Building - wing N",
         "Building Long Name": "Communication Studies and Journalism Building",
+        "Images": [
+          "https://i.postimg.cc/jjx3532c/1750702027234.jpg",
+          "https://i.postimg.cc/8zHwqd4c/unnamed.jpg",
+          "https://i.postimg.cc/Znpxj60N/1770043429139.jpg"
+        ],
         "Services": {
           "Book Stop": "https://www.bkstr.com/concordiastore/home"
         },
@@ -599,6 +729,11 @@
         "Building": "CJS",
         "BuildingName": "CJ Building - wing S",
         "Building Long Name": "Communication Studies and Journalism Building",
+        "Images": [
+          "https://i.postimg.cc/jjx3532c/1750702027234.jpg",
+          "https://i.postimg.cc/8zHwqd4c/unnamed.jpg",
+          "https://i.postimg.cc/Znpxj60N/1770043429139.jpg"
+        ],
         "Services": {
           "Book Stop": "https://www.bkstr.com/concordiastore/home"
         },
@@ -617,6 +752,11 @@
         "Building": "SP",
         "BuildingName": "SP Building",
         "Building Long Name": "Richard J. Renaud Science Complex",
+        "Images": [
+          "https://i.postimg.cc/hjxmqcgW/1753215175111.jpg",
+          "https://i.postimg.cc/8Pw6GZ2x/1449596518422.jpg",
+          "https://i.postimg.cc/fbStxDJ2/1605724878607.jpg"
+        ],
         "Services": {
           "Campus Safety & Prevention Services": "https://www.concordia.ca/campus-life/security.html",
           "First Stop": "https://www.concordia.ca/students/first-stop.html",
@@ -637,6 +777,11 @@
         "Building": "HU",
         "BuildingName": "HU Building",
         "Building Long Name": "Applied Science Hub",
+        "Images": [
+          "https://i.postimg.cc/brgszvBr/1752777007725.jpg",
+          "https://i.postimg.cc/tCRsBhs8/1737729906548.png",
+          "https://i.postimg.cc/k5SG2sHR/thumbnail.jpg"
+        ],
         "Services": {},
         "Address": "7141, Sherbrooke W",
         "Latitude": 45.458513,
@@ -653,6 +798,11 @@
         "Building": "RF",
         "BuildingName": "RF Building",
         "Building Long Name": "Loyola Jesuit Hall and Conference Centre",
+        "Images": [
+          "https://i.postimg.cc/wMwTCG1G/1754321077294.jpg",
+          "https://i.postimg.cc/jSwd1vt3/unnamed.jpg",
+          "https://i.postimg.cc/brwq99mJ/image-jpg-1-img.jpg"
+        ],
         "Services": {
           "Conference services": "https://www.concordia.ca/hospitality.html",
           "Jesuit Hall & Conference Centre": "https://www.concordia.ca/hospitality/venues/loyola-jesuit-hall-conference-centre.html"
@@ -672,6 +822,11 @@
         "Building": "PY",
         "BuildingName": "PY Building",
         "Building Long Name": "Psychology Building",
+        "Images": [
+          "https://i.postimg.cc/KzZbm5Sn/1750712426337.jpg",
+          "https://i.postimg.cc/sxxRhD2h/1540585268814.jpg",
+          "https://i.postimg.cc/SRPb7F2K/1752712885205.jpg"
+        ],
         "Services": {},
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.458938,
@@ -688,6 +843,11 @@
         "Building": "CC",
         "BuildingName": "CC Building",
         "Building Long Name": "Central Building",
+        "Images": [
+          "https://i.postimg.cc/pTVwwXKx/1750701910958.jpg",
+          "https://i.postimg.cc/Qt62hGqj/unnamed.jpg",
+          "https://i.postimg.cc/d3Lz0HWg/1741284389503.jpg"
+        ],
         "Services": {
           "Concordia Student Union": "https://www.csu.qc.ca/",
           "Loyola College for Diversity & Sustainability": "https://www.concordia.ca/artsci/loyola-college-diversity-sustainability.html",
@@ -708,6 +868,11 @@
         "Building": "AD",
         "BuildingName": "AD Building",
         "Building Long Name": "Administration Building",
+        "Images": [
+          "https://i.postimg.cc/SQvBP4sZ/1750701647513.jpg",
+          "https://i.postimg.cc/FRnBwb9L/download.jpg",
+          "https://i.postimg.cc/KjkHbKz9/download.jpg"
+        ],
         "Services": {
           "Access Centre for Students with Disabilities": "https://www.concordia.ca/students/accessibility.html",
           "Centre for Teaching & Learning": "https://www.concordia.ca/ctl.html",
@@ -734,6 +899,11 @@
         "Building": "FC",
         "BuildingName": "FC Building",
         "Building Long Name": "F.C. Smith Building",
+        "Images": [
+          "https://i.postimg.cc/9Qb5J7qZ/download.jpg",
+          "https://i.postimg.cc/bwgc3t25/download.jpg",
+          "https://i.postimg.cc/1zYxZ1BZ/download.jpg"
+        ],
         "Services": {
           "Loyola Chapel": "https://www.concordia.ca/hospitality/venues/loyola-chapel.html",
           "Concordia Multi-Faith & Spirituality Centre": "https://www.concordia.ca/equity/spirituality.html"
@@ -753,6 +923,11 @@
         "Building": "PT",
         "BuildingName": "PT Building",
         "Building Long Name": "Oscar Peterson Concert Hall",
+        "Images": [
+          "https://i.postimg.cc/7h8WxH2f/download.jpg",
+          "https://i.postimg.cc/0jYHjTY3/download.jpg",
+          "https://i.postimg.cc/DwyYfY8G/download.jpg"
+        ],
         "Services": {
           "Concert Hall": "https://www.concordia.ca/arts/venues/oscar-peterson.html"
         },
@@ -771,6 +946,11 @@
         "Building": "SC",
         "BuildingName": "SC Building",
         "Building Long Name": "Student Centre",
+        "Images": [
+          "https://i.postimg.cc/Kc0TSqh2/download.jpg",
+          "https://i.postimg.cc/CKCZvJsW/download.jpg",
+          "https://i.postimg.cc/Wzzh1Vcv/download.jpg"
+        ],
         "Services": {
           "Cafeteria": "https://www.concordia.ca/campus-life/food-services/places-to-eat/buzz-dining-hall.html",
           "Café": "https://hivecafe.ca/",
@@ -791,6 +971,11 @@
         "Building": "VE",
         "BuildingName": "VE Building",
         "Building Long Name": "Vanier Extension",
+        "Images": [
+          "https://i.postimg.cc/pLzyTk42/download.jpg",
+          "https://i.postimg.cc/BvC65bJ7/download.jpg",
+          "https://i.postimg.cc/k5y4NGnm/download.jpg"
+        ],
         "Services": {
           "Library": "https://library.concordia.ca/locations/vanier.php"
         },
@@ -809,6 +994,11 @@
         "Building": "VL",
         "BuildingName": "VL Building",
         "Building Long Name": "Vanier Library Building",
+        "Images": [
+          "https://i.postimg.cc/8CwpJYHP/download.jpg",
+          "https://i.postimg.cc/rmm8S9n0/1539800278428.jpg",
+          "https://i.postimg.cc/P5TNC1j4/download.jpg"
+        ],
         "Services": {
           "Georges P. Vanier Library": "https://library.concordia.ca/locations/vanier.php"
         },
@@ -827,6 +1017,11 @@
         "Building": "JR",
         "BuildingName": "JR Building",
         "Building Long Name": "Jesuit Residence",
+        "Images": [
+          "https://i.postimg.cc/D0SwKcLH/download.jpg",
+          "https://i.postimg.cc/VshNW3cs/download.jpg",
+          "https://i.postimg.cc/4NhxLBJ2/download.jpg"
+        ],
         "Services": {
           "Student Residence": "https://www.concordia.ca/students/housing/residences/loyola-residences.html"
         },
@@ -845,6 +1040,11 @@
         "Building": "SH",
         "BuildingName": "SH Building",
         "Building Long Name": "Solar House",
+        "Images": [
+          "https://i.postimg.cc/pd1dc7nY/download.jpg",
+          "https://i.postimg.cc/9MRQ6pGN/download.jpg",
+          "https://i.postimg.cc/sxPsz01L/download.jpg"
+        ],
         "Services": {},
         "Address": "7141 Sherbrooke W",
         "Latitude": 45.459298,
@@ -861,6 +1061,11 @@
         "Building": "HC",
         "BuildingName": "HC Building",
         "Building Long Name": "Hingston Hall, wing HC",
+        "Images": [
+          "https://i.postimg.cc/GtKVq04T/download.jpg",
+          "https://i.postimg.cc/VshNW3cs/download.jpg",
+          "https://i.postimg.cc/9QrKtnVg/download.jpg"
+        ],
         "Services": {
           "Student Residence": "https://www.concordia.ca/students/housing/residences/loyola-residences.html"
         },
@@ -879,6 +1084,11 @@
         "Building": "HB",
         "BuildingName": "HB Building",
         "Building Long Name": "Hingston Hall, wing HB",
+        "Images": [
+          "https://i.postimg.cc/9MRQ6pGN/download.jpg",
+          "https://i.postimg.cc/pd1dc7nY/download.jpg",
+          "https://i.postimg.cc/sxPsz01L/download.jpg"
+        ],
         "Services": {
           "Concordia University Faculty Association": "https://cufa.net/",
           "Student Residence": "https://www.concordia.ca/students/housing/residences/loyola-residences.html"
@@ -898,6 +1108,11 @@
         "Building": "HA",
         "BuildingName": "HA Building",
         "Building Long Name": "Hingston Hall, wing HA",
+        "Images": [
+          "https://i.postimg.cc/9MRQ6pGN/download.jpg",
+          "https://i.postimg.cc/sxPsz01L/download.jpg",
+          "https://i.postimg.cc/pd1dc7nY/download.jpg"
+        ],
         "Services": {
           "Student Residence": "https://www.concordia.ca/students/housing/residences/loyola-residences.html"
         },
@@ -916,6 +1131,11 @@
         "Building": "TB",
         "BuildingName": "TB Building",
         "Building Long Name": "TB Annex",
+        "Images": [
+          "https://iili.io/qquDCs2.png",
+          "https://iili.io/qquDe1I.jpg",
+          "https://iili.io/qqubK21.png"
+        ],
         "Services": {},
         "Address": "7075 Terrebonne",
         "Latitude": 45.460051,
@@ -932,6 +1152,11 @@
         "Building": "EV",
         "BuildingName": "EV Building",
         "Building Long Name": "Engineering, Computer Science and Visual Arts Integrated Complex",
+        "Images": [
+          "https://iili.io/qqum0HF.jpg",
+          "https://iili.io/qqumJus.jpg",
+          "https://iili.io/qqumZOu.png"
+        ],
         "Services": {
           "FOFA Gallery": "https://www.concordia.ca/finearts/about/galleries-venues/fofa-gallery.html",
           "Le Gym": "https://www.concordia.ca/campus-life/recreation/le-gym.html",
@@ -952,6 +1177,11 @@
         "Building": "FB",
         "BuildingName": "FB Building",
         "Building Long Name": "Faubourg Building",
+        "Images": [
+          "https://iili.io/qquyICx.png",
+          "https://iili.io/qqupkrB.jpg",
+          "https://iili.io/qqA9INn.png"
+        ],
         "Services": {
           "District 3 Innovation Hub": "https://www.concordia.ca/research/d3.html",
           "Office of the Registrar": "https://www.concordia.ca/offices/registrar.html",
@@ -978,6 +1208,11 @@
         "Building": "ES",
         "BuildingName": "ES Building",
         "Building Long Name": "ES Building",
+        "Images": [
+          "https://iili.io/qqTLZpR.png",
+          "https://iili.io/qqTsrUG.jpg",
+          "https://iili.io/qqTZzoN.jpg"
+        ],
         "Services": {},
         "Address": "2135 Guy Street",
         "Latitude": 45.496172,
