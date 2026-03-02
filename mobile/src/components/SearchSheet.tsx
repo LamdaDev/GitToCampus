@@ -15,11 +15,16 @@ import {
 type SearchBarProps = {
   buildings: BuildingShape[];
   onPressBuilding?: (b: BuildingShape) => void;
+  onCalendarConnected?: () => void;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
 
-export default function SearchSheet({ buildings, onPressBuilding }: Readonly<SearchBarProps>) {
+export default function SearchSheet({
+  buildings,
+  onPressBuilding,
+  onCalendarConnected,
+}: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
@@ -96,6 +101,7 @@ export default function SearchSheet({ buildings, onPressBuilding }: Readonly<Sea
       setCalendarStatus('connected');
       setSessionExpiresAt(result.session.expiresAt);
       setCalendarMessage(null);
+      onCalendarConnected?.();
       return;
     }
 
@@ -127,7 +133,7 @@ export default function SearchSheet({ buildings, onPressBuilding }: Readonly<Sea
         ? previousStatus
         : 'not_connected',
     );
-  }, []);
+  }, [onCalendarConnected]);
 
   const helperText = useMemo(() => {
     if (calendarStatus === 'connected') return '';

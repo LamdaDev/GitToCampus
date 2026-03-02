@@ -313,7 +313,7 @@ jest.mock('../src/components/ShuttleScheduleDetails', () => {
 
 jest.mock('../src/components/SearchSheet', () => {
   const { View, TouchableOpacity, Text } = require('react-native');
-  return ({ onPressBuilding }: any) => (
+  return ({ onPressBuilding, onCalendarConnected }: any) => (
     <View testID="search-sheet">
       <TouchableOpacity
         testID="press-building-in-search"
@@ -333,6 +333,20 @@ jest.mock('../src/components/SearchSheet', () => {
         }
       >
         <Text>Select</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="trigger-calendar-connected" onPress={() => onCalendarConnected?.()}>
+        <Text>Calendar Connected</Text>
+      </TouchableOpacity>
+    </View>
+  );
+});
+
+jest.mock('../src/components/CalendarSelectionSlider', () => {
+  const { View, TouchableOpacity, Text } = require('react-native');
+  return ({ onDone }: any) => (
+    <View testID="calendar-selection-slider">
+      <TouchableOpacity testID="calendar-selection-done-button" onPress={onDone}>
+        <Text>Done</Text>
       </TouchableOpacity>
     </View>
   );
@@ -543,6 +557,31 @@ describe('BottomSheet', () => {
     );
 
     expect(getByTestId('search-sheet')).toBeTruthy();
+  });
+
+  test('opens calendar selection slider after SearchSheet reports calendar connected', () => {
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="search" />,
+    );
+
+    fireEvent.press(getByTestId('trigger-calendar-connected'));
+
+    expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+    expect(queryByTestId('search-sheet')).toBeNull();
+  });
+
+  test('done button on calendar selection slider returns to SearchSheet', () => {
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="search" />,
+    );
+
+    fireEvent.press(getByTestId('trigger-calendar-connected'));
+    expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+
+    fireEvent.press(getByTestId('calendar-selection-done-button'));
+
+    expect(getByTestId('search-sheet')).toBeTruthy();
+    expect(queryByTestId('calendar-selection-slider')).toBeNull();
   });
 
   test('global search mode hides building details even when a building is selected', () => {

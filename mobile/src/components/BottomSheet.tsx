@@ -38,6 +38,7 @@ import { buildShuttlePlan } from '../services/shuttlePlanner';
 import type { ShuttlePlan } from '../types/Shuttle';
 
 import SearchSheet from './SearchSheet';
+import CalendarSelectionSlider from './CalendarSelectionSlider';
 
 const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
@@ -343,9 +344,24 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [activeView, directionsPanelSnapPoint, snapToDirectionsPanel]);
 
     const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
+    const [showCalendarSelectionSlider, setShowCalendarSelectionSlider] = useState(false);
     const isInternalSearch = searchFor !== null;
     const isGlobalSearch = mode === 'search';
-    const isSearchActive = isInternalSearch || isGlobalSearch;
+    const isSearchActive = isInternalSearch || isGlobalSearch || showCalendarSelectionSlider;
+
+    const openCalendarSelectionSlider = useCallback(() => {
+      setShowCalendarSelectionSlider(true);
+      requestAnimationFrame(() => {
+        snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
+      });
+    }, [snapToKnownPosition]);
+
+    const closeCalendarSelectionSlider = useCallback(() => {
+      setShowCalendarSelectionSlider(false);
+      requestAnimationFrame(() => {
+        snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
+      });
+    }, [snapToKnownPosition]);
 
     const showDirections = (building: BuildingShape, asDestination?: boolean) => {
       setTravelMode('walking');
@@ -386,6 +402,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleSheetClose = () => {
       setActiveView('building');
       setSearchFor(null);
+      setShowCalendarSelectionSlider(false);
       setTravelMode('walking');
       setShuttlePlan(null);
       setRouteStartSource('current');
@@ -661,6 +678,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ]);
 
     useEffect(() => {
+      if (mode !== 'search') {
+        setShowCalendarSelectionSlider(false);
+      }
+    }, [mode]);
+
+    useEffect(() => {
       const isSearching = mode === 'search' || searchFor !== null;
       if (!isSearching) return;
 
@@ -696,10 +719,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       >
         <BottomSheetView style={buildingDetailsStyles.container}>
           {isSearchActive ? (
-            <SearchSheet
-              buildings={buildings}
-              onPressBuilding={isInternalSearch ? handleInternalSearch : closeSearchBuilding}
-            />
+            showCalendarSelectionSlider && !isInternalSearch ? (
+              <CalendarSelectionSlider onDone={closeCalendarSelectionSlider} />
+            ) : (
+              <SearchSheet
+                buildings={buildings}
+                onPressBuilding={isInternalSearch ? handleInternalSearch : closeSearchBuilding}
+                onCalendarConnected={openCalendarSelectionSlider}
+              />
+            )
           ) : activeView === 'building' ? (
             <BuildingDetails
               selectedBuilding={selectedBuilding}
