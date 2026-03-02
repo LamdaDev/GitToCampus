@@ -11,6 +11,7 @@ import { getAllBuildingShapes } from './utils/buildingsRepository';
 import { SheetMode } from './types/SheetMode';
 import type { OutdoorRouteOverlay } from './types/Map';
 import { useSharedValue } from 'react-native-reanimated';
+import { initializeClarityAsync } from './services/clarity';
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -39,6 +40,10 @@ const App = () => {
   useEffect(() => {
     bottomSheetAnimatedPosition.value = windowHeight;
   }, [bottomSheetAnimatedPosition, windowHeight]);
+
+  useEffect(() => {
+    void initializeClarityAsync();
+  }, []);
 
   const toggleSearchBarState = () => {
     setSheetOpen(false);

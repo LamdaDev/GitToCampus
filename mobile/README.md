@@ -40,6 +40,12 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
    cp .env.example .env
    ```
    Then set `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` in `mobile/.env`.
+   This key is used for both Directions API requests and native Android/iOS map initialization.
+   For Google Calendar sync, also set:
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID`
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID`
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID` (used for web or as fallback)
+   - `EXPO_PUBLIC_CLARITY_PROJECT_ID` (for Microsoft Clarity session recording)
 
 ### Running on Android
 
@@ -111,6 +117,91 @@ The routing services use a Strategy Pattern to keep mode-specific behavior isola
 - Shuttle planning is isolated behind a separate `ShuttlePlanStrategy` layer and continues to preserve cross-campus constraints and existing schedule behavior.
 
 This structure improves extensibility (new modes/route types), testability (strategy-level tests), and maintainability without changing UI behavior.
+
+## Google Calendar OAuth (US-3.1 / TASK-3.1.1)
+
+### Integration approach
+
+- The `SearchSheet` includes a clear `Connect Google Calendar` / `Reconnect Google Calendar` action.
+- OAuth is implemented with `expo-auth-session` using Authorization Code + PKCE.
+- Google OAuth is not supported in Expo Go for this flow. Use a development build (`npx expo run:android` or `npx expo run:ios`) when testing Google sign-in.
+- Google Calendar access is requested with the read-only scope:
+  - `https://www.googleapis.com/auth/calendar.readonly`
+
+### Android setup and commands
+
+Use this flow for Android Google Calendar sign-in.
+
+1. Verify app signing fingerprint:
+
+   ```bash
+   cd mobile/android
+   .\gradlew.bat signingReport
+   ```
+
+   Use `app -> Variant: debug -> SHA1` in Google Cloud.
+
+2. Configure Google Cloud OAuth Android client:
+   - Application type: `Android`
+   - Package name: `com.anonymous.mobile`
+   - SHA-1: value from `signingReport`
+   - Advanced settings: enable `Custom URI scheme`
+
+3. Set env vars in `mobile/.env`:
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID=<android-client-id>.apps.googleusercontent.com`
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID=<ios-client-id>.apps.googleusercontent.com`
+   - `EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID=<web-client-id>.apps.googleusercontent.com`
+
+4. Ensure OAuth test users are allowed:
+   - Google Auth Platform -> Audience -> add all tester emails.
+
+5. Build and run dev client (not Expo Go):
+   ```bash
+   cd mobile
+   npx expo run:android
+   npx expo start --dev-client -c
+   ```
+   Open the installed dev app (`com.anonymous.mobile`) and connect Google Calendar from the app UI.
+
+### Token storage
+
+- Auth session data (access token metadata + expiry) is stored in `expo-secure-store`.
+- Storage key: `gittocampus.googleCalendar.session.v1`.
+- No OAuth client IDs or secrets are hardcoded in source; client IDs are read from `EXPO_PUBLIC_*` env vars.
+
+## Microsoft Clarity (Usability Testing)
+
+- SDK package: `@microsoft/react-native-clarity`
+- Initialization happens at app startup in `src/App.tsx` via `src/services/clarity.ts`.
+- Clarity is skipped in Expo Go by design. Use a development build.
+
+### Commands
+
+1. Install dependencies:
+   ```bash
+   cd mobile
+   npm install
+   ```
+2. Ensure `EXPO_PUBLIC_CLARITY_PROJECT_ID` is set in `.env`.
+3. Build and run dev client:
+   - Android:
+     ```bash
+     npx expo run:android
+     npx expo start --dev-client -c
+     ```
+   - iOS (cloud build):
+     ```bash
+     npx eas build -p ios --profile development
+     npx expo start --dev-client --host tunnel -c
+     ```
+
+### Session expiry and reconnect behavior
+
+- On app load, stored session data is validated and expiry-checked.
+- Expired or malformed session data is cleared from secure storage.
+- UI status is shown as `Connected`, `Not connected`, or `Session expired`.
+- If sign-in is canceled/denied/fails, the app remains usable and shows a clear message.
+- If a session expires while the app is open, UI switches to `Session expired` and prompts reconnect.
 
 ## Testing (Jest + React Native Testing Library)
 

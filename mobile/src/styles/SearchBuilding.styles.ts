@@ -28,6 +28,19 @@ export const searchBuilding = StyleSheet.create({
     marginTop: 18,
     opacity: 0.85,
   },
+  connectionStatus: {
+    color: 'rgba(255,255,255,0.78)',
+    textAlign: 'center',
+    marginTop: 8,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  connectionStatusConnected: {
+    color: '#d9ffd6',
+  },
+  connectionStatusExpired: {
+    color: '#ffd8ab',
+  },
 
   signIn: {
     backgroundColor: '#ffffff',
@@ -41,9 +54,20 @@ export const searchBuilding = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
   },
+  signInDisabled: {
+    opacity: 0.65,
+  },
   signInText: {
     color: '#111',
     fontWeight: '600',
+  },
+  authMessage: {
+    color: '#ffffff',
+    textAlign: 'center',
+    marginTop: 10,
+    paddingHorizontal: 8,
+    opacity: 0.9,
+    fontSize: 13,
   },
   emptyText: {
     color: 'rgba(255,255,255,0.75)',

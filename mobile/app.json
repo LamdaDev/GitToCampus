@@ -2,6 +2,7 @@
   "expo": {
     "name": "mobile",
     "slug": "mobile",
+    "scheme": "gittocampus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,6 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.gittocampus.mobile",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to show nearby results."
       }
@@ -29,6 +31,7 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": ["expo-secure-store", "expo-web-browser"]
   }
 }
