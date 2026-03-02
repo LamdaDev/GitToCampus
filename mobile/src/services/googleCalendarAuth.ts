@@ -58,7 +58,6 @@ export type GoogleCalendarListItem = {
 export type GoogleCalendarListResult =
   | { type: 'success'; calendars: GoogleCalendarListItem[] }
   | { type: 'error'; message: string };
-
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
@@ -160,7 +159,6 @@ const mapCalendarListErrorToMessage = (error: unknown): string => {
   }
   return 'Unable to load calendar list right now. Please retry.';
 };
-
 export const saveGoogleCalendarSession = async (session: GoogleCalendarSession): Promise<void> => {
   await SecureStore.setItemAsync(
     GOOGLE_CALENDAR_STORAGE_KEY,
@@ -269,7 +267,6 @@ export const fetchGoogleCalendarListAsync = async (): Promise<GoogleCalendarList
     };
   }
 };
-
 export const connectGoogleCalendarAsync = async (): Promise<GoogleCalendarConnectResult> => {
   const clientId = getConfiguredClientId();
   if (!clientId) {

@@ -79,7 +79,6 @@ describe('googleCalendarAuth', () => {
   afterAll(() => {
     (global as { fetch?: typeof fetch }).fetch = originalFetch;
   });
-
   test('returns connected state for a valid stored session', async () => {
     await saveGoogleCalendarSession({
       accessToken: 'token-1',
@@ -242,7 +241,6 @@ describe('googleCalendarAuth', () => {
       message: 'Unable to load calendar list right now. Please retry.',
     });
   });
-
   test('returns error when oauth client id is missing', async () => {
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID = '';
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID = '';
