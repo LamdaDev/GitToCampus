@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useWindowDimensions, Platform, View } from 'react-native';
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useWindowDimensions, Platform, View, Text } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import type { SharedValue } from 'react-native-reanimated';
@@ -19,6 +19,7 @@ import { centroidOfPolygon } from '../utils/geoJson';
 import { decodePolyline } from '../utils/polyline';
 
 import MapControls from '../components/MapControls';
+import * as turf from '@turf/turf';
 
 type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
@@ -76,6 +77,7 @@ const flattenBuildingsByCampus = (
       items.push({
         key: `${campus}-${building.id}-${idx}`,
         buildingId: building.id,
+        buildingShortCode: building.shortCode ?? '',
         campus,
         coordinates,
       });
@@ -99,6 +101,17 @@ const watchUserLocation = async (
   });
 };
 
+const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]) => {
+  const polygon = turf.polygon([coordinates.map((c) => [c.longitude, c.latitude])]);
+
+  const center = turf.pointOnFeature(polygon);
+
+  return {
+    latitude: center.geometry.coordinates[1],
+    longitude: center.geometry.coordinates[0],
+  };
+};
+
 const renderPolygonItem = (
   item: PolygonRenderItem,
   selectedBuildingId: string | null,
@@ -106,17 +119,35 @@ const renderPolygonItem = (
 ) => {
   const theme = POLYGON_THEME[item.campus];
   const isSelected = item.buildingId === selectedBuildingId;
+  const center = getPolygonCenter(item.coordinates);
 
   return (
-    <Polygon
-      key={item.key}
-      coordinates={item.coordinates}
-      tappable
-      strokeColor={isSelected ? theme.selectedStroke : theme.stroke}
-      fillColor={isSelected ? theme.selectedFill : theme.fill}
-      strokeWidth={isSelected ? theme.selectedStrokeWidth : theme.strokeWidth}
-      onPress={() => onPolygonPress(item)}
-    />
+    <Fragment key={item.key}>
+      <Polygon
+        key={item.key}
+        coordinates={item.coordinates}
+        tappable
+        strokeColor={isSelected ? theme.selectedStroke : theme.stroke}
+        fillColor={isSelected ? theme.selectedFill : theme.fill}
+        strokeWidth={isSelected ? theme.selectedStrokeWidth : theme.strokeWidth}
+        onPress={() => onPolygonPress(item)}
+      />
+      <Marker coordinate={center} tracksViewChanges={true} testID={'map-label'}>
+        <View
+          style={{
+            backgroundColor: theme.labelFill,
+            paddingHorizontal: 6,
+            paddingVertical: 2,
+            borderRadius: 15,
+            elevation: 2,
+          }}
+        >
+          <Text style={{ fontSize: 10, color: 'white', fontWeight: '700' }}>
+            {item.buildingShortCode}
+          </Text>
+        </View>
+      </Marker>
+    </Fragment>
   );
 };
 

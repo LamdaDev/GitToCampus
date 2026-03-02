@@ -45,6 +45,8 @@ export const POLYGON_THEME = {
     selectedStroke: 'rgba(128, 0, 32, 1.0)',
     selectedFill: '#467599',
     selectedStrokeWidth: 2,
+
+    labelFill: '#941014',
   },
   LOYOLA: {
     stroke: 'rgba(0, 90, 60, 0.95)',
@@ -54,5 +56,7 @@ export const POLYGON_THEME = {
     selectedStroke: 'rgba(0, 90, 60, 1.0)',
     selectedFill: '#467599',
     selectedStrokeWidth: 2,
+
+    labelFill: '#076C00',
   },
 } as const;
