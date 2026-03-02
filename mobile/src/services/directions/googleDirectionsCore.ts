@@ -1,5 +1,6 @@
 import type { LatLng } from 'react-native-maps';
 import {
+  DirectionsRouteSegment,
   DirectionsRequest,
   DirectionsRoute,
   DirectionsServiceError,
@@ -217,6 +218,32 @@ const extractTransitInstructions = (
   }, []);
 };
 
+const toRouteSegmentMode = (
+  travelMode: GoogleDirectionsStep['travel_mode'],
+): DirectionsRouteSegment['mode'] | null => {
+  if (travelMode === 'WALKING') return 'walking';
+  if (travelMode === 'DRIVING') return 'driving';
+  if (travelMode === 'TRANSIT') return 'transit';
+  return null;
+};
+
+const extractStepRouteSegments = (
+  steps: GoogleDirectionsStep[] | undefined,
+): DirectionsRouteSegment[] => {
+  if (!steps || steps.length === 0) return [];
+
+  return steps.flatMap((step) => {
+    const nestedSegments = extractStepRouteSegments(step.steps);
+    if (nestedSegments.length > 0) return nestedSegments;
+
+    const mode = toRouteSegmentMode(step.travel_mode);
+    const polyline = step.polyline?.points?.trim();
+    if (!mode || !polyline) return [];
+
+    return [{ mode, polyline }];
+  });
+};
+
 const toQueryString = (query: Record<string, string | number>) =>
   Object.entries(query)
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
@@ -382,9 +409,11 @@ export const fetchGoogleTransitRoute = async (
   const transitInstructions = result.legs.flatMap((leg, legIndex) =>
     extractTransitInstructions(leg.steps, legIndex),
   );
+  const routeSegments = result.legs.flatMap((leg) => extractStepRouteSegments(leg.steps));
 
   return {
     ...result.route,
     transitInstructions,
+    routeSegments: routeSegments.length > 0 ? routeSegments : undefined,
   };
 };

@@ -37,6 +37,7 @@ export type GoogleDirectionsStep = {
   html_instructions?: string;
   distance?: { text?: string; value?: number };
   duration?: { text?: string; value?: number };
+  polyline?: { points?: string };
   transit_details?: GoogleTransitDetails;
   steps?: GoogleDirectionsStep[];
 };

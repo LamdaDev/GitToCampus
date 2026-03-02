@@ -94,7 +94,7 @@ describe('shuttlePlanner service', () => {
     expect(result.departures).toEqual([]);
   });
 
-  test('selects nearest pickup stop on the start campus when multiple stops exist', () => {
+  test('selects available pickup and dropoff stops for cross-campus route', () => {
     const result = selectPickupDropoff({
       startCampus: 'SGW',
       destinationCampus: 'LOYOLA',
@@ -242,7 +242,14 @@ describe('shuttlePlanner service', () => {
     expect(plan.nextDepartureInMinutes).toBe(0);
   });
 
-  test('selects the closest non-first stop candidate when start is nearer to another stop', () => {
+  test('selects the nearest pickup stop when multiple custom campus stops exist', () => {
+    SHUTTLE_STOPS.push({
+      id: 'sgw-custom-near',
+      campus: 'SGW',
+      name: 'SGW Shuttle Stop (Custom Near)',
+      coords: { latitude: 45.49583, longitude: -73.579385 },
+    });
+
     const result = selectPickupDropoff({
       startCampus: 'SGW',
       destinationCampus: 'LOYOLA',
@@ -250,7 +257,7 @@ describe('shuttlePlanner service', () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result?.pickup.id).toBe('sgw-gm');
+    expect(result?.pickup.id).toBe('sgw-custom-near');
     expect(result?.dropoff.campus).toBe('LOYOLA');
   });
 
@@ -312,6 +319,13 @@ describe('shuttlePlanner service', () => {
   });
 
   test('rethrows unexpected stop-selection errors in buildShuttlePlan', () => {
+    SHUTTLE_STOPS.push({
+      id: 'sgw-custom-error-path',
+      campus: 'SGW',
+      name: 'SGW Shuttle Stop (Custom Error Path)',
+      coords: { latitude: 45.49583, longitude: -73.579385 },
+    });
+
     jest.spyOn(locationUtils, 'getDistanceMeters').mockImplementation(() => {
       throw new Error('DISTANCE_FAIL');
     });

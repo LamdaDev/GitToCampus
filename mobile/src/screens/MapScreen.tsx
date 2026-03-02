@@ -44,6 +44,7 @@ const ROUTE_FIT_TOP_PADDING = 110;
 
 const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
+const WALKING_DOT_PATTERN = [2, 10];
 
 const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
   latitude: pos.coords.latitude,
@@ -266,11 +267,30 @@ export default function MapScreen({
         : { strokeColor: ROUTE_LINE_COLOR },
     [],
   );
+  const routePolylineSegments = useMemo(() => {
+    if (!outdoorRoute) return [];
+
+    if (outdoorRoute.routeSegments && outdoorRoute.routeSegments.length > 0) {
+      return outdoorRoute.routeSegments.map((segment, index) => ({
+        key: `segment-${index}`,
+        coordinates: decodePolyline(segment.encodedPolyline),
+        requiresWalking: segment.requiresWalking,
+      }));
+    }
+
+    return [
+      {
+        key: 'overview',
+        coordinates: decodePolyline(outdoorRoute.encodedPolyline),
+        requiresWalking: Boolean(outdoorRoute.isWalkingRoute),
+      },
+    ];
+  }, [outdoorRoute]);
   const routeCoordinates = useMemo(
-    () => decodePolyline(outdoorRoute?.encodedPolyline ?? ''),
-    [outdoorRoute?.encodedPolyline],
+    () => routePolylineSegments.flatMap((segment) => segment.coordinates),
+    [routePolylineSegments],
   );
-  const showRoute = routeCoordinates.length > 1 && Boolean(outdoorRoute);
+  const showRoute = routePolylineSegments.some((segment) => segment.coordinates.length > 1);
 
   useEffect(() => {
     if (!showRoute) return;
@@ -317,15 +337,21 @@ export default function MapScreen({
         {selectedMarker}
         {showRoute && (
           <>
-            <Polyline
-              testID="route-polyline"
-              coordinates={routeCoordinates}
-              {...routePolylineStrokeProps}
-              strokeWidth={ROUTE_LINE_WIDTH}
-              lineCap="round"
-              lineJoin="round"
-              zIndex={999}
-            />
+            {routePolylineSegments.map((segment, index) =>
+              segment.coordinates.length > 1 ? (
+                <Polyline
+                  key={segment.key}
+                  testID={index === 0 ? 'route-polyline' : `route-polyline-segment-${index}`}
+                  coordinates={segment.coordinates}
+                  {...routePolylineStrokeProps}
+                  lineDashPattern={segment.requiresWalking ? WALKING_DOT_PATTERN : undefined}
+                  strokeWidth={ROUTE_LINE_WIDTH}
+                  lineCap="round"
+                  lineJoin="round"
+                  zIndex={999}
+                />
+              ) : null,
+            )}
             <Marker
               testID="route-start-marker"
               coordinate={outdoorRoute!.start}

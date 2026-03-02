@@ -527,6 +527,59 @@ describe('MapScreen', () => {
     });
   });
 
+  test('renders dotted route polyline when route requires walking', async () => {
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{
+          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+          start: { latitude: 45.5, longitude: -73.57 },
+          destination: { latitude: 45.49, longitude: -73.58 },
+          isWalkingRoute: true,
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      const routePolyline = getByTestId('route-polyline');
+      expect(routePolyline.props.lineDashPattern).toEqual([2, 10]);
+    });
+  });
+
+  test('renders mixed route segments with dotted walking and solid transit polylines', async () => {
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{
+          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+          start: { latitude: 45.5, longitude: -73.57 },
+          destination: { latitude: 45.49, longitude: -73.58 },
+          routeSegments: [
+            {
+              encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+              requiresWalking: true,
+            },
+            {
+              encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+              requiresWalking: false,
+            },
+          ],
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline').props.lineDashPattern).toEqual([2, 10]);
+      expect(getByTestId('route-polyline-segment-1').props.lineDashPattern).toBeUndefined();
+    });
+  });
+
   test('skips route fitting when map ref does not expose fitToCoordinates', async () => {
     mockHasAnimateToRegion = false;
 
