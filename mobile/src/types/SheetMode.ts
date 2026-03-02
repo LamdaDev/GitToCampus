@@ -1,3 +1,3 @@
 export type SheetMode = 'detail' | 'search';
 
-export type RoutePlannerMode = 'walking' | 'driving' | 'transit';
+export type RoutePlannerMode = 'walking' | 'driving' | 'transit' | 'shuttle';

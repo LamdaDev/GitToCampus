@@ -92,10 +92,12 @@ describe('directions strategies', () => {
                     html_instructions: '<b>Walk</b> to stop',
                     distance: { text: '200 m', value: 200 },
                     duration: { text: '3 mins', value: 180 },
+                    polyline: { points: 'walk-segment' },
                   },
                   {
                     travel_mode: 'TRANSIT',
                     duration: { text: '22 mins', value: 1320 },
+                    polyline: { points: 'transit-segment' },
                     transit_details: {
                       line: {
                         short_name: '24',
@@ -138,6 +140,16 @@ describe('directions strategies', () => {
         lineColor: null,
         lineTextColor: null,
         vehicleType: 'BUS',
+      },
+    ]);
+    expect(route.routeSegments).toEqual([
+      {
+        mode: 'walking',
+        polyline: 'walk-segment',
+      },
+      {
+        mode: 'transit',
+        polyline: 'transit-segment',
       },
     ]);
   });

@@ -34,6 +34,11 @@ export type TransitInstruction = {
   vehicleType?: string | null;
 };
 
+export type DirectionsRouteSegment = {
+  polyline: string;
+  mode: 'walking' | 'driving' | 'transit';
+};
+
 export type DirectionsRoute = {
   polyline: string;
   distanceMeters: number;
@@ -42,6 +47,7 @@ export type DirectionsRoute = {
   durationText: string;
   bounds: DirectionsBounds | null;
   transitInstructions?: TransitInstruction[];
+  routeSegments?: DirectionsRouteSegment[];
 };
 
 export type DirectionsErrorCode =

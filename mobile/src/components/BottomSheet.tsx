@@ -30,6 +30,7 @@ import {
   type DirectionsTravelMode,
   type TransitInstruction,
 } from '../types/Directions';
+import type { RoutePlannerMode } from '../types/SheetMode';
 import type { SharedValue } from 'react-native-reanimated';
 import { decodePolyline } from '../utils/polyline';
 import { formatEta } from '../utils/directionsFormatting';
@@ -50,7 +51,7 @@ const SHUTTLE_SCHEDULE_SNAP_POINTS = Array.from(
   (_value, index) => `${22 + index}%`,
 );
 const DIRECTIONS_PANEL_SNAP_POINT = '52%';
-const DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT = '62%';
+const DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT = '52%';
 const SEARCH_EXPANDED_SNAP_POINT = '82%';
 const SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT = '92%';
 
@@ -162,7 +163,18 @@ const toInternalSnapIndex = (index: number) => {
 const isShuttleWeekdayDebugEnabled = () =>
   (process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY ?? '').trim().toLowerCase() === 'true';
 
+const getForcedShuttlePlanningDate = (): Date | null => {
+  const raw = (process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME ?? '').trim();
+  if (!raw) return null;
+
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const getShuttlePlanningDate = (now: Date) => {
+  const forcedPlanningDate = getForcedShuttlePlanningDate();
+  if (forcedPlanningDate) return forcedPlanningDate;
+
   if (!isShuttleWeekdayDebugEnabled()) return now;
 
   const day = now.getDay();
@@ -193,13 +205,13 @@ const getShuttlePlanningDate = (now: Date) => {
   return now;
 };
 
-const getDirectionsPanelSnapPoint = (
-  travelMode: DirectionsTravelMode,
-  isCrossCampusRoute: boolean,
-) =>
-  travelMode === 'transit' && isCrossCampusRoute
+const getDirectionsPanelSnapPoint = (travelMode: RoutePlannerMode, isCrossCampusRoute: boolean) =>
+  travelMode === 'shuttle' && isCrossCampusRoute
     ? DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT
     : DIRECTIONS_PANEL_SNAP_POINT;
+
+const toDirectionsTravelMode = (travelMode: RoutePlannerMode): DirectionsTravelMode =>
+  travelMode === 'shuttle' ? 'transit' : travelMode;
 
 export type BottomSliderHandle = {
   open: (index?: number) => void;
@@ -259,7 +271,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [routeEncodedPolyline, setRouteEncodedPolyline] = useState<string>('');
     const [navigationProgressMeters, setNavigationProgressMeters] = useState(0);
     const [routeTransitSteps, setRouteTransitSteps] = useState<TransitInstruction[]>([]);
-    const [travelMode, setTravelMode] = useState<DirectionsTravelMode>('walking');
+    const [travelMode, setTravelMode] = useState<RoutePlannerMode>('walking');
     const [shuttlePlan, setShuttlePlan] = useState<ShuttlePlan | null>(null);
     const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
     const destinationCampus = destinationBuilding?.campus ?? null;
@@ -505,14 +517,22 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ]);
 
     const canStartNavigationFromCurrentLocation = routeStartSource === 'current';
+    const shuttlePickupCoords =
+      travelMode === 'shuttle' &&
+      shuttlePlan?.isServiceAvailable &&
+      shuttlePlan.nextDepartureInMinutes !== null
+        ? (shuttlePlan.pickup?.coords ?? null)
+        : null;
+    const routeDestinationCoords = shuttlePickupCoords ?? destinationCoords;
+    const routeRequestMode: DirectionsTravelMode =
+      shuttlePickupCoords !== null ? 'walking' : toDirectionsTravelMode(travelMode);
 
     useEffect(() => {
       const shouldComputeShuttlePlan =
         (activeView === 'directions' || activeView === 'shuttle-schedule') &&
-        travelMode === 'transit' &&
-        isCrossCampusRoute;
+        travelMode === 'shuttle';
 
-      if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus || !startCoords) {
+      if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus) {
         setShuttlePlan(null);
         return;
       }
@@ -521,11 +541,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         buildShuttlePlan({
           startCampus,
           destinationCampus,
-          startCoords,
+          startCoords: startCoords ?? null,
           now: getShuttlePlanningDate(new Date()),
         }),
       );
-    }, [activeView, destinationCampus, isCrossCampusRoute, startCampus, startCoords, travelMode]);
+    }, [activeView, destinationCampus, startCampus, startCoords, travelMode]);
 
     const showNavigationSummary = useCallback(() => {
       setActiveView('navigation');
@@ -538,16 +558,20 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [snapToDirectionsPanel]);
 
     const handleDirectionsGo = useCallback(
-      (mode: DirectionsTravelMode) => {
+      (mode: RoutePlannerMode) => {
         if (mode === 'transit') {
           showTransitPlan();
+          return;
+        }
+        if (mode === 'shuttle') {
+          showShuttleSchedule();
           return;
         }
         if (!canStartNavigationFromCurrentLocation) return;
 
         showNavigationSummary();
       },
-      [canStartNavigationFromCurrentLocation, showNavigationSummary],
+      [canStartNavigationFromCurrentLocation, showNavigationSummary, showShuttleSchedule],
     );
 
     useEffect(() => {
@@ -562,8 +586,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         return;
       }
       if (activeView !== 'directions') return;
+      if (travelMode === 'shuttle' && !shuttlePickupCoords) {
+        resetRouteState();
+        return;
+      }
+      const targetDestination = routeDestinationCoords;
       // Not an error state: route cannot be requested until both endpoints are available.
-      if (!startCoords || !destinationCoords) {
+      if (!startCoords || !targetDestination) {
         resetRouteState();
         return;
       }
@@ -585,8 +614,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         try {
           const route = await fetchOutdoorDirections({
             origin: startCoords,
-            destination: destinationCoords,
-            mode: travelMode,
+            destination: targetDestination,
+            mode: routeRequestMode,
           });
 
           if (cancelled) return;
@@ -602,7 +631,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           passOutdoorRoute({
             encodedPolyline: route.polyline,
             start: startCoords,
-            destination: destinationCoords,
+            destination: targetDestination,
+            isWalkingRoute: routeRequestMode === 'walking',
+            routeSegments: route.routeSegments?.map((segment) => ({
+              encodedPolyline: segment.polyline,
+              requiresWalking: segment.mode === 'walking',
+            })),
             distanceText: route.distanceText,
             durationText: route.durationText,
             distanceMeters: route.distanceMeters,
@@ -633,9 +667,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [
       activeView,
       destinationBuilding?.id,
-      destinationCoords,
       passOutdoorRoute,
       resetRouteState,
+      routeDestinationCoords,
+      routeRequestMode,
+      shuttlePickupCoords,
       startBuilding?.id,
       startCoords,
       travelMode,

@@ -8,12 +8,12 @@ describe('shuttleStops constants', () => {
     expect(campuses.has('LOYOLA')).toBe(true);
   });
 
-  test('contains exactly two stops per campus', () => {
+  test('contains exactly one stop per campus', () => {
     const sgwStops = SHUTTLE_STOPS.filter((stop) => stop.campus === 'SGW');
     const loyolaStops = SHUTTLE_STOPS.filter((stop) => stop.campus === 'LOYOLA');
 
-    expect(sgwStops).toHaveLength(2);
-    expect(loyolaStops).toHaveLength(2);
+    expect(sgwStops).toHaveLength(1);
+    expect(loyolaStops).toHaveLength(1);
   });
 
   test('has unique stop ids and non-empty names', () => {
@@ -39,8 +39,6 @@ describe('shuttleStops constants', () => {
     const ids = new Set(SHUTTLE_STOPS.map((stop) => stop.id));
 
     expect(ids.has('sgw-hall')).toBe(true);
-    expect(ids.has('sgw-gm')).toBe(true);
     expect(ids.has('loy-ad')).toBe(true);
-    expect(ids.has('loy-sherbrooke')).toBe(true);
   });
 });

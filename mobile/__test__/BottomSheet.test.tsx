@@ -180,19 +180,21 @@ jest.mock('../src/components/DirectionDetails', () => {
     shuttlePlan,
   }: any) =>
     (() => {
-      const [selectedMode, setSelectedMode] = React.useState<'walking' | 'driving' | 'transit'>(
-        'walking',
-      );
+      const [selectedMode, setSelectedMode] = React.useState<
+        'walking' | 'driving' | 'transit' | 'shuttle'
+      >('walking');
       const hasRouteSummary = Boolean(routeDurationText && routeDistanceText);
-      const showGoButton = hasRouteSummary && (selectedMode === 'transit' || canStartNavigation);
-      const showShuttleCard = selectedMode === 'transit' && Boolean(isCrossCampusRoute);
+      const showGoButton =
+        hasRouteSummary &&
+        (selectedMode === 'transit' || selectedMode === 'shuttle' || canStartNavigation);
+      const showShuttleCard = selectedMode === 'shuttle';
 
       React.useEffect(() => {
         if (!selectedTravelMode) return;
         setSelectedMode(selectedTravelMode);
       }, [selectedTravelMode]);
 
-      const handleSelectMode = (mode: 'walking' | 'driving' | 'transit') => {
+      const handleSelectMode = (mode: 'walking' | 'driving' | 'transit' | 'shuttle') => {
         setSelectedMode(mode);
         onTravelModeChange?.(mode);
       };
@@ -204,6 +206,7 @@ jest.mock('../src/components/DirectionDetails', () => {
           return;
         }
         if (selectedMode === 'transit') onPressTransitGo?.();
+        if (selectedMode === 'shuttle') onPressShuttleSchedule?.();
       };
 
       return (
@@ -256,6 +259,9 @@ jest.mock('../src/components/DirectionDetails', () => {
           </TouchableOpacity>
           <TouchableOpacity testID="transport-bus" onPress={() => handleSelectMode('transit')}>
             <Text>Bus</Text>
+          </TouchableOpacity>
+          <TouchableOpacity testID="transport-shuttle" onPress={() => handleSelectMode('shuttle')}>
+            <Text>Shuttle</Text>
           </TouchableOpacity>
           {showGoButton ? (
             <TouchableOpacity testID="route-go-button" onPress={handleGo}>
@@ -350,6 +356,8 @@ describe('BottomSheet', () => {
   const directionsServiceMock = directionsService as jest.Mocked<typeof directionsService>;
   const shuttlePlannerMock = shuttlePlannerService as jest.Mocked<typeof shuttlePlannerService>;
   const originalShuttleWeekdayDebug = process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
+  const originalShuttleForcedPlanningTime =
+    process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;
   const pressAndFlush = async (node: any) => {
     await act(async () => {
       fireEvent.press(node);
@@ -361,6 +369,7 @@ describe('BottomSheet', () => {
     jest.clearAllMocks();
     jest.useRealTimers();
     delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
+    delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;
     directionsServiceMock.fetchOutdoorDirections.mockImplementation(
       () => new Promise(() => undefined),
     );
@@ -381,6 +390,11 @@ describe('BottomSheet', () => {
       delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
     } else {
       process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY = originalShuttleWeekdayDebug;
+    }
+    if (originalShuttleForcedPlanningTime === undefined) {
+      delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;
+    } else {
+      process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME = originalShuttleForcedPlanningTime;
     }
     jest.useRealTimers();
   });
@@ -748,7 +762,7 @@ describe('BottomSheet', () => {
     expect(getByTestId('cross-campus-state').props.children).toBe('false');
   });
 
-  test('cross-campus transit computes shuttle plan and exposes shuttle card content path', async () => {
+  test('cross-campus shuttle mode computes shuttle plan and exposes shuttle card content path', async () => {
     shuttlePlannerMock.buildShuttlePlan.mockReturnValueOnce({
       direction: 'LOYOLA_TO_SGW',
       pickup: null,
@@ -769,7 +783,7 @@ describe('BottomSheet', () => {
     );
 
     await pressAndFlush(getByTestId('on-show-directions-as-destination'));
-    await pressAndFlush(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('transport-shuttle'));
 
     await waitFor(() => {
       expect(shuttlePlannerMock.buildShuttlePlan).toHaveBeenCalledWith(
@@ -783,7 +797,76 @@ describe('BottomSheet', () => {
     });
   });
 
-  test('opens shuttle schedule view from shuttle card and returns to directions with back arrow', async () => {
+  test('shuttle mode routes map path to pickup stop when next bus is available', async () => {
+    const passOutdoorRoute = jest.fn();
+    const shuttlePickupCoords = { latitude: 45.458317, longitude: -73.640225 };
+
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 450,
+      distanceText: '450 m',
+      durationSeconds: 360,
+      durationText: '6 mins',
+      bounds: null,
+    });
+    shuttlePlannerMock.buildShuttlePlan.mockReturnValueOnce({
+      direction: 'LOYOLA_TO_SGW',
+      pickup: {
+        id: 'loy-ad',
+        campus: 'LOYOLA',
+        name: 'Loyola Shuttle Stop (AD Building)',
+        coords: shuttlePickupCoords,
+      },
+      dropoff: {
+        id: 'sgw-hall',
+        campus: 'SGW',
+        name: 'SGW Shuttle Stop (Hall Building)',
+        coords: { latitude: 45.497193, longitude: -73.578985 },
+      },
+      nextDepartures: ['10:15 AM', '10:30 AM'],
+      nextDepartureDates: [],
+      nextDepartureInMinutes: 2,
+      isServiceAvailable: true,
+    });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        passOutdoorRoute={passOutdoorRoute}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalled();
+    });
+
+    const initialCallCount = directionsServiceMock.fetchOutdoorDirections.mock.calls.length;
+    await pressAndFlush(getByTestId('transport-shuttle'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThan(
+        initialCallCount,
+      );
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          mode: 'walking',
+          destination: shuttlePickupCoords,
+        }),
+      );
+      expect(passOutdoorRoute).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+          destination: shuttlePickupCoords,
+        }),
+      );
+    });
+  });
+
+  test('opens shuttle schedule view from shuttle mode and returns to directions with back arrow', async () => {
     shuttlePlannerMock.buildShuttlePlan.mockReturnValue({
       direction: 'LOYOLA_TO_SGW',
       pickup: null,
@@ -804,7 +887,7 @@ describe('BottomSheet', () => {
     );
 
     await pressAndFlush(getByTestId('on-show-directions-as-destination'));
-    await pressAndFlush(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('transport-shuttle'));
     await pressAndFlush(getByTestId('shuttle-full-schedule-button'));
 
     await waitFor(() => {
@@ -822,9 +905,9 @@ describe('BottomSheet', () => {
     });
   });
 
-  test('same-campus transit does not expose shuttle card content path', async () => {
+  test('same-campus shuttle mode shows unavailable shuttle card content path', async () => {
     const sameCampusCurrent: BuildingShape = { ...mockBuildings[0], campus: 'SGW' };
-    const { getByTestId, queryByTestId } = render(
+    const { getByTestId } = render(
       <BottomSlider
         {...defaultProps}
         ref={createRef()}
@@ -834,16 +917,23 @@ describe('BottomSheet', () => {
     );
 
     await pressAndFlush(getByTestId('on-show-directions-as-destination'));
-    await pressAndFlush(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('transport-shuttle'));
 
     await waitFor(() => {
       expect(getByTestId('cross-campus-state').props.children).toBe('false');
-      expect(queryByTestId('shuttle-card-state')).toBeNull();
-      expect(shuttlePlannerMock.buildShuttlePlan).not.toHaveBeenCalled();
+      expect(getByTestId('shuttle-card-state').props.children).toBe(
+        'Shuttle bus unavailable today. Try Public Transit.',
+      );
+      expect(shuttlePlannerMock.buildShuttlePlan).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startCampus: 'SGW',
+          destinationCampus: 'SGW',
+        }),
+      );
     });
   });
 
-  test('cross-campus transit snaps to 62% and returns to 52% for walk/car', async () => {
+  test('cross-campus shuttle keeps directions panel at 52% (same as walk/car)', async () => {
     const { getByTestId } = render(
       <BottomSlider
         {...defaultProps}
@@ -854,10 +944,13 @@ describe('BottomSheet', () => {
     );
 
     await pressAndFlush(getByTestId('on-show-directions-as-destination'));
-
-    await pressAndFlush(getByTestId('transport-bus'));
     await waitFor(() => {
-      expect(mockSnapToPosition).toHaveBeenLastCalledWith('62%');
+      expect(getByTestId('cross-campus-state').props.children).toBe('true');
+    });
+
+    await pressAndFlush(getByTestId('transport-shuttle'));
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenLastCalledWith('52%');
     });
 
     await pressAndFlush(getByTestId('transport-walk'));
@@ -1425,7 +1518,7 @@ describe('BottomSheet', () => {
     );
 
     await pressAndFlush(getByTestId('on-show-directions-as-destination'));
-    await pressAndFlush(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('transport-shuttle'));
 
     const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
     expect(shuttlePlanArgs).toBeTruthy();
@@ -1447,7 +1540,7 @@ describe('BottomSheet', () => {
     );
 
     await pressAndFlush(getByTestId('on-show-directions-as-destination'));
-    await pressAndFlush(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('transport-shuttle'));
 
     const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
     expect(shuttlePlanArgs).toBeTruthy();
@@ -1469,7 +1562,7 @@ describe('BottomSheet', () => {
     );
 
     await pressAndFlush(getByTestId('on-show-directions-as-destination'));
-    await pressAndFlush(getByTestId('transport-bus'));
+    await pressAndFlush(getByTestId('transport-shuttle'));
 
     const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
     expect(shuttlePlanArgs).toBeTruthy();

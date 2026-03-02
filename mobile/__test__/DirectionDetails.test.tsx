@@ -126,12 +126,14 @@ describe('Direction Details', () => {
     const walkButton = getByTestId('transport-walk');
     const carButton = getByTestId('transport-car');
     const busButton = getByTestId('transport-bus');
+    const shuttleButton = getByTestId('transport-shuttle');
 
     // Walk button starts active
     fireEvent.press(walkButton);
     expect(walkButton.props.accessibilityState.selected).toBe(true);
     expect(carButton.props.accessibilityState.selected).toBe(false);
     expect(busButton.props.accessibilityState.selected).toBe(false);
+    expect(shuttleButton.props.accessibilityState.selected).toBe(false);
     expect(onTravelModeChange).toHaveBeenLastCalledWith('walking');
 
     // Press car button
@@ -139,6 +141,7 @@ describe('Direction Details', () => {
     expect(walkButton.props.accessibilityState.selected).toBe(false);
     expect(carButton.props.accessibilityState.selected).toBe(true);
     expect(busButton.props.accessibilityState.selected).toBe(false);
+    expect(shuttleButton.props.accessibilityState.selected).toBe(false);
     expect(onTravelModeChange).toHaveBeenLastCalledWith('driving');
 
     // Press bus button
@@ -146,12 +149,21 @@ describe('Direction Details', () => {
     expect(walkButton.props.accessibilityState.selected).toBe(false);
     expect(carButton.props.accessibilityState.selected).toBe(false);
     expect(busButton.props.accessibilityState.selected).toBe(true);
+    expect(shuttleButton.props.accessibilityState.selected).toBe(false);
     expect(onTravelModeChange).toHaveBeenLastCalledWith('transit');
-    expect(onTravelModeChange).toHaveBeenCalledTimes(3);
+
+    // Press shuttle button
+    fireEvent.press(shuttleButton);
+    expect(walkButton.props.accessibilityState.selected).toBe(false);
+    expect(carButton.props.accessibilityState.selected).toBe(false);
+    expect(busButton.props.accessibilityState.selected).toBe(false);
+    expect(shuttleButton.props.accessibilityState.selected).toBe(true);
+    expect(onTravelModeChange).toHaveBeenLastCalledWith('shuttle');
+    expect(onTravelModeChange).toHaveBeenCalledTimes(4);
   });
 
-  test('keeps only three transport options (walk, car, transit)', () => {
-    const { queryByTestId, getByTestId } = render(
+  test('renders four transport options (walk, car, transit, shuttle)', () => {
+    const { getByTestId } = render(
       <DirectionDetails
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[1]}
@@ -164,10 +176,10 @@ describe('Direction Details', () => {
     expect(getByTestId('transport-walk')).toBeTruthy();
     expect(getByTestId('transport-car')).toBeTruthy();
     expect(getByTestId('transport-bus')).toBeTruthy();
-    expect(queryByTestId('transport-shuttle')).toBeNull();
+    expect(getByTestId('transport-shuttle')).toBeTruthy();
   });
 
-  test('renders shuttle card details when transit is selected on cross-campus routes', () => {
+  test('renders shuttle card details when shuttle is selected on cross-campus routes', () => {
     const onTravelModeChange = jest.fn();
     const { getByTestId, queryByTestId } = render(
       <DirectionDetails
@@ -202,19 +214,19 @@ describe('Direction Details', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('transport-bus'));
-    expect(onTravelModeChange).toHaveBeenLastCalledWith('transit');
+    fireEvent.press(getByTestId('transport-shuttle'));
+    expect(onTravelModeChange).toHaveBeenLastCalledWith('shuttle');
     expect(getByTestId('shuttle-card-content')).toBeTruthy();
     expect(getByTestId('shuttle-direction-label').props.children).toBe('LOY -> SGW');
     expect(getByTestId('shuttle-next-bus-text').props.children).toContain('Next bus in 10');
     expect(queryByTestId('shuttle-pickup-text')).toBeNull();
     expect(queryByTestId('shuttle-dropoff-text')).toBeNull();
-    expect(getByTestId('route-summary-text').props.children).toBe('14 mins');
-    expect(getByTestId('route-go-button')).toBeTruthy();
+    expect(queryByTestId('route-summary-text')).toBeNull();
+    expect(queryByTestId('route-go-button')).toBeNull();
   });
 
-  test('hides shuttle card for same-campus transit', () => {
-    const { getByTestId, queryByTestId } = render(
+  test('shows Shuttle Unavailable card for same-campus shuttle routes', () => {
+    const { getByTestId } = render(
       <DirectionDetails
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[0]}
@@ -235,8 +247,12 @@ describe('Direction Details', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('transport-bus'));
-    expect(queryByTestId('shuttle-card-content')).toBeNull();
+    fireEvent.press(getByTestId('transport-shuttle'));
+    expect(getByTestId('shuttle-card-content')).toBeTruthy();
+    expect(getByTestId('shuttle-unavailable-text').props.children).toBe(
+      'Shuttle service not available right now. Try Public Transit.',
+    );
+    expect(getByTestId('shuttle-full-schedule-button')).toBeTruthy();
   });
 
   test('calls onPressShuttleSchedule when schedule button is pressed', () => {
@@ -262,13 +278,13 @@ describe('Direction Details', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('transport-bus'));
+    fireEvent.press(getByTestId('transport-shuttle'));
     fireEvent.press(getByTestId('shuttle-full-schedule-button'));
     expect(onPressShuttleSchedule).toHaveBeenCalledTimes(1);
   });
 
   test('shows only unavailable message when no shuttle buses are available', () => {
-    const { getByTestId, queryByTestId, getByText } = render(
+    const { getByTestId, queryByTestId } = render(
       <DirectionDetails
         startBuilding={mockBuildings[0]}
         destinationBuilding={mockBuildings[1]}
@@ -301,7 +317,7 @@ describe('Direction Details', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('transport-bus'));
+    fireEvent.press(getByTestId('transport-shuttle'));
 
     expect(getByTestId('shuttle-unavailable-text').props.children).toBe(
       'Shuttle bus unavailable today. Try Public Transit.',
@@ -309,7 +325,8 @@ describe('Direction Details', () => {
     expect(queryByTestId('shuttle-direction-label')).toBeNull();
     expect(queryByTestId('shuttle-pickup-text')).toBeNull();
     expect(queryByTestId('shuttle-dropoff-text')).toBeNull();
-    expect(getByText('14 mins')).toBeTruthy();
+    expect(queryByTestId('route-summary-text')).toBeNull();
+    expect(queryByTestId('route-go-button')).toBeNull();
   });
 
   test('shows loading state when route is loading', () => {
@@ -596,6 +613,7 @@ describe('Direction Details', () => {
 
     expect(getByTestId('transport-walk').props.accessibilityState.selected).toBe(true);
     expect(getByTestId('transport-bus').props.accessibilityState.selected).toBe(false);
+    expect(getByTestId('transport-shuttle').props.accessibilityState.selected).toBe(false);
     expect(queryByTestId('shuttle-card-content')).toBeNull();
 
     rerender(
@@ -613,6 +631,23 @@ describe('Direction Details', () => {
     );
 
     expect(getByTestId('transport-bus').props.accessibilityState.selected).toBe(true);
+    expect(queryByTestId('shuttle-card-content')).toBeNull();
+
+    rerender(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        isCrossCampusRoute={true}
+        selectedTravelMode="shuttle"
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+      />,
+    );
+
+    expect(getByTestId('transport-shuttle').props.accessibilityState.selected).toBe(true);
     expect(getByTestId('shuttle-card-content')).toBeTruthy();
   });
 
@@ -639,7 +674,7 @@ describe('Direction Details', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('transport-bus'));
+    fireEvent.press(getByTestId('transport-shuttle'));
 
     expect(getByTestId('shuttle-next-bus-text').props.children).toBe('Next bus in 1 min');
     expect(getByText('SGW -> LOY')).toBeTruthy();
@@ -666,7 +701,7 @@ describe('Direction Details', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('transport-bus'));
+    fireEvent.press(getByTestId('transport-shuttle'));
     expect(getByTestId('shuttle-next-bus-text').props.children).toBe('Next bus time unavailable');
   });
 
@@ -691,7 +726,7 @@ describe('Direction Details', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('transport-bus'));
+    fireEvent.press(getByTestId('transport-shuttle'));
 
     expect(getByTestId('shuttle-unavailable-text').props.children).toBe(
       'Shuttle bus unavailable today. Try Public Transit.',

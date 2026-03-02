@@ -105,10 +105,12 @@ describe('googleDirections service', () => {
                     html_instructions: '<b>Walk</b> to <b>Guy-Concordia Station</b>',
                     distance: { text: '300 m', value: 300 },
                     duration: { text: '4 mins', value: 240 },
+                    polyline: { points: 'walk-polyline' },
                   },
                   {
                     travel_mode: 'TRANSIT',
                     duration: { text: '22 mins', value: 1320 },
+                    polyline: { points: 'transit-polyline' },
                     transit_details: {
                       departure_stop: { name: 'Guy-Concordia' },
                       arrival_stop: { name: "De l'Eglise" },
@@ -162,6 +164,16 @@ describe('googleDirections service', () => {
         lineColor: '#00985F',
         lineTextColor: '#FFFFFF',
         vehicleType: 'SUBWAY',
+      },
+    ]);
+    expect(route.routeSegments).toEqual([
+      {
+        mode: 'walking',
+        polyline: 'walk-polyline',
+      },
+      {
+        mode: 'transit',
+        polyline: 'transit-polyline',
       },
     ]);
     expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('mode=transit'));

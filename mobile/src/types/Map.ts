@@ -12,10 +12,17 @@ export type PolygonRenderItem = {
   coordinates: LatLng[];
 };
 
+export type OutdoorRouteSegment = {
+  encodedPolyline: string;
+  requiresWalking: boolean;
+};
+
 export type OutdoorRouteOverlay = {
   encodedPolyline: string;
   start: LatLng;
   destination: LatLng;
+  isWalkingRoute?: boolean;
+  routeSegments?: OutdoorRouteSegment[];
   distanceText?: string;
   durationText?: string;
   distanceMeters?: number;
