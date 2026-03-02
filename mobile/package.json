@@ -18,6 +18,7 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@gorhom/bottom-sheet": "^5.2.8",
+    "@microsoft/react-native-clarity": "^4.5.3",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~54.0.33",
     "expo-application": "~7.0.8",

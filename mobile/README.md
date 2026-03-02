@@ -45,6 +45,7 @@ This is an Expo-based React Native app using TypeScript and the managed workflow
    - `EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID`
    - `EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID`
    - `EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID` (used for web or as fallback)
+   - `EXPO_PUBLIC_CLARITY_PROJECT_ID` (for Microsoft Clarity session recording)
 
 ### Running on Android
 
@@ -167,6 +168,32 @@ Use this flow for Android Google Calendar sign-in.
 - Auth session data (access token metadata + expiry) is stored in `expo-secure-store`.
 - Storage key: `gittocampus.googleCalendar.session.v1`.
 - No OAuth client IDs or secrets are hardcoded in source; client IDs are read from `EXPO_PUBLIC_*` env vars.
+
+## Microsoft Clarity (Usability Testing)
+
+- SDK package: `@microsoft/react-native-clarity`
+- Initialization happens at app startup in `src/App.tsx` via `src/services/clarity.ts`.
+- Clarity is skipped in Expo Go by design. Use a development build.
+
+### Commands
+
+1. Install dependencies:
+   ```bash
+   cd mobile
+   npm install
+   ```
+2. Ensure `EXPO_PUBLIC_CLARITY_PROJECT_ID` is set in `.env`.
+3. Build and run dev client:
+   - Android:
+     ```bash
+     npx expo run:android
+     npx expo start --dev-client -c
+     ```
+   - iOS (cloud build):
+     ```bash
+     npx eas build -p ios --profile development
+     npx expo start --dev-client --host tunnel -c
+     ```
 
 ### Session expiry and reconnect behavior
 

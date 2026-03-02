@@ -5,6 +5,7 @@ import BottomSheet from '../src/components/BottomSheet';
 import App from '../src/App';
 
 const mockUseFonts = jest.fn(() => [true]);
+const mockInitializeClarityAsync = jest.fn(async () => {});
 
 // Mock GestureHandlerView needed for BottomSheet
 jest.mock('react-native-gesture-handler', () => {
@@ -91,9 +92,14 @@ jest.mock('../src/components/AppSearchBar', () => {
   };
 });
 
+jest.mock('../src/services/clarity', () => ({
+  initializeClarityAsync: () => mockInitializeClarityAsync(),
+}));
+
 describe('App', () => {
   beforeEach(() => {
     mockUseFonts.mockReturnValue([true]);
+    mockInitializeClarityAsync.mockClear();
   });
 
   test('renders MapScreen inside SafeAreaView', () => {
@@ -164,5 +170,10 @@ describe('App', () => {
 
     const { queryByTestId } = render(<App />);
     expect(queryByTestId('map-screen')).toBeNull();
+  });
+
+  test('initializes Clarity at startup', () => {
+    render(<App />);
+    expect(mockInitializeClarityAsync).toHaveBeenCalledTimes(1);
   });
 });
