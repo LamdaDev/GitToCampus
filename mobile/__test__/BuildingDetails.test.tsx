@@ -199,4 +199,37 @@ describe('Building Details', () => {
 
     expect(serviceButton).toBeTruthy();
   });
+  test('carousel images update when selected building changes', () => {
+    const { getAllByTestId, rerender } = render(
+      <BuildingDetails
+        selectedBuilding={mockBuildings[0]}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    let images = getAllByTestId('carousel-image');
+    expect(images).toHaveLength(mockBuildings[0].images.length);
+    images.forEach((img, index) => {
+      expect(img.props.source).toEqual({ uri: mockBuildings[0].images[index] });
+    });
+
+    rerender(
+      <BuildingDetails
+        selectedBuilding={mockBuildings[1]}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    images = getAllByTestId('carousel-image');
+    expect(images).toHaveLength(mockBuildings[1].images.length);
+    images.forEach((img, index) => {
+      expect(img.props.source).toEqual({ uri: mockBuildings[1].images[index] });
+    });
+  });
 });

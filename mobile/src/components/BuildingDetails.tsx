@@ -1,6 +1,6 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Linking, ScrollView, Image } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 
@@ -24,6 +24,9 @@ export default function BuildingDetails({
   currentBuilding: _currentBuilding,
   userLocation: _userLocation,
 }: Readonly<BuildingDetailProps>) {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewWidth = useRef(0);
+  const contentWidth = useRef(0);
   const services = selectedBuilding?.services;
 
   const handleDirectionsToPress = () => {
@@ -37,6 +40,14 @@ export default function BuildingDetails({
       onShowDirections(selectedBuilding, false);
     }
   };
+
+  useEffect(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({
+        x: (contentWidth.current - scrollViewWidth.current) / 2,
+      });
+    }, 50);
+  }, [selectedBuilding]);
 
   /**
    * hotspotsSection & servicesSection loads any information if present, else it will render nothing
@@ -67,6 +78,13 @@ export default function BuildingDetails({
         showsHorizontalScrollIndicator
         scrollEventThrottle={16}
         style={buildingDetailsStyles.carousel}
+        ref={scrollViewRef}
+        onLayout={(e) => {
+          scrollViewWidth.current = e.nativeEvent.layout.width;
+        }}
+        onContentSizeChange={(width) => {
+          contentWidth.current = width;
+        }}
       >
         {selectedBuilding?.images?.map((imgUrl, index) => (
           <View key={index} style={buildingDetailsStyles.imageWrapper}>
@@ -118,8 +136,8 @@ export default function BuildingDetails({
           <Text style={buildingDetailsStyles.servicesTitle}>Services</Text>
           <BottomSheetFlatList
             data={servicesSection(services)}
-            renderItem={({ item }) => (
-              <View style={buildingDetailsStyles.row}>
+            renderItem={({ item, index }) => (
+              <View key={index} style={buildingDetailsStyles.row}>
                 {item.map((service, serviceIndex) => (
                   <TouchableOpacity
                     key={serviceIndex}
