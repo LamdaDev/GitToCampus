@@ -168,6 +168,7 @@ describe('SearchSheet', () => {
   });
 
   test('shows connected state after successful calendar sign-in', async () => {
+    const onCalendarConnected = jest.fn();
     connectGoogleCalendarMock.mockResolvedValueOnce({
       type: 'success',
       session: {
@@ -177,7 +178,9 @@ describe('SearchSheet', () => {
         expiresAt: Date.now() + 10 * 60 * 1000,
       },
     });
-    const { getByTestId, queryByText } = render(<SearchSheet buildings={mockBuildings} />);
+    const { getByTestId, queryByText } = render(
+      <SearchSheet buildings={mockBuildings} onCalendarConnected={onCalendarConnected} />,
+    );
 
     await waitFor(() =>
       expect(getByTestId('calendar-connection-status')).toHaveTextContent(
@@ -192,6 +195,7 @@ describe('SearchSheet', () => {
     expect(getByTestId('calendar-connection-status')).toHaveTextContent(
       'Calendar status: Connected',
     );
+    expect(onCalendarConnected).toHaveBeenCalledTimes(1);
   });
 
   test('shows expired helper and status when a stored session is already expired', async () => {

@@ -6,6 +6,8 @@ import { Platform } from 'react-native';
 
 const GOOGLE_CALENDAR_STORAGE_KEY = 'gittocampus.googleCalendar.session.v1';
 const GOOGLE_CALENDAR_KEYCHAIN_SERVICE = 'gittocampus.googleCalendar';
+const GOOGLE_CALENDAR_LIST_ENDPOINT =
+  'https://www.googleapis.com/calendar/v3/users/me/calendarList';
 const TOKEN_EXPIRY_GRACE_MS = 60_000;
 const FALLBACK_ACCESS_TOKEN_TTL_SECONDS = 3600;
 const GOOGLE_CALENDAR_REDIRECT_PATH = 'oauthredirect';
@@ -44,6 +46,17 @@ export type GoogleCalendarConnectResult =
   | { type: 'success'; session: GoogleCalendarSession }
   | { type: 'cancel' }
   | { type: 'denied' }
+  | { type: 'error'; message: string };
+
+export type GoogleCalendarListItem = {
+  id: string;
+  name: string;
+  accessRole: string | null;
+  isPrimary: boolean;
+};
+
+export type GoogleCalendarListResult =
+  | { type: 'success'; calendars: GoogleCalendarListItem[] }
   | { type: 'error'; message: string };
 
 const isNonEmptyString = (value: unknown): value is string =>
@@ -141,6 +154,13 @@ const mapUnexpectedErrorToMessage = (error: unknown): string => {
   return 'Unable to connect Google Calendar right now. Please try again.';
 };
 
+const mapCalendarListErrorToMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+  return 'Unable to load calendar list right now. Please retry.';
+};
+
 export const saveGoogleCalendarSession = async (session: GoogleCalendarSession): Promise<void> => {
   await SecureStore.setItemAsync(
     GOOGLE_CALENDAR_STORAGE_KEY,
@@ -180,6 +200,75 @@ export const getStoredGoogleCalendarSessionState =
       return { status: 'not_connected', session: null };
     }
   };
+
+const parseCalendarListItems = (value: unknown): GoogleCalendarListItem[] => {
+  if (!value || typeof value !== 'object') return [];
+
+  const payload = value as { items?: unknown };
+  if (!Array.isArray(payload.items)) return [];
+
+  return payload.items
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+
+      const candidate = item as Record<string, unknown>;
+      const id = candidate.id;
+      const name = candidate.summaryOverride ?? candidate.summary;
+      if (!isNonEmptyString(id) || !isNonEmptyString(name)) return null;
+
+      return {
+        id,
+        name: name.trim(),
+        accessRole: isNonEmptyString(candidate.accessRole) ? candidate.accessRole : null,
+        isPrimary: candidate.primary === true,
+      } as GoogleCalendarListItem;
+    })
+    .filter((item): item is GoogleCalendarListItem => item !== null);
+};
+
+export const fetchGoogleCalendarListAsync = async (): Promise<GoogleCalendarListResult> => {
+  const state = await getStoredGoogleCalendarSessionState();
+  if (state.status !== 'connected' || !state.session) {
+    return {
+      type: 'error',
+      message: 'Connect Google Calendar before loading your calendars.',
+    };
+  }
+
+  try {
+    const response = await fetch(GOOGLE_CALENDAR_LIST_ENDPOINT, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${state.session.accessToken}`,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        return {
+          type: 'error',
+          message: 'Calendar authorization expired. Reconnect Google Calendar and try again.',
+        };
+      }
+      return {
+        type: 'error',
+        message: 'Unable to load calendar list right now. Please retry.',
+      };
+    }
+
+    const payload: unknown = await response.json();
+    return {
+      type: 'success',
+      calendars: parseCalendarListItems(payload),
+    };
+  } catch (error) {
+    return {
+      type: 'error',
+      message: mapCalendarListErrorToMessage(error),
+    };
+  }
+};
 
 export const connectGoogleCalendarAsync = async (): Promise<GoogleCalendarConnectResult> => {
   const clientId = getConfiguredClientId();

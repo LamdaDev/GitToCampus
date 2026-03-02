@@ -4,11 +4,13 @@ import * as WebBrowser from 'expo-web-browser';
 import {
   GOOGLE_CALENDAR_READONLY_SCOPE,
   connectGoogleCalendarAsync,
+  fetchGoogleCalendarListAsync,
   getStoredGoogleCalendarSessionState,
   saveGoogleCalendarSession,
 } from '../src/services/googleCalendarAuth';
 
 const STORAGE_KEY = 'gittocampus.googleCalendar.session.v1';
+const originalFetch = global.fetch;
 
 jest.mock('expo-web-browser', () => ({
   maybeCompleteAuthSession: jest.fn(),
@@ -54,11 +56,14 @@ describe('googleCalendarAuth', () => {
   const webBrowserMock = WebBrowser as unknown as {
     maybeCompleteAuthSession: jest.Mock;
   };
+  const fetchMock = jest.fn();
   let consoleInfoSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
     secureStoreMock.__mockStore.clear();
+    fetchMock.mockReset();
+    (global as { fetch?: typeof fetch }).fetch = fetchMock as unknown as typeof fetch;
     authSessionMock.makeRedirectUri.mockReturnValue('gittocampus://oauthredirect');
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID = 'android-client-id';
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID = 'ios-client-id';
@@ -69,6 +74,10 @@ describe('googleCalendarAuth', () => {
 
   afterEach(() => {
     consoleInfoSpy.mockRestore();
+  });
+
+  afterAll(() => {
+    (global as { fetch?: typeof fetch }).fetch = originalFetch;
   });
 
   test('returns connected state for a valid stored session', async () => {
@@ -133,6 +142,105 @@ describe('googleCalendarAuth', () => {
     const state = await getStoredGoogleCalendarSessionState();
 
     expect(state).toEqual({ status: 'not_connected', session: null });
+  });
+
+  test('returns error when calendar list is requested without active session', async () => {
+    const result = await fetchGoogleCalendarListAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Connect Google Calendar before loading your calendars.',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test('fetches and parses calendars when the session is valid', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'calendar-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        items: [
+          { id: 'primary-id', summary: 'Main Calendar', primary: true, accessRole: 'owner' },
+          { id: 'shared-id', summaryOverride: 'Shared Team Calendar', accessRole: 'reader' },
+          { id: 'invalid-id', summary: '   ' },
+        ],
+      }),
+    });
+
+    const result = await fetchGoogleCalendarListAsync();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://www.googleapis.com/calendar/v3/users/me/calendarList',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer calendar-token',
+        }),
+      }),
+    );
+    expect(result).toEqual({
+      type: 'success',
+      calendars: [
+        {
+          id: 'primary-id',
+          name: 'Main Calendar',
+          accessRole: 'owner',
+          isPrimary: true,
+        },
+        {
+          id: 'shared-id',
+          name: 'Shared Team Calendar',
+          accessRole: 'reader',
+          isPrimary: false,
+        },
+      ],
+    });
+  });
+
+  test('returns reconnect message when calendar list request is unauthorized', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'expired-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+    });
+
+    const result = await fetchGoogleCalendarListAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Calendar authorization expired. Reconnect Google Calendar and try again.',
+    });
+  });
+
+  test('returns fallback message when calendar list request fails', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'live-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockRejectedValueOnce('network down');
+
+    const result = await fetchGoogleCalendarListAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Unable to load calendar list right now. Please retry.',
+    });
   });
 
   test('returns error when oauth client id is missing', async () => {
