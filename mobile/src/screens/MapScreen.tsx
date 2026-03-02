@@ -133,18 +133,8 @@ const renderPolygonItem = (
         onPress={() => onPolygonPress(item)}
       />
       <Marker coordinate={center} tracksViewChanges={true} testID={'map-label'}>
-        <View
-          style={{
-            backgroundColor: theme.labelFill,
-            paddingHorizontal: 6,
-            paddingVertical: 2,
-            borderRadius: 15,
-            elevation: 2,
-          }}
-        >
-          <Text style={{ fontSize: 10, color: 'white', fontWeight: '700' }}>
-            {item.buildingShortCode}
-          </Text>
+        <View style={[styles.labels, { backgroundColor: theme.labelFill }]}>
+          <Text style={styles.labelText}>{item.buildingShortCode}</Text>
         </View>
       </Marker>
     </Fragment>

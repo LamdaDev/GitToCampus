@@ -27,6 +27,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
+  labels: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 15,
+    elevation: 2,
+  },
+  labelText: {
+    fontSize: 10,
+    color: 'white',
+    fontWeight: '700',
+  },
 });
 
 export default styles;
