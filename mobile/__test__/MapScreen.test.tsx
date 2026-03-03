@@ -15,6 +15,7 @@ const mockPassUserLocation = jest.fn();
 const mockPassCurrentBuilding = jest.fn();
 const mockOpenBottomSheet = jest.fn();
 const mockOnMapPress = jest.fn();
+const mockOnOpenCalendar = jest.fn();
 const mockAnimateToRegion = jest.fn();
 const mockFitToCoordinates = jest.fn();
 let mockHasAnimateToRegion = true;
@@ -135,6 +136,7 @@ describe('MapScreen', () => {
     mockHasAnimateToRegion = true;
     mockFitToCoordinates.mockClear();
     mockOnMapPress.mockClear();
+    mockOnOpenCalendar.mockClear();
 
     repoMock.getCampusBuildingShapes.mockImplementation((campus: 'SGW' | 'LOYOLA') =>
       mockBuildings.filter((b) => b.campus === campus),
@@ -199,6 +201,21 @@ describe('MapScreen', () => {
     fireEvent.press(getByTestId('campus-map'));
 
     expect(mockOnMapPress).toHaveBeenCalledTimes(1);
+  });
+
+  test('calls onOpenCalendar when the calendar control is pressed', async () => {
+    const { getByLabelText } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        onOpenCalendar={mockOnOpenCalendar}
+      />,
+    );
+
+    fireEvent.press(getByLabelText('Open Calendar'));
+    expect(mockOnOpenCalendar).toHaveBeenCalledTimes(1);
   });
 
   test('selecting polygon updates selection, parent callback, sheet open, and marker', async () => {

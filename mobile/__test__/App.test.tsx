@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import MapScreen from '../src/screens/MapScreen';
 import BottomSheet from '../src/components/BottomSheet';
 import App from '../src/App';
@@ -7,6 +7,16 @@ import App from '../src/App';
 const mockUseFonts = jest.fn(() => [true]);
 const mockInitializeClarityAsync = jest.fn(async () => {});
 const mockCloseCalendarSlider = jest.fn();
+const mockBottomSheetOpen = jest.fn();
+const mockOpenCalendarEventsSlider = jest.fn();
+const mockGetStoredGoogleCalendarSessionState = jest.fn(async () => ({
+  status: 'not_connected',
+  session: null,
+}));
+const mockFetchGoogleCalendarListAsync = jest.fn(async () => ({
+  type: 'success',
+  calendars: [],
+}));
 
 // Mock GestureHandlerView needed for BottomSheet
 jest.mock('react-native-gesture-handler', () => {
@@ -30,8 +40,9 @@ jest.mock('../src/components/BottomSheet', () => {
     ref,
   ) {
     React.useImperativeHandle(ref, () => ({
-      open: jest.fn(),
+      open: mockBottomSheetOpen,
       closeCalendarSlider: mockCloseCalendarSlider,
+      openCalendarEventsSlider: mockOpenCalendarEventsSlider,
     }));
     return (
       <View testID="bottom-sheet">
@@ -59,7 +70,12 @@ const mockOpenBottomSheet = jest.fn();
 jest.mock('../src/screens/MapScreen', () => {
   const { TouchableOpacity, View, Text, Button } = require('react-native');
 
-  return function MockMapScreen({ openBottomSheet, passSelectedBuilding, onMapPress }) {
+  return function MockMapScreen({
+    openBottomSheet,
+    passSelectedBuilding,
+    onMapPress,
+    onOpenCalendar,
+  }) {
     return (
       <View testID="map-screen">
         <Button testID="open-sheet" title="Open" onPress={mockOpenBottomSheet} />
@@ -75,6 +91,9 @@ jest.mock('../src/screens/MapScreen', () => {
         </TouchableOpacity>
         <TouchableOpacity testID="press-map-background" onPress={onMapPress}>
           <Text>Press Map</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="open-calendar-shortcut" onPress={onOpenCalendar}>
+          <Text>Calendar Shortcut</Text>
         </TouchableOpacity>
       </View>
     );
@@ -103,11 +122,26 @@ jest.mock('../src/services/clarity', () => ({
   initializeClarityAsync: () => mockInitializeClarityAsync(),
 }));
 
+jest.mock('../src/services/googleCalendarAuth', () => ({
+  getStoredGoogleCalendarSessionState: () => mockGetStoredGoogleCalendarSessionState(),
+  fetchGoogleCalendarListAsync: () => mockFetchGoogleCalendarListAsync(),
+}));
+
 describe('App', () => {
   beforeEach(() => {
     mockUseFonts.mockReturnValue([true]);
     mockInitializeClarityAsync.mockClear();
     mockCloseCalendarSlider.mockClear();
+    mockBottomSheetOpen.mockClear();
+    mockOpenCalendarEventsSlider.mockClear();
+    mockGetStoredGoogleCalendarSessionState.mockResolvedValue({
+      status: 'not_connected',
+      session: null,
+    });
+    mockFetchGoogleCalendarListAsync.mockResolvedValue({
+      type: 'success',
+      calendars: [],
+    });
   });
 
   test('renders MapScreen inside SafeAreaView', () => {
@@ -191,5 +225,44 @@ describe('App', () => {
     fireEvent.press(getByTestId('press-map-background'));
 
     expect(mockCloseCalendarSlider).toHaveBeenCalledTimes(1);
+  });
+
+  test('calendar shortcut opens search sheet when Google Calendar is not connected', async () => {
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('open-calendar-shortcut'));
+
+    await waitFor(() => expect(mockBottomSheetOpen).toHaveBeenCalledWith(1));
+    expect(mockGetStoredGoogleCalendarSessionState).toHaveBeenCalledTimes(1);
+    expect(mockOpenCalendarEventsSlider).not.toHaveBeenCalled();
+    expect(queryByTestId('search-bar')).toBeNull();
+  });
+
+  test('calendar shortcut opens upcoming classes when Google Calendar is connected', async () => {
+    mockGetStoredGoogleCalendarSessionState.mockResolvedValueOnce({
+      status: 'connected',
+      session: {
+        accessToken: 'token',
+        tokenType: 'Bearer',
+        scope: 'scope',
+        expiresAt: Date.now() + 60_000,
+      },
+    });
+    mockFetchGoogleCalendarListAsync.mockResolvedValueOnce({
+      type: 'success',
+      calendars: [
+        { id: 'calendar-1', name: 'Primary', accessRole: 'owner', isPrimary: true },
+        { id: 'calendar-2', name: 'Classes', accessRole: 'reader', isPrimary: false },
+      ],
+    });
+
+    const { getByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('open-calendar-shortcut'));
+
+    await waitFor(() => {
+      expect(mockBottomSheetOpen).toHaveBeenCalledWith(1);
+      expect(mockOpenCalendarEventsSlider).toHaveBeenCalledWith(['calendar-1', 'calendar-2']);
+    });
   });
 });

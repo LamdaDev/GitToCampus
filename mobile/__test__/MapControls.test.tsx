@@ -31,9 +31,15 @@ describe('MapControls', () => {
   test('uses default bottom offset and fires control handlers', () => {
     const onToggleCampus = jest.fn();
     const onRecenter = jest.fn();
+    const onOpenCalendar = jest.fn();
 
     const { getByLabelText, getByText } = render(
-      <MapControls selectedCampus="SGW" onToggleCampus={onToggleCampus} onRecenter={onRecenter} />,
+      <MapControls
+        selectedCampus="SGW"
+        onToggleCampus={onToggleCampus}
+        onRecenter={onRecenter}
+        onOpenCalendar={onOpenCalendar}
+      />,
     );
 
     expect(getByText('SGW')).toBeTruthy();
@@ -41,12 +47,15 @@ describe('MapControls', () => {
 
     const toggleButton = getByLabelText('Toggle Campus');
     const recenterButton = getByLabelText('Recenter Map');
+    const calendarButton = getByLabelText('Open Calendar');
 
     fireEvent.press(toggleButton);
     fireEvent.press(recenterButton);
+    fireEvent.press(calendarButton);
 
     expect(onToggleCampus).toHaveBeenCalledTimes(1);
     expect(onRecenter).toHaveBeenCalledTimes(1);
+    expect(onOpenCalendar).toHaveBeenCalledTimes(1);
   });
 
   test('positions controls above a visible bottom sheet when animated position is provided', () => {

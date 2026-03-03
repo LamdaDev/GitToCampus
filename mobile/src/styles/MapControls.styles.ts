@@ -1,6 +1,24 @@
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
+  calendarButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 20,
+    backgroundColor: 'hsla(349, 61%, 35%, 0.9)',
+    borderColor: '#1f2937',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+    zIndex: 10,
+  },
   container: {
     position: 'absolute',
     right: 16,
