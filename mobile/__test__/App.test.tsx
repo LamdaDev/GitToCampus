@@ -242,6 +242,33 @@ describe('App', () => {
     expect(queryByTestId('search-bar')).toBeNull();
   });
 
+  test('calendar shortcut does not open upcoming classes when calendar fetch fails', async () => {
+    mockGetStoredGoogleCalendarSessionState.mockResolvedValueOnce({
+      status: 'connected',
+      session: {
+        accessToken: 'token',
+        tokenType: 'Bearer',
+        scope: 'scope',
+        expiresAt: Date.now() + 60_000,
+      },
+    });
+    mockFetchGoogleCalendarListAsync.mockResolvedValueOnce({
+      type: 'error',
+      reason: 'network',
+    });
+
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('open-calendar-shortcut'));
+
+    await waitFor(() => {
+      expect(mockBottomSheetOpen).toHaveBeenCalledWith(1);
+      expect(mockFetchGoogleCalendarListAsync).toHaveBeenCalledTimes(1);
+      expect(mockOpenCalendarEventsSlider).not.toHaveBeenCalled();
+      expect(queryByTestId('search-bar')).toBeNull();
+    });
+  });
+
   test('calendar shortcut opens upcoming classes when Google Calendar is connected', async () => {
     mockGetStoredGoogleCalendarSessionState.mockResolvedValueOnce({
       status: 'connected',

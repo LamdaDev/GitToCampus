@@ -1468,6 +1468,36 @@ describe('BottomSheet', () => {
     });
   });
 
+  test('imperative calendar slider handlers open events view and close back to search', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        mode="search"
+      />,
+    );
+
+    expect(getByTestId('search-sheet')).toBeTruthy();
+    expect(queryByTestId('upcoming-classes-slider')).toBeNull();
+
+    await act(async () => {
+      ref.current?.openCalendarEventsSlider(['calendar-1']);
+      await Promise.resolve();
+    });
+
+    expect(getByTestId('upcoming-classes-slider')).toBeTruthy();
+
+    await act(async () => {
+      ref.current?.closeCalendarSlider();
+      await Promise.resolve();
+    });
+
+    expect(getByTestId('search-sheet')).toBeTruthy();
+    expect(queryByTestId('upcoming-classes-slider')).toBeNull();
+  });
+
   test('formats long navigation duration with hour text in navigation summary', async () => {
     directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
       polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
@@ -1605,5 +1635,28 @@ describe('BottomSheet', () => {
       throw new Error('Expected shuttle plan args to be defined');
     }
     expect(shuttlePlanArgs.now).toEqual(new Date(2026, 1, 24, 8, 5, 0, 0));
+  });
+
+  test('shuttle planning honors forced planning datetime when debug env is set', async () => {
+    process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME = '2026-02-25T12:30:00.000Z';
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('transport-shuttle'));
+
+    const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
+    expect(shuttlePlanArgs).toBeTruthy();
+    if (!shuttlePlanArgs) {
+      throw new Error('Expected shuttle plan args to be defined');
+    }
+    expect(shuttlePlanArgs.now.toISOString()).toBe('2026-02-25T12:30:00.000Z');
   });
 });

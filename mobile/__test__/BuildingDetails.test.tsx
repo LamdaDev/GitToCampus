@@ -2,6 +2,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import BuildingDetails from '../src/components/BuildingDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import React from 'react';
+import { Linking } from 'react-native';
 
 const mockOnClose = jest.fn();
 const mockOnShowDirections = jest.fn();
@@ -52,10 +53,13 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const actual = jest.requireActual('@gorhom/bottom-sheet');
   return {
     ...actual,
-    BottomSheetFlatList: ({ data, renderItem }: any) => {
+    BottomSheetFlatList: ({ data, renderItem, keyExtractor }: any) => {
       // Simulate rendering each item without throwing
       if (Array.isArray(data)) {
-        return data.map((item, index) => renderItem({ item, index, separators: {} }));
+        return data.map((item, index) => {
+          keyExtractor?.(item, index);
+          return renderItem({ item, index, separators: {} });
+        });
       }
       return null;
     },
@@ -100,6 +104,7 @@ describe('Building Details', () => {
 
     expect(getByText('EV Building')).toBeTruthy();
     expect(queryByText('Services')).toBeNull();
+    expect(getByText('No services available')).toBeTruthy();
   });
 
   test('"Start From" button calls onShowDirections with building as start', () => {
@@ -182,6 +187,7 @@ describe('Building Details', () => {
 
   test('renders services and opens URL when pressed', () => {
     const selectedBuilding = mockBuildings[0];
+    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValueOnce();
 
     const { getByText } = render(
       <BuildingDetails
@@ -198,7 +204,39 @@ describe('Building Details', () => {
     const serviceButton = getByText('Concordia Multi-Faith and Spirituality Centre');
 
     expect(serviceButton).toBeTruthy();
+    fireEvent.press(serviceButton);
+    expect(openUrlSpy).toHaveBeenCalledWith(
+      'https://www.concordia.ca/equity/spirituality.html',
+    );
   });
+
+  test('splits services into multiple rows when building has more than three entries', () => {
+    const selectedBuilding: BuildingShape = {
+      ...mockBuildings[0],
+      services: {
+        Registration: 'https://www.concordia.ca/students/registration.html',
+        Financial: 'https://www.concordia.ca/students/financial.html',
+        Library: 'https://www.concordia.ca/library.html',
+        Security: 'https://www.concordia.ca/security.html',
+      },
+    };
+
+    const { getByText } = render(
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    expect(getByText('Registration')).toBeTruthy();
+    expect(getByText('Financial')).toBeTruthy();
+    expect(getByText('Library')).toBeTruthy();
+    expect(getByText('Security')).toBeTruthy();
+  });
+
   test('carousel images update when selected building changes', () => {
     const { getAllByTestId, rerender } = render(
       <BuildingDetails

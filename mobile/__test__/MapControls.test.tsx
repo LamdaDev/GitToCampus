@@ -89,4 +89,26 @@ describe('MapControls', () => {
 
     expect(mockAnimatedStyles[mockAnimatedStyles.length - 1]).toEqual({ bottom: 110 });
   });
+
+  test('handles pressIn/pressOut events for all control buttons', () => {
+    const { getByLabelText } = render(
+      <MapControls selectedCampus="SGW" onToggleCampus={jest.fn()} onRecenter={jest.fn()} />,
+    );
+
+    const calendarButton = getByLabelText('Open Calendar');
+    const toggleButton = getByLabelText('Toggle Campus');
+    const recenterButton = getByLabelText('Recenter Map');
+
+    fireEvent(calendarButton, 'pressIn');
+    fireEvent(calendarButton, 'pressOut');
+    fireEvent(toggleButton, 'pressIn');
+    fireEvent(toggleButton, 'pressOut');
+    fireEvent(recenterButton, 'pressIn');
+    fireEvent(recenterButton, 'pressOut');
+
+    expect(calendarButton).toBeTruthy();
+    expect(toggleButton).toBeTruthy();
+    expect(recenterButton).toBeTruthy();
+  });
+
 });
