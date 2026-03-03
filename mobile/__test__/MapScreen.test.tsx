@@ -15,7 +15,10 @@ const mockPassUserLocation = jest.fn();
 const mockPassCurrentBuilding = jest.fn();
 const mockOpenBottomSheet = jest.fn();
 const mockOnMapPress = jest.fn();
+<<<<<<< HEAD
 const mockOnOpenCalendar = jest.fn();
+=======
+>>>>>>> 24d51a4961aa8c7fdb63ade8abb4b84a7d20adb1
 const mockAnimateToRegion = jest.fn();
 const mockFitToCoordinates = jest.fn();
 let mockHasAnimateToRegion = true;
@@ -136,7 +139,10 @@ describe('MapScreen', () => {
     mockHasAnimateToRegion = true;
     mockFitToCoordinates.mockClear();
     mockOnMapPress.mockClear();
+<<<<<<< HEAD
     mockOnOpenCalendar.mockClear();
+=======
+>>>>>>> 24d51a4961aa8c7fdb63ade8abb4b84a7d20adb1
 
     repoMock.getCampusBuildingShapes.mockImplementation((campus: 'SGW' | 'LOYOLA') =>
       mockBuildings.filter((b) => b.campus === campus),
@@ -203,6 +209,7 @@ describe('MapScreen', () => {
     expect(mockOnMapPress).toHaveBeenCalledTimes(1);
   });
 
+<<<<<<< HEAD
   test('calls onOpenCalendar when the calendar control is pressed', async () => {
     const { getByLabelText } = render(
       <MapScreen
@@ -218,6 +225,8 @@ describe('MapScreen', () => {
     expect(mockOnOpenCalendar).toHaveBeenCalledTimes(1);
   });
 
+=======
+>>>>>>> 24d51a4961aa8c7fdb63ade8abb4b84a7d20adb1
   test('selecting polygon updates selection, parent callback, sheet open, and marker', async () => {
     const { UNSAFE_getAllByType, getByTestId } = render(
       <MapScreen
