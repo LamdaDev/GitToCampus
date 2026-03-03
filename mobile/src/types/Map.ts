@@ -8,6 +8,7 @@ import type { Campus } from './Campus';
 export type PolygonRenderItem = {
   key: string;
   buildingId: string;
+  buildingShortCode: string;
   campus: Campus;
   coordinates: LatLng[];
 };

@@ -20,6 +20,7 @@
     "@gorhom/bottom-sheet": "^5.2.8",
     "@microsoft/react-native-clarity": "^4.5.3",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@turf/turf": "^7.3.4",
     "expo": "~54.0.33",
     "expo-application": "~7.0.8",
     "expo-asset": "^12.0.12",

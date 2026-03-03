@@ -75,11 +75,23 @@ jest.mock('../src/utils/geoJson', () => {
   };
 });
 
+jest.mock('@turf/turf', () => ({
+  polygon: jest.fn(),
+  pointOnFeature: jest.fn(() => ({
+    geometry: { coordinates: [0, 0] },
+  })),
+}));
+
 const mockBuildings: BuildingShape[] = [
   {
     id: 'sgw-1',
     campus: 'SGW',
     name: 'Hall Building',
+    images: [
+      'https://iili.io/qqoKrrB.png',
+      'https://iili.io/qqonjDX.png',
+      'https://iili.io/qqoEmDg.png',
+    ],
     polygons: [
       [
         { latitude: 45.5, longitude: -73.57 },
@@ -92,6 +104,11 @@ const mockBuildings: BuildingShape[] = [
     id: 'loy-1',
     campus: 'LOYOLA',
     name: 'Administration',
+    images: [
+      'https://i.postimg.cc/SQvBP4sZ/1750701647513.jpg',
+      'https://i.postimg.cc/FRnBwb9L/download.jpg',
+      'https://i.postimg.cc/KjkHbKz9/download.jpg',
+    ],
     polygons: [
       [
         { latitude: 45.52, longitude: -73.59 },
@@ -733,5 +750,41 @@ describe('MapScreen', () => {
 
     const fitCall = mockFitToCoordinates.mock.calls.at(-1);
     expect(fitCall?.[1]?.edgePadding?.bottom).toBe(expectedBottomPadding);
+  });
+
+  test('renders all polygons with markers and labels', async () => {
+    const { getAllByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    await waitFor(() => {
+      const markers = getAllByTestId('map-label');
+      expect(markers.length).toBe(mockBuildings.reduce((sum, b) => sum + b.polygons.length, 0));
+    });
+
+    expect(getAllByTestId('map-label')).toBeTruthy();
+  });
+
+  test('pressing a polygon selects it and applies styling', async () => {
+    const { UNSAFE_getAllByType } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    fireEvent(UNSAFE_getAllByType(Polygon)[1], 'press');
+
+    await waitFor(() => {
+      expect(mockPassSelectedBuilding).toHaveBeenCalled();
+      expect(mockOpenBottomSheet).toHaveBeenCalled();
+    });
   });
 });
