@@ -110,5 +110,4 @@ describe('MapControls', () => {
     expect(toggleButton).toBeTruthy();
     expect(recenterButton).toBeTruthy();
   });
-
 });

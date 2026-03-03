@@ -205,9 +205,7 @@ describe('Building Details', () => {
 
     expect(serviceButton).toBeTruthy();
     fireEvent.press(serviceButton);
-    expect(openUrlSpy).toHaveBeenCalledWith(
-      'https://www.concordia.ca/equity/spirituality.html',
-    );
+    expect(openUrlSpy).toHaveBeenCalledWith('https://www.concordia.ca/equity/spirituality.html');
   });
 
   test('splits services into multiple rows when building has more than three entries', () => {

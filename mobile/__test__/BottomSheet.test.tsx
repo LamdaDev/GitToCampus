@@ -1471,12 +1471,7 @@ describe('BottomSheet', () => {
   test('imperative calendar slider handlers open events view and close back to search', async () => {
     const ref = createRef<BottomSliderHandle>();
     const { getByTestId, queryByTestId } = render(
-      <BottomSlider
-        {...defaultProps}
-        ref={ref}
-        selectedBuilding={null}
-        mode="search"
-      />,
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} mode="search" />,
     );
 
     expect(getByTestId('search-sheet')).toBeTruthy();
