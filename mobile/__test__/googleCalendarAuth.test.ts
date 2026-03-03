@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import {
   GOOGLE_CALENDAR_READONLY_SCOPE,
   connectGoogleCalendarAsync,
+  fetchGoogleCalendarEventsAsync,
   fetchGoogleCalendarListAsync,
   getStoredGoogleCalendarSessionState,
   saveGoogleCalendarSession,
@@ -241,6 +242,150 @@ describe('googleCalendarAuth', () => {
       message: 'Unable to load calendar list right now. Please retry.',
     });
   });
+
+  test('returns empty upcoming classes when selected calendar ids is empty', async () => {
+    const result = await fetchGoogleCalendarEventsAsync([]);
+
+    expect(result).toEqual({
+      type: 'success',
+      events: [],
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test('returns error when upcoming classes are requested without active session', async () => {
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Connect Google Calendar before loading your upcoming classes.',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test('fetches and merges upcoming classes across selected calendars', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'calendar-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'event-b',
+              summary: 'Software Testing',
+              location: 'MB 5.105',
+              start: { dateTime: '2030-02-19T13:00:00.000Z' },
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'event-a',
+              summary: 'Data Structures',
+              location: 'Faubourg Building C080',
+              start: { dateTime: '2030-02-19T12:00:00.000Z' },
+            },
+            {
+              id: 'event-c',
+              summary: '   ',
+              start: { dateTime: '2030-02-19T14:00:00.000Z' },
+            },
+          ],
+        }),
+      });
+
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1', 'calendar-2']);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('/calendar-1/events'),
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer calendar-token',
+        }),
+      }),
+    );
+    expect(result).toEqual({
+      type: 'success',
+      events: [
+        {
+          id: 'event-a',
+          calendarId: 'calendar-2',
+          title: 'Data Structures',
+          location: 'Faubourg Building C080',
+          startsAt: new Date('2030-02-19T12:00:00.000Z').getTime(),
+        },
+        {
+          id: 'event-b',
+          calendarId: 'calendar-1',
+          title: 'Software Testing',
+          location: 'MB 5.105',
+          startsAt: new Date('2030-02-19T13:00:00.000Z').getTime(),
+        },
+        {
+          id: 'event-c',
+          calendarId: 'calendar-2',
+          title: 'Untitled event',
+          location: null,
+          startsAt: new Date('2030-02-19T14:00:00.000Z').getTime(),
+        },
+      ],
+    });
+  });
+
+  test('returns reconnect message when upcoming classes request is unauthorized', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'expired-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+    });
+
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Calendar authorization expired. Reconnect Google Calendar and try again.',
+    });
+  });
+
+  test('returns fallback message when upcoming classes request fails', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'live-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockRejectedValueOnce('network down');
+
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Unable to load upcoming classes right now. Please retry.',
+    });
+  });
+
   test('returns error when oauth client id is missing', async () => {
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID = '';
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID = '';

@@ -6,6 +6,7 @@ import App from '../src/App';
 
 const mockUseFonts = jest.fn(() => [true]);
 const mockInitializeClarityAsync = jest.fn(async () => {});
+const mockCloseCalendarSlider = jest.fn();
 
 // Mock GestureHandlerView needed for BottomSheet
 jest.mock('react-native-gesture-handler', () => {
@@ -28,7 +29,10 @@ jest.mock('../src/components/BottomSheet', () => {
     { revealSearchBar, onExitSearch },
     ref,
   ) {
-    React.useImperativeHandle(ref, () => ({ open: jest.fn() }));
+    React.useImperativeHandle(ref, () => ({
+      open: jest.fn(),
+      closeCalendarSlider: mockCloseCalendarSlider,
+    }));
     return (
       <View testID="bottom-sheet">
         <TouchableOpacity testID="reveal-search-bar" onPress={revealSearchBar}>
@@ -55,7 +59,7 @@ const mockOpenBottomSheet = jest.fn();
 jest.mock('../src/screens/MapScreen', () => {
   const { TouchableOpacity, View, Text, Button } = require('react-native');
 
-  return function MockMapScreen({ openBottomSheet, passSelectedBuilding }) {
+  return function MockMapScreen({ openBottomSheet, passSelectedBuilding, onMapPress }) {
     return (
       <View testID="map-screen">
         <Button testID="open-sheet" title="Open" onPress={mockOpenBottomSheet} />
@@ -68,6 +72,9 @@ jest.mock('../src/screens/MapScreen', () => {
           onPress={() => passSelectedBuilding({ id: 'b1' })}
         >
           <Text>Select</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="press-map-background" onPress={onMapPress}>
+          <Text>Press Map</Text>
         </TouchableOpacity>
       </View>
     );
@@ -100,6 +107,7 @@ describe('App', () => {
   beforeEach(() => {
     mockUseFonts.mockReturnValue([true]);
     mockInitializeClarityAsync.mockClear();
+    mockCloseCalendarSlider.mockClear();
   });
 
   test('renders MapScreen inside SafeAreaView', () => {
@@ -175,5 +183,13 @@ describe('App', () => {
   test('initializes Clarity at startup', () => {
     render(<App />);
     expect(mockInitializeClarityAsync).toHaveBeenCalledTimes(1);
+  });
+
+  test('map presses dismiss calendar sliders via bottom sheet handle', () => {
+    const { getByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('press-map-background'));
+
+    expect(mockCloseCalendarSlider).toHaveBeenCalledTimes(1);
   });
 });

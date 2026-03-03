@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import CalendarSelectionCard from './CalendarSelectionCard';
 import { calendarSelectionSliderStyles } from '../styles/CalendarSelectionSlider.styles';
 import {
@@ -8,16 +9,22 @@ import {
 } from '../services/googleCalendarAuth';
 
 type CalendarSelectionSliderProps = {
-  onDone?: () => void;
+  initialSelectedCalendarIds?: string[];
+  onDone?: (selectedCalendarIds: string[]) => void;
+  onClose?: () => void;
 };
 
 export default function CalendarSelectionSlider({
+  initialSelectedCalendarIds = [],
   onDone,
+  onClose,
 }: Readonly<CalendarSelectionSliderProps>) {
   const [availableCalendars, setAvailableCalendars] = useState<GoogleCalendarListItem[]>([]);
   const [isCalendarListLoading, setIsCalendarListLoading] = useState(false);
   const [calendarListError, setCalendarListError] = useState<string | null>(null);
-  const [activeCalendarId, setActiveCalendarId] = useState<string | null>(null);
+  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>(
+    initialSelectedCalendarIds,
+  );
 
   const loadCalendarList = useCallback(async () => {
     setIsCalendarListLoading(true);
@@ -28,20 +35,32 @@ export default function CalendarSelectionSlider({
 
     if (result.type === 'error') {
       setAvailableCalendars([]);
-      setActiveCalendarId(null);
+      setSelectedCalendarIds([]);
       setCalendarListError(result.message);
       return;
     }
 
     setAvailableCalendars(result.calendars);
-    setActiveCalendarId((previousId) => {
-      if (previousId && result.calendars.some((calendar) => calendar.id === previousId)) {
-        return previousId;
+    setSelectedCalendarIds((previousIds) => {
+      const availableCalendarIds = new Set(result.calendars.map((calendar) => calendar.id));
+      const retainedSelection = previousIds.filter((calendarId) =>
+        availableCalendarIds.has(calendarId),
+      );
+      if (retainedSelection.length > 0) {
+        return retainedSelection;
       }
 
       const primaryCalendar = result.calendars.find((calendar) => calendar.isPrimary);
-      return primaryCalendar?.id ?? result.calendars[0]?.id ?? null;
+      return primaryCalendar ? [primaryCalendar.id] : [];
     });
+  }, []);
+
+  const handleToggleCalendar = useCallback((calendarId: string) => {
+    setSelectedCalendarIds((previousIds) =>
+      previousIds.includes(calendarId)
+        ? previousIds.filter((id) => id !== calendarId)
+        : [...previousIds, calendarId],
+    );
   }, []);
 
   useEffect(() => {
@@ -50,19 +69,36 @@ export default function CalendarSelectionSlider({
 
   return (
     <View style={calendarSelectionSliderStyles.container} testID="calendar-selection-slider">
-      <CalendarSelectionCard
-        calendars={availableCalendars}
-        activeCalendarId={activeCalendarId}
-        isLoading={isCalendarListLoading}
-        errorMessage={calendarListError}
-        onRetry={() => void loadCalendarList()}
-        onSelectCalendar={setActiveCalendarId}
-      />
+      <View style={calendarSelectionSliderStyles.headerRow}>
+        <Text testID="calendar-selection-title" style={calendarSelectionSliderStyles.titleText}>
+          Select Calendars:
+        </Text>
+        <TouchableOpacity
+          testID="close-calendar-selection-button"
+          style={calendarSelectionSliderStyles.closeButton}
+          accessibilityRole="button"
+          accessibilityLabel="Close calendar selection"
+          onPress={onClose}
+        >
+          <Ionicons name="close" size={22} color="#ffffff" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={calendarSelectionSliderStyles.cardWrapper}>
+        <CalendarSelectionCard
+          calendars={availableCalendars}
+          selectedCalendarIds={selectedCalendarIds}
+          isLoading={isCalendarListLoading}
+          errorMessage={calendarListError}
+          onRetry={() => void loadCalendarList()}
+          onToggleCalendar={handleToggleCalendar}
+        />
+      </View>
 
       <TouchableOpacity
         testID="calendar-selection-done-button"
         style={calendarSelectionSliderStyles.doneButton}
-        onPress={onDone}
+        onPress={() => onDone?.(selectedCalendarIds)}
       >
         <Text style={calendarSelectionSliderStyles.doneButtonText}>Done</Text>
       </TouchableOpacity>

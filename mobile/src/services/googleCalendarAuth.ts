@@ -8,6 +8,7 @@ const GOOGLE_CALENDAR_STORAGE_KEY = 'gittocampus.googleCalendar.session.v1';
 const GOOGLE_CALENDAR_KEYCHAIN_SERVICE = 'gittocampus.googleCalendar';
 const GOOGLE_CALENDAR_LIST_ENDPOINT =
   'https://www.googleapis.com/calendar/v3/users/me/calendarList';
+const GOOGLE_CALENDAR_EVENTS_ENDPOINT = 'https://www.googleapis.com/calendar/v3/calendars';
 const TOKEN_EXPIRY_GRACE_MS = 60_000;
 const FALLBACK_ACCESS_TOKEN_TTL_SECONDS = 3600;
 const GOOGLE_CALENDAR_REDIRECT_PATH = 'oauthredirect';
@@ -58,6 +59,19 @@ export type GoogleCalendarListItem = {
 export type GoogleCalendarListResult =
   | { type: 'success'; calendars: GoogleCalendarListItem[] }
   | { type: 'error'; message: string };
+
+export type GoogleCalendarEventItem = {
+  id: string;
+  calendarId: string;
+  title: string;
+  location: string | null;
+  startsAt: number;
+};
+
+export type GoogleCalendarEventsResult =
+  | { type: 'success'; events: GoogleCalendarEventItem[] }
+  | { type: 'error'; message: string };
+
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
@@ -159,6 +173,14 @@ const mapCalendarListErrorToMessage = (error: unknown): string => {
   }
   return 'Unable to load calendar list right now. Please retry.';
 };
+
+const mapCalendarEventsErrorToMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+  return 'Unable to load upcoming classes right now. Please retry.';
+};
+
 export const saveGoogleCalendarSession = async (session: GoogleCalendarSession): Promise<void> => {
   await SecureStore.setItemAsync(
     GOOGLE_CALENDAR_STORAGE_KEY,
@@ -224,6 +246,49 @@ const parseCalendarListItems = (value: unknown): GoogleCalendarListItem[] => {
     .filter((item): item is GoogleCalendarListItem => item !== null);
 };
 
+const parseCalendarEventStartTime = (value: unknown): number | null => {
+  if (!value || typeof value !== 'object') return null;
+
+  const start = value as { dateTime?: unknown; date?: unknown };
+  const startValue = start.dateTime ?? start.date;
+  if (!isNonEmptyString(startValue)) return null;
+
+  const startsAt = new Date(startValue).getTime();
+  return Number.isFinite(startsAt) ? startsAt : null;
+};
+
+const parseCalendarEventItems = (calendarId: string, value: unknown): GoogleCalendarEventItem[] => {
+  if (!value || typeof value !== 'object') return [];
+
+  const payload = value as { items?: unknown };
+  if (!Array.isArray(payload.items)) return [];
+
+  return payload.items
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null;
+
+      const candidate = item as Record<string, unknown>;
+      const startsAt = parseCalendarEventStartTime(candidate.start);
+      if (startsAt === null) return null;
+
+      const rawId = candidate.id;
+      const title = isNonEmptyString(candidate.summary)
+        ? candidate.summary.trim()
+        : 'Untitled event';
+      const location = isNonEmptyString(candidate.location) ? candidate.location.trim() : null;
+      const id = isNonEmptyString(rawId) ? rawId.trim() : `${calendarId}-${startsAt}-${index}`;
+
+      return {
+        id,
+        calendarId,
+        title,
+        location,
+        startsAt,
+      } as GoogleCalendarEventItem;
+    })
+    .filter((item): item is GoogleCalendarEventItem => item !== null);
+};
+
 export const fetchGoogleCalendarListAsync = async (): Promise<GoogleCalendarListResult> => {
   const state = await getStoredGoogleCalendarSessionState();
   if (state.status !== 'connected' || !state.session) {
@@ -267,6 +332,81 @@ export const fetchGoogleCalendarListAsync = async (): Promise<GoogleCalendarList
     };
   }
 };
+
+export const fetchGoogleCalendarEventsAsync = async (
+  calendarIds: string[],
+): Promise<GoogleCalendarEventsResult> => {
+  const uniqueCalendarIds = [...new Set(calendarIds.map((id) => id.trim()).filter(Boolean))];
+  if (uniqueCalendarIds.length === 0) {
+    return { type: 'success', events: [] };
+  }
+
+  const state = await getStoredGoogleCalendarSessionState();
+  if (state.status !== 'connected' || !state.session) {
+    return {
+      type: 'error',
+      message: 'Connect Google Calendar before loading your upcoming classes.',
+    };
+  }
+
+  const timeMin = new Date().toISOString();
+
+  try {
+    const responses = await Promise.all(
+      uniqueCalendarIds.map(async (calendarId) => {
+        const endpoint =
+          `${GOOGLE_CALENDAR_EVENTS_ENDPOINT}/${encodeURIComponent(calendarId)}` +
+          `/events?singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(timeMin)}` +
+          '&maxResults=20';
+
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${state.session!.accessToken}`,
+            Accept: 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          return { calendarId, response, payload: null as unknown };
+        }
+
+        const payload: unknown = await response.json();
+        return { calendarId, response, payload };
+      }),
+    );
+
+    const unauthorized = responses.some(
+      ({ response }) => response.status === 401 || response.status === 403,
+    );
+    if (unauthorized) {
+      return {
+        type: 'error',
+        message: 'Calendar authorization expired. Reconnect Google Calendar and try again.',
+      };
+    }
+
+    const hasFailedResponse = responses.some(({ response }) => !response.ok);
+    if (hasFailedResponse) {
+      return {
+        type: 'error',
+        message: 'Unable to load upcoming classes right now. Please retry.',
+      };
+    }
+
+    const events = responses
+      .flatMap(({ calendarId, payload }) => parseCalendarEventItems(calendarId, payload))
+      .sort((a, b) => a.startsAt - b.startsAt);
+
+    return { type: 'success', events };
+  } catch (error) {
+    return {
+      type: 'error',
+      message: mapCalendarEventsErrorToMessage(error),
+    };
+  }
+};
+
 export const connectGoogleCalendarAsync = async (): Promise<GoogleCalendarConnectResult> => {
   const clientId = getConfiguredClientId();
   if (!clientId) {

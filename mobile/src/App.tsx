@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LogBox, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -61,6 +61,10 @@ const App = () => {
     bottomSheetRef.current?.open(1);
   };
 
+  const handleMapPress = useCallback(() => {
+    bottomSheetRef.current?.closeCalendarSlider();
+  }, []);
+
   const exitSearchMode = () => {
     setSheetMode('detail');
   };
@@ -85,6 +89,7 @@ const App = () => {
           passUserLocation={setUserLocation}
           passCurrentBuilding={setCurrentBuilding}
           openBottomSheet={openBuildingDetails}
+          onMapPress={handleMapPress}
           externalSelectedBuilding={selectedBuilding}
           outdoorRoute={outdoorRoute}
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
