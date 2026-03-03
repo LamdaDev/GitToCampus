@@ -52,7 +52,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
   const actual = jest.requireActual('@gorhom/bottom-sheet');
   return {
     ...actual,
-    BottomSheetFlatList: ({ data, renderItem }) => {
+    BottomSheetFlatList: ({ data, renderItem }: any) => {
       // Simulate rendering each item without throwing
       if (Array.isArray(data)) {
         return data.map((item, index) => renderItem({ item, index, separators: {} }));
@@ -173,10 +173,10 @@ describe('Building Details', () => {
 
     const images = getAllByTestId('carousel-image');
 
-    expect(images).toHaveLength(selectedBuilding.images.length);
+    expect(images).toHaveLength(selectedBuilding.images!.length);
 
     images.forEach((img, index) => {
-      expect(img.props.source).toEqual({ uri: selectedBuilding.images[index] });
+      expect(img.props.source).toEqual({ uri: selectedBuilding.images![index] });
     });
   });
 
@@ -211,9 +211,9 @@ describe('Building Details', () => {
     );
 
     let images = getAllByTestId('carousel-image');
-    expect(images).toHaveLength(mockBuildings[0].images.length);
+    expect(images).toHaveLength(mockBuildings[0].images!.length);
     images.forEach((img, index) => {
-      expect(img.props.source).toEqual({ uri: mockBuildings[0].images[index] });
+      expect(img.props.source).toEqual({ uri: mockBuildings[0].images![index] });
     });
 
     rerender(
@@ -227,9 +227,9 @@ describe('Building Details', () => {
     );
 
     images = getAllByTestId('carousel-image');
-    expect(images).toHaveLength(mockBuildings[1].images.length);
+    expect(images).toHaveLength(mockBuildings[1].images!.length);
     images.forEach((img, index) => {
-      expect(img.props.source).toEqual({ uri: mockBuildings[1].images[index] });
+      expect(img.props.source).toEqual({ uri: mockBuildings[1].images![index] });
     });
   });
 });

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "jsx": "react",
     "strict": true,
-    "types": ["jest"],
+    "types": ["jest", "node"],
     "esModuleInterop": true
   }
 }

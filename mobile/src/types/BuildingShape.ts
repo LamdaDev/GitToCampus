@@ -16,6 +16,7 @@ export type BuildingShape = {
   // Optional metadata (future US-1.5)
   shortCode?: string; // e.g., "MB"
   address?: string;
-  images: string[];
+  images?: string[];
+  hotspots?: Record<string, string>;
   services?: Record<string, string>;
 };

@@ -180,9 +180,9 @@ jest.mock('../src/components/DirectionDetails', () => {
     shuttlePlan,
   }: any) =>
     (() => {
-      const [selectedMode, setSelectedMode] = React.useState<
-        'walking' | 'driving' | 'transit' | 'shuttle'
-      >('walking');
+      const [selectedMode, setSelectedMode] = React.useState(
+        'walking' as 'walking' | 'driving' | 'transit' | 'shuttle',
+      );
       const hasRouteSummary = Boolean(routeDurationText && routeDistanceText);
       const showGoButton =
         hasRouteSummary &&
@@ -1551,6 +1551,9 @@ describe('BottomSheet', () => {
 
     const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
     expect(shuttlePlanArgs).toBeTruthy();
+    if (!shuttlePlanArgs) {
+      throw new Error('Expected shuttle plan args to be defined');
+    }
     expect(shuttlePlanArgs.now).toEqual(new Date(2026, 1, 23, 10, 20, 0, 0));
   });
 
@@ -1573,6 +1576,9 @@ describe('BottomSheet', () => {
 
     const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
     expect(shuttlePlanArgs).toBeTruthy();
+    if (!shuttlePlanArgs) {
+      throw new Error('Expected shuttle plan args to be defined');
+    }
     expect(shuttlePlanArgs.now).toEqual(new Date(2026, 1, 23, 9, 45, 0, 0));
   });
 
@@ -1595,6 +1601,9 @@ describe('BottomSheet', () => {
 
     const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
     expect(shuttlePlanArgs).toBeTruthy();
+    if (!shuttlePlanArgs) {
+      throw new Error('Expected shuttle plan args to be defined');
+    }
     expect(shuttlePlanArgs.now).toEqual(new Date(2026, 1, 24, 8, 5, 0, 0));
   });
 });

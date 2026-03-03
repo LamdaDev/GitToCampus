@@ -7,25 +7,26 @@ import App from '../src/App';
 const mockUseFonts = jest.fn(() => [true]);
 const mockInitializeClarityAsync = jest.fn(async () => {});
 const mockCloseCalendarSlider = jest.fn();
-<<<<<<< HEAD
 const mockBottomSheetOpen = jest.fn();
 const mockOpenCalendarEventsSlider = jest.fn();
-const mockGetStoredGoogleCalendarSessionState = jest.fn(async () => ({
-  status: 'not_connected',
-  session: null,
-}));
-const mockFetchGoogleCalendarListAsync = jest.fn(async () => ({
-  type: 'success',
-  calendars: [],
-}));
-=======
->>>>>>> 24d51a4961aa8c7fdb63ade8abb4b84a7d20adb1
+const mockGetStoredGoogleCalendarSessionState = jest.fn(
+  async (): Promise<any> => ({
+    status: 'not_connected',
+    session: null,
+  }),
+);
+const mockFetchGoogleCalendarListAsync = jest.fn(
+  async (): Promise<any> => ({
+    type: 'success',
+    calendars: [],
+  }),
+);
 
 // Mock GestureHandlerView needed for BottomSheet
 jest.mock('react-native-gesture-handler', () => {
   const { View } = require('react-native');
   return {
-    GestureHandlerRootView: ({ children }) => <View>{children}</View>,
+    GestureHandlerRootView: ({ children }: any) => <View>{children}</View>,
   };
 });
 
@@ -39,18 +40,13 @@ jest.mock('../src/components/BottomSheet', () => {
   const { TouchableOpacity, View, Text } = require('react-native');
 
   const MockBottomSheet = React.forwardRef(function MockBottomSheet(
-    { revealSearchBar, onExitSearch },
-    ref,
+    { revealSearchBar, onExitSearch }: any,
+    ref: any,
   ) {
     React.useImperativeHandle(ref, () => ({
-<<<<<<< HEAD
       open: mockBottomSheetOpen,
       closeCalendarSlider: mockCloseCalendarSlider,
       openCalendarEventsSlider: mockOpenCalendarEventsSlider,
-=======
-      open: jest.fn(),
-      closeCalendarSlider: mockCloseCalendarSlider,
->>>>>>> 24d51a4961aa8c7fdb63ade8abb4b84a7d20adb1
     }));
     return (
       <View testID="bottom-sheet">
@@ -69,7 +65,7 @@ jest.mock('../src/components/BottomSheet', () => {
 jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
   return {
-    Ionicons: ({ name }) => <Text>{name}</Text>,
+    Ionicons: ({ name }: any) => <Text>{name}</Text>,
   };
 });
 
@@ -78,16 +74,12 @@ const mockOpenBottomSheet = jest.fn();
 jest.mock('../src/screens/MapScreen', () => {
   const { TouchableOpacity, View, Text, Button } = require('react-native');
 
-<<<<<<< HEAD
   return function MockMapScreen({
     openBottomSheet,
     passSelectedBuilding,
     onMapPress,
     onOpenCalendar,
-  }) {
-=======
-  return function MockMapScreen({ openBottomSheet, passSelectedBuilding, onMapPress }) {
->>>>>>> 24d51a4961aa8c7fdb63ade8abb4b84a7d20adb1
+  }: any) {
     return (
       <View testID="map-screen">
         <Button testID="open-sheet" title="Open" onPress={mockOpenBottomSheet} />
@@ -104,12 +96,9 @@ jest.mock('../src/screens/MapScreen', () => {
         <TouchableOpacity testID="press-map-background" onPress={onMapPress}>
           <Text>Press Map</Text>
         </TouchableOpacity>
-<<<<<<< HEAD
         <TouchableOpacity testID="open-calendar-shortcut" onPress={onOpenCalendar}>
           <Text>Calendar Shortcut</Text>
         </TouchableOpacity>
-=======
->>>>>>> 24d51a4961aa8c7fdb63ade8abb4b84a7d20adb1
       </View>
     );
   };
@@ -122,7 +111,7 @@ jest.mock('../src/utils/buildingsRepository', () => ({
 jest.mock('../src/components/AppSearchBar', () => {
   const { TouchableOpacity, View, Text } = require('react-native');
 
-  return function MockAppSearchBar({ openSearch }) {
+  return function MockAppSearchBar({ openSearch }: any) {
     return (
       <View testID="search-bar">
         <TouchableOpacity testID="open-search" onPress={openSearch}>
@@ -147,7 +136,6 @@ describe('App', () => {
     mockUseFonts.mockReturnValue([true]);
     mockInitializeClarityAsync.mockClear();
     mockCloseCalendarSlider.mockClear();
-<<<<<<< HEAD
     mockBottomSheetOpen.mockClear();
     mockOpenCalendarEventsSlider.mockClear();
     mockGetStoredGoogleCalendarSessionState.mockResolvedValue({
@@ -158,8 +146,6 @@ describe('App', () => {
       type: 'success',
       calendars: [],
     });
-=======
->>>>>>> 24d51a4961aa8c7fdb63ade8abb4b84a7d20adb1
   });
 
   test('renders MapScreen inside SafeAreaView', () => {
@@ -244,7 +230,6 @@ describe('App', () => {
 
     expect(mockCloseCalendarSlider).toHaveBeenCalledTimes(1);
   });
-<<<<<<< HEAD
 
   test('calendar shortcut opens search sheet when Google Calendar is not connected', async () => {
     const { getByTestId, queryByTestId } = render(<App />);
@@ -284,6 +269,4 @@ describe('App', () => {
       expect(mockOpenCalendarEventsSlider).toHaveBeenCalledWith(['calendar-1', 'calendar-2']);
     });
   });
-=======
->>>>>>> 24d51a4961aa8c7fdb63ade8abb4b84a7d20adb1
 });
