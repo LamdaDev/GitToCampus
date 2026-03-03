@@ -21,10 +21,7 @@ export default function CalendarSelectionCard({
   onRetry,
   onToggleCalendar,
 }: Readonly<CalendarSelectionCardProps>) {
-  const selectedCalendarIdSet = useMemo(
-    () => new Set(selectedCalendarIds),
-    [selectedCalendarIds],
-  );
+  const selectedCalendarIdSet = useMemo(() => new Set(selectedCalendarIds), [selectedCalendarIds]);
   const shouldShowCalendarListScroll = calendars.length > 6;
 
   return (
