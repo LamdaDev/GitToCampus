@@ -26,6 +26,7 @@ type MapScreenProps = {
   passUserLocation: React.Dispatch<React.SetStateAction<UserCoords | null>>;
   passCurrentBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
   openBottomSheet: () => void;
+  onMapPress?: () => void;
   externalSelectedBuilding?: BuildingShape | null;
   outdoorRoute?: OutdoorRouteOverlay | null;
   bottomSheetAnimatedPosition?: SharedValue<number>;
@@ -167,6 +168,7 @@ export default function MapScreen({
   passUserLocation,
   passCurrentBuilding,
   openBottomSheet,
+  onMapPress,
   externalSelectedBuilding,
   outdoorRoute,
   bottomSheetAnimatedPosition,
@@ -276,6 +278,10 @@ export default function MapScreen({
     mapRef.current = ref;
   }, []);
 
+  const handleMapPress = useCallback(() => {
+    onMapPress?.();
+  }, [onMapPress]);
+
   const mapInitialRegion = useMemo(() => getCampusRegion('SGW'), []);
 
   const showSelectedMarker = Boolean(
@@ -344,11 +350,13 @@ export default function MapScreen({
 
   const mapProps = {
     ref: handleMapRef,
+    testID: 'campus-map',
     style: styles.map,
     initialRegion: mapInitialRegion,
     provider: PROVIDER_GOOGLE,
     showsUserLocation: true,
     showsMyLocationButton: false,
+    onPress: handleMapPress,
   } as const;
 
   return (

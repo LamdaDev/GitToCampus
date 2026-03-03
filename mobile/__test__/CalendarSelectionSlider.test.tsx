@@ -52,25 +52,26 @@ describe('CalendarSelectionSlider', () => {
     const { getByTestId, findByTestId } = render(<CalendarSelectionSlider />);
 
     expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+    expect(getByTestId('calendar-selection-title')).toHaveTextContent('Select Calendars:');
     expect(await findByTestId('calendar-option-primary-calendar')).toBeTruthy();
-    expect(getByTestId('active-calendar-label')).toHaveTextContent(
-      'Active Calendar: Work Schedule',
-    );
+    expect(getByTestId('calendar-option-winter-calendar')).toBeTruthy();
   });
 
-  test('updates active calendar label when selecting another calendar', async () => {
+  test('allows selecting multiple calendars', async () => {
     fetchGoogleCalendarListMock.mockResolvedValueOnce({
       type: 'success',
       calendars: mockGoogleCalendars,
     });
 
-    const { getByTestId, findByTestId } = render(<CalendarSelectionSlider />);
+    const { getByTestId, findByTestId, getAllByText } = render(<CalendarSelectionSlider />);
     expect(await findByTestId('calendar-option-winter-calendar')).toBeTruthy();
+    expect(getAllByText('checkbox-outline')).toHaveLength(1);
 
     fireEvent.press(getByTestId('calendar-option-winter-calendar'));
-    expect(getByTestId('active-calendar-label')).toHaveTextContent(
-      'Active Calendar: Winter Schedule',
-    );
+    expect(getAllByText('checkbox-outline')).toHaveLength(2);
+
+    fireEvent.press(getByTestId('calendar-option-primary-calendar'));
+    expect(getAllByText('checkbox-outline')).toHaveLength(1);
   });
 
   test('shows error and retries loading', async () => {
@@ -103,5 +104,14 @@ describe('CalendarSelectionSlider', () => {
     fireEvent.press(getByTestId('calendar-selection-done-button'));
 
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  test('calls onClose when close button is pressed', async () => {
+    const onClose = jest.fn();
+    const { getByTestId } = render(<CalendarSelectionSlider onClose={onClose} />);
+
+    await waitFor(() => expect(fetchGoogleCalendarListMock).toHaveBeenCalledTimes(1));
+    fireEvent.press(getByTestId('close-calendar-selection-button'));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

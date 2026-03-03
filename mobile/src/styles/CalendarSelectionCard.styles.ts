@@ -2,7 +2,6 @@ import { StyleSheet } from 'react-native';
 
 export const calendarSelectionCardStyles = StyleSheet.create({
   card: {
-    marginTop: 16,
     backgroundColor: 'rgba(99, 24, 39, 0.72)',
     borderRadius: 18,
     borderWidth: 1,
@@ -10,14 +9,23 @@ export const calendarSelectionCardStyles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 10,
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
+    flex: 1,
+    minHeight: 0,
   },
   options: {
-    gap: 8,
+    flex: 1,
+    minHeight: 0,
+  },
+  optionsList: {
+    width: '100%',
+    flex: 1,
+    minHeight: 0,
+  },
+  optionsListContent: {
+    paddingBottom: 10,
+  },
+  optionGap: {
+    height: 8,
   },
   option: {
     backgroundColor: 'rgba(45, 10, 16, 0.65)',
@@ -61,11 +69,5 @@ export const calendarSelectionCardStyles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '700',
-  },
-  activeText: {
-    color: 'rgba(255,255,255,0.95)',
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 });

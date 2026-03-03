@@ -1,35 +1,31 @@
 import React, { useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { calendarSelectionCardStyles } from '../styles/CalendarSelectionCard.styles';
 import { type GoogleCalendarListItem } from '../services/googleCalendarAuth';
 
 type CalendarSelectionCardProps = {
   calendars: GoogleCalendarListItem[];
-  activeCalendarId: string | null;
+  selectedCalendarIds: string[];
   isLoading: boolean;
   errorMessage: string | null;
   onRetry: () => void;
-  onSelectCalendar: (calendarId: string) => void;
+  onToggleCalendar: (calendarId: string) => void;
 };
 
 export default function CalendarSelectionCard({
   calendars,
-  activeCalendarId,
+  selectedCalendarIds,
   isLoading,
   errorMessage,
   onRetry,
-  onSelectCalendar,
+  onToggleCalendar,
 }: Readonly<CalendarSelectionCardProps>) {
-  const activeCalendarLabel = useMemo(
-    () => calendars.find((calendar) => calendar.id === activeCalendarId)?.name ?? 'None',
-    [activeCalendarId, calendars],
-  );
+  const selectedCalendarIdSet = useMemo(() => new Set(selectedCalendarIds), [selectedCalendarIds]);
+  const shouldShowCalendarListScroll = calendars.length > 6;
 
   return (
     <View style={calendarSelectionCardStyles.card} testID="calendar-selection-card">
-      <Text style={calendarSelectionCardStyles.title}>Select your calendar(s):</Text>
-
       {isLoading ? (
         <Text testID="calendar-list-loading" style={calendarSelectionCardStyles.infoText}>
           Loading calendars...
@@ -58,35 +54,42 @@ export default function CalendarSelectionCard({
               No calendars were found on this account.
             </Text>
           ) : (
-            calendars.map((calendar) => {
-              const isSelected = activeCalendarId === calendar.id;
-              return (
-                <TouchableOpacity
-                  key={calendar.id}
-                  testID={`calendar-option-${calendar.id}`}
-                  style={[
-                    calendarSelectionCardStyles.option,
-                    isSelected && calendarSelectionCardStyles.optionSelected,
-                  ]}
-                  activeOpacity={0.85}
-                  onPress={() => onSelectCalendar(calendar.id)}
-                >
-                  <Ionicons
-                    name={isSelected ? 'checkbox-outline' : 'square-outline'}
-                    size={18}
-                    color="#F5F1F2"
-                  />
-                  <Text style={calendarSelectionCardStyles.optionText}>{calendar.name}</Text>
-                </TouchableOpacity>
-              );
-            })
+            <FlatList<GoogleCalendarListItem>
+              testID="calendar-options-list"
+              data={calendars}
+              keyExtractor={(calendar) => calendar.id}
+              nestedScrollEnabled={true}
+              scrollEnabled={shouldShowCalendarListScroll}
+              showsVerticalScrollIndicator={shouldShowCalendarListScroll}
+              style={calendarSelectionCardStyles.optionsList}
+              contentContainerStyle={calendarSelectionCardStyles.optionsListContent}
+              keyboardShouldPersistTaps="handled"
+              ItemSeparatorComponent={() => <View style={calendarSelectionCardStyles.optionGap} />}
+              renderItem={({ item: calendar }) => {
+                const isSelected = selectedCalendarIdSet.has(calendar.id);
+                return (
+                  <TouchableOpacity
+                    testID={`calendar-option-${calendar.id}`}
+                    style={[
+                      calendarSelectionCardStyles.option,
+                      isSelected && calendarSelectionCardStyles.optionSelected,
+                    ]}
+                    activeOpacity={0.85}
+                    onPress={() => onToggleCalendar(calendar.id)}
+                  >
+                    <Ionicons
+                      name={isSelected ? 'checkbox-outline' : 'square-outline'}
+                      size={18}
+                      color="#F5F1F2"
+                    />
+                    <Text style={calendarSelectionCardStyles.optionText}>{calendar.name}</Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
           )}
         </View>
       ) : null}
-
-      <Text testID="active-calendar-label" style={calendarSelectionCardStyles.activeText}>
-        Active Calendar: {activeCalendarLabel}
-      </Text>
     </View>
   );
 }

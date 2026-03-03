@@ -39,6 +39,7 @@ import type { ShuttlePlan } from '../types/Shuttle';
 
 import SearchSheet from './SearchSheet';
 import CalendarSelectionSlider from './CalendarSelectionSlider';
+import UpcomingClassesSlider from './UpcomingClassesSlider';
 
 const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
@@ -217,6 +218,7 @@ export type BottomSliderHandle = {
   open: (index?: number) => void;
   close: () => void;
   setSnap: (index: number) => void;
+  closeCalendarSlider: () => void;
 };
 
 type BottomSheetProps = {
@@ -344,24 +346,53 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [activeView, directionsPanelSnapPoint, snapToDirectionsPanel]);
 
     const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
-    const [showCalendarSelectionSlider, setShowCalendarSelectionSlider] = useState(false);
+    const [calendarSliderMode, setCalendarSliderMode] = useState<'selection' | 'events' | null>(
+      null,
+    );
+    const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
     const isInternalSearch = searchFor !== null;
     const isGlobalSearch = mode === 'search';
-    const isSearchActive = isInternalSearch || isGlobalSearch || showCalendarSelectionSlider;
+    const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
 
-    const openCalendarSelectionSlider = useCallback(() => {
-      setShowCalendarSelectionSlider(true);
-      requestAnimationFrame(() => {
-        snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
-      });
-    }, [snapToKnownPosition]);
+    const openCalendarSelectionSlider = useCallback(
+      (resetSelection: boolean = false) => {
+        if (resetSelection) {
+          setSelectedCalendarIds([]);
+        }
+        setCalendarSliderMode('selection');
+        requestAnimationFrame(() => {
+          snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
+        });
+      },
+      [snapToKnownPosition],
+    );
 
-    const closeCalendarSelectionSlider = useCallback(() => {
-      setShowCalendarSelectionSlider(false);
-      requestAnimationFrame(() => {
-        snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
-      });
-    }, [snapToKnownPosition]);
+    const showUpcomingClassesSlider = useCallback(
+      (calendarIds: string[]) => {
+        setSelectedCalendarIds(calendarIds);
+        setCalendarSliderMode('events');
+        requestAnimationFrame(() => {
+          snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
+        });
+      },
+      [snapToKnownPosition],
+    );
+
+    const openCalendarSelectionAfterConnect = useCallback(() => {
+      openCalendarSelectionSlider(true);
+    }, [openCalendarSelectionSlider]);
+
+    const handleReselectCalendars = useCallback(() => {
+      openCalendarSelectionSlider();
+    }, [openCalendarSelectionSlider]);
+
+    const handleCloseUpcomingClassesSlider = useCallback(() => {
+      setCalendarSliderMode(null);
+    }, []);
+
+    const handleCloseCalendarSelectionSlider = useCallback(() => {
+      setCalendarSliderMode(null);
+    }, []);
 
     const showDirections = (building: BuildingShape, asDestination?: boolean) => {
       setTravelMode('walking');
@@ -402,7 +433,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleSheetClose = () => {
       setActiveView('building');
       setSearchFor(null);
-      setShowCalendarSelectionSlider(false);
+      setCalendarSliderMode(null);
+      setSelectedCalendarIds([]);
       setTravelMode('walking');
       setShuttlePlan(null);
       setRouteStartSource('current');
@@ -679,7 +711,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     useEffect(() => {
       if (mode !== 'search') {
-        setShowCalendarSelectionSlider(false);
+        setCalendarSliderMode(null);
       }
     }, [mode]);
 
@@ -700,6 +732,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       open: openSheet,
       close: closeSheet,
       setSnap: setSnapPoint,
+      closeCalendarSlider: () => setCalendarSliderMode(null),
     }));
 
     return (
@@ -711,7 +744,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         handleIndicatorStyle={buildingDetailsStyles.handle}
         enablePanDownToClose={true}
         enableHandlePanningGesture={true}
-        enableContentPanningGesture={false}
+        enableContentPanningGesture={true}
         enableDynamicSizing={false}
         animatedPosition={animatedPosition}
         onAnimate={handleSheetAnimate}
@@ -719,13 +752,23 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       >
         <BottomSheetView style={buildingDetailsStyles.container}>
           {isSearchActive ? (
-            showCalendarSelectionSlider && !isInternalSearch ? (
-              <CalendarSelectionSlider onDone={closeCalendarSelectionSlider} />
+            calendarSliderMode === 'events' && !isInternalSearch ? (
+              <UpcomingClassesSlider
+                selectedCalendarIds={selectedCalendarIds}
+                onReselectCalendars={handleReselectCalendars}
+                onClose={handleCloseUpcomingClassesSlider}
+              />
+            ) : calendarSliderMode === 'selection' && !isInternalSearch ? (
+              <CalendarSelectionSlider
+                initialSelectedCalendarIds={selectedCalendarIds}
+                onDone={showUpcomingClassesSlider}
+                onClose={handleCloseCalendarSelectionSlider}
+              />
             ) : (
               <SearchSheet
                 buildings={buildings}
                 onPressBuilding={isInternalSearch ? handleInternalSearch : closeSearchBuilding}
-                onCalendarConnected={openCalendarSelectionSlider}
+                onCalendarConnected={openCalendarSelectionAfterConnect}
               />
             )
           ) : activeView === 'building' ? (
