@@ -59,16 +59,14 @@ const App = () => {
     bottomSheetRef.current?.open(0);
   };
 
-  const openSearchBuilding = () => {
+  const openSearchBuilding = useCallback(() => {
     setSheetMode('search');
     setSheetOpen(true);
     bottomSheetRef.current?.open(1);
-  };
+  }, []);
 
   const handleOpenCalendar = useCallback(async () => {
-    setSheetMode('search');
-    setSheetOpen(true);
-    bottomSheetRef.current?.open(1);
+    openSearchBuilding();
 
     const sessionState = await getStoredGoogleCalendarSessionState();
     if (sessionState.status !== 'connected' || !sessionState.session) {
@@ -84,7 +82,7 @@ const App = () => {
     requestAnimationFrame(() => {
       bottomSheetRef.current?.openCalendarEventsSlider(allCalendarIds);
     });
-  }, []);
+  }, [openSearchBuilding]);
 
   const handleMapPress = useCallback(() => {
     bottomSheetRef.current?.closeCalendarSlider();
