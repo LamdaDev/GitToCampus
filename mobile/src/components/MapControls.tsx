@@ -37,13 +37,15 @@ const MapControls = ({
 
   return (
     <>
-      <Pressable
-        onPress={onOpenCalendar}
-        style={({ pressed }) => [styles.calendarButton, pressed && styles.buttonPressed]}
-        accessibilityLabel="Open Calendar"
-      >
-        <Ionicons name="calendar-outline" size={22} color="#EAEAEA" />
-      </Pressable>
+      {onOpenCalendar ? (
+        <Pressable
+          onPress={onOpenCalendar}
+          style={({ pressed }) => [styles.calendarButton, pressed && styles.buttonPressed]}
+          accessibilityLabel="Open Calendar"
+        >
+          <Ionicons name="calendar-outline" size={22} color="#EAEAEA" />
+        </Pressable>
+      ) : null}
 
       <Animated.View style={[styles.container, animatedContainerStyle]}>
         {/* Top Button: Campus Toggle */}
