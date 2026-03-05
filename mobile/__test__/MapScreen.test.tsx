@@ -201,6 +201,30 @@ describe('MapScreen', () => {
     expect(mockOnMapPress).toHaveBeenCalledTimes(1);
   });
 
+  test('map background press clears manual selection and marker', async () => {
+    const { UNSAFE_getAllByType, getByTestId, queryAllByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    fireEvent(UNSAFE_getAllByType(Polygon)[1], 'press');
+
+    await waitFor(() => {
+      expect(queryAllByTestId('map-marker')).toHaveLength(1);
+    });
+
+    fireEvent.press(getByTestId('campus-map'));
+
+    await waitFor(() => {
+      expect(queryAllByTestId('map-marker')).toHaveLength(0);
+      expect(mockPassSelectedBuilding).toHaveBeenLastCalledWith(null);
+    });
+  });
+
   test('selecting polygon updates selection, parent callback, sheet open, and marker', async () => {
     const { UNSAFE_getAllByType, getByTestId } = render(
       <MapScreen
@@ -343,6 +367,39 @@ describe('MapScreen', () => {
       expect(mockPassCurrentBuilding).toHaveBeenLastCalledWith(mockBuildings[1]);
       expect(mockAnimateToRegion).toHaveBeenCalledWith(getCampusRegion('LOYOLA'), 1000);
       expect(queryAllByTestId('map-marker')).toHaveLength(0);
+    });
+  });
+
+  test('highlights current building polygon when location enters a building', async () => {
+    let locationCallback: ((value: any) => void) | undefined;
+    repoMock.findBuildingAt.mockReturnValue(mockBuildings[1]);
+    locationMock.watchPositionAsync.mockImplementationOnce(async (_opts: any, cb: any) => {
+      locationCallback = cb;
+      return { remove: jest.fn() } as any;
+    });
+
+    const { UNSAFE_getAllByType } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(locationMock.watchPositionAsync).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      locationCallback?.({ coords: { latitude: 45.52, longitude: -73.59 } });
+    });
+
+    await waitFor(() => {
+      const polygons = UNSAFE_getAllByType(Polygon);
+      const loyolaPolygon = polygons[1];
+      expect(loyolaPolygon.props.fillColor).toBe('#467599');
+      expect(loyolaPolygon.props.strokeColor).toBe('rgba(0, 90, 60, 1.0)');
     });
   });
 
