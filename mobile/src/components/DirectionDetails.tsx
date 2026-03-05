@@ -486,7 +486,7 @@ export default function DirectionDetails({
           </View>
         </View>
       ) : null}
-      {!isShuttleSelected ? (
+      {isShuttleSelected ? null : (
         <View style={directionDetailsStyles.routeMetaContainer}>
           {renderRouteMetaBody({
             isRouteLoading,
@@ -501,7 +501,7 @@ export default function DirectionDetails({
             handlePressGo,
           })}
         </View>
-      ) : null}
+      )}
     </>
   );
 }

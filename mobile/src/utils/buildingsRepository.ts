@@ -92,7 +92,7 @@ const findContainingBuilding = (
   campusBuildings: BuildingShape[],
 ): BuildingShape | undefined => {
   for (const building of campusBuildings) {
-    if (isPointInAnyPolygon(point as any, building.polygons)) {
+    if (isPointInAnyPolygon(point, building.polygons)) {
       return building;
     }
   }
@@ -124,8 +124,7 @@ const toBuildingShape = (
   feature: GeoJsonFeatureCollection<BuildingBoundaryProps>['features'][number],
   metaById: Map<string, BuildingMetadata>,
 ): BuildingShape | null => {
-  const props = feature.properties ?? {};
-  const id = toStableId(props.unique_id);
+  const id = toStableId(feature.properties?.unique_id);
   if (!id) return null;
 
   const meta = metaById.get(id);
@@ -156,7 +155,9 @@ const buildMetadataMap = (
 ): Map<string, BuildingMetadata> => {
   const metaById = new Map<string, BuildingMetadata>();
   for (const feature of buildingList.features) {
-    const props = (feature.properties ?? {}) as BuildingListProps;
+    const props = feature.properties;
+    if (!props) continue;
+
     const entry = toBuildingMetadataEntry(props);
     if (!entry) continue;
 

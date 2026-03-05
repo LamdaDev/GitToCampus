@@ -283,7 +283,7 @@ export default function MapScreen({
   externalSelectedBuilding,
   outdoorRoute,
   bottomSheetAnimatedPosition,
-}: MapScreenProps) {
+}: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);

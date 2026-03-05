@@ -5,6 +5,7 @@ import { searchBuilding } from '../styles/SearchBuilding.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BuildingShape } from '../types/BuildingShape';
+import type { ListRenderItemInfo } from 'react-native';
 import {
   clearGoogleCalendarSession,
   connectGoogleCalendarAsync,
@@ -161,6 +162,30 @@ export default function SearchSheet({
   const handleSearchChange = useCallback((text?: string) => {
     setSearch(text ?? '');
   }, []);
+  const renderBuildingItem = useCallback(
+    ({ item }: ListRenderItemInfo<BuildingShape>) => (
+      <TouchableOpacity
+        style={searchBuilding.buildingPill}
+        activeOpacity={0.85}
+        onPress={() => onPressBuilding?.(item)}
+      >
+        <View style={searchBuilding.iconWrap}>
+          <Ionicons name="location-outline" size={34} color="#F5F1F2" />
+        </View>
+
+        <View style={searchBuilding.textWrap}>
+          <Text style={searchBuilding.buildingName} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={searchBuilding.buildingAddress} numberOfLines={1}>
+            {'(' + item.shortCode + ') '}
+            {item.address}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    ),
+    [onPressBuilding],
+  );
 
   return (
     <View style={searchBuilding.screen}>
@@ -207,27 +232,7 @@ export default function SearchSheet({
           contentContainerStyle={searchBuilding.listContent}
           showsVerticalScrollIndicator={true}
           ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
-          renderItem={({ item }: { item: BuildingShape }) => (
-            <TouchableOpacity
-              style={searchBuilding.buildingPill}
-              activeOpacity={0.85}
-              onPress={() => onPressBuilding?.(item)}
-            >
-              <View style={searchBuilding.iconWrap}>
-                <Ionicons name="location-outline" size={34} color="#F5F1F2" />
-              </View>
-
-              <View style={searchBuilding.textWrap}>
-                <Text style={searchBuilding.buildingName} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <Text style={searchBuilding.buildingAddress} numberOfLines={1}>
-                  {'(' + item.shortCode + ') '}
-                  {item.address}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
+          renderItem={renderBuildingItem}
         />
       </View>
     </View>

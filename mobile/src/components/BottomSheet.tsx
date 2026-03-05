@@ -879,7 +879,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         (activeView === 'directions' || activeView === 'shuttle-schedule') &&
         travelMode === 'shuttle';
 
-      if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus) {
+      const canComputeShuttlePlan =
+        shouldComputeShuttlePlan && startCampus !== null && destinationCampus !== null;
+      if (!canComputeShuttlePlan) {
         setShuttlePlan(null);
         return;
       }

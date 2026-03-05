@@ -92,7 +92,7 @@ const parseStoredSession = (value: string): GoogleCalendarSession | null => {
   if (typeof candidate.expiresAt !== 'number' || !Number.isFinite(candidate.expiresAt)) {
     return null;
   }
-  if (typeof candidate.refreshToken !== 'undefined' && !isNonEmptyString(candidate.refreshToken)) {
+  if (candidate.refreshToken !== undefined && !isNonEmptyString(candidate.refreshToken)) {
     return null;
   }
 
