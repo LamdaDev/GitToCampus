@@ -219,6 +219,7 @@ export type BottomSliderHandle = {
   close: () => void;
   setSnap: (index: number) => void;
   closeCalendarSlider: () => void;
+  openCalendarEventsSlider: (calendarIds: string[]) => void;
 };
 
 type BottomSheetProps = {
@@ -733,6 +734,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       close: closeSheet,
       setSnap: setSnapPoint,
       closeCalendarSlider: () => setCalendarSliderMode(null),
+      openCalendarEventsSlider: (calendarIds: string[]) => {
+        showUpcomingClassesSlider(calendarIds);
+      },
     }));
 
     return (
