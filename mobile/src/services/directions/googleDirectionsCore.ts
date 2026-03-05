@@ -78,7 +78,7 @@ const stripHtmlTags = (raw: string) => {
 
     pendingTag += char;
     if (char === '>') {
-      if (output.length > 0 && output[output.length - 1] !== ' ') {
+      if (output.length > 0 && !output.endsWith(' ')) {
         output += ' ';
       }
       inTag = false;
@@ -340,7 +340,7 @@ const parseDirectionsRoute = (
   }
 
   const route = data.routes?.[0];
-  if (!route || !route.overview_polyline?.points) {
+  if (!route?.overview_polyline?.points) {
     throw new DirectionsServiceError('NO_ROUTE', 'No valid outdoor route was returned.');
   }
 

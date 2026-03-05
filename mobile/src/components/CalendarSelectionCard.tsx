@@ -13,6 +13,8 @@ type CalendarSelectionCardProps = {
   onToggleCalendar: (calendarId: string) => void;
 };
 
+const CalendarOptionSeparator = () => <View style={calendarSelectionCardStyles.optionGap} />;
+
 export default function CalendarSelectionCard({
   calendars,
   selectedCalendarIds,
@@ -64,7 +66,7 @@ export default function CalendarSelectionCard({
               style={calendarSelectionCardStyles.optionsList}
               contentContainerStyle={calendarSelectionCardStyles.optionsListContent}
               keyboardShouldPersistTaps="handled"
-              ItemSeparatorComponent={() => <View style={calendarSelectionCardStyles.optionGap} />}
+              ItemSeparatorComponent={CalendarOptionSeparator}
               renderItem={({ item: calendar }) => {
                 const isSelected = selectedCalendarIdSet.has(calendar.id);
                 return (

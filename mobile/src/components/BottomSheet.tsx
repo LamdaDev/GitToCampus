@@ -236,9 +236,14 @@ type BottomSheetProps = {
   animatedPosition?: SharedValue<number>;
 };
 
-const ROUTE_UI_VIEWS: ViewType[] = ['directions', 'transit-plan', 'shuttle-schedule', 'navigation'];
+const ROUTE_UI_VIEWS = new Set<ViewType>([
+  'directions',
+  'transit-plan',
+  'shuttle-schedule',
+  'navigation',
+]);
 
-const isRouteUiVisible = (activeView: ViewType) => ROUTE_UI_VIEWS.includes(activeView);
+const isRouteUiVisible = (activeView: ViewType) => ROUTE_UI_VIEWS.has(activeView);
 
 type RouteLoadDecision =
   | { action: 'skip' }
