@@ -64,6 +64,227 @@ const inferShuttleDirection = (
   return null;
 };
 
+const getShuttleDirectionLabel = (direction: ShuttleDirection | null) =>
+  direction === 'LOYOLA_TO_SGW' ? 'LOY -> SGW' : 'SGW -> LOY';
+
+const getShuttleDepartureSummary = (nextDepartureInMinutes: number | null) => {
+  if (nextDepartureInMinutes === null) return null;
+  if (nextDepartureInMinutes <= 1) return 'Next bus in 1 min';
+  return `Next bus in ${nextDepartureInMinutes} mins`;
+};
+
+const ScheduleMenuButton = ({
+  onPress,
+}: Readonly<{
+  onPress?: () => void;
+}>) => (
+  <TouchableOpacity
+    testID="shuttle-full-schedule-button"
+    onPress={onPress}
+    style={directionDetailsStyles.shuttleScheduleButton}
+  >
+    <View style={directionDetailsStyles.shuttleScheduleIcon}>
+      <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+        <View style={directionDetailsStyles.shuttleScheduleDot} />
+        <View style={directionDetailsStyles.shuttleScheduleLine} />
+      </View>
+      <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+        <View style={directionDetailsStyles.shuttleScheduleDot} />
+        <View style={directionDetailsStyles.shuttleScheduleLine} />
+      </View>
+      <View style={directionDetailsStyles.shuttleScheduleIconRow}>
+        <View style={directionDetailsStyles.shuttleScheduleDot} />
+        <View style={directionDetailsStyles.shuttleScheduleLine} />
+      </View>
+    </View>
+  </TouchableOpacity>
+);
+
+const ShuttleUnavailableCard = ({
+  message,
+  scheduleMenuButton,
+}: Readonly<{
+  message: string;
+  scheduleMenuButton: React.ReactNode;
+}>) => (
+  <View style={directionDetailsStyles.shuttleUnavailableCard}>
+    <View style={directionDetailsStyles.shuttleUnavailableRow}>
+      <View style={directionDetailsStyles.shuttleUnavailableIconWrap}>
+        <Ionicons name="alert-circle-outline" size={18} color="#F4C15B" />
+      </View>
+      <View style={directionDetailsStyles.shuttleUnavailableTextWrap}>
+        <Text style={directionDetailsStyles.shuttleUnavailableTitle}>Shuttle Unavailable</Text>
+        <Text
+          testID="shuttle-unavailable-text"
+          style={directionDetailsStyles.shuttleUnavailableText}
+        >
+          {message}
+        </Text>
+      </View>
+      <View style={directionDetailsStyles.shuttleUnavailableButtonWrap}>{scheduleMenuButton}</View>
+    </View>
+  </View>
+);
+
+const renderShuttleCardBody = ({
+  isCrossCampusRoute,
+  shuttlePlan,
+  shuttleDepartureSummary,
+  shuttleDirectionLabel,
+  scheduleMenuButton,
+}: {
+  isCrossCampusRoute: boolean;
+  shuttlePlan: ShuttlePlan | null;
+  shuttleDepartureSummary: string | null;
+  shuttleDirectionLabel: string;
+  scheduleMenuButton: React.ReactNode;
+}) => {
+  if (!shuttlePlan) {
+    if (isCrossCampusRoute) {
+      return (
+        <>
+          <View style={directionDetailsStyles.shuttleCardTopRow}>
+            <View style={directionDetailsStyles.shuttleHeaderSpacer} />
+            {scheduleMenuButton}
+          </View>
+          <Text testID="shuttle-loading-text" style={directionDetailsStyles.routeMetaText}>
+            Loading shuttle schedule...
+          </Text>
+        </>
+      );
+    }
+
+    return (
+      <ShuttleUnavailableCard
+        message={SHUTTLE_UNAVAILABLE_MESSAGE}
+        scheduleMenuButton={scheduleMenuButton}
+      />
+    );
+  }
+
+  if (shuttlePlan.isServiceAvailable) {
+    return (
+      <>
+        <View style={directionDetailsStyles.shuttleCardTopRow}>
+          <Text testID="shuttle-next-bus-text" style={directionDetailsStyles.shuttlePrimaryText}>
+            {shuttleDepartureSummary ?? 'Next bus time unavailable'}
+          </Text>
+          {scheduleMenuButton}
+        </View>
+        <Text testID="shuttle-direction-label" style={directionDetailsStyles.shuttleDirectionText}>
+          {shuttleDirectionLabel}
+        </Text>
+      </>
+    );
+  }
+
+  return (
+    <ShuttleUnavailableCard
+      message={shuttlePlan.message ?? SHUTTLE_UNAVAILABLE_MESSAGE}
+      scheduleMenuButton={scheduleMenuButton}
+    />
+  );
+};
+
+const renderRouteMetaBody = ({
+  isRouteLoading,
+  routeErrorMessage,
+  hasRouteSummary,
+  routeDurationText,
+  routeDistanceText,
+  routeEtaText,
+  isCrossCampusRoute,
+  showGoButton,
+  canPressGo,
+  handlePressGo,
+}: {
+  isRouteLoading: boolean;
+  routeErrorMessage: string | null;
+  hasRouteSummary: boolean;
+  routeDurationText: string | null;
+  routeDistanceText: string | null;
+  routeEtaText: string | null;
+  isCrossCampusRoute: boolean;
+  showGoButton: boolean;
+  canPressGo: boolean;
+  handlePressGo: () => void;
+}) => {
+  if (isRouteLoading) {
+    return (
+      <Text testID="route-loading-text" style={directionDetailsStyles.routeMetaText}>
+        Loading route...
+      </Text>
+    );
+  }
+
+  if (routeErrorMessage) {
+    return (
+      <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
+        {routeErrorMessage}
+      </Text>
+    );
+  }
+
+  if (!hasRouteSummary) {
+    return (
+      <Text testID="route-empty-text" style={directionDetailsStyles.routeMetaText}>
+        Select start and destination to view route details.
+      </Text>
+    );
+  }
+
+  const routeSecondaryText = routeEtaText
+    ? `${routeEtaText} ETA - ${routeDistanceText}`
+    : routeDistanceText;
+
+  return (
+    <View style={directionDetailsStyles.routeSummaryRow}>
+      <View style={directionDetailsStyles.routeSummaryTextWrap}>
+        <Text
+          testID="route-summary-text"
+          numberOfLines={1}
+          style={directionDetailsStyles.routePrimaryText}
+        >
+          {routeDurationText}
+        </Text>
+        <View style={directionDetailsStyles.routeSecondaryInlineRow}>
+          <Text
+            testID="route-secondary-text"
+            numberOfLines={1}
+            style={directionDetailsStyles.routeSecondaryText}
+          >
+            {routeSecondaryText}
+          </Text>
+          {isCrossCampusRoute ? (
+            <>
+              <Text style={directionDetailsStyles.routeSecondaryText}> - </Text>
+              <View style={directionDetailsStyles.crossCampusContainer}>
+                <Text testID="cross-campus-label" style={directionDetailsStyles.crossCampusText}>
+                  Cross-Campus
+                </Text>
+              </View>
+            </>
+          ) : null}
+        </View>
+      </View>
+      {showGoButton ? (
+        <TouchableOpacity
+          testID="route-go-button"
+          disabled={!canPressGo}
+          activeOpacity={canPressGo ? 0.85 : 1}
+          onPress={handlePressGo}
+          style={[
+            directionDetailsStyles.routeGoButton,
+            !canPressGo && directionDetailsStyles.routeGoButtonDisabled,
+          ]}
+        >
+          <Text style={directionDetailsStyles.routeGoText}>GO</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  );
+};
+
 export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
@@ -100,24 +321,9 @@ export default function DirectionDetails({
     setActiveMode(selectedTravelMode);
   }, [selectedTravelMode]);
 
-  const handleSelectWalk = () => {
-    setActiveMode('walking');
-    onTravelModeChange?.('walking');
-  };
-
-  const handleSelectCar = () => {
-    setActiveMode('driving');
-    onTravelModeChange?.('driving');
-  };
-
-  const handleSelectTransit = () => {
-    setActiveMode('transit');
-    onTravelModeChange?.('transit');
-  };
-
-  const handleSelectShuttle = () => {
-    setActiveMode('shuttle');
-    onTravelModeChange?.('shuttle');
+  const handleSelectMode = (mode: RoutePlannerMode) => {
+    setActiveMode(mode);
+    onTravelModeChange?.(mode);
   };
 
   const handlePressGo = () => {
@@ -145,37 +351,9 @@ export default function DirectionDetails({
   const nextDepartureInMinutes = shuttlePlan?.nextDepartureInMinutes ?? null;
   const effectiveDirection =
     shuttlePlan?.direction ?? inferShuttleDirection(startBuilding, destinationBuilding);
-  const shuttleDirectionLabel =
-    effectiveDirection === 'LOYOLA_TO_SGW' ? 'LOY -> SGW' : 'SGW -> LOY';
-  const shuttleDepartureSummary =
-    nextDepartureInMinutes === null
-      ? null
-      : nextDepartureInMinutes <= 1
-        ? 'Next bus in 1 min'
-        : `Next bus in ${nextDepartureInMinutes} mins`;
-
-  const scheduleMenuButton = (
-    <TouchableOpacity
-      testID="shuttle-full-schedule-button"
-      onPress={onPressShuttleSchedule}
-      style={directionDetailsStyles.shuttleScheduleButton}
-    >
-      <View style={directionDetailsStyles.shuttleScheduleIcon}>
-        <View style={directionDetailsStyles.shuttleScheduleIconRow}>
-          <View style={directionDetailsStyles.shuttleScheduleDot} />
-          <View style={directionDetailsStyles.shuttleScheduleLine} />
-        </View>
-        <View style={directionDetailsStyles.shuttleScheduleIconRow}>
-          <View style={directionDetailsStyles.shuttleScheduleDot} />
-          <View style={directionDetailsStyles.shuttleScheduleLine} />
-        </View>
-        <View style={directionDetailsStyles.shuttleScheduleIconRow}>
-          <View style={directionDetailsStyles.shuttleScheduleDot} />
-          <View style={directionDetailsStyles.shuttleScheduleLine} />
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+  const shuttleDirectionLabel = getShuttleDirectionLabel(effectiveDirection);
+  const shuttleDepartureSummary = getShuttleDepartureSummary(nextDepartureInMinutes);
+  const scheduleMenuButton = <ScheduleMenuButton onPress={onPressShuttleSchedule} />;
 
   return (
     <>
@@ -244,7 +422,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected('walking') && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={handleSelectWalk}
+            onPress={() => handleSelectMode('walking')}
           >
             <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
           </TouchableOpacity>
@@ -255,7 +433,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected('driving') && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={handleSelectCar}
+            onPress={() => handleSelectMode('driving')}
           >
             <Ionicons
               name="car-outline"
@@ -270,7 +448,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected('transit') && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={handleSelectTransit}
+            onPress={() => handleSelectMode('transit')}
           >
             <Ionicons
               name="train-outline"
@@ -285,7 +463,7 @@ export default function DirectionDetails({
               directionDetailsStyles.transportationButton,
               isSelected('shuttle') && directionDetailsStyles.activeTransportationButton,
             ]}
-            onPress={handleSelectShuttle}
+            onPress={() => handleSelectMode('shuttle')}
           >
             <Ionicons
               name="bus-outline"
@@ -298,149 +476,30 @@ export default function DirectionDetails({
       {showShuttleCard ? (
         <View testID="shuttle-card-content" style={directionDetailsStyles.shuttleCardMetaContainer}>
           <View style={directionDetailsStyles.shuttleCardContainer}>
-            {!shuttlePlan ? (
-              isCrossCampusRoute ? (
-                <>
-                  <View style={directionDetailsStyles.shuttleCardTopRow}>
-                    <View style={directionDetailsStyles.shuttleHeaderSpacer} />
-                    {scheduleMenuButton}
-                  </View>
-                  <Text testID="shuttle-loading-text" style={directionDetailsStyles.routeMetaText}>
-                    Loading shuttle schedule...
-                  </Text>
-                </>
-              ) : (
-                <View style={directionDetailsStyles.shuttleUnavailableCard}>
-                  <View style={directionDetailsStyles.shuttleUnavailableRow}>
-                    <View style={directionDetailsStyles.shuttleUnavailableIconWrap}>
-                      <Ionicons name="alert-circle-outline" size={18} color="#F4C15B" />
-                    </View>
-                    <View style={directionDetailsStyles.shuttleUnavailableTextWrap}>
-                      <Text style={directionDetailsStyles.shuttleUnavailableTitle}>
-                        Shuttle Unavailable
-                      </Text>
-                      <Text
-                        testID="shuttle-unavailable-text"
-                        style={directionDetailsStyles.shuttleUnavailableText}
-                      >
-                        {SHUTTLE_UNAVAILABLE_MESSAGE}
-                      </Text>
-                    </View>
-                    <View style={directionDetailsStyles.shuttleUnavailableButtonWrap}>
-                      {scheduleMenuButton}
-                    </View>
-                  </View>
-                </View>
-              )
-            ) : shuttlePlan.isServiceAvailable ? (
-              <>
-                <View style={directionDetailsStyles.shuttleCardTopRow}>
-                  <Text
-                    testID="shuttle-next-bus-text"
-                    style={directionDetailsStyles.shuttlePrimaryText}
-                  >
-                    {shuttleDepartureSummary ?? 'Next bus time unavailable'}
-                  </Text>
-                  {scheduleMenuButton}
-                </View>
-                <Text
-                  testID="shuttle-direction-label"
-                  style={directionDetailsStyles.shuttleDirectionText}
-                >
-                  {shuttleDirectionLabel}
-                </Text>
-              </>
-            ) : (
-              <View style={directionDetailsStyles.shuttleUnavailableCard}>
-                <View style={directionDetailsStyles.shuttleUnavailableRow}>
-                  <View style={directionDetailsStyles.shuttleUnavailableIconWrap}>
-                    <Ionicons name="alert-circle-outline" size={18} color="#F4C15B" />
-                  </View>
-                  <View style={directionDetailsStyles.shuttleUnavailableTextWrap}>
-                    <Text style={directionDetailsStyles.shuttleUnavailableTitle}>
-                      Shuttle Unavailable
-                    </Text>
-                    <Text
-                      testID="shuttle-unavailable-text"
-                      style={directionDetailsStyles.shuttleUnavailableText}
-                    >
-                      {shuttlePlan?.message ?? SHUTTLE_UNAVAILABLE_MESSAGE}
-                    </Text>
-                  </View>
-                  <View style={directionDetailsStyles.shuttleUnavailableButtonWrap}>
-                    {scheduleMenuButton}
-                  </View>
-                </View>
-              </View>
-            )}
+            {renderShuttleCardBody({
+              isCrossCampusRoute,
+              shuttlePlan,
+              shuttleDepartureSummary,
+              shuttleDirectionLabel,
+              scheduleMenuButton,
+            })}
           </View>
         </View>
       ) : null}
       {!isShuttleSelected ? (
         <View style={directionDetailsStyles.routeMetaContainer}>
-          {isRouteLoading ? (
-            <Text testID="route-loading-text" style={directionDetailsStyles.routeMetaText}>
-              Loading route...
-            </Text>
-          ) : routeErrorMessage ? (
-            <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
-              {routeErrorMessage}
-            </Text>
-          ) : hasRouteSummary ? (
-            <View style={directionDetailsStyles.routeSummaryRow}>
-              <View style={directionDetailsStyles.routeSummaryTextWrap}>
-                <Text
-                  testID="route-summary-text"
-                  numberOfLines={1}
-                  style={directionDetailsStyles.routePrimaryText}
-                >
-                  {routeDurationText}
-                </Text>
-                <View style={directionDetailsStyles.routeSecondaryInlineRow}>
-                  <Text
-                    testID="route-secondary-text"
-                    numberOfLines={1}
-                    style={directionDetailsStyles.routeSecondaryText}
-                  >
-                    {routeEtaText
-                      ? `${routeEtaText} ETA - ${routeDistanceText}`
-                      : routeDistanceText}
-                  </Text>
-                  {isCrossCampusRoute && (
-                    <>
-                      <Text style={directionDetailsStyles.routeSecondaryText}> - </Text>
-                      <View style={directionDetailsStyles.crossCampusContainer}>
-                        <Text
-                          testID="cross-campus-label"
-                          style={directionDetailsStyles.crossCampusText}
-                        >
-                          Cross-Campus
-                        </Text>
-                      </View>
-                    </>
-                  )}
-                </View>
-              </View>
-              {showGoButton ? (
-                <TouchableOpacity
-                  testID="route-go-button"
-                  disabled={!canPressGo}
-                  activeOpacity={canPressGo ? 0.85 : 1}
-                  onPress={handlePressGo}
-                  style={[
-                    directionDetailsStyles.routeGoButton,
-                    !canPressGo && directionDetailsStyles.routeGoButtonDisabled,
-                  ]}
-                >
-                  <Text style={directionDetailsStyles.routeGoText}>GO</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          ) : (
-            <Text testID="route-empty-text" style={directionDetailsStyles.routeMetaText}>
-              Select start and destination to view route details.
-            </Text>
-          )}
+          {renderRouteMetaBody({
+            isRouteLoading,
+            routeErrorMessage,
+            hasRouteSummary,
+            routeDurationText,
+            routeDistanceText,
+            routeEtaText,
+            isCrossCampusRoute,
+            showGoButton,
+            canPressGo,
+            handlePressGo,
+          })}
         </View>
       ) : null}
     </>

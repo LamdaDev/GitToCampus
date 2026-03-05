@@ -62,6 +62,35 @@ const getBuildingDistance = (
   return centroid ? getDistance(point, centroid) : Number.MAX_VALUE;
 };
 
+const MAX_DISTANCE_METERS_FROM_CAMPUS = 2000;
+
+const getDistanceToCampusMeters = (
+  point: { latitude: number; longitude: number },
+  campus: Campus,
+) => {
+  const campusCenter = getCampusRegion(campus);
+  return getDistance(point, {
+    latitude: campusCenter.latitude,
+    longitude: campusCenter.longitude,
+  });
+};
+
+const isPointNearCampus = (point: { latitude: number; longitude: number }, campus: Campus) =>
+  getDistanceToCampusMeters(point, campus) <= MAX_DISTANCE_METERS_FROM_CAMPUS;
+
+const findContainingBuilding = (
+  point: { latitude: number; longitude: number },
+  campusBuildings: BuildingShape[],
+): BuildingShape | undefined => {
+  for (const building of campusBuildings) {
+    if (isPointInAnyPolygon(point as any, building.polygons)) {
+      return building;
+    }
+  }
+
+  return undefined;
+};
+
 /**
  * Parse and join datasets once, then reuse results (performance).
  */
@@ -169,29 +198,10 @@ export const findBuildingAt = (point: {
   latitude: number;
   longitude: number;
 }): BuildingShape | undefined => {
-  // Find which campus the user is closest to
   const closestCampus = findClosestCampus(point);
-  const campusCenter = getCampusRegion(closestCampus);
-
-  // Early exit if urser isnt atleast somewhat close to that campus
-  const MAX_DISTANCE_METERS = 2000;
-  const distanceToCampus = getDistance(point, {
-    latitude: campusCenter.latitude,
-    longitude: campusCenter.longitude,
-  });
-
-  if (distanceToCampus > MAX_DISTANCE_METERS) {
-    return undefined; // Too far away, skip building search
-  }
-
-  // User is near campus, proceed with building search
+  if (!isPointNearCampus(point, closestCampus)) return undefined;
   const campusBuildings = getCampusBuildingShapes(closestCampus);
-
-  for (const building of campusBuildings) {
-    if (isPointInAnyPolygon(point as any, building.polygons)) return building;
-  }
-
-  return undefined;
+  return findContainingBuilding(point, campusBuildings);
 };
 
 /**

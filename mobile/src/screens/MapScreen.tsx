@@ -49,6 +49,12 @@ const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
 const WALKING_DASH_PATTERN = [12, 8];
 
+type RoutePolylineSegment = {
+  key: string;
+  coordinates: { latitude: number; longitude: number }[];
+  requiresWalking: boolean;
+};
+
 const toRouteSegmentKey = (
   segmentType: 'overview' | 'segment',
   index: number,
@@ -57,6 +63,71 @@ const toRouteSegmentKey = (
 ) => {
   const polylineSignature = `${encodedPolyline.slice(0, 12)}-${encodedPolyline.slice(-12)}`;
   return `${segmentType}-${index}-${requiresWalking ? 'walk' : 'solid'}-${polylineSignature}`;
+};
+
+const buildRoutePolylineSegments = (
+  outdoorRoute: OutdoorRouteOverlay | null | undefined,
+): RoutePolylineSegment[] => {
+  if (!outdoorRoute) return [];
+
+  if (outdoorRoute.routeSegments && outdoorRoute.routeSegments.length > 0) {
+    const segments: RoutePolylineSegment[] = [];
+    for (let index = 0; index < outdoorRoute.routeSegments.length; index += 1) {
+      const segment = outdoorRoute.routeSegments[index];
+      segments.push({
+        key: toRouteSegmentKey(
+          'segment',
+          index,
+          segment.encodedPolyline,
+          Boolean(segment.requiresWalking),
+        ),
+        coordinates: decodePolyline(segment.encodedPolyline),
+        requiresWalking: Boolean(segment.requiresWalking),
+      });
+    }
+    return segments;
+  }
+
+  return [
+    {
+      key: toRouteSegmentKey(
+        'overview',
+        0,
+        outdoorRoute.encodedPolyline,
+        Boolean(outdoorRoute.isWalkingRoute),
+      ),
+      coordinates: decodePolyline(outdoorRoute.encodedPolyline),
+      requiresWalking: Boolean(outdoorRoute.isWalkingRoute),
+    },
+  ];
+};
+
+const renderRoutePolylineElements = (
+  routePolylineSegments: RoutePolylineSegment[],
+  routePolylineStrokeProps: { strokeColor: string },
+) => {
+  const polylineElements: React.ReactElement[] = [];
+
+  for (let index = 0; index < routePolylineSegments.length; index += 1) {
+    const segment = routePolylineSegments[index];
+    if (segment.coordinates.length <= 1) continue;
+
+    polylineElements.push(
+      <Polyline
+        key={segment.key}
+        testID={index === 0 ? 'route-polyline' : `route-polyline-segment-${index}`}
+        coordinates={segment.coordinates}
+        {...routePolylineStrokeProps}
+        lineDashPattern={segment.requiresWalking ? WALKING_DASH_PATTERN : undefined}
+        strokeWidth={ROUTE_LINE_WIDTH}
+        lineCap={segment.requiresWalking ? 'butt' : 'round'}
+        lineJoin="round"
+        zIndex={999}
+      />,
+    );
+  }
+
+  return polylineElements;
 };
 
 const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
@@ -300,40 +371,19 @@ export default function MapScreen({
     selectedBuildingId && selectedBuilding && selectedMarkerCoordinate,
   );
   const routePolylineStrokeProps = useMemo(() => ({ strokeColor: ROUTE_LINE_COLOR }), []);
-  const routePolylineSegments = useMemo(() => {
-    if (!outdoorRoute) return [];
-
-    if (outdoorRoute.routeSegments && outdoorRoute.routeSegments.length > 0) {
-      return outdoorRoute.routeSegments.map((segment, index) => ({
-        key: toRouteSegmentKey(
-          'segment',
-          index,
-          segment.encodedPolyline,
-          Boolean(segment.requiresWalking),
-        ),
-        coordinates: decodePolyline(segment.encodedPolyline),
-        requiresWalking: Boolean(segment.requiresWalking),
-      }));
-    }
-
-    return [
-      {
-        key: toRouteSegmentKey(
-          'overview',
-          0,
-          outdoorRoute.encodedPolyline,
-          Boolean(outdoorRoute.isWalkingRoute),
-        ),
-        coordinates: decodePolyline(outdoorRoute.encodedPolyline),
-        requiresWalking: Boolean(outdoorRoute.isWalkingRoute),
-      },
-    ];
-  }, [outdoorRoute]);
+  const routePolylineSegments = useMemo(
+    () => buildRoutePolylineSegments(outdoorRoute),
+    [outdoorRoute],
+  );
   const routeCoordinates = useMemo(
     () => routePolylineSegments.flatMap((segment) => segment.coordinates),
     [routePolylineSegments],
   );
   const showRoute = routePolylineSegments.some((segment) => segment.coordinates.length > 1);
+  const renderedRoutePolylines = useMemo(
+    () => renderRoutePolylineElements(routePolylineSegments, routePolylineStrokeProps),
+    [routePolylineSegments, routePolylineStrokeProps],
+  );
 
   useEffect(() => {
     if (!showRoute) return;
@@ -382,21 +432,7 @@ export default function MapScreen({
         {selectedMarker}
         {showRoute && (
           <>
-            {routePolylineSegments.map((segment, index) =>
-              segment.coordinates.length > 1 ? (
-                <Polyline
-                  key={segment.key}
-                  testID={index === 0 ? 'route-polyline' : `route-polyline-segment-${index}`}
-                  coordinates={segment.coordinates}
-                  {...routePolylineStrokeProps}
-                  lineDashPattern={segment.requiresWalking ? WALKING_DASH_PATTERN : undefined}
-                  strokeWidth={ROUTE_LINE_WIDTH}
-                  lineCap={segment.requiresWalking ? 'butt' : 'round'}
-                  lineJoin="round"
-                  zIndex={999}
-                />
-              ) : null,
-            )}
+            {renderedRoutePolylines}
             <Marker
               testID="route-start-marker"
               coordinate={outdoorRoute!.start}
