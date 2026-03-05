@@ -27,6 +27,7 @@ type MapScreenProps = {
   passCurrentBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
   openBottomSheet: () => void;
   onMapPress?: () => void;
+  onOpenCalendar?: () => void;
   externalSelectedBuilding?: BuildingShape | null;
   outdoorRoute?: OutdoorRouteOverlay | null;
   bottomSheetAnimatedPosition?: SharedValue<number>;
@@ -169,6 +170,7 @@ export default function MapScreen({
   passCurrentBuilding,
   openBottomSheet,
   onMapPress,
+  onOpenCalendar,
   externalSelectedBuilding,
   outdoorRoute,
   bottomSheetAnimatedPosition,
@@ -406,6 +408,7 @@ export default function MapScreen({
         selectedCampus={selectedCampus}
         onToggleCampus={handleToggleCampus}
         onRecenter={handleRecenter}
+        onOpenCalendar={onOpenCalendar}
         bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
       />
     </View>

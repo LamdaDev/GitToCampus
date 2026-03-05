@@ -12,6 +12,10 @@ import { SheetMode } from './types/SheetMode';
 import type { OutdoorRouteOverlay } from './types/Map';
 import { useSharedValue } from 'react-native-reanimated';
 import { initializeClarityAsync } from './services/clarity';
+import {
+  fetchGoogleCalendarListAsync,
+  getStoredGoogleCalendarSessionState,
+} from './services/googleCalendarAuth';
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -55,11 +59,30 @@ const App = () => {
     bottomSheetRef.current?.open(0);
   };
 
-  const openSearchBuilding = () => {
+  const openSearchBuilding = useCallback(() => {
     setSheetMode('search');
     setSheetOpen(true);
     bottomSheetRef.current?.open(1);
-  };
+  }, []);
+
+  const handleOpenCalendar = useCallback(async () => {
+    openSearchBuilding();
+
+    const sessionState = await getStoredGoogleCalendarSessionState();
+    if (sessionState.status !== 'connected' || !sessionState.session) {
+      return;
+    }
+
+    const calendarListResult = await fetchGoogleCalendarListAsync();
+    if (calendarListResult.type !== 'success') {
+      return;
+    }
+
+    const allCalendarIds = calendarListResult.calendars.map((calendar) => calendar.id);
+    requestAnimationFrame(() => {
+      bottomSheetRef.current?.openCalendarEventsSlider(allCalendarIds);
+    });
+  }, [openSearchBuilding]);
 
   const handleMapPress = useCallback(() => {
     bottomSheetRef.current?.closeCalendarSlider();
@@ -90,6 +113,7 @@ const App = () => {
           passCurrentBuilding={setCurrentBuilding}
           openBottomSheet={openBuildingDetails}
           onMapPress={handleMapPress}
+          onOpenCalendar={() => void handleOpenCalendar()}
           externalSelectedBuilding={selectedBuilding}
           outdoorRoute={outdoorRoute}
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}

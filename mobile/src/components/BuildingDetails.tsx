@@ -8,6 +8,7 @@ import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import type { ListRenderItemInfo } from 'react-native';
 
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
@@ -99,18 +100,18 @@ export default function BuildingDetails({
     </View>
   );
 
-  const servicesSection = (services: { name: string; url: string }[]) => {
-    if (!services || services.length === 0) return []; // Return empty array if no services
+  const servicesSection = (buildingServices: Record<string, string>) => {
+    const entries = Object.entries(buildingServices);
+    if (entries.length === 0) return [];
 
-    // Group services into rows of 3
-    return Object.entries(services).reduce(
+    return entries.reduce(
       (rows, [name, url], index) => {
-        if (index % 3 === 0) rows.push([]); // Start a new row after every 3 items
+        if (index % 3 === 0) rows.push([]);
         rows[rows.length - 1].push({ name, url });
         return rows;
       },
-      [] as { name: string; url: string }[][],
-    ); // Return the grouped rows
+      [] as Array<Array<{ name: string; url: string }>>,
+    );
   };
 
   return (
@@ -136,9 +137,12 @@ export default function BuildingDetails({
           <Text style={buildingDetailsStyles.servicesTitle}>Services</Text>
           <BottomSheetFlatList
             data={servicesSection(services)}
-            renderItem={({ item, index }) => (
+            renderItem={({
+              item,
+              index,
+            }: ListRenderItemInfo<Array<{ name: string; url: string }>>) => (
               <View key={index} style={buildingDetailsStyles.row}>
-                {item.map((service, serviceIndex) => (
+                {item.map((service: { name: string; url: string }, serviceIndex: number) => (
                   <TouchableOpacity
                     key={serviceIndex}
                     style={buildingDetailsStyles.uniqueServiceContainer}
@@ -149,7 +153,9 @@ export default function BuildingDetails({
                 ))}
               </View>
             )}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(_item: Array<{ name: string; url: string }>, index: number) =>
+              index.toString()
+            }
             showsVerticalScrollIndicator={true}
           />
         </View>

@@ -12,6 +12,7 @@ type Props = {
   selectedCampus: Campus;
   onToggleCampus: () => void;
   onRecenter: () => void;
+  onOpenCalendar?: () => void;
   bottomSheetAnimatedPosition?: SharedValue<number>;
 };
 
@@ -19,6 +20,7 @@ const MapControls = ({
   selectedCampus,
   onToggleCampus,
   onRecenter,
+  onOpenCalendar,
   bottomSheetAnimatedPosition,
 }: Props) => {
   const label = selectedCampus === 'SGW' ? 'SGW' : 'LOY';
@@ -34,28 +36,37 @@ const MapControls = ({
   }, [bottomSheetAnimatedPosition, windowHeight]);
 
   return (
-    <Animated.View style={[styles.container, animatedContainerStyle]}>
-      {/* Top Button: Campus Toggle */}
-      <Pressable
-        onPress={onToggleCampus}
-        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-        accessibilityLabel="Toggle Campus"
-      >
-        <Text style={styles.label}>{label}</Text>
-      </Pressable>
+    <>
+      {onOpenCalendar ? (
+        <Pressable
+          onPress={onOpenCalendar}
+          style={({ pressed }) => [styles.calendarButton, pressed && styles.buttonPressed]}
+          accessibilityLabel="Open Calendar"
+        >
+          <Ionicons name="calendar-outline" size={22} color="#EAEAEA" />
+        </Pressable>
+      ) : null}
 
-      {/* Horizontal Divider Line */}
-      {/* <View style={styles.divider} /> */}
+      <Animated.View style={[styles.container, animatedContainerStyle]}>
+        {/* Top Button: Campus Toggle */}
+        <Pressable
+          onPress={onToggleCampus}
+          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+          accessibilityLabel="Toggle Campus"
+        >
+          <Text style={styles.label}>{label}</Text>
+        </Pressable>
 
-      {/* Bottom Button: Recenter */}
-      <Pressable
-        onPress={onRecenter}
-        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-        accessibilityLabel="Recenter Map"
-      >
-        <Ionicons name="navigate" size={20} color="#EAEAEA" />
-      </Pressable>
-    </Animated.View>
+        {/* Bottom Button: Recenter */}
+        <Pressable
+          onPress={onRecenter}
+          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+          accessibilityLabel="Recenter Map"
+        >
+          <Ionicons name="navigate" size={20} color="#EAEAEA" />
+        </Pressable>
+      </Animated.View>
+    </>
   );
 };
 
