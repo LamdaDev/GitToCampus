@@ -558,9 +558,7 @@ describe('MapScreen', () => {
       expect(routePolyline).toBeTruthy();
       expect(routePolyline.props.strokeColor).toBe('#0472f8');
       expect(routePolyline.props.strokeWidth).toBe(6);
-      if (Platform.OS === 'ios') {
-        expect(routePolyline.props.strokeColors).toEqual(['#0472f8']);
-      }
+      expect(routePolyline.props.strokeColors).toBeUndefined();
       expect(getByTestId('route-start-marker').props.coordinate).toEqual({
         latitude: 45.5,
         longitude: -73.57,
@@ -579,7 +577,7 @@ describe('MapScreen', () => {
     });
   });
 
-  test('renders dotted route polyline when route requires walking', async () => {
+  test('renders dashed route polyline when route requires walking', async () => {
     const { getByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
@@ -597,11 +595,12 @@ describe('MapScreen', () => {
 
     await waitFor(() => {
       const routePolyline = getByTestId('route-polyline');
-      expect(routePolyline.props.lineDashPattern).toEqual([2, 10]);
+      expect(routePolyline.props.lineDashPattern).toEqual([12, 8]);
+      expect(routePolyline.props.lineCap).toBe('butt');
     });
   });
 
-  test('renders mixed route segments with dotted walking and solid transit polylines', async () => {
+  test('renders mixed route segments with dashed walking and solid transit polylines', async () => {
     const { getByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
@@ -627,8 +626,63 @@ describe('MapScreen', () => {
     );
 
     await waitFor(() => {
-      expect(getByTestId('route-polyline').props.lineDashPattern).toEqual([2, 10]);
+      expect(getByTestId('route-polyline').props.lineDashPattern).toEqual([12, 8]);
+      expect(getByTestId('route-polyline').props.lineCap).toBe('butt');
       expect(getByTestId('route-polyline-segment-1').props.lineDashPattern).toBeUndefined();
+      expect(getByTestId('route-polyline-segment-1').props.lineCap).toBe('round');
+    });
+  });
+
+  test('switches route polyline style cleanly between walking and driving', async () => {
+    const route = {
+      encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      start: { latitude: 45.5, longitude: -73.57 },
+      destination: { latitude: 45.49, longitude: -73.58 },
+    };
+
+    const { getByTestId, rerender } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{ ...route, isWalkingRoute: true }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline').props.lineDashPattern).toEqual([12, 8]);
+      expect(getByTestId('route-polyline').props.lineCap).toBe('butt');
+    });
+
+    rerender(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{ ...route, isWalkingRoute: false }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline').props.lineDashPattern).toBeUndefined();
+      expect(getByTestId('route-polyline').props.lineCap).toBe('round');
+    });
+
+    rerender(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{ ...route, isWalkingRoute: true }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline').props.lineDashPattern).toEqual([12, 8]);
+      expect(getByTestId('route-polyline').props.lineCap).toBe('butt');
     });
   });
 
@@ -694,7 +748,7 @@ describe('MapScreen', () => {
       await waitFor(() => {
         const routePolyline = getByTestId('route-polyline');
         expect(routePolyline.props.strokeColor).toBe('#0472f8');
-        expect(routePolyline.props.strokeColors).toEqual(['#0472f8']);
+        expect(routePolyline.props.strokeColors).toBeUndefined();
       });
     } finally {
       restorePlatformOS();

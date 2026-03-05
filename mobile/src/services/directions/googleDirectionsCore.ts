@@ -53,12 +53,12 @@ const mapStatusToErrorCode = (status: GoogleDirectionsStatus) => {
 
 const decodeHtmlEntities = (raw: string) =>
   raw
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>');
+    .replaceAll('&nbsp;', ' ')
+    .replaceAll('&amp;', '&')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>');
 
 const stripHtmlTags = (raw: string) => {
   let output = '';

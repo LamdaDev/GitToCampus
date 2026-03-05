@@ -1,5 +1,5 @@
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useWindowDimensions, Platform, View, Text } from 'react-native';
+import { useWindowDimensions, View, Text } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import type { SharedValue } from 'react-native-reanimated';
@@ -47,7 +47,17 @@ const ROUTE_FIT_TOP_PADDING = 110;
 
 const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
-const WALKING_DOT_PATTERN = [2, 10];
+const WALKING_DASH_PATTERN = [12, 8];
+
+const toRouteSegmentKey = (
+  segmentType: 'overview' | 'segment',
+  index: number,
+  encodedPolyline: string,
+  requiresWalking: boolean,
+) => {
+  const polylineSignature = `${encodedPolyline.slice(0, 12)}-${encodedPolyline.slice(-12)}`;
+  return `${segmentType}-${index}-${requiresWalking ? 'walk' : 'solid'}-${polylineSignature}`;
+};
 
 const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
   latitude: pos.coords.latitude,
@@ -289,27 +299,31 @@ export default function MapScreen({
   const showSelectedMarker = Boolean(
     selectedBuildingId && selectedBuilding && selectedMarkerCoordinate,
   );
-  const routePolylineStrokeProps = useMemo(
-    () =>
-      Platform.OS === 'ios'
-        ? { strokeColor: ROUTE_LINE_COLOR, strokeColors: [ROUTE_LINE_COLOR] }
-        : { strokeColor: ROUTE_LINE_COLOR },
-    [],
-  );
+  const routePolylineStrokeProps = useMemo(() => ({ strokeColor: ROUTE_LINE_COLOR }), []);
   const routePolylineSegments = useMemo(() => {
     if (!outdoorRoute) return [];
 
     if (outdoorRoute.routeSegments && outdoorRoute.routeSegments.length > 0) {
       return outdoorRoute.routeSegments.map((segment, index) => ({
-        key: `segment-${index}`,
+        key: toRouteSegmentKey(
+          'segment',
+          index,
+          segment.encodedPolyline,
+          Boolean(segment.requiresWalking),
+        ),
         coordinates: decodePolyline(segment.encodedPolyline),
-        requiresWalking: segment.requiresWalking,
+        requiresWalking: Boolean(segment.requiresWalking),
       }));
     }
 
     return [
       {
-        key: 'overview',
+        key: toRouteSegmentKey(
+          'overview',
+          0,
+          outdoorRoute.encodedPolyline,
+          Boolean(outdoorRoute.isWalkingRoute),
+        ),
         coordinates: decodePolyline(outdoorRoute.encodedPolyline),
         requiresWalking: Boolean(outdoorRoute.isWalkingRoute),
       },
@@ -375,9 +389,9 @@ export default function MapScreen({
                   testID={index === 0 ? 'route-polyline' : `route-polyline-segment-${index}`}
                   coordinates={segment.coordinates}
                   {...routePolylineStrokeProps}
-                  lineDashPattern={segment.requiresWalking ? WALKING_DOT_PATTERN : undefined}
+                  lineDashPattern={segment.requiresWalking ? WALKING_DASH_PATTERN : undefined}
                   strokeWidth={ROUTE_LINE_WIDTH}
-                  lineCap="round"
+                  lineCap={segment.requiresWalking ? 'butt' : 'round'}
                   lineJoin="round"
                   zIndex={999}
                 />
