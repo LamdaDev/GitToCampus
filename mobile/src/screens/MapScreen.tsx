@@ -48,6 +48,7 @@ const ROUTE_FIT_TOP_PADDING = 110;
 const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
 const WALKING_DASH_PATTERN = [12, 8];
+const ROUTE_POLYLINE_STROKE_PROPS = { strokeColor: ROUTE_LINE_COLOR } as const;
 
 type RoutePolylineSegment = {
   key: string;
@@ -128,6 +129,21 @@ const renderRoutePolylineElements = (
   }
 
   return polylineElements;
+};
+
+const flattenRouteCoordinates = (routePolylineSegments: RoutePolylineSegment[]) => {
+  const routeCoordinates: { latitude: number; longitude: number }[] = [];
+  for (const segment of routePolylineSegments) {
+    routeCoordinates.push(...segment.coordinates);
+  }
+  return routeCoordinates;
+};
+
+const hasRenderableRoute = (routePolylineSegments: RoutePolylineSegment[]) => {
+  for (const segment of routePolylineSegments) {
+    if (segment.coordinates.length > 1) return true;
+  }
+  return false;
 };
 
 const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
@@ -225,6 +241,18 @@ const renderPolygonItem = (
   );
 };
 
+const renderPolygonItems = (
+  polygonItems: PolygonRenderItem[],
+  selectedBuildingId: string | null,
+  onPolygonPress: (item: PolygonRenderItem) => void,
+) => {
+  const elements: React.ReactElement[] = [];
+  for (const item of polygonItems) {
+    elements.push(renderPolygonItem(item, selectedBuildingId, onPolygonPress));
+  }
+  return elements;
+};
+
 const selectBuildingAtCoords = (
   coords: UserCoords,
   setCurrentBuildingId: (id: string | null) => void,
@@ -277,12 +305,21 @@ export default function MapScreen({
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
+    let isActive = true;
 
-    void initLocationTracking(setUserCoords).then((sub) => {
-      subscription = sub;
-    });
+    const startTracking = async () => {
+      const nextSubscription = await initLocationTracking(setUserCoords);
+      if (!isActive) {
+        nextSubscription?.remove();
+        return;
+      }
+      subscription = nextSubscription;
+    };
+
+    void startTracking();
 
     return () => {
+      isActive = false;
       subscription?.remove();
     };
   }, []);
@@ -357,32 +394,20 @@ export default function MapScreen({
     );
   }, [userCoords]);
 
-  const handleMapRef = useCallback((ref: any) => {
-    mapRef.current = ref;
-  }, []);
-
-  const handleMapPress = useCallback(() => {
-    onMapPress?.();
-  }, [onMapPress]);
-
   const mapInitialRegion = useMemo(() => getCampusRegion('SGW'), []);
 
   const showSelectedMarker = Boolean(
     selectedBuildingId && selectedBuilding && selectedMarkerCoordinate,
   );
-  const routePolylineStrokeProps = useMemo(() => ({ strokeColor: ROUTE_LINE_COLOR }), []);
   const routePolylineSegments = useMemo(
     () => buildRoutePolylineSegments(outdoorRoute),
     [outdoorRoute],
   );
-  const routeCoordinates = useMemo(
-    () => routePolylineSegments.flatMap((segment) => segment.coordinates),
-    [routePolylineSegments],
-  );
-  const showRoute = routePolylineSegments.some((segment) => segment.coordinates.length > 1);
+  const routeCoordinates = flattenRouteCoordinates(routePolylineSegments);
+  const showRoute = hasRenderableRoute(routePolylineSegments);
   const renderedRoutePolylines = useMemo(
-    () => renderRoutePolylineElements(routePolylineSegments, routePolylineStrokeProps),
-    [routePolylineSegments, routePolylineStrokeProps],
+    () => renderRoutePolylineElements(routePolylineSegments, ROUTE_POLYLINE_STROKE_PROPS),
+    [routePolylineSegments],
   );
 
   useEffect(() => {
@@ -406,23 +431,20 @@ export default function MapScreen({
     <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} />
   ) : null;
 
-  const renderedPolygons = useMemo(() => {
-    const elements = [];
-    for (const item of polygonItems) {
-      elements.push(renderPolygonItem(item, selectedBuildingId, handlePolygonPress));
-    }
-    return elements;
-  }, [handlePolygonPress, polygonItems, selectedBuildingId]);
+  const renderedPolygons = useMemo(
+    () => renderPolygonItems(polygonItems, selectedBuildingId, handlePolygonPress),
+    [handlePolygonPress, polygonItems, selectedBuildingId],
+  );
 
   const mapProps = {
-    ref: handleMapRef,
+    ref: mapRef,
     testID: 'campus-map',
     style: styles.map,
     initialRegion: mapInitialRegion,
     provider: PROVIDER_GOOGLE,
     showsUserLocation: true,
     showsMyLocationButton: false,
-    onPress: handleMapPress,
+    onPress: onMapPress,
   } as const;
 
   return (
