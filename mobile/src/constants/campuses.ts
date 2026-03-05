@@ -16,8 +16,9 @@ import type { Campus } from '../types/Campus';
  */
 // SGW (Sir George Williams) — downtown campus (approx center point)
 export const SGW_REGION: Region = {
-  latitude: 45.4973,
-  longitude: -73.5789,
+  // Hall Building (Henry F. Hall) center point
+  latitude: 45.497092,
+  longitude: -73.5788,
   latitudeDelta: 0.01,
   longitudeDelta: 0.01,
 };

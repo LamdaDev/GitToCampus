@@ -116,11 +116,11 @@ const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]
 
 const renderPolygonItem = (
   item: PolygonRenderItem,
-  selectedBuildingId: string | null,
+  highlightedBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
 ) => {
   const theme = POLYGON_THEME[item.campus];
-  const isSelected = item.buildingId === selectedBuildingId;
+  const isSelected = item.buildingId === highlightedBuildingId;
   const center = getPolygonCenter(item.coordinates);
 
   return (
@@ -279,8 +279,11 @@ export default function MapScreen({
   }, []);
 
   const handleMapPress = useCallback(() => {
+    // Background map taps clear manual selection and restore current-building highlight.
+    setSelectedBuildingId(null);
+    passSelectedBuilding(null);
     onMapPress?.();
-  }, [onMapPress]);
+  }, [onMapPress, passSelectedBuilding]);
 
   const mapInitialRegion = useMemo(() => getCampusRegion('SGW'), []);
 
@@ -340,13 +343,16 @@ export default function MapScreen({
     <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} />
   ) : null;
 
+  // Manual selection has priority; otherwise highlight the building the user is currently inside.
+  const highlightedBuildingId = selectedBuildingId ?? currentBuildingId;
+
   const renderedPolygons = useMemo(() => {
     const elements = [];
     for (const item of polygonItems) {
-      elements.push(renderPolygonItem(item, selectedBuildingId, handlePolygonPress));
+      elements.push(renderPolygonItem(item, highlightedBuildingId, handlePolygonPress));
     }
     return elements;
-  }, [handlePolygonPress, polygonItems, selectedBuildingId]);
+  }, [handlePolygonPress, highlightedBuildingId, polygonItems]);
 
   const mapProps = {
     ref: handleMapRef,
