@@ -117,12 +117,26 @@ const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]
 
 const renderPolygonItem = (
   item: PolygonRenderItem,
-  highlightedBuildingId: string | null,
+  selectedBuildingId: string | null,
+  currentBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
 ) => {
   const theme = POLYGON_THEME[item.campus];
-  const isSelected = item.buildingId === highlightedBuildingId;
+  const isSelected = item.buildingId === selectedBuildingId;
+  const isCurrent = item.buildingId === currentBuildingId;
   const center = getPolygonCenter(item.coordinates);
+
+  const strokeColor = isSelected
+    ? theme.selectedStroke
+    : isCurrent
+      ? theme.currentStroke
+      : theme.stroke;
+  const fillColor = isSelected ? theme.selectedFill : isCurrent ? theme.currentFill : theme.fill;
+  const strokeWidth = isSelected
+    ? theme.selectedStrokeWidth
+    : isCurrent
+      ? theme.currentStrokeWidth
+      : theme.strokeWidth;
 
   return (
     <Fragment key={item.key}>
@@ -130,9 +144,9 @@ const renderPolygonItem = (
         key={item.key}
         coordinates={item.coordinates}
         tappable
-        strokeColor={isSelected ? theme.selectedStroke : theme.stroke}
-        fillColor={isSelected ? theme.selectedFill : theme.fill}
-        strokeWidth={isSelected ? theme.selectedStrokeWidth : theme.strokeWidth}
+        strokeColor={strokeColor}
+        fillColor={fillColor}
+        strokeWidth={strokeWidth}
         onPress={() => onPolygonPress(item)}
       />
       <Marker coordinate={center} tracksViewChanges={true} testID={'map-label'}>
@@ -219,7 +233,10 @@ export default function MapScreen({
   }, [selectedCampus]);
 
   useEffect(() => {
-    if (!externalSelectedBuilding) return;
+    if (!externalSelectedBuilding) {
+      setSelectedBuildingId(null);
+      return;
+    }
     setSelectedBuildingId(externalSelectedBuilding.id);
     setSelectedCampus(externalSelectedBuilding.campus);
   }, [externalSelectedBuilding]);
@@ -345,16 +362,15 @@ export default function MapScreen({
     <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} />
   ) : null;
 
-  // Manual selection has priority; otherwise highlight the building the user is currently inside.
-  const highlightedBuildingId = selectedBuildingId ?? currentBuildingId;
-
   const renderedPolygons = useMemo(() => {
     const elements = [];
     for (const item of polygonItems) {
-      elements.push(renderPolygonItem(item, highlightedBuildingId, handlePolygonPress));
+      elements.push(
+        renderPolygonItem(item, selectedBuildingId, currentBuildingId, handlePolygonPress),
+      );
     }
     return elements;
-  }, [handlePolygonPress, highlightedBuildingId, polygonItems]);
+  }, [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId]);
 
   const mapProps = {
     ref: handleMapRef,

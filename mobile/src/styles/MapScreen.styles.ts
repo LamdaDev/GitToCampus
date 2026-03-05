@@ -53,7 +53,11 @@ export const POLYGON_THEME = {
     fill: 'rgba(128, 0, 32, 0.30)',
     strokeWidth: 2,
 
-    selectedStroke: 'rgba(128, 0, 32, 1.0)',
+    currentStroke: 'rgba(88, 0, 22, 1.0)',
+    currentFill: 'rgba(88, 0, 22, 0.55)',
+    currentStrokeWidth: 3,
+
+    selectedStroke: '#1f5dd8',
     selectedFill: '#467599',
     selectedStrokeWidth: 2,
 
@@ -64,7 +68,11 @@ export const POLYGON_THEME = {
     fill: 'rgba(0, 90, 60, 0.30)',
     strokeWidth: 2,
 
-    selectedStroke: 'rgba(0, 90, 60, 1.0)',
+    currentStroke: 'rgba(0, 64, 42, 1.0)',
+    currentFill: 'rgba(0, 64, 42, 0.55)',
+    currentStrokeWidth: 3,
+
+    selectedStroke: '#1f5dd8',
     selectedFill: '#467599',
     selectedStrokeWidth: 2,
 
