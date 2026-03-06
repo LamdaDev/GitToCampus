@@ -9,6 +9,7 @@ import type { BuildingShape } from '../src/types/BuildingShape';
 import * as buildingsRepository from '../src/utils/buildingsRepository';
 import * as geoJson from '../src/utils/geoJson';
 import { getCampusRegion } from '../src/constants/campuses';
+import { POLYGON_THEME } from '../src/styles/MapScreen.styles';
 
 const mockPassSelectedBuilding = jest.fn();
 const mockPassUserLocation = jest.fn();
@@ -415,8 +416,9 @@ describe('MapScreen', () => {
     await waitFor(() => {
       const polygons = UNSAFE_getAllByType(Polygon);
       const loyolaPolygon = polygons[1];
-      expect(loyolaPolygon.props.fillColor).toBe('#467599');
-      expect(loyolaPolygon.props.strokeColor).toBe('rgba(0, 90, 60, 1.0)');
+      expect(loyolaPolygon.props.fillColor).toBe(POLYGON_THEME.LOYOLA.currentFill);
+      expect(loyolaPolygon.props.strokeColor).toBe(POLYGON_THEME.LOYOLA.currentStroke);
+      expect(loyolaPolygon.props.strokeWidth).toBe(POLYGON_THEME.LOYOLA.currentStrokeWidth);
     });
   });
 
