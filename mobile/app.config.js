@@ -2,6 +2,14 @@ const { expo } = require('./app.json');
 
 const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 const GOOGLE_CLIENT_ID_SUFFIX = '.apps.googleusercontent.com';
+const BUILDING_IMAGE_HOSTS = ['iili.io', 'postimg.cc', 'i.postimg.cc'];
+
+const imageHostTransportException = {
+  NSIncludesSubdomains: true,
+  NSExceptionAllowsInsecureHTTPLoads: true,
+  NSExceptionRequiresForwardSecrecy: false,
+  NSExceptionMinimumTLSVersion: 'TLSv1.0',
+};
 
 const toGoogleClientScheme = (clientId) => {
   const normalizedClientId = typeof clientId === 'string' ? clientId.trim() : '';
@@ -29,6 +37,17 @@ const scheme = Array.from(
   new Set([...baseSchemes, expo.android?.package, ...googleCalendarSchemes].filter(Boolean)),
 );
 
+const appTransportSecurity = {
+  NSAllowsArbitraryLoads: false,
+  NSAllowsLocalNetworking: true,
+  NSExceptionDomains: {
+    ...(expo.ios?.infoPlist?.NSAppTransportSecurity?.NSExceptionDomains ?? {}),
+    ...Object.fromEntries(
+      BUILDING_IMAGE_HOSTS.map((host) => [host, { ...imageHostTransportException }]),
+    ),
+  },
+};
+
 if (!googleMapsApiKey) {
   // Keep this as a warning so tests and non-maps flows can still run,
   // while making the native build issue obvious.
@@ -52,6 +71,7 @@ module.exports = {
     infoPlist: {
       ...expo.ios?.infoPlist,
       ITSAppUsesNonExemptEncryption: false,
+      NSAppTransportSecurity: appTransportSecurity,
     },
     config: {
       ...expo.ios?.config,

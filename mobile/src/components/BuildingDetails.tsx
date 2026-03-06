@@ -34,6 +34,13 @@ type BuildingImage = {
   url: string;
 };
 
+const toSafeImageUrl = (rawUrl: string): string | null => {
+  const normalizedUrl = rawUrl.trim();
+  if (!normalizedUrl) return null;
+  if (/^https?:\/\//i.test(normalizedUrl)) return normalizedUrl;
+  return `https://${normalizedUrl}`;
+};
+
 const toBuildingImages = (images: string[] | undefined): BuildingImage[] => {
   if (!images || images.length === 0) return [];
 
@@ -41,11 +48,14 @@ const toBuildingImages = (images: string[] | undefined): BuildingImage[] => {
   const buildingImages: BuildingImage[] = [];
 
   for (const imageUrl of images) {
-    const currentCount = (seenCountsByUrl.get(imageUrl) ?? 0) + 1;
-    seenCountsByUrl.set(imageUrl, currentCount);
+    const safeUrl = toSafeImageUrl(imageUrl);
+    if (!safeUrl) continue;
+
+    const currentCount = (seenCountsByUrl.get(safeUrl) ?? 0) + 1;
+    seenCountsByUrl.set(safeUrl, currentCount);
     buildingImages.push({
-      key: `${imageUrl}#${currentCount}`,
-      url: imageUrl,
+      key: `${safeUrl}#${currentCount}`,
+      url: safeUrl,
     });
   }
 
@@ -131,6 +141,14 @@ export default function BuildingDetails({
               testID="carousel-image"
               source={{ uri: image.url }}
               style={buildingDetailsStyles.carouselImage}
+              onError={(event) => {
+                if (__DEV__) {
+                  console.warn('[BuildingDetails] Failed to load building image', {
+                    url: image.url,
+                    error: event.nativeEvent.error,
+                  });
+                }
+              }}
             />
           </View>
         ))}

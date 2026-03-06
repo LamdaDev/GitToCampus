@@ -220,11 +220,36 @@ describe('MapScreen', () => {
       expect(queryAllByTestId('map-marker')).toHaveLength(1);
     });
 
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
     fireEvent.press(getByTestId('campus-map'));
 
     await waitFor(() => {
       expect(queryAllByTestId('map-marker')).toHaveLength(0);
       expect(mockPassSelectedBuilding).toHaveBeenLastCalledWith(null);
+    });
+  });
+
+  test('ignores immediate map press after polygon press to keep selected building', async () => {
+    const { UNSAFE_getAllByType, getByTestId, queryAllByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        onMapPress={mockOnMapPress}
+      />,
+    );
+
+    fireEvent(UNSAFE_getAllByType(Polygon)[1], 'press');
+    fireEvent.press(getByTestId('campus-map'));
+
+    await waitFor(() => {
+      expect(mockPassSelectedBuilding).toHaveBeenCalledWith(mockBuildings[1]);
+      expect(mockOnMapPress).not.toHaveBeenCalled();
+      expect(queryAllByTestId('map-marker')).toHaveLength(1);
     });
   });
 
