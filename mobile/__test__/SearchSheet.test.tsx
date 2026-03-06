@@ -141,12 +141,12 @@ describe('SearchSheet', () => {
     expect(onPressBuilding).toHaveBeenCalledWith(mockBuildings[0]);
   });
 
-  test('shows connection status as not connected on initial load', async () => {
+  test('shows connect button on initial load', async () => {
     const { getByTestId } = render(<SearchSheet buildings={mockBuildings} />);
 
     await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Not connected',
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Connect Google Calendar',
       ),
     );
   });
@@ -156,8 +156,8 @@ describe('SearchSheet', () => {
     const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
 
     await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Not connected',
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Connect Google Calendar',
       ),
     );
     fireEvent.press(getByTestId('connect-google-calendar-button'));
@@ -187,8 +187,8 @@ describe('SearchSheet', () => {
     );
 
     await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Not connected',
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Connect Google Calendar',
       ),
     );
     fireEvent.press(getByTestId('connect-google-calendar-button'));
@@ -196,8 +196,8 @@ describe('SearchSheet', () => {
     await waitFor(() => expect(connectGoogleCalendarMock).toHaveBeenCalledTimes(1));
 
     expect(queryByText('Google Calendar connected.')).toBeNull();
-    expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-      'Calendar status: Connected',
+    expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+      'Sign Out Google Calendar',
     );
     expect(onCalendarConnected).toHaveBeenCalledTimes(1);
   });
@@ -261,11 +261,7 @@ describe('SearchSheet', () => {
       <SearchSheet buildings={mockBuildings} selectedCalendarIds={['calendar-1']} />,
     );
 
-    await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Connected',
-      ),
-    );
+    await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
     expect(getByTestId('next-class-card')).toBeTruthy();
     expect(await findByText('No upcoming classes')).toBeTruthy();
   });
@@ -276,14 +272,9 @@ describe('SearchSheet', () => {
       session: null,
     });
 
-    const { getByTestId, getByText } = render(<SearchSheet buildings={mockBuildings} />);
+    const { getByText } = render(<SearchSheet buildings={mockBuildings} />);
 
-    await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Session expired',
-      ),
-    );
-    expect(getByText('Google Calendar session expired.')).toBeTruthy();
+    await waitFor(() => expect(getByText('Google Calendar session expired.')).toBeTruthy());
     expect(
       getByText('Session expired. Reconnect Google Calendar to continue syncing.'),
     ).toBeTruthy();
@@ -303,8 +294,8 @@ describe('SearchSheet', () => {
     const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
 
     await waitFor(() => expect(clearCalendarSessionMock).toHaveBeenCalledTimes(1));
-    expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-      'Calendar status: Session expired',
+    expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+      'Reconnect Google Calendar',
     );
     expect(
       await findByText('Session expired. Reconnect Google Calendar to continue syncing.'),
@@ -326,8 +317,8 @@ describe('SearchSheet', () => {
     const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
 
     await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Session expired',
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Reconnect Google Calendar',
       ),
     );
     expect(
@@ -350,8 +341,8 @@ describe('SearchSheet', () => {
     const { getByTestId } = render(<SearchSheet buildings={mockBuildings} />);
 
     await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Connected',
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Sign Out Google Calendar',
       ),
     );
 
@@ -360,14 +351,14 @@ describe('SearchSheet', () => {
     });
 
     await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Session expired',
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Reconnect Google Calendar',
       ),
     );
     expect(clearCalendarSessionMock).toHaveBeenCalledTimes(1);
   });
 
-  test('keeps connected status after canceling reconnect from connected state', async () => {
+  test('signs out when calendar action button is pressed in connected state', async () => {
     getStoredSessionStateMock.mockResolvedValueOnce({
       status: 'connected',
       session: {
@@ -377,23 +368,26 @@ describe('SearchSheet', () => {
         expiresAt: Date.now() + 10 * 60 * 1000,
       },
     });
-    connectGoogleCalendarMock.mockResolvedValueOnce({ type: 'cancel' });
 
     const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
 
     await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Connected',
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Sign Out Google Calendar',
       ),
     );
+    expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+      'Sign Out Google Calendar',
+    );
+
     fireEvent.press(getByTestId('connect-google-calendar-button'));
 
-    expect(
-      await findByText('Google sign-in was canceled. You can continue using the app.'),
-    ).toBeTruthy();
-    expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-      'Calendar status: Connected',
+    await waitFor(() => expect(clearCalendarSessionMock).toHaveBeenCalledTimes(1));
+    expect(await findByText('Signed out of Google Calendar.')).toBeTruthy();
+    expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+      'Connect Google Calendar',
     );
+    expect(connectGoogleCalendarMock).not.toHaveBeenCalled();
   });
 
   test('preserves expired status when reconnect fails with generic error', async () => {
@@ -409,15 +403,15 @@ describe('SearchSheet', () => {
     const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
 
     await waitFor(() =>
-      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-        'Calendar status: Session expired',
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Reconnect Google Calendar',
       ),
     );
     fireEvent.press(getByTestId('connect-google-calendar-button'));
 
     expect(await findByText('Failed to refresh token.')).toBeTruthy();
-    expect(getByTestId('calendar-connection-status')).toHaveTextContent(
-      'Calendar status: Session expired',
+    expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+      'Reconnect Google Calendar',
     );
   });
 });

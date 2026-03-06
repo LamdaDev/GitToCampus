@@ -187,23 +187,30 @@ export default function SearchSheet({
     );
   }, [onCalendarConnected]);
 
+  const handleDisconnectCalendar = useCallback(async () => {
+    try {
+      await clearGoogleCalendarSession();
+    } catch {
+      // Force local sign-out UI state even if secure-store cleanup fails.
+    }
+
+    setCalendarStatus('not_connected');
+    setSessionExpiresAt(null);
+    setNextClassEvent(null);
+    setCalendarMessage('Signed out of Google Calendar.');
+  }, []);
+
   const helperText = useMemo(() => {
     if (calendarStatus === 'connected') return '';
     if (calendarStatus === 'expired') return 'Google Calendar session expired.';
     return 'Sign in below to sync your calendar';
   }, [calendarStatus]);
 
-  const statusLabel = useMemo(() => {
-    if (calendarStatus === 'connected') return 'Connected';
-    if (calendarStatus === 'expired') return 'Session expired';
-    if (calendarStatus === 'loading') return 'Checking...';
-    return 'Not connected';
-  }, [calendarStatus]);
-
   const buttonText = useMemo(() => {
     if (isCalendarConnecting) return 'Connecting...';
+    if (calendarStatus === 'connected') return 'Sign Out Google Calendar';
     if (calendarStatus === 'loading') return 'Preparing Google Sign-In';
-    if (calendarStatus === 'connected' || calendarStatus === 'expired') {
+    if (calendarStatus === 'expired') {
       return 'Reconnect Google Calendar';
     }
     return 'Connect Google Calendar';
@@ -230,17 +237,6 @@ export default function SearchSheet({
       />
 
       {helperText ? <Text style={searchBuilding.helperText}>{helperText}</Text> : null}
-      <Text
-        testID="calendar-connection-status"
-        style={[
-          searchBuilding.connectionStatus,
-          calendarStatus === 'connected' && searchBuilding.connectionStatusConnected,
-          calendarStatus === 'expired' && searchBuilding.connectionStatusExpired,
-        ]}
-      >
-        Calendar status: {statusLabel}
-      </Text>
-
       {calendarStatus === 'connected' ? (
         <View style={searchBuilding.nextClassCard} testID="next-class-card">
           <View style={searchBuilding.nextClassTextWrap}>
@@ -266,7 +262,9 @@ export default function SearchSheet({
       <TouchableOpacity
         style={[searchBuilding.signIn, buttonDisabled && searchBuilding.signInDisabled]}
         disabled={buttonDisabled}
-        onPress={() => void handleConnectCalendar()}
+        onPress={() =>
+          void (calendarStatus === 'connected' ? handleDisconnectCalendar() : handleConnectCalendar())
+        }
         testID="connect-google-calendar-button"
       >
         <Ionicons name="logo-google" size={18} color="#111" />
