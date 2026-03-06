@@ -46,6 +46,16 @@ const parseScheduleTokenToMinutes = (token: string): number | null => {
   return hour * 60 + minute;
 };
 
+const getNextBusText = (nextDepartureInMinutes: number | null) => {
+  if (nextDepartureInMinutes === null) {
+    return 'Next bus time unavailable';
+  }
+  if (nextDepartureInMinutes <= 1) {
+    return 'Next bus in 1 min';
+  }
+  return `Next bus in ${nextDepartureInMinutes} mins`;
+};
+
 export default function ShuttleScheduleDetails({
   startBuilding,
   destinationBuilding,
@@ -125,11 +135,7 @@ export default function ShuttleScheduleDetails({
               testID="shuttle-schedule-next-bus-text"
               style={directionDetailsStyles.shuttlePrimaryText}
             >
-              {shuttlePlan.nextDepartureInMinutes === null
-                ? 'Next bus time unavailable'
-                : shuttlePlan.nextDepartureInMinutes <= 1
-                  ? 'Next bus in 1 min'
-                  : `Next bus in ${shuttlePlan.nextDepartureInMinutes} mins`}
+              {getNextBusText(shuttlePlan.nextDepartureInMinutes)}
             </Text>
             <Text style={directionDetailsStyles.shuttleDirectionText}>{directionLabel}</Text>
             <Text

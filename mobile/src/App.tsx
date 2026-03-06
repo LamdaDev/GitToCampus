@@ -84,6 +84,12 @@ const App = () => {
     });
   }, [openSearchBuilding]);
 
+  const openCalendarFromMap = useCallback(() => {
+    handleOpenCalendar().catch((error) => {
+      console.warn('Failed to open calendar from map action', error);
+    });
+  }, [handleOpenCalendar]);
+
   const handleMapPress = useCallback(() => {
     bottomSheetRef.current?.closeCalendarSlider();
   }, []);
@@ -113,7 +119,7 @@ const App = () => {
           passCurrentBuilding={setCurrentBuilding}
           openBottomSheet={openBuildingDetails}
           onMapPress={handleMapPress}
-          onOpenCalendar={() => void handleOpenCalendar()}
+          onOpenCalendar={openCalendarFromMap}
           externalSelectedBuilding={selectedBuilding}
           outdoorRoute={outdoorRoute}
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}

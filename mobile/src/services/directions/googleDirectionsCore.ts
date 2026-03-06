@@ -53,12 +53,12 @@ const mapStatusToErrorCode = (status: GoogleDirectionsStatus) => {
 
 const decodeHtmlEntities = (raw: string) =>
   raw
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>');
+    .replaceAll('&nbsp;', ' ')
+    .replaceAll('&amp;', '&')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>');
 
 const stripHtmlTags = (raw: string) => {
   let output = '';
@@ -78,7 +78,7 @@ const stripHtmlTags = (raw: string) => {
 
     pendingTag += char;
     if (char === '>') {
-      if (output.length > 0 && output[output.length - 1] !== ' ') {
+      if (output.length > 0 && !output.endsWith(' ')) {
         output += ' ';
       }
       inTag = false;
@@ -340,7 +340,7 @@ const parseDirectionsRoute = (
   }
 
   const route = data.routes?.[0];
-  if (!route || !route.overview_polyline?.points) {
+  if (!route?.overview_polyline?.points) {
     throw new DirectionsServiceError('NO_ROUTE', 'No valid outdoor route was returned.');
   }
 

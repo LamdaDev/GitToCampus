@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useWindowDimensions } from 'react-native';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { useWindowDimensions, Text, TouchableOpacity, View } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
+import type { ListRenderItemInfo } from 'react-native';
 import {
   fetchGoogleCalendarEventsAsync,
   type GoogleCalendarEventItem,
@@ -93,10 +93,31 @@ export default function UpcomingClassesSlider({
   const hasMoreEvents = events.length > MAX_EVENTS_TO_RENDER;
   const isEventsListScrollable = displayedEvents.length > MAX_VISIBLE_EVENTS;
   const eventsListMaxHeight = isEventsListScrollable ? MAX_VISIBLE_EVENTS_HEIGHT : undefined;
+  const isEmptyUpcomingClasses = !isLoading && !errorMessage && events.length === 0;
+  const shouldRenderUpcomingClassesList = !isLoading && !errorMessage && events.length > 0;
   const fixedCardHeight = useMemo(() => {
     const targetHeight = Math.round(windowHeight * 0.68);
     return Math.max(390, Math.min(targetHeight, 680));
   }, [windowHeight]);
+  const renderEventItem = useCallback(
+    ({ item: event }: ListRenderItemInfo<GoogleCalendarEventItem>) => (
+      <View
+        testID={`upcoming-class-event-${event.id}`}
+        style={upcomingClassesSliderStyles.eventItem}
+      >
+        <Ionicons name="book" size={18} color="#F5F1F2" />
+        <View style={upcomingClassesSliderStyles.eventTextWrap}>
+          <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventTitleText}>
+            {event.title}
+          </Text>
+          <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventMetaText}>
+            {event.location ?? 'Location not provided'}
+          </Text>
+        </View>
+      </View>
+    ),
+    [],
+  );
 
   return (
     <View style={upcomingClassesSliderStyles.container} testID="upcoming-classes-slider">
@@ -144,59 +165,44 @@ export default function UpcomingClassesSlider({
             </>
           ) : null}
 
-          {!isLoading && !errorMessage ? (
-            events.length === 0 ? (
-              <Text testID="upcoming-classes-empty" style={upcomingClassesSliderStyles.infoText}>
-                No upcoming classes were found for your selected calendars.
-              </Text>
-            ) : (
-              <View
-                style={[
-                  upcomingClassesSliderStyles.eventsViewport,
-                  eventsListMaxHeight ? { maxHeight: eventsListMaxHeight } : null,
-                ]}
-              >
-                <BottomSheetFlatList<GoogleCalendarEventItem>
-                  data={displayedEvents}
-                  keyExtractor={(event: GoogleCalendarEventItem) =>
-                    `${event.calendarId}-${event.id}-${event.startsAt}`
-                  }
-                  style={upcomingClassesSliderStyles.eventsList}
-                  contentContainerStyle={upcomingClassesSliderStyles.eventsContent}
-                  nestedScrollEnabled={true}
-                  scrollEnabled={isEventsListScrollable}
-                  showsVerticalScrollIndicator={isEventsListScrollable}
-                  keyboardShouldPersistTaps="handled"
-                  initialNumToRender={MAX_EVENTS_TO_RENDER}
-                  ListFooterComponent={
-                    hasMoreEvents ? (
-                      <Text
-                        testID="upcoming-classes-overflow-indicator"
-                        style={upcomingClassesSliderStyles.overflowIndicatorText}
-                      >
-                        ...
-                      </Text>
-                    ) : null
-                  }
-                  renderItem={({ item: event }: { item: GoogleCalendarEventItem }) => (
-                    <View
-                      testID={`upcoming-class-event-${event.id}`}
-                      style={upcomingClassesSliderStyles.eventItem}
+          {isEmptyUpcomingClasses ? (
+            <Text testID="upcoming-classes-empty" style={upcomingClassesSliderStyles.infoText}>
+              No upcoming classes were found for your selected calendars.
+            </Text>
+          ) : null}
+
+          {shouldRenderUpcomingClassesList ? (
+            <View
+              style={[
+                upcomingClassesSliderStyles.eventsViewport,
+                eventsListMaxHeight ? { maxHeight: eventsListMaxHeight } : null,
+              ]}
+            >
+              <BottomSheetFlatList<GoogleCalendarEventItem>
+                data={displayedEvents}
+                keyExtractor={(event: GoogleCalendarEventItem) =>
+                  `${event.calendarId}-${event.id}-${event.startsAt}`
+                }
+                style={upcomingClassesSliderStyles.eventsList}
+                contentContainerStyle={upcomingClassesSliderStyles.eventsContent}
+                nestedScrollEnabled={true}
+                scrollEnabled={isEventsListScrollable}
+                showsVerticalScrollIndicator={isEventsListScrollable}
+                keyboardShouldPersistTaps="handled"
+                initialNumToRender={MAX_EVENTS_TO_RENDER}
+                ListFooterComponent={
+                  hasMoreEvents ? (
+                    <Text
+                      testID="upcoming-classes-overflow-indicator"
+                      style={upcomingClassesSliderStyles.overflowIndicatorText}
                     >
-                      <Ionicons name="book" size={18} color="#F5F1F2" />
-                      <View style={upcomingClassesSliderStyles.eventTextWrap}>
-                        <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventTitleText}>
-                          {event.title}
-                        </Text>
-                        <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventMetaText}>
-                          {event.location ?? 'Location not provided'}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                />
-              </View>
-            )
+                      ...
+                    </Text>
+                  ) : null
+                }
+                renderItem={renderEventItem}
+              />
+            </View>
           ) : null}
         </View>
 
