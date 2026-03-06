@@ -134,7 +134,9 @@ const getGoogleClientRedirectScheme = (clientId: string): string | null => {
 const getRedirectScheme = (): string =>
   Platform.OS === 'ios'
     ? (
-        getGoogleClientRedirectScheme(process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID ?? '') ??
+        getGoogleClientRedirectScheme(
+          process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID ?? '',
+        ) ??
         Application.applicationId ??
         IOS_BUNDLE_ID_FALLBACK
       ).trim()

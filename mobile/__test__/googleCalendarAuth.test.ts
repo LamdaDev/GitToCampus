@@ -427,7 +427,8 @@ describe('googleCalendarAuth', () => {
     await connectGoogleCalendarAsync();
 
     expect(authSessionMock.makeRedirectUri).toHaveBeenCalledWith({
-      native: 'com.googleusercontent.apps.84039552841-5f103afd16hji1k39pt9i2tghnsumr9q:/oauthredirect',
+      native:
+        'com.googleusercontent.apps.84039552841-5f103afd16hji1k39pt9i2tghnsumr9q:/oauthredirect',
       path: 'oauthredirect',
     });
   });
