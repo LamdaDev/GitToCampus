@@ -1,0 +1,16 @@
+appId: host.exp.exponent
+---
+- tapOn: 'Enter building name'
+- tapOn: 'Search buildings...'
+- inputText: 'Stinger Dome Seasonal'
+- tapOn: Back
+- tapOn:
+    text: Stinger Dome Seasonal
+    index: 1
+
+- tapOn: 'My Location'
+- tapOn: 'Samuel Bronfman Building'
+# tap on Shuttle Bus Transit Button
+- tapOn: 
+- tapOn:
+    id: shuttle-full-schedule-button

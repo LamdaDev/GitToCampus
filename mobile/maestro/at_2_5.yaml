@@ -1,0 +1,16 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    point: '70%,80%'
+- extendedWaitUntil:
+    visible: 'Grey Nuns Garden'
+    timeout: 2000
+- tapOn: 'Start From'
+- tapOn: 'SGW'
+- tapOn:
+    text: Map Marker
+    index: 3
+    repeat: 4
+- tapOn:
+    point: '50%,45%'
+    
