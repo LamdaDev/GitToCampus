@@ -203,6 +203,7 @@ describe('MapScreen', () => {
     expect(mockOnMapPress).toHaveBeenCalledTimes(1);
   });
 
+<<<<<<< HEAD
   test('map background press clears manual selection and marker', async () => {
     const { UNSAFE_getAllByType, getByTestId, queryAllByTestId } = render(
       <MapScreen
@@ -227,6 +228,8 @@ describe('MapScreen', () => {
     });
   });
 
+=======
+>>>>>>> b2d2420bca4548d8682d937b7eb02e8bfdcb9315
   test('calls onOpenCalendar when the calendar control is pressed', async () => {
     const { getByLabelText } = render(
       <MapScreen
