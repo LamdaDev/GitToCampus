@@ -383,6 +383,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       openCalendarSelectionSlider(true);
     }, [openCalendarSelectionSlider]);
 
+    const handleCalendarGoFromSearch = useCallback(() => {
+      if (selectedCalendarIds.length > 0) {
+        showUpcomingClassesSlider(selectedCalendarIds);
+        return;
+      }
+
+      openCalendarSelectionSlider();
+    }, [openCalendarSelectionSlider, selectedCalendarIds, showUpcomingClassesSlider]);
+
     const handleReselectCalendars = useCallback(() => {
       openCalendarSelectionSlider();
     }, [openCalendarSelectionSlider]);
@@ -773,6 +782,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
                 buildings={buildings}
                 onPressBuilding={isInternalSearch ? handleInternalSearch : closeSearchBuilding}
                 onCalendarConnected={openCalendarSelectionAfterConnect}
+                selectedCalendarIds={selectedCalendarIds}
+                onCalendarGoPress={handleCalendarGoFromSearch}
               />
             )
           ) : activeView === 'building' ? (

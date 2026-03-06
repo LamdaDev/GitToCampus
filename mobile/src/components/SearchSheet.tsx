@@ -8,7 +8,9 @@ import { BuildingShape } from '../types/BuildingShape';
 import {
   clearGoogleCalendarSession,
   connectGoogleCalendarAsync,
+  fetchGoogleCalendarEventsAsync,
   getStoredGoogleCalendarSessionState,
+  type GoogleCalendarEventItem,
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
 
@@ -16,6 +18,8 @@ type SearchBarProps = {
   buildings: BuildingShape[];
   onPressBuilding?: (b: BuildingShape) => void;
   onCalendarConnected?: () => void;
+  selectedCalendarIds?: string[];
+  onCalendarGoPress?: () => void;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
@@ -24,12 +28,56 @@ export default function SearchSheet({
   buildings,
   onPressBuilding,
   onCalendarConnected,
+  selectedCalendarIds = [],
+  onCalendarGoPress,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [isCalendarConnecting, setIsCalendarConnecting] = useState(false);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
+  const [nextClassEvent, setNextClassEvent] = useState<GoogleCalendarEventItem | null>(null);
+  const [isNextClassLoading, setIsNextClassLoading] = useState(false);
+
+  const nextClassLabel = useMemo(() => {
+    if (isNextClassLoading) return 'Loading next class...';
+    if (selectedCalendarIds.length === 0) return 'Select calendars to see your next class.';
+    if (!nextClassEvent) return 'No upcoming classes';
+    return nextClassEvent.location ?? 'Location not provided';
+  }, [isNextClassLoading, nextClassEvent, selectedCalendarIds.length]);
+
+  const loadNextClass = useCallback(async () => {
+    if (calendarStatus !== 'connected') {
+      setNextClassEvent(null);
+      return;
+    }
+
+    if (selectedCalendarIds.length === 0) {
+      setNextClassEvent(null);
+      return;
+    }
+
+    setIsNextClassLoading(true);
+    const result = await fetchGoogleCalendarEventsAsync(selectedCalendarIds);
+    setIsNextClassLoading(false);
+
+    if (result.type === 'error') {
+      setNextClassEvent(null);
+      return;
+    }
+
+    const now = Date.now();
+    const next = result.events
+      .filter((event) => Number.isFinite(event.startsAt) && event.startsAt >= now)
+      .sort((a, b) => {
+        if (a.startsAt !== b.startsAt) return a.startsAt - b.startsAt;
+        const calendarComparison = a.calendarId.localeCompare(b.calendarId);
+        if (calendarComparison !== 0) return calendarComparison;
+        return a.id.localeCompare(b.id);
+      })[0];
+
+    setNextClassEvent(next ?? null);
+  }, [calendarStatus, selectedCalendarIds]);
 
   const filtered = useMemo(() => {
     const searchCriteria = search.trim().toLowerCase();
@@ -89,6 +137,10 @@ export default function SearchSheet({
       clearTimeout(timeoutId);
     };
   }, [calendarStatus, markSessionExpired, sessionExpiresAt]);
+
+  useEffect(() => {
+    void loadNextClass();
+  }, [loadNextClass]);
 
   const handleConnectCalendar = useCallback(async () => {
     setIsCalendarConnecting(true);
@@ -188,6 +240,28 @@ export default function SearchSheet({
       >
         Calendar status: {statusLabel}
       </Text>
+
+      {calendarStatus === 'connected' ? (
+        <View style={searchBuilding.nextClassCard} testID="next-class-card">
+          <View style={searchBuilding.nextClassTextWrap}>
+            <Text style={searchBuilding.nextClassTitle} numberOfLines={1}>
+              {nextClassEvent?.title ?? 'Next Class'}
+            </Text>
+            <Text style={searchBuilding.nextClassMeta} numberOfLines={1}>
+              {nextClassLabel}
+            </Text>
+          </View>
+          <TouchableOpacity
+            testID="next-class-go-button"
+            accessibilityRole="button"
+            style={searchBuilding.nextClassGoButton}
+            disabled={isNextClassLoading}
+            onPress={onCalendarGoPress}
+          >
+            <Text style={searchBuilding.nextClassGoText}>GO</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       <TouchableOpacity
         style={[searchBuilding.signIn, buttonDisabled && searchBuilding.signInDisabled]}

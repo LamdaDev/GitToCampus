@@ -67,6 +67,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
 
 jest.mock('../src/services/googleCalendarAuth', () => ({
   connectGoogleCalendarAsync: jest.fn(async () => ({ type: 'cancel' })),
+  fetchGoogleCalendarEventsAsync: jest.fn(async () => ({ type: 'success', events: [] })),
   getStoredGoogleCalendarSessionState: jest.fn(async () => ({
     status: 'not_connected',
     session: null,
@@ -78,6 +79,8 @@ describe('SearchSheet', () => {
   const getStoredSessionStateMock =
     googleCalendarAuth.getStoredGoogleCalendarSessionState as jest.Mock;
   const connectGoogleCalendarMock = googleCalendarAuth.connectGoogleCalendarAsync as jest.Mock;
+  const fetchGoogleCalendarEventsMock =
+    googleCalendarAuth.fetchGoogleCalendarEventsAsync as jest.Mock;
   const clearCalendarSessionMock = googleCalendarAuth.clearGoogleCalendarSession as jest.Mock;
 
   beforeEach(() => {
@@ -87,6 +90,7 @@ describe('SearchSheet', () => {
       session: null,
     });
     connectGoogleCalendarMock.mockResolvedValue({ type: 'cancel' });
+    fetchGoogleCalendarEventsMock.mockResolvedValue({ type: 'success', events: [] });
     clearCalendarSessionMock.mockResolvedValue(undefined);
     jest.useRealTimers();
   });
@@ -196,6 +200,74 @@ describe('SearchSheet', () => {
       'Calendar status: Connected',
     );
     expect(onCalendarConnected).toHaveBeenCalledTimes(1);
+  });
+
+  test('shows next class card and calls GO action when connected with selected calendars', async () => {
+    getStoredSessionStateMock.mockResolvedValueOnce({
+      status: 'connected',
+      session: {
+        accessToken: 'token-live',
+        tokenType: 'Bearer',
+        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      },
+    });
+    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      type: 'success',
+      events: [
+        {
+          id: 'event-1',
+          calendarId: 'calendar-1',
+          title: 'Hall Building 435',
+          location: 'Hall Building 435',
+          startsAt: Date.now() + 30 * 60 * 1000,
+        },
+      ],
+    });
+
+    const onCalendarGoPress = jest.fn();
+    const { getByTestId, getAllByText } = render(
+      <SearchSheet
+        buildings={mockBuildings}
+        selectedCalendarIds={['calendar-1']}
+        onCalendarGoPress={onCalendarGoPress}
+      />,
+    );
+
+    await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
+    expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledWith(['calendar-1']);
+    expect(getAllByText('Hall Building 435').length).toBeGreaterThan(0);
+
+    fireEvent.press(getByTestId('next-class-go-button'));
+    expect(onCalendarGoPress).toHaveBeenCalledTimes(1);
+  });
+
+  test('shows no upcoming classes in next class card when events are empty', async () => {
+    getStoredSessionStateMock.mockResolvedValueOnce({
+      status: 'connected',
+      session: {
+        accessToken: 'token-live',
+        tokenType: 'Bearer',
+        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      },
+    });
+    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      type: 'success',
+      events: [],
+    });
+
+    const { findByText, getByTestId } = render(
+      <SearchSheet buildings={mockBuildings} selectedCalendarIds={['calendar-1']} />,
+    );
+
+    await waitFor(() =>
+      expect(getByTestId('calendar-connection-status')).toHaveTextContent(
+        'Calendar status: Connected',
+      ),
+    );
+    expect(getByTestId('next-class-card')).toBeTruthy();
+    expect(await findByText('No upcoming classes')).toBeTruthy();
   });
 
   test('shows expired helper and status when a stored session is already expired', async () => {
