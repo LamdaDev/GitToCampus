@@ -1,13 +1,52 @@
 const { expo } = require('./app.json');
 
 const googleMapsApiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+const GOOGLE_CLIENT_ID_SUFFIX = '.apps.googleusercontent.com';
+const BUILDING_IMAGE_HOSTS = ['iili.io', 'postimg.cc', 'i.postimg.cc'];
+
+const imageHostTransportException = {
+  NSIncludesSubdomains: true,
+  NSExceptionAllowsInsecureHTTPLoads: true,
+  NSExceptionRequiresForwardSecrecy: false,
+  NSExceptionMinimumTLSVersion: 'TLSv1.0',
+};
+
+const toGoogleClientScheme = (clientId) => {
+  const normalizedClientId = typeof clientId === 'string' ? clientId.trim() : '';
+  if (!normalizedClientId.endsWith(GOOGLE_CLIENT_ID_SUFFIX)) return null;
+
+  const clientIdPrefix = normalizedClientId.slice(0, -GOOGLE_CLIENT_ID_SUFFIX.length).trim();
+  if (!clientIdPrefix) return null;
+
+  return `com.googleusercontent.apps.${clientIdPrefix}`;
+};
+
 const baseSchemes = [];
 if (Array.isArray(expo.scheme)) {
   baseSchemes.push(...expo.scheme);
 } else if (expo.scheme) {
   baseSchemes.push(expo.scheme);
 }
-const scheme = Array.from(new Set([...baseSchemes, expo.android?.package].filter(Boolean)));
+
+const googleCalendarSchemes = [
+  toGoogleClientScheme(process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID),
+  toGoogleClientScheme(process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID),
+];
+
+const scheme = Array.from(
+  new Set([...baseSchemes, expo.android?.package, ...googleCalendarSchemes].filter(Boolean)),
+);
+
+const appTransportSecurity = {
+  NSAllowsArbitraryLoads: false,
+  NSAllowsLocalNetworking: true,
+  NSExceptionDomains: {
+    ...(expo.ios?.infoPlist?.NSAppTransportSecurity?.NSExceptionDomains ?? {}),
+    ...Object.fromEntries(
+      BUILDING_IMAGE_HOSTS.map((host) => [host, { ...imageHostTransportException }]),
+    ),
+  },
+};
 
 if (!googleMapsApiKey) {
   // Keep this as a warning so tests and non-maps flows can still run,
@@ -32,6 +71,7 @@ module.exports = {
     infoPlist: {
       ...expo.ios?.infoPlist,
       ITSAppUsesNonExemptEncryption: false,
+      NSAppTransportSecurity: appTransportSecurity,
     },
     config: {
       ...expo.ios?.config,

@@ -49,6 +49,7 @@ const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
 const WALKING_DASH_PATTERN = [12, 8];
 const ROUTE_POLYLINE_STROKE_PROPS = { strokeColor: ROUTE_LINE_COLOR } as const;
+const POLYGON_PRESS_GUARD_RESET_DELAY_MS = 0;
 
 type RoutePolylineSegment = {
   key: string;
@@ -306,6 +307,8 @@ export default function MapScreen({
   const { height: windowHeight } = useWindowDimensions();
 
   const mapRef = useRef<any>(null);
+  const shouldIgnoreNextMapPressRef = useRef(false);
+  const polygonPressGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Pass user location to parent
   useEffect(() => {
@@ -336,6 +339,10 @@ export default function MapScreen({
     return () => {
       isActive = false;
       subscription?.remove();
+      if (polygonPressGuardTimeoutRef.current !== null) {
+        clearTimeout(polygonPressGuardTimeoutRef.current);
+        polygonPressGuardTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -383,6 +390,15 @@ export default function MapScreen({
 
   const handlePolygonPress = useCallback(
     (item: PolygonRenderItem) => {
+      shouldIgnoreNextMapPressRef.current = true;
+      if (polygonPressGuardTimeoutRef.current !== null) {
+        clearTimeout(polygonPressGuardTimeoutRef.current);
+      }
+      polygonPressGuardTimeoutRef.current = setTimeout(() => {
+        shouldIgnoreNextMapPressRef.current = false;
+        polygonPressGuardTimeoutRef.current = null;
+      }, POLYGON_PRESS_GUARD_RESET_DELAY_MS);
+
       setSelectedBuildingId(item.buildingId);
       setSelectedCampus(item.campus);
 
@@ -413,6 +429,15 @@ export default function MapScreen({
   }, [userCoords]);
 
   const handleMapPress = useCallback(() => {
+    if (shouldIgnoreNextMapPressRef.current) {
+      shouldIgnoreNextMapPressRef.current = false;
+      if (polygonPressGuardTimeoutRef.current !== null) {
+        clearTimeout(polygonPressGuardTimeoutRef.current);
+        polygonPressGuardTimeoutRef.current = null;
+      }
+      return;
+    }
+
     setSelectedBuildingId(null);
     passSelectedBuilding(null);
     onMapPress?.();

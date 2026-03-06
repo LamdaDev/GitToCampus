@@ -220,11 +220,36 @@ describe('MapScreen', () => {
       expect(queryAllByTestId('map-marker')).toHaveLength(1);
     });
 
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
     fireEvent.press(getByTestId('campus-map'));
 
     await waitFor(() => {
       expect(queryAllByTestId('map-marker')).toHaveLength(0);
       expect(mockPassSelectedBuilding).toHaveBeenLastCalledWith(null);
+    });
+  });
+
+  test('ignores immediate map press after polygon press to keep selected building', async () => {
+    const { UNSAFE_getAllByType, getByTestId, queryAllByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        onMapPress={mockOnMapPress}
+      />,
+    );
+
+    fireEvent(UNSAFE_getAllByType(Polygon)[1], 'press');
+    fireEvent.press(getByTestId('campus-map'));
+
+    await waitFor(() => {
+      expect(mockPassSelectedBuilding).toHaveBeenCalledWith(mockBuildings[1]);
+      expect(mockOnMapPress).not.toHaveBeenCalled();
+      expect(queryAllByTestId('map-marker')).toHaveLength(1);
     });
   });
 
@@ -517,6 +542,45 @@ describe('MapScreen', () => {
     expect(mockAnimateToRegion).not.toHaveBeenCalled();
   });
 
+  test('clears pending polygon press guard timeout on unmount', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    const { UNSAFE_getAllByType, unmount } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    fireEvent(UNSAFE_getAllByType(Polygon)[0], 'press');
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    clearTimeoutSpy.mockRestore();
+  });
+
+  test('replaces pending polygon press guard timeout on rapid consecutive polygon presses', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    const { UNSAFE_getAllByType } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    const polygons = UNSAFE_getAllByType(Polygon);
+    fireEvent(polygons[0], 'press');
+    fireEvent(polygons[1], 'press');
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    clearTimeoutSpy.mockRestore();
+  });
+
   test('recenter animates to user location when available', async () => {
     let locationCallback: ((value: any) => void) | undefined;
     locationMock.watchPositionAsync.mockImplementationOnce(async (_opts: any, cb: any) => {
@@ -594,6 +658,40 @@ describe('MapScreen', () => {
     });
 
     unmount();
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  test('removes late location subscription when component unmounts before watch resolves', async () => {
+    const remove = jest.fn();
+    let resolveWatchSubscription: ((subscription: { remove: jest.Mock }) => void) | null = null;
+
+    locationMock.watchPositionAsync.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveWatchSubscription = resolve as (subscription: { remove: jest.Mock }) => void;
+        }) as any,
+    );
+
+    const { unmount } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(locationMock.watchPositionAsync).toHaveBeenCalledTimes(1);
+    });
+
+    unmount();
+
+    await act(async () => {
+      resolveWatchSubscription?.({ remove });
+      await Promise.resolve();
+    });
+
     expect(remove).toHaveBeenCalledTimes(1);
   });
 
