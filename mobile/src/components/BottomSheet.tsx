@@ -236,6 +236,320 @@ type BottomSheetProps = {
   animatedPosition?: SharedValue<number>;
 };
 
+const ROUTE_UI_VIEWS = new Set<ViewType>([
+  'directions',
+  'transit-plan',
+  'shuttle-schedule',
+  'navigation',
+]);
+
+const isRouteUiVisible = (activeView: ViewType) => ROUTE_UI_VIEWS.has(activeView);
+
+type RouteLoadDecision =
+  | { action: 'skip' }
+  | { action: 'reset'; message?: string | null }
+  | { action: 'load'; origin: LatLng; destination: LatLng };
+
+const getRouteLoadDecision = ({
+  activeView,
+  travelMode,
+  shuttlePickupCoords,
+  routeDestinationCoords,
+  startCoords,
+  startBuildingId,
+  destinationBuildingId,
+}: {
+  activeView: ViewType;
+  travelMode: RoutePlannerMode;
+  shuttlePickupCoords: LatLng | null;
+  routeDestinationCoords: LatLng | null;
+  startCoords: LatLng | null;
+  startBuildingId?: string;
+  destinationBuildingId?: string;
+}): RouteLoadDecision => {
+  if (!isRouteUiVisible(activeView)) {
+    return { action: 'reset' };
+  }
+
+  if (activeView !== 'directions') {
+    return { action: 'skip' };
+  }
+
+  if (travelMode === 'shuttle' && !shuttlePickupCoords) {
+    return { action: 'reset' };
+  }
+
+  if (!startCoords || !routeDestinationCoords) {
+    return { action: 'reset' };
+  }
+
+  if (startBuildingId && destinationBuildingId && startBuildingId === destinationBuildingId) {
+    return { action: 'reset', message: 'Start and destination cannot be the same.' };
+  }
+
+  return { action: 'load', origin: startCoords, destination: routeDestinationCoords };
+};
+
+const toOutdoorRouteOverlay = (
+  route: Awaited<ReturnType<typeof fetchOutdoorDirections>>,
+  start: LatLng,
+  destination: LatLng,
+  mode: DirectionsTravelMode,
+): OutdoorRouteOverlay => ({
+  encodedPolyline: route.polyline,
+  start,
+  destination,
+  isWalkingRoute: mode === 'walking',
+  routeSegments: route.routeSegments?.map((segment) => ({
+    encodedPolyline: segment.polyline,
+    requiresWalking: segment.mode === 'walking',
+  })),
+  distanceText: route.distanceText,
+  durationText: route.durationText,
+  distanceMeters: route.distanceMeters,
+  durationSeconds: route.durationSeconds,
+});
+
+const getRouteErrorMessage = (error: unknown): string => {
+  if (error instanceof DirectionsServiceError) {
+    if (error.code === 'MISSING_API_KEY') {
+      return 'Google Directions API key is missing.';
+    }
+    if (error.code === 'NO_ROUTE') {
+      return 'No route found for this start and destination.';
+    }
+  }
+
+  return 'Unable to load route. Please try again.';
+};
+
+const renderBottomSheetContent = ({
+  isSearchActive,
+  calendarSliderMode,
+  isInternalSearch,
+  selectedCalendarIds,
+  handleReselectCalendars,
+  handleCloseUpcomingClassesSlider,
+  handleCloseCalendarSelectionSlider,
+  showUpcomingClassesSlider,
+  buildings,
+  handleInternalSearch,
+  closeSearchBuilding,
+  openCalendarSelectionAfterConnect,
+  activeView,
+  selectedBuilding,
+  closeSheet,
+  showDirections,
+  currentBuilding,
+  userLocation,
+  destinationBuilding,
+  routeTransitSteps,
+  showDirectionsPanel,
+  startBuilding,
+  shuttlePlan,
+  navigationSummary,
+  endNavigation,
+  isCrossCampusRoute,
+  isRouteLoading,
+  routeErrorMessage,
+  routeDistanceText,
+  routeDurationText,
+  routeDurationSeconds,
+  travelMode,
+  canStartNavigationFromCurrentLocation,
+  setSearchFor,
+  setTravelMode,
+  handleDirectionsGo,
+  showShuttleSchedule,
+}: {
+  isSearchActive: boolean;
+  calendarSliderMode: 'selection' | 'events' | null;
+  isInternalSearch: boolean;
+  selectedCalendarIds: string[];
+  handleReselectCalendars: () => void;
+  handleCloseUpcomingClassesSlider: () => void;
+  handleCloseCalendarSelectionSlider: () => void;
+  showUpcomingClassesSlider: (calendarIds: string[]) => void;
+  buildings: BuildingShape[];
+  handleInternalSearch: (building: BuildingShape) => void;
+  closeSearchBuilding: (building: BuildingShape) => void;
+  openCalendarSelectionAfterConnect: () => void;
+  activeView: ViewType;
+  selectedBuilding: BuildingShape | null;
+  closeSheet: () => void;
+  showDirections: (building: BuildingShape, asDestination?: boolean) => void;
+  currentBuilding: BuildingShape | null;
+  userLocation: UserCoords | null;
+  destinationBuilding: BuildingShape | null;
+  routeTransitSteps: TransitInstruction[];
+  showDirectionsPanel: () => void;
+  startBuilding: BuildingShape | null;
+  shuttlePlan: ShuttlePlan | null;
+  navigationSummary: {
+    arrivalValue: string;
+    durationStat: { value: string; label: string };
+    distanceStat: { value: string; label: string };
+  } | null;
+  endNavigation: () => void;
+  isCrossCampusRoute: boolean;
+  isRouteLoading: boolean;
+  routeErrorMessage: string | null;
+  routeDistanceText: string | null;
+  routeDurationText: string | null;
+  routeDurationSeconds: number | null;
+  travelMode: RoutePlannerMode;
+  canStartNavigationFromCurrentLocation: boolean;
+  setSearchFor: React.Dispatch<React.SetStateAction<'start' | 'destination' | null>>;
+  setTravelMode: React.Dispatch<React.SetStateAction<RoutePlannerMode>>;
+  handleDirectionsGo: (mode: RoutePlannerMode) => void;
+  showShuttleSchedule: () => void;
+}) => {
+  if (isSearchActive) {
+    if (calendarSliderMode === 'events' && !isInternalSearch) {
+      return (
+        <UpcomingClassesSlider
+          selectedCalendarIds={selectedCalendarIds}
+          onReselectCalendars={handleReselectCalendars}
+          onClose={handleCloseUpcomingClassesSlider}
+        />
+      );
+    }
+
+    if (calendarSliderMode === 'selection' && !isInternalSearch) {
+      return (
+        <CalendarSelectionSlider
+          initialSelectedCalendarIds={selectedCalendarIds}
+          onDone={showUpcomingClassesSlider}
+          onClose={handleCloseCalendarSelectionSlider}
+        />
+      );
+    }
+
+    return (
+      <SearchSheet
+        buildings={buildings}
+        onPressBuilding={isInternalSearch ? handleInternalSearch : closeSearchBuilding}
+        onCalendarConnected={openCalendarSelectionAfterConnect}
+      />
+    );
+  }
+
+  if (activeView === 'building') {
+    return (
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={closeSheet}
+        onShowDirections={showDirections}
+        currentBuilding={currentBuilding}
+        userLocation={userLocation}
+      />
+    );
+  }
+
+  if (activeView === 'transit-plan') {
+    return (
+      <TransitPlanDetails
+        destinationBuilding={destinationBuilding}
+        routeTransitSteps={routeTransitSteps}
+        onBack={showDirectionsPanel}
+        onClose={closeSheet}
+      />
+    );
+  }
+
+  if (activeView === 'shuttle-schedule') {
+    return (
+      <ShuttleScheduleDetails
+        startBuilding={startBuilding}
+        destinationBuilding={destinationBuilding}
+        shuttlePlan={shuttlePlan}
+        onBack={showDirectionsPanel}
+        onClose={closeSheet}
+      />
+    );
+  }
+
+  if (activeView === 'navigation') {
+    return (
+      <>
+        <View style={directionDetailsStyles.navigationSummaryCard}>
+          <View style={directionDetailsStyles.navigationSummaryRow}>
+            <View style={directionDetailsStyles.navigationSummaryStat}>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={directionDetailsStyles.navigationSummaryValue}
+              >
+                {navigationSummary?.arrivalValue ?? '--:--'}
+              </Text>
+              <Text style={directionDetailsStyles.navigationSummaryLabel}>arrival</Text>
+            </View>
+            <View style={directionDetailsStyles.navigationSummaryDivider} />
+            <View style={directionDetailsStyles.navigationSummaryStat}>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={directionDetailsStyles.navigationSummaryValue}
+              >
+                {navigationSummary?.durationStat.value ?? '--'}
+              </Text>
+              <Text style={directionDetailsStyles.navigationSummaryLabel}>
+                {navigationSummary?.durationStat.label ?? 'min'}
+              </Text>
+            </View>
+            <View style={directionDetailsStyles.navigationSummaryDivider} />
+            <View style={directionDetailsStyles.navigationSummaryStat}>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={directionDetailsStyles.navigationSummaryValue}
+              >
+                {navigationSummary?.distanceStat.value ?? '--'}
+              </Text>
+              <Text style={directionDetailsStyles.navigationSummaryLabel}>
+                {navigationSummary?.distanceStat.label ?? 'km'}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <TouchableOpacity
+          testID="end-navigation-button"
+          accessibilityRole="button"
+          activeOpacity={0.88}
+          onPress={endNavigation}
+          style={directionDetailsStyles.navigationEndButton}
+        >
+          <Text style={directionDetailsStyles.navigationEndButtonText}>End Navigation</Text>
+        </TouchableOpacity>
+      </>
+    );
+  }
+
+  return (
+    <DirectionDetails
+      onClose={closeSheet}
+      startBuilding={startBuilding}
+      destinationBuilding={destinationBuilding}
+      userLocation={userLocation}
+      currentBuilding={currentBuilding}
+      isCrossCampusRoute={isCrossCampusRoute}
+      isRouteLoading={isRouteLoading}
+      routeErrorMessage={routeErrorMessage}
+      routeDistanceText={routeDistanceText}
+      routeDurationText={routeDurationText}
+      routeDurationSeconds={routeDurationSeconds}
+      selectedTravelMode={travelMode}
+      shuttlePlan={shuttlePlan}
+      canStartNavigation={canStartNavigationFromCurrentLocation}
+      onPressStart={() => setSearchFor('start')}
+      onPressDestination={() => setSearchFor('destination')}
+      onTravelModeChange={setTravelMode}
+      onPressGo={handleDirectionsGo}
+      onPressShuttleSchedule={showShuttleSchedule}
+    />
+  );
+};
+
 const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
   (
     {
@@ -565,7 +879,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         (activeView === 'directions' || activeView === 'shuttle-schedule') &&
         travelMode === 'shuttle';
 
-      if (!shouldComputeShuttlePlan || !startCampus || !destinationCampus) {
+      const canComputeShuttlePlan =
+        shouldComputeShuttlePlan && startCampus !== null && destinationCampus !== null;
+      if (!canComputeShuttlePlan) {
         setShuttlePlan(null);
         return;
       }
@@ -608,34 +924,19 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     );
 
     useEffect(() => {
-      // Not an error state: directions panel is not active, so route UI should be reset.
-      if (
-        activeView !== 'directions' &&
-        activeView !== 'transit-plan' &&
-        activeView !== 'shuttle-schedule' &&
-        activeView !== 'navigation'
-      ) {
-        resetRouteState();
-        return;
-      }
-      if (activeView !== 'directions') return;
-      if (travelMode === 'shuttle' && !shuttlePickupCoords) {
-        resetRouteState();
-        return;
-      }
-      const targetDestination = routeDestinationCoords;
-      // Not an error state: route cannot be requested until both endpoints are available.
-      if (!startCoords || !targetDestination) {
-        resetRouteState();
-        return;
-      }
-      // Validation error state: start and destination must be different buildings.
-      if (
-        startBuilding?.id &&
-        destinationBuilding?.id &&
-        startBuilding.id === destinationBuilding.id
-      ) {
-        resetRouteState('Start and destination cannot be the same.');
+      const routeLoadDecision = getRouteLoadDecision({
+        activeView,
+        travelMode,
+        shuttlePickupCoords,
+        routeDestinationCoords,
+        startCoords,
+        startBuildingId: startBuilding?.id,
+        destinationBuildingId: destinationBuilding?.id,
+      });
+
+      if (routeLoadDecision.action === 'skip') return;
+      if (routeLoadDecision.action === 'reset') {
+        resetRouteState(routeLoadDecision.message ?? null);
         return;
       }
 
@@ -646,8 +947,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setRouteErrorMessage(null);
         try {
           const route = await fetchOutdoorDirections({
-            origin: startCoords,
-            destination: targetDestination,
+            origin: routeLoadDecision.origin,
+            destination: routeLoadDecision.destination,
             mode: routeRequestMode,
           });
 
@@ -661,34 +962,18 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           setNavigationProgressMeters(0);
           setRouteTransitSteps(route.transitInstructions ?? []);
           setIsRouteLoading(false);
-          passOutdoorRoute({
-            encodedPolyline: route.polyline,
-            start: startCoords,
-            destination: targetDestination,
-            isWalkingRoute: routeRequestMode === 'walking',
-            routeSegments: route.routeSegments?.map((segment) => ({
-              encodedPolyline: segment.polyline,
-              requiresWalking: segment.mode === 'walking',
-            })),
-            distanceText: route.distanceText,
-            durationText: route.durationText,
-            distanceMeters: route.distanceMeters,
-            durationSeconds: route.durationSeconds,
-          });
+          passOutdoorRoute(
+            toOutdoorRouteOverlay(
+              route,
+              routeLoadDecision.origin,
+              routeLoadDecision.destination,
+              routeRequestMode,
+            ),
+          );
         } catch (error) {
           if (cancelled) return;
           console.warn('Failed to fetch outdoor directions', error);
-          if (error instanceof DirectionsServiceError) {
-            if (error.code === 'MISSING_API_KEY') {
-              resetRouteState('Google Directions API key is missing.');
-              return;
-            }
-            if (error.code === 'NO_ROUTE') {
-              resetRouteState('No route found for this start and destination.');
-              return;
-            }
-          }
-          resetRouteState('Unable to load route. Please try again.');
+          resetRouteState(getRouteErrorMessage(error));
         }
       };
 
@@ -755,124 +1040,45 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         onClose={handleSheetClose}
       >
         <BottomSheetView style={buildingDetailsStyles.container}>
-          {isSearchActive ? (
-            calendarSliderMode === 'events' && !isInternalSearch ? (
-              <UpcomingClassesSlider
-                selectedCalendarIds={selectedCalendarIds}
-                onReselectCalendars={handleReselectCalendars}
-                onClose={handleCloseUpcomingClassesSlider}
-              />
-            ) : calendarSliderMode === 'selection' && !isInternalSearch ? (
-              <CalendarSelectionSlider
-                initialSelectedCalendarIds={selectedCalendarIds}
-                onDone={showUpcomingClassesSlider}
-                onClose={handleCloseCalendarSelectionSlider}
-              />
-            ) : (
-              <SearchSheet
-                buildings={buildings}
-                onPressBuilding={isInternalSearch ? handleInternalSearch : closeSearchBuilding}
-                onCalendarConnected={openCalendarSelectionAfterConnect}
-              />
-            )
-          ) : activeView === 'building' ? (
-            <BuildingDetails
-              selectedBuilding={selectedBuilding}
-              onClose={closeSheet}
-              onShowDirections={showDirections}
-              currentBuilding={currentBuilding}
-              userLocation={userLocation}
-            />
-          ) : activeView === 'transit-plan' ? (
-            <TransitPlanDetails
-              destinationBuilding={destinationBuilding}
-              routeTransitSteps={routeTransitSteps}
-              onBack={showDirectionsPanel}
-              onClose={closeSheet}
-            />
-          ) : activeView === 'shuttle-schedule' ? (
-            <ShuttleScheduleDetails
-              startBuilding={startBuilding}
-              destinationBuilding={destinationBuilding}
-              shuttlePlan={shuttlePlan}
-              onBack={showDirectionsPanel}
-              onClose={closeSheet}
-            />
-          ) : activeView === 'navigation' ? (
-            <>
-              <View style={directionDetailsStyles.navigationSummaryCard}>
-                <View style={directionDetailsStyles.navigationSummaryRow}>
-                  <View style={directionDetailsStyles.navigationSummaryStat}>
-                    <Text
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      style={directionDetailsStyles.navigationSummaryValue}
-                    >
-                      {navigationSummary?.arrivalValue ?? '--:--'}
-                    </Text>
-                    <Text style={directionDetailsStyles.navigationSummaryLabel}>arrival</Text>
-                  </View>
-                  <View style={directionDetailsStyles.navigationSummaryDivider} />
-                  <View style={directionDetailsStyles.navigationSummaryStat}>
-                    <Text
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      style={directionDetailsStyles.navigationSummaryValue}
-                    >
-                      {navigationSummary?.durationStat.value ?? '--'}
-                    </Text>
-                    <Text style={directionDetailsStyles.navigationSummaryLabel}>
-                      {navigationSummary?.durationStat.label ?? 'min'}
-                    </Text>
-                  </View>
-                  <View style={directionDetailsStyles.navigationSummaryDivider} />
-                  <View style={directionDetailsStyles.navigationSummaryStat}>
-                    <Text
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      style={directionDetailsStyles.navigationSummaryValue}
-                    >
-                      {navigationSummary?.distanceStat.value ?? '--'}
-                    </Text>
-                    <Text style={directionDetailsStyles.navigationSummaryLabel}>
-                      {navigationSummary?.distanceStat.label ?? 'km'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <TouchableOpacity
-                testID="end-navigation-button"
-                accessibilityRole="button"
-                activeOpacity={0.88}
-                onPress={endNavigation}
-                style={directionDetailsStyles.navigationEndButton}
-              >
-                <Text style={directionDetailsStyles.navigationEndButtonText}>End Navigation</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <DirectionDetails
-              onClose={closeSheet}
-              startBuilding={startBuilding}
-              destinationBuilding={destinationBuilding}
-              userLocation={userLocation}
-              currentBuilding={currentBuilding}
-              isCrossCampusRoute={isCrossCampusRoute}
-              isRouteLoading={isRouteLoading}
-              routeErrorMessage={routeErrorMessage}
-              routeDistanceText={routeDistanceText}
-              routeDurationText={routeDurationText}
-              routeDurationSeconds={routeDurationSeconds}
-              selectedTravelMode={travelMode}
-              shuttlePlan={shuttlePlan}
-              canStartNavigation={canStartNavigationFromCurrentLocation}
-              onPressStart={() => setSearchFor('start')}
-              onPressDestination={() => setSearchFor('destination')}
-              onTravelModeChange={setTravelMode}
-              onPressGo={handleDirectionsGo}
-              onPressShuttleSchedule={showShuttleSchedule}
-            />
-          )}
+          {renderBottomSheetContent({
+            isSearchActive,
+            calendarSliderMode,
+            isInternalSearch,
+            selectedCalendarIds,
+            handleReselectCalendars,
+            handleCloseUpcomingClassesSlider,
+            handleCloseCalendarSelectionSlider,
+            showUpcomingClassesSlider,
+            buildings,
+            handleInternalSearch,
+            closeSearchBuilding,
+            openCalendarSelectionAfterConnect,
+            activeView,
+            selectedBuilding,
+            closeSheet,
+            showDirections,
+            currentBuilding,
+            userLocation,
+            destinationBuilding,
+            routeTransitSteps,
+            showDirectionsPanel,
+            startBuilding,
+            shuttlePlan,
+            navigationSummary,
+            endNavigation,
+            isCrossCampusRoute,
+            isRouteLoading,
+            routeErrorMessage,
+            routeDistanceText,
+            routeDurationText,
+            routeDurationSeconds,
+            travelMode,
+            canStartNavigationFromCurrentLocation,
+            setSearchFor,
+            setTravelMode,
+            handleDirectionsGo,
+            showShuttleSchedule,
+          })}
         </BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>

@@ -54,11 +54,9 @@ export const extractOuterRingsAsLatLngPolygons = (
     return [outerRing.map(toLatLng)];
   }
 
-  // MultiPolygon
-  const multi = geometry as GeoJsonMultiPolygon;
   const polygons: LatLng[][] = [];
 
-  for (const poly of multi.coordinates ?? []) {
+  for (const poly of geometry.coordinates ?? []) {
     const outerRing = poly?.[0];
     if (!outerRing || !isValidRing(outerRing)) continue;
     polygons.push(outerRing.map(toLatLng));
@@ -99,7 +97,7 @@ export const isPointInPolygon = (point: LatLng, polygon: LatLng[]): boolean => {
     const xj = polygon[j].longitude,
       yj = polygon[j].latitude;
 
-    const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi + 0.0) + xi;
+    const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi + 0) + xi;
     if (intersect) inside = !inside;
   }
 

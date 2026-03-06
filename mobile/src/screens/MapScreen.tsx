@@ -1,5 +1,5 @@
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useWindowDimensions, Platform, View, Text } from 'react-native';
+import { useWindowDimensions, View, Text } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import type { SharedValue } from 'react-native-reanimated';
@@ -47,7 +47,104 @@ const ROUTE_FIT_TOP_PADDING = 110;
 
 const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
-const WALKING_DOT_PATTERN = [2, 10];
+const WALKING_DASH_PATTERN = [12, 8];
+const ROUTE_POLYLINE_STROKE_PROPS = { strokeColor: ROUTE_LINE_COLOR } as const;
+
+type RoutePolylineSegment = {
+  key: string;
+  coordinates: { latitude: number; longitude: number }[];
+  requiresWalking: boolean;
+};
+
+const toRouteSegmentKey = (
+  segmentType: 'overview' | 'segment',
+  index: number,
+  encodedPolyline: string,
+  requiresWalking: boolean,
+) => {
+  const polylineSignature = `${encodedPolyline.slice(0, 12)}-${encodedPolyline.slice(-12)}`;
+  return `${segmentType}-${index}-${requiresWalking ? 'walk' : 'solid'}-${polylineSignature}`;
+};
+
+const buildRoutePolylineSegments = (
+  outdoorRoute: OutdoorRouteOverlay | null | undefined,
+): RoutePolylineSegment[] => {
+  if (!outdoorRoute) return [];
+
+  if (outdoorRoute.routeSegments && outdoorRoute.routeSegments.length > 0) {
+    const segments: RoutePolylineSegment[] = [];
+    for (let index = 0; index < outdoorRoute.routeSegments.length; index += 1) {
+      const segment = outdoorRoute.routeSegments[index];
+      segments.push({
+        key: toRouteSegmentKey(
+          'segment',
+          index,
+          segment.encodedPolyline,
+          Boolean(segment.requiresWalking),
+        ),
+        coordinates: decodePolyline(segment.encodedPolyline),
+        requiresWalking: Boolean(segment.requiresWalking),
+      });
+    }
+    return segments;
+  }
+
+  return [
+    {
+      key: toRouteSegmentKey(
+        'overview',
+        0,
+        outdoorRoute.encodedPolyline,
+        Boolean(outdoorRoute.isWalkingRoute),
+      ),
+      coordinates: decodePolyline(outdoorRoute.encodedPolyline),
+      requiresWalking: Boolean(outdoorRoute.isWalkingRoute),
+    },
+  ];
+};
+
+const renderRoutePolylineElements = (
+  routePolylineSegments: RoutePolylineSegment[],
+  routePolylineStrokeProps: { strokeColor: string },
+) => {
+  const polylineElements: React.ReactElement[] = [];
+
+  for (let index = 0; index < routePolylineSegments.length; index += 1) {
+    const segment = routePolylineSegments[index];
+    if (segment.coordinates.length <= 1) continue;
+
+    polylineElements.push(
+      <Polyline
+        key={segment.key}
+        testID={index === 0 ? 'route-polyline' : `route-polyline-segment-${index}`}
+        coordinates={segment.coordinates}
+        {...routePolylineStrokeProps}
+        lineDashPattern={segment.requiresWalking ? WALKING_DASH_PATTERN : undefined}
+        strokeWidth={ROUTE_LINE_WIDTH}
+        lineCap={segment.requiresWalking ? 'butt' : 'round'}
+        lineJoin="round"
+        zIndex={999}
+      />,
+    );
+  }
+
+  return polylineElements;
+};
+
+const flattenRouteCoordinates = (routePolylineSegments: RoutePolylineSegment[]) => {
+  const routeCoordinates: { latitude: number; longitude: number }[] = [];
+  for (const segment of routePolylineSegments) {
+    routeCoordinates.push(...segment.coordinates);
+  }
+  return routeCoordinates;
+};
+
+const hasRenderableRoute = (routePolylineSegments: RoutePolylineSegment[]) => {
+  for (const segment of routePolylineSegments) {
+    if (segment.coordinates.length > 1) return true;
+  }
+  return false;
+};
 
 const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
   latitude: pos.coords.latitude,
@@ -158,6 +255,19 @@ const renderPolygonItem = (
   );
 };
 
+const renderPolygonItems = (
+  polygonItems: PolygonRenderItem[],
+  selectedBuildingId: string | null,
+  currentBuildingId: string | null,
+  onPolygonPress: (item: PolygonRenderItem) => void,
+) => {
+  const elements: React.ReactElement[] = [];
+  for (const item of polygonItems) {
+    elements.push(renderPolygonItem(item, selectedBuildingId, currentBuildingId, onPolygonPress));
+  }
+  return elements;
+};
+
 const selectBuildingAtCoords = (
   coords: UserCoords,
   setCurrentBuildingId: (id: string | null) => void,
@@ -188,7 +298,7 @@ export default function MapScreen({
   externalSelectedBuilding,
   outdoorRoute,
   bottomSheetAnimatedPosition,
-}: MapScreenProps) {
+}: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
@@ -210,12 +320,21 @@ export default function MapScreen({
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
+    let isActive = true;
 
-    void initLocationTracking(setUserCoords).then((sub) => {
-      subscription = sub;
-    });
+    const startTracking = async () => {
+      const nextSubscription = await initLocationTracking(setUserCoords);
+      if (!isActive) {
+        nextSubscription?.remove();
+        return;
+      }
+      subscription = nextSubscription;
+    };
+
+    void startTracking();
 
     return () => {
+      isActive = false;
       subscription?.remove();
     };
   }, []);
@@ -293,12 +412,7 @@ export default function MapScreen({
     );
   }, [userCoords]);
 
-  const handleMapRef = useCallback((ref: any) => {
-    mapRef.current = ref;
-  }, []);
-
   const handleMapPress = useCallback(() => {
-    // Background map taps clear manual selection and restore current-building highlight.
     setSelectedBuildingId(null);
     passSelectedBuilding(null);
     onMapPress?.();
@@ -309,37 +423,16 @@ export default function MapScreen({
   const showSelectedMarker = Boolean(
     selectedBuildingId && selectedBuilding && selectedMarkerCoordinate,
   );
-  const routePolylineStrokeProps = useMemo(
-    () =>
-      Platform.OS === 'ios'
-        ? { strokeColor: ROUTE_LINE_COLOR, strokeColors: [ROUTE_LINE_COLOR] }
-        : { strokeColor: ROUTE_LINE_COLOR },
-    [],
+  const routePolylineSegments = useMemo(
+    () => buildRoutePolylineSegments(outdoorRoute),
+    [outdoorRoute],
   );
-  const routePolylineSegments = useMemo(() => {
-    if (!outdoorRoute) return [];
-
-    if (outdoorRoute.routeSegments && outdoorRoute.routeSegments.length > 0) {
-      return outdoorRoute.routeSegments.map((segment, index) => ({
-        key: `segment-${index}`,
-        coordinates: decodePolyline(segment.encodedPolyline),
-        requiresWalking: segment.requiresWalking,
-      }));
-    }
-
-    return [
-      {
-        key: 'overview',
-        coordinates: decodePolyline(outdoorRoute.encodedPolyline),
-        requiresWalking: Boolean(outdoorRoute.isWalkingRoute),
-      },
-    ];
-  }, [outdoorRoute]);
-  const routeCoordinates = useMemo(
-    () => routePolylineSegments.flatMap((segment) => segment.coordinates),
+  const routeCoordinates = flattenRouteCoordinates(routePolylineSegments);
+  const showRoute = hasRenderableRoute(routePolylineSegments);
+  const renderedRoutePolylines = useMemo(
+    () => renderRoutePolylineElements(routePolylineSegments, ROUTE_POLYLINE_STROKE_PROPS),
     [routePolylineSegments],
   );
-  const showRoute = routePolylineSegments.some((segment) => segment.coordinates.length > 1);
 
   useEffect(() => {
     if (!showRoute) return;
@@ -362,18 +455,14 @@ export default function MapScreen({
     <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} />
   ) : null;
 
-  const renderedPolygons = useMemo(() => {
-    const elements = [];
-    for (const item of polygonItems) {
-      elements.push(
-        renderPolygonItem(item, selectedBuildingId, currentBuildingId, handlePolygonPress),
-      );
-    }
-    return elements;
-  }, [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId]);
+  const renderedPolygons = useMemo(
+    () =>
+      renderPolygonItems(polygonItems, selectedBuildingId, currentBuildingId, handlePolygonPress),
+    [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId],
+  );
 
   const mapProps = {
-    ref: handleMapRef,
+    ref: mapRef,
     testID: 'campus-map',
     style: styles.map,
     initialRegion: mapInitialRegion,
@@ -390,21 +479,7 @@ export default function MapScreen({
         {selectedMarker}
         {showRoute && (
           <>
-            {routePolylineSegments.map((segment, index) =>
-              segment.coordinates.length > 1 ? (
-                <Polyline
-                  key={segment.key}
-                  testID={index === 0 ? 'route-polyline' : `route-polyline-segment-${index}`}
-                  coordinates={segment.coordinates}
-                  {...routePolylineStrokeProps}
-                  lineDashPattern={segment.requiresWalking ? WALKING_DOT_PATTERN : undefined}
-                  strokeWidth={ROUTE_LINE_WIDTH}
-                  lineCap="round"
-                  lineJoin="round"
-                  zIndex={999}
-                />
-              ) : null,
-            )}
+            {renderedRoutePolylines}
             <Marker
               testID="route-start-marker"
               coordinate={outdoorRoute!.start}
