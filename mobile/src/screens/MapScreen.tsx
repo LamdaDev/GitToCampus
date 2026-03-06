@@ -215,11 +215,25 @@ const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]
 const renderPolygonItem = (
   item: PolygonRenderItem,
   selectedBuildingId: string | null,
+  currentBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
 ) => {
   const theme = POLYGON_THEME[item.campus];
   const isSelected = item.buildingId === selectedBuildingId;
+  const isCurrent = item.buildingId === currentBuildingId;
   const center = getPolygonCenter(item.coordinates);
+
+  const strokeColor = isSelected
+    ? theme.selectedStroke
+    : isCurrent
+      ? theme.currentStroke
+      : theme.stroke;
+  const fillColor = isSelected ? theme.selectedFill : isCurrent ? theme.currentFill : theme.fill;
+  const strokeWidth = isSelected
+    ? theme.selectedStrokeWidth
+    : isCurrent
+      ? theme.currentStrokeWidth
+      : theme.strokeWidth;
 
   return (
     <Fragment key={item.key}>
@@ -227,9 +241,9 @@ const renderPolygonItem = (
         key={item.key}
         coordinates={item.coordinates}
         tappable
-        strokeColor={isSelected ? theme.selectedStroke : theme.stroke}
-        fillColor={isSelected ? theme.selectedFill : theme.fill}
-        strokeWidth={isSelected ? theme.selectedStrokeWidth : theme.strokeWidth}
+        strokeColor={strokeColor}
+        fillColor={fillColor}
+        strokeWidth={strokeWidth}
         onPress={() => onPolygonPress(item)}
       />
       <Marker coordinate={center} tracksViewChanges={true} testID={'map-label'}>
@@ -244,11 +258,12 @@ const renderPolygonItem = (
 const renderPolygonItems = (
   polygonItems: PolygonRenderItem[],
   selectedBuildingId: string | null,
+  currentBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
 ) => {
   const elements: React.ReactElement[] = [];
   for (const item of polygonItems) {
-    elements.push(renderPolygonItem(item, selectedBuildingId, onPolygonPress));
+    elements.push(renderPolygonItem(item, selectedBuildingId, currentBuildingId, onPolygonPress));
   }
   return elements;
 };
@@ -337,7 +352,10 @@ export default function MapScreen({
   }, [selectedCampus]);
 
   useEffect(() => {
-    if (!externalSelectedBuilding) return;
+    if (!externalSelectedBuilding) {
+      setSelectedBuildingId(null);
+      return;
+    }
     setSelectedBuildingId(externalSelectedBuilding.id);
     setSelectedCampus(externalSelectedBuilding.campus);
   }, [externalSelectedBuilding]);
@@ -394,6 +412,12 @@ export default function MapScreen({
     );
   }, [userCoords]);
 
+  const handleMapPress = useCallback(() => {
+    setSelectedBuildingId(null);
+    passSelectedBuilding(null);
+    onMapPress?.();
+  }, [onMapPress, passSelectedBuilding]);
+
   const mapInitialRegion = useMemo(() => getCampusRegion('SGW'), []);
 
   const showSelectedMarker = Boolean(
@@ -432,8 +456,9 @@ export default function MapScreen({
   ) : null;
 
   const renderedPolygons = useMemo(
-    () => renderPolygonItems(polygonItems, selectedBuildingId, handlePolygonPress),
-    [handlePolygonPress, polygonItems, selectedBuildingId],
+    () =>
+      renderPolygonItems(polygonItems, selectedBuildingId, currentBuildingId, handlePolygonPress),
+    [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId],
   );
 
   const mapProps = {
@@ -444,7 +469,7 @@ export default function MapScreen({
     provider: PROVIDER_GOOGLE,
     showsUserLocation: true,
     showsMyLocationButton: false,
-    onPress: onMapPress,
+    onPress: handleMapPress,
   } as const;
 
   return (

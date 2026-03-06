@@ -9,6 +9,7 @@ import type { BuildingShape } from '../src/types/BuildingShape';
 import * as buildingsRepository from '../src/utils/buildingsRepository';
 import * as geoJson from '../src/utils/geoJson';
 import { getCampusRegion } from '../src/constants/campuses';
+import { POLYGON_THEME } from '../src/styles/MapScreen.styles';
 
 const mockPassSelectedBuilding = jest.fn();
 const mockPassUserLocation = jest.fn();
@@ -203,6 +204,30 @@ describe('MapScreen', () => {
     expect(mockOnMapPress).toHaveBeenCalledTimes(1);
   });
 
+  test('map background press clears manual selection and marker', async () => {
+    const { UNSAFE_getAllByType, getByTestId, queryAllByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    fireEvent(UNSAFE_getAllByType(Polygon)[1], 'press');
+
+    await waitFor(() => {
+      expect(queryAllByTestId('map-marker')).toHaveLength(1);
+    });
+
+    fireEvent.press(getByTestId('campus-map'));
+
+    await waitFor(() => {
+      expect(queryAllByTestId('map-marker')).toHaveLength(0);
+      expect(mockPassSelectedBuilding).toHaveBeenLastCalledWith(null);
+    });
+  });
+
   test('calls onOpenCalendar when the calendar control is pressed', async () => {
     const { getByLabelText } = render(
       <MapScreen
@@ -360,6 +385,40 @@ describe('MapScreen', () => {
       expect(mockPassCurrentBuilding).toHaveBeenLastCalledWith(mockBuildings[1]);
       expect(mockAnimateToRegion).toHaveBeenCalledWith(getCampusRegion('LOYOLA'), 1000);
       expect(queryAllByTestId('map-marker')).toHaveLength(0);
+    });
+  });
+
+  test('highlights current building polygon when location enters a building', async () => {
+    let locationCallback: ((value: any) => void) | undefined;
+    repoMock.findBuildingAt.mockReturnValue(mockBuildings[1]);
+    locationMock.watchPositionAsync.mockImplementationOnce(async (_opts: any, cb: any) => {
+      locationCallback = cb;
+      return { remove: jest.fn() } as any;
+    });
+
+    const { UNSAFE_getAllByType } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(locationMock.watchPositionAsync).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      locationCallback?.({ coords: { latitude: 45.52, longitude: -73.59 } });
+    });
+
+    await waitFor(() => {
+      const polygons = UNSAFE_getAllByType(Polygon);
+      const loyolaPolygon = polygons[1];
+      expect(loyolaPolygon.props.fillColor).toBe(POLYGON_THEME.LOYOLA.currentFill);
+      expect(loyolaPolygon.props.strokeColor).toBe(POLYGON_THEME.LOYOLA.currentStroke);
+      expect(loyolaPolygon.props.strokeWidth).toBe(POLYGON_THEME.LOYOLA.currentStrokeWidth);
     });
   });
 
