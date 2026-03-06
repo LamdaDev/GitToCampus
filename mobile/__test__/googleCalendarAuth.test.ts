@@ -136,6 +136,23 @@ describe('googleCalendarAuth', () => {
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledTimes(1);
   });
 
+  test('returns not connected and clears storage for invalid expiresAt shape', async () => {
+    secureStoreMock.__mockStore.set(
+      STORAGE_KEY,
+      JSON.stringify({
+        accessToken: 'token',
+        tokenType: 'Bearer',
+        scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+        expiresAt: null,
+      }),
+    );
+
+    const state = await getStoredGoogleCalendarSessionState();
+
+    expect(state).toEqual({ status: 'not_connected', session: null });
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledTimes(1);
+  });
+
   test('returns not connected when secure store read fails', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockRejectedValueOnce(new Error('read failed'));
 
@@ -225,6 +242,27 @@ describe('googleCalendarAuth', () => {
     });
   });
 
+  test('returns fallback message when calendar list request receives non-auth failure status', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'server-error-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    });
+
+    const result = await fetchGoogleCalendarListAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Unable to load calendar list right now. Please retry.',
+    });
+  });
+
   test('returns fallback message when calendar list request fails', async () => {
     await saveGoogleCalendarSession({
       accessToken: 'live-token',
@@ -240,6 +278,24 @@ describe('googleCalendarAuth', () => {
     expect(result).toEqual({
       type: 'error',
       message: 'Unable to load calendar list right now. Please retry.',
+    });
+  });
+
+  test('returns thrown error message when calendar list request rejects with Error', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'live-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockRejectedValueOnce(new Error('calendar list exploded'));
+
+    const result = await fetchGoogleCalendarListAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'calendar list exploded',
     });
   });
 
@@ -368,6 +424,27 @@ describe('googleCalendarAuth', () => {
     });
   });
 
+  test('returns fallback message when upcoming classes receives non-auth failure status', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'live-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    });
+
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Unable to load upcoming classes right now. Please retry.',
+    });
+  });
+
   test('returns fallback message when upcoming classes request fails', async () => {
     await saveGoogleCalendarSession({
       accessToken: 'live-token',
@@ -383,6 +460,24 @@ describe('googleCalendarAuth', () => {
     expect(result).toEqual({
       type: 'error',
       message: 'Unable to load upcoming classes right now. Please retry.',
+    });
+  });
+
+  test('returns thrown error message when upcoming classes request rejects with Error', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'live-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockRejectedValueOnce(new Error('calendar events exploded'));
+
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'calendar events exploded',
     });
   });
 
