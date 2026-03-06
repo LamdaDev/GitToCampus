@@ -668,9 +668,7 @@ describe('MapScreen', () => {
     locationMock.watchPositionAsync.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          resolveWatchSubscription = resolve as (
-            subscription: { remove: jest.Mock },
-          ) => void;
+          resolveWatchSubscription = resolve as (subscription: { remove: jest.Mock }) => void;
         }) as any,
     );
 
