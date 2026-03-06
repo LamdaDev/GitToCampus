@@ -401,6 +401,37 @@ describe('googleCalendarAuth', () => {
     });
   });
 
+  test('builds native redirect uri from the app identifier', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({ type: 'cancel' })),
+    });
+
+    await connectGoogleCalendarAsync();
+
+    expect(authSessionMock.makeRedirectUri).toHaveBeenCalledWith({
+      native: 'com.anonymous.mobile:/oauthredirect',
+      path: 'oauthredirect',
+    });
+  });
+
+  test('uses a Google iOS-client redirect scheme when the iOS client id is valid', async () => {
+    process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID =
+      '84039552841-5f103afd16hji1k39pt9i2tghnsumr9q.apps.googleusercontent.com';
+
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({ type: 'cancel' })),
+    });
+
+    await connectGoogleCalendarAsync();
+
+    expect(authSessionMock.makeRedirectUri).toHaveBeenCalledWith({
+      native: 'com.googleusercontent.apps.84039552841-5f103afd16hji1k39pt9i2tghnsumr9q:/oauthredirect',
+      path: 'oauthredirect',
+    });
+  });
+
   test('returns cancel when the auth prompt is canceled', async () => {
     authSessionMock.loadAsync.mockResolvedValueOnce({
       codeVerifier: 'verifier',
