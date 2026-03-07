@@ -474,6 +474,30 @@ describe('googleCalendarAuth', () => {
     });
   });
 
+  test('returns actionable message when oauth client is deleted or invalid', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({
+        type: 'error',
+        params: {
+          error: 'deleted_client',
+          error_description: '   ',
+        },
+        error: null,
+      })),
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result.type).toBe('error');
+    if (result.type !== 'error') {
+      throw new Error('Expected error result');
+    }
+    expect(result.message).toContain('Google OAuth client is invalid or deleted');
+    expect(result.message).toContain('mobile/.env');
+    expect(result.message).toContain('EXPO_PUBLIC_GOOGLE_CALENDAR_');
+  });
+
   test('maps auth error code to denied calendar message', async () => {
     authSessionMock.loadAsync.mockResolvedValueOnce({
       codeVerifier: 'verifier',

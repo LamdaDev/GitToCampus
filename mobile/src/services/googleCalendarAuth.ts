@@ -181,6 +181,13 @@ const mapCalendarEventsErrorToMessage = (error: unknown): string => {
   return 'Unable to load upcoming classes right now. Please retry.';
 };
 
+const getPlatformClientIdEnvName = (): string =>
+  Platform.OS === 'android'
+    ? 'EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID'
+    : Platform.OS === 'ios'
+      ? 'EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID'
+      : 'EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID';
+
 export const saveGoogleCalendarSession = async (session: GoogleCalendarSession): Promise<void> => {
   await SecureStore.setItemAsync(
     GOOGLE_CALENDAR_STORAGE_KEY,
@@ -462,8 +469,19 @@ export const connectGoogleCalendarAsync = async (): Promise<GoogleCalendarConnec
     }
 
     if (promptResult.type === 'error') {
-      if ((promptResult.params.error ?? '').toLowerCase() === 'access_denied') {
+      const oauthErrorCode = (promptResult.params.error ?? '').toLowerCase();
+
+      if (oauthErrorCode === 'access_denied') {
         return { type: 'denied' };
+      }
+
+      if (oauthErrorCode === 'deleted_client' || oauthErrorCode === 'invalid_client') {
+        return {
+          type: 'error',
+          message:
+            `Google OAuth client is invalid or deleted. Update ${getPlatformClientIdEnvName()} ` +
+            'in mobile/.env and rebuild the dev client.',
+        };
       }
 
       const oauthErrorDescription = (promptResult.params.error_description ?? '').trim();
