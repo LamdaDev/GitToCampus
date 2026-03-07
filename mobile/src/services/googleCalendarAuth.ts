@@ -13,7 +13,9 @@ const TOKEN_EXPIRY_GRACE_MS = 60_000;
 const FALLBACK_ACCESS_TOKEN_TTL_SECONDS = 3600;
 const GOOGLE_CALENDAR_REDIRECT_PATH = 'oauthredirect';
 const APP_SCHEME = 'gittocampus';
+const IOS_BUNDLE_ID_FALLBACK = 'com.gittocampus.mobile';
 const ANDROID_PACKAGE_FALLBACK = 'com.anonymous.mobile';
+const GOOGLE_CLIENT_ID_SUFFIX = '.apps.googleusercontent.com';
 
 const GOOGLE_CALENDAR_DISCOVERY = {
   authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -92,7 +94,7 @@ const parseStoredSession = (value: string): GoogleCalendarSession | null => {
   if (typeof candidate.expiresAt !== 'number' || !Number.isFinite(candidate.expiresAt)) {
     return null;
   }
-  if (typeof candidate.refreshToken !== 'undefined' && !isNonEmptyString(candidate.refreshToken)) {
+  if (candidate.refreshToken !== undefined && !isNonEmptyString(candidate.refreshToken)) {
     return null;
   }
 
@@ -119,10 +121,29 @@ const getConfiguredClientId = (): string => {
   return (platformClientId ?? fallbackClientId ?? '').trim();
 };
 
+const getGoogleClientRedirectScheme = (clientId: string): string | null => {
+  const normalizedClientId = clientId.trim();
+  if (!normalizedClientId.endsWith(GOOGLE_CLIENT_ID_SUFFIX)) return null;
+
+  const clientIdPrefix = normalizedClientId.slice(0, -GOOGLE_CLIENT_ID_SUFFIX.length).trim();
+  if (!clientIdPrefix) return null;
+
+  return `com.googleusercontent.apps.${clientIdPrefix}`;
+};
+
 const getRedirectScheme = (): string =>
-  Platform.OS === 'android'
-    ? (Application.applicationId ?? ANDROID_PACKAGE_FALLBACK).trim()
-    : APP_SCHEME;
+  Platform.OS === 'ios'
+    ? (
+        getGoogleClientRedirectScheme(
+          process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID ?? '',
+        ) ??
+        Application.applicationId ??
+        IOS_BUNDLE_ID_FALLBACK
+      ).trim()
+    : (
+        Application.applicationId ??
+        (Platform.OS === 'android' ? ANDROID_PACKAGE_FALLBACK : APP_SCHEME)
+      ).trim();
 
 const createRedirectUri = () =>
   AuthSession.makeRedirectUri({

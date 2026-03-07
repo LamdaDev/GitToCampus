@@ -1,0 +1,32 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    point: '70%,80%'
+- extendedWaitUntil:
+    visible: 'Grey Nuns Garden'
+    timeout: 2000
+- tapOn: 'Start From'
+- tapOn: 'Set destination'
+- tapOn: 'Samuel Bronfman Building'
+# tap on Car Button
+- tapOn: 
+# tap on Public Transit Button
+- tapOn: 
+# tap on X Button
+- tapOn: 
+- tapOn: 'Enter building name'
+- tapOn: 'Search buildings...'
+- inputText: 'Stinger Dome Seasonal'
+- tapOn: Back
+- tapOn:
+    text: Stinger Dome Seasonal
+    index: 1
+
+- tapOn: 'My Location'
+- tapOn: 'Samuel Bronfman Building'
+# tap on Car Button
+- tapOn: 
+# tap on Public Transit Button
+- tapOn: 
+# tap on Car Button
+- tapOn: 

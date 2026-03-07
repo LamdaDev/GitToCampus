@@ -1,8 +1,8 @@
-import { render, fireEvent } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import BuildingDetails from '../src/components/BuildingDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import React from 'react';
-import { Linking } from 'react-native';
+import { Linking, ScrollView } from 'react-native';
 
 const mockOnClose = jest.fn();
 const mockOnShowDirections = jest.fn();
@@ -267,5 +267,77 @@ describe('Building Details', () => {
     images.forEach((img, index) => {
       expect(img.props.source).toEqual({ uri: mockBuildings[1].images![index] });
     });
+  });
+
+  test('normalizes image urls and skips blank image values', () => {
+    const selectedBuilding: BuildingShape = {
+      ...mockBuildings[0],
+      images: [' iili.io/custom-image.png ', '   ', '\n', 'https://iili.io/already-valid.png'],
+    };
+
+    const { getAllByTestId } = render(
+      <BuildingDetails
+        selectedBuilding={selectedBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    const images = getAllByTestId('carousel-image');
+    expect(images).toHaveLength(2);
+    expect(images[0].props.source).toEqual({ uri: 'https://iili.io/custom-image.png' });
+    expect(images[1].props.source).toEqual({ uri: 'https://iili.io/already-valid.png' });
+  });
+
+  test('runs carousel layout handlers and scheduled scroll centering effect', () => {
+    jest.useFakeTimers();
+
+    try {
+      const { UNSAFE_getByType } = render(
+        <BuildingDetails
+          selectedBuilding={mockBuildings[0]}
+          onClose={mockOnClose}
+          onShowDirections={mockOnShowDirections}
+          currentBuilding={null}
+          userLocation={null}
+        />,
+      );
+
+      const carousel = UNSAFE_getByType(ScrollView);
+      carousel.props.onLayout?.({ nativeEvent: { layout: { width: 140 } } });
+      carousel.props.onContentSizeChange?.(280, 125);
+
+      act(() => {
+        jest.advanceTimersByTime(60);
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('logs image loading errors in development mode', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const { getAllByTestId } = render(
+      <BuildingDetails
+        selectedBuilding={mockBuildings[0]}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    fireEvent(getAllByTestId('carousel-image')[0], 'error', {
+      nativeEvent: { error: 'mock-image-error' },
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith('[BuildingDetails] Failed to load building image', {
+      url: mockBuildings[0].images?.[0],
+      error: 'mock-image-error',
+    });
+    warnSpy.mockRestore();
   });
 });
