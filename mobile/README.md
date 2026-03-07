@@ -276,4 +276,9 @@ If you add a dependency that touches native modules, you may need to add a mock 
 
 - If `adb` is not found, check your PATH and ANDROID_HOME.
 - Restart terminal after environment changes.
+- If Google sign-in shows `Error 401: deleted_client`:
+  - The configured OAuth client ID no longer exists in Google Cloud.
+  - Recreate the Android OAuth client for package `com.anonymous.mobile` with your debug SHA-1.
+  - Update `EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID` in `mobile/.env`.
+  - Rebuild and run again with `npx expo run:android` and `npx expo start --dev-client -c`.
 - For Expo issues, check [Expo documentation](https://docs.expo.dev/).

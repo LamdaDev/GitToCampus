@@ -49,15 +49,15 @@ const App = () => {
     void initializeClarityAsync();
   }, []);
 
-  const toggleSearchBarState = () => {
+  const toggleSearchBarState = useCallback(() => {
     setSheetOpen(false);
-  };
+  }, []);
 
-  const openBuildingDetails = () => {
+  const openBuildingDetails = useCallback(() => {
     setSheetMode('detail');
     setSheetOpen(true);
     bottomSheetRef.current?.open(0);
-  };
+  }, []);
 
   const openSearchBuilding = useCallback(() => {
     setSheetMode('search');
@@ -94,9 +94,9 @@ const App = () => {
     bottomSheetRef.current?.closeCalendarSlider();
   }, []);
 
-  const exitSearchMode = () => {
+  const exitSearchMode = useCallback(() => {
     setSheetMode('detail');
-  };
+  }, []);
   /*load once for the searching for specifc buildings
    * buildings gets passed into bottomSheet then into searchBuilding.tsx
    */
@@ -125,7 +125,7 @@ const App = () => {
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
         />
 
-        {sheetOpen ? '' : <AppSearchBar openSearch={openSearchBuilding} />}
+        {!sheetOpen ? <AppSearchBar openSearch={openSearchBuilding} /> : null}
 
         <BottomSlider
           userLocation={userLocation}

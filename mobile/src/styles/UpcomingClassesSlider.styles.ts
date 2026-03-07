@@ -3,9 +3,7 @@ import { StyleSheet } from 'react-native';
 export const upcomingClassesSliderStyles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 8,
     paddingHorizontal: 8,
-    paddingBottom: 12,
   },
   headerRow: {
     flexDirection: 'row',
@@ -35,7 +33,8 @@ export const upcomingClassesSliderStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 36,
     gap: 10,
     alignSelf: 'stretch',
   },
@@ -47,14 +46,12 @@ export const upcomingClassesSliderStyles = StyleSheet.create({
   contentArea: {
     flex: 1,
     minHeight: 0,
-    paddingBottom: 12,
   },
   eventsViewport: {
     width: '100%',
     minHeight: 0,
     flexShrink: 1,
     overflow: 'hidden',
-    marginBottom: 8,
   },
   eventsList: {
     width: '100%',
@@ -62,7 +59,6 @@ export const upcomingClassesSliderStyles = StyleSheet.create({
   },
   eventsContent: {
     gap: 8,
-    paddingBottom: 16,
   },
   overflowIndicatorText: {
     color: '#ffffff',

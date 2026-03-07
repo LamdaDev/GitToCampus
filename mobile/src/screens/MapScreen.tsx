@@ -203,14 +203,16 @@ const watchUserLocation = async (
 };
 
 const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]) => {
-  const polygon = turf.polygon([coordinates.map((c) => [c.longitude, c.latitude])]);
-
-  const center = turf.pointOnFeature(polygon);
-
-  return {
-    latitude: center.geometry.coordinates[1],
-    longitude: center.geometry.coordinates[0],
-  };
+  try {
+    const polygon = turf.polygon([coordinates.map((c) => [c.longitude, c.latitude])]);
+    const center = turf.pointOnFeature(polygon);
+    return {
+      latitude: center.geometry.coordinates[1],
+      longitude: center.geometry.coordinates[0],
+    };
+  } catch {
+    return centroidOfPolygon(coordinates) ?? coordinates[0] ?? { latitude: 0, longitude: 0 };
+  }
 };
 
 const renderPolygonItem = (
@@ -289,7 +291,7 @@ const initLocationTracking = async (
   return watchUserLocation(onPositionUpdate);
 };
 
-export default function MapScreen({
+function MapScreen({
   passSelectedBuilding,
   passUserLocation,
   passCurrentBuilding,
@@ -309,6 +311,18 @@ export default function MapScreen({
   const mapRef = useRef<any>(null);
   const shouldIgnoreNextMapPressRef = useRef(false);
   const polygonPressGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleUserPositionUpdate = useCallback((coords: UserCoords) => {
+    setUserCoords((previousCoords) => {
+      if (
+        previousCoords &&
+        previousCoords.latitude === coords.latitude &&
+        previousCoords.longitude === coords.longitude
+      ) {
+        return previousCoords;
+      }
+      return coords;
+    });
+  }, []);
 
   // Pass user location to parent
   useEffect(() => {
@@ -326,7 +340,7 @@ export default function MapScreen({
     let isActive = true;
 
     const startTracking = async () => {
-      const nextSubscription = await initLocationTracking(setUserCoords);
+      const nextSubscription = await initLocationTracking(handleUserPositionUpdate);
       if (!isActive) {
         nextSubscription?.remove();
         return;
@@ -344,7 +358,7 @@ export default function MapScreen({
         polygonPressGuardTimeoutRef.current = null;
       }
     };
-  }, []);
+  }, [handleUserPositionUpdate]);
 
   useEffect(() => {
     if (!userCoords) return;
@@ -452,8 +466,14 @@ export default function MapScreen({
     () => buildRoutePolylineSegments(outdoorRoute),
     [outdoorRoute],
   );
-  const routeCoordinates = flattenRouteCoordinates(routePolylineSegments);
-  const showRoute = hasRenderableRoute(routePolylineSegments);
+  const routeCoordinates = useMemo(
+    () => flattenRouteCoordinates(routePolylineSegments),
+    [routePolylineSegments],
+  );
+  const showRoute = useMemo(
+    () => hasRenderableRoute(routePolylineSegments),
+    [routePolylineSegments],
+  );
   const renderedRoutePolylines = useMemo(
     () => renderRoutePolylineElements(routePolylineSegments, ROUTE_POLYLINE_STROKE_PROPS),
     [routePolylineSegments],
@@ -477,7 +497,11 @@ export default function MapScreen({
   }, [bottomSheetAnimatedPosition, routeCoordinates, showRoute, windowHeight]);
 
   const selectedMarker = showSelectedMarker ? (
-    <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} />
+    <Marker
+      coordinate={selectedMarkerCoordinate!}
+      title={selectedBuilding?.name}
+      tracksViewChanges={false}
+    />
   ) : null;
 
   const renderedPolygons = useMemo(
@@ -530,3 +554,5 @@ export default function MapScreen({
     </View>
   );
 }
+
+export default React.memo(MapScreen);

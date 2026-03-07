@@ -149,6 +149,40 @@ const toBuildingShape = (
  * Parse and join datasets once, then reuse results (performance).
  */
 let cachedAllBuildings: BuildingShape[] | null = null;
+let cachedBuildingsByCampus: Map<Campus, BuildingShape[]> | null = null;
+let cachedBuildingById: Map<string, BuildingShape> | null = null;
+
+const buildBuildingIndexes = (allBuildings: BuildingShape[]) => {
+  const buildingsByCampus = new Map<Campus, BuildingShape[]>([
+    ['SGW', []],
+    ['LOYOLA', []],
+  ]);
+  const buildingById = new Map<string, BuildingShape>();
+
+  for (const building of allBuildings) {
+    const campusBuildings = buildingsByCampus.get(building.campus);
+    if (campusBuildings) {
+      campusBuildings.push(building);
+    }
+    buildingById.set(building.id, building);
+  }
+
+  return { buildingsByCampus, buildingById };
+};
+
+const ensureBuildingsCache = () => {
+  if (!cachedAllBuildings) {
+    cachedAllBuildings = buildAllBuildingsCache();
+  }
+
+  if (!cachedBuildingsByCampus || !cachedBuildingById) {
+    const indexes = buildBuildingIndexes(cachedAllBuildings);
+    cachedBuildingsByCampus = indexes.buildingsByCampus;
+    cachedBuildingById = indexes.buildingById;
+  }
+
+  return cachedAllBuildings;
+};
 
 const buildMetadataMap = (
   buildingList: GeoJsonFeatureCollection<BuildingListProps>,
@@ -193,22 +227,23 @@ const buildAllBuildingsCache = (): BuildingShape[] => {
  * Useful for debugging or future features.
  */
 export const getAllBuildingShapes = (): BuildingShape[] => {
-  cachedAllBuildings ??= buildAllBuildingsCache();
-  return cachedAllBuildings;
+  return ensureBuildingsCache();
 };
 
 /**
  * Returns campus-filtered building shapes for rendering.
  */
 export const getCampusBuildingShapes = (campus: Campus): BuildingShape[] => {
-  return getAllBuildingShapes().filter((building) => building.campus === campus);
+  ensureBuildingsCache();
+  return cachedBuildingsByCampus?.get(campus) ?? [];
 };
 
 /**
  * Optional helper: lookup by id for future selection/popup work.
  */
 export const getBuildingShapeById = (id: string): BuildingShape | undefined => {
-  return getAllBuildingShapes().find((building) => building.id === id);
+  ensureBuildingsCache();
+  return cachedBuildingById?.get(id);
 };
 
 /**

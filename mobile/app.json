@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.gittocampus.mobile",
+      "bundleIdentifier": "com.anonymous.mobile",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to show nearby results."
       }

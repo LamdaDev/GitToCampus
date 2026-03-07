@@ -313,7 +313,7 @@ jest.mock('../src/components/ShuttleScheduleDetails', () => {
 
 jest.mock('../src/components/SearchSheet', () => {
   const { View, TouchableOpacity, Text } = require('react-native');
-  return ({ onPressBuilding, onCalendarConnected }: any) => (
+  return ({ onPressBuilding, onCalendarConnected, onCalendarGoPress }: any) => (
     <View testID="search-sheet">
       <TouchableOpacity
         testID="press-building-in-search"
@@ -336,6 +336,9 @@ jest.mock('../src/components/SearchSheet', () => {
       </TouchableOpacity>
       <TouchableOpacity testID="trigger-calendar-connected" onPress={() => onCalendarConnected?.()}>
         <Text>Calendar Connected</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="trigger-calendar-go" onPress={() => onCalendarGoPress?.()}>
+        <Text>Calendar Go</Text>
       </TouchableOpacity>
     </View>
   );
@@ -584,6 +587,17 @@ describe('BottomSheet', () => {
     expect(queryByTestId('search-sheet')).toBeNull();
   });
 
+  test('calendar GO from search opens calendar selection when no calendars are selected', () => {
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="search" />,
+    );
+
+    fireEvent.press(getByTestId('trigger-calendar-go'));
+
+    expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+    expect(queryByTestId('search-sheet')).toBeNull();
+  });
+
   test('done button on calendar selection slider opens upcoming classes slider', () => {
     const { getByTestId, queryByTestId } = render(
       <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="search" />,
@@ -703,7 +717,7 @@ describe('BottomSheet', () => {
     );
 
     jest.runAllTimers();
-    expect(mockSnapToPosition).toHaveBeenCalledWith('82%');
+    expect(mockSnapToPosition).toHaveBeenCalledWith('75%');
     jest.useRealTimers();
   });
 
