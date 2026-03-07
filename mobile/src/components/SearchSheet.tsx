@@ -24,6 +24,9 @@ type SearchBarProps = {
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
+const SEARCH_LIST_INITIAL_NUM_TO_RENDER = 12;
+const SEARCH_LIST_MAX_TO_RENDER_PER_BATCH = 12;
+const SEARCH_LIST_WINDOW_SIZE = 7;
 
 export default function SearchSheet({
   buildings,
@@ -80,13 +83,22 @@ export default function SearchSheet({
     setNextClassEvent(next ?? null);
   }, [calendarStatus, selectedCalendarIds]);
 
+  const searchableBuildings = useMemo(
+    () =>
+      buildings.map((building) => ({
+        building,
+        normalizedSearchText: `${building.name} ${building.address ?? ''}`.toLowerCase(),
+      })),
+    [buildings],
+  );
+
   const filtered = useMemo(() => {
     const searchCriteria = search.trim().toLowerCase();
     if (!searchCriteria) return buildings;
-    return buildings.filter((building) =>
-      (building.name + ' ' + building.address).toLowerCase().includes(searchCriteria),
-    );
-  }, [search, buildings]);
+    return searchableBuildings
+      .filter(({ normalizedSearchText }) => normalizedSearchText.includes(searchCriteria))
+      .map(({ building }) => building);
+  }, [buildings, search, searchableBuildings]);
 
   const markSessionExpired = useCallback(async () => {
     try {
@@ -303,6 +315,11 @@ export default function SearchSheet({
           keyExtractor={(item: BuildingShape) => item.id}
           contentContainerStyle={searchBuilding.listContent}
           showsVerticalScrollIndicator={true}
+          initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
+          maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
+          windowSize={SEARCH_LIST_WINDOW_SIZE}
+          removeClippedSubviews={true}
+          keyboardShouldPersistTaps="handled"
           ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
           renderItem={renderBuildingItem}
         />
