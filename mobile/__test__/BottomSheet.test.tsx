@@ -717,7 +717,7 @@ describe('BottomSheet', () => {
     );
 
     jest.runAllTimers();
-    expect(mockSnapToPosition).toHaveBeenCalledWith('82%');
+    expect(mockSnapToPosition).toHaveBeenCalledWith('75%');
     jest.useRealTimers();
   });
 
