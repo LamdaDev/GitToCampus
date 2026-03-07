@@ -240,7 +240,7 @@ export default function SearchSheet({
       {calendarStatus === 'connected' ? (
         <View style={searchBuilding.nextClassCard} testID="next-class-card">
           <View style={searchBuilding.nextClassTextWrap}>
-            <Text style={searchBuilding.nextClassTitle} numberOfLines={1}>
+            <Text style={searchBuilding.nextClassTitle} numberOfLines={2} ellipsizeMode="tail">
               {nextClassEvent?.title ?? 'Next Class'}
             </Text>
             <Text style={searchBuilding.nextClassMeta} numberOfLines={1}>

@@ -78,7 +78,7 @@ export const searchBuilding = StyleSheet.create({
   },
   nextClassTitle: {
     color: '#ffffff',
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '700',
   },
   nextClassMeta: {

@@ -45,7 +45,7 @@ const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
 const SHEET_INDEX_EXPANDED = 3;
 const NAVIGATION_SNAP_POINTS = ['22%', '26%'] as const;
-const DEFAULT_SNAP_POINTS = ['22%', '29%', '47%', '82%'] as const;
+const DEFAULT_SNAP_POINTS = ['22%', '29%', '47%', '78%'] as const;
 const DIRECTIONS_SNAP_POINTS = Array.from({ length: 61 }, (_value, index) => `${22 + index}%`);
 const SHUTTLE_SCHEDULE_SNAP_POINTS = Array.from(
   { length: 74 },
@@ -53,7 +53,7 @@ const SHUTTLE_SCHEDULE_SNAP_POINTS = Array.from(
 );
 const DIRECTIONS_PANEL_SNAP_POINT = '52%';
 const DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT = '52%';
-const SEARCH_EXPANDED_SNAP_POINT = '82%';
+const SEARCH_EXPANDED_SNAP_POINT = '78%';
 const SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT = '92%';
 
 const METERS_PER_DEGREE_LAT = 110540;
