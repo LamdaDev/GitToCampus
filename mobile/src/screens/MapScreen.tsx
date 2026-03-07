@@ -470,7 +470,10 @@ function MapScreen({
     () => flattenRouteCoordinates(routePolylineSegments),
     [routePolylineSegments],
   );
-  const showRoute = useMemo(() => hasRenderableRoute(routePolylineSegments), [routePolylineSegments]);
+  const showRoute = useMemo(
+    () => hasRenderableRoute(routePolylineSegments),
+    [routePolylineSegments],
+  );
   const renderedRoutePolylines = useMemo(
     () => renderRoutePolylineElements(routePolylineSegments, ROUTE_POLYLINE_STROKE_PROPS),
     [routePolylineSegments],
@@ -494,7 +497,11 @@ function MapScreen({
   }, [bottomSheetAnimatedPosition, routeCoordinates, showRoute, windowHeight]);
 
   const selectedMarker = showSelectedMarker ? (
-    <Marker coordinate={selectedMarkerCoordinate!} title={selectedBuilding?.name} tracksViewChanges={false} />
+    <Marker
+      coordinate={selectedMarkerCoordinate!}
+      title={selectedBuilding?.name}
+      tracksViewChanges={false}
+    />
   ) : null;
 
   const renderedPolygons = useMemo(

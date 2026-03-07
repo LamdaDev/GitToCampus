@@ -300,7 +300,9 @@ export default function SearchSheet({
         style={[searchBuilding.signIn, buttonDisabled && searchBuilding.signInDisabled]}
         disabled={buttonDisabled}
         onPress={() =>
-          void (calendarStatus === 'connected' ? handleDisconnectCalendar() : handleConnectCalendar())
+          void (calendarStatus === 'connected'
+            ? handleDisconnectCalendar()
+            : handleConnectCalendar())
         }
         testID="connect-google-calendar-button"
       >
