@@ -10,6 +10,7 @@ const GOOGLE_CALENDAR_LIST_ENDPOINT =
   'https://www.googleapis.com/calendar/v3/users/me/calendarList';
 const GOOGLE_CALENDAR_EVENTS_ENDPOINT = 'https://www.googleapis.com/calendar/v3/calendars';
 const GOOGLE_CALENDAR_EVENTS_MAX_RESULTS = 100;
+const GOOGLE_CALENDAR_EVENTS_LOOKAHEAD_DAYS = 30;
 export const ONGOING_EVENT_WITHOUT_END_MAX_AGE_MS = 3 * 60 * 60 * 1000;
 const TOKEN_EXPIRY_GRACE_MS = 60_000;
 const FALLBACK_ACCESS_TOKEN_TTL_SECONDS = 3600;
@@ -483,15 +484,20 @@ export const fetchGoogleCalendarEventsAsync = async (
   const now = new Date();
   const nowTimestamp = now.getTime();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const endOfLookaheadWindow = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + GOOGLE_CALENDAR_EVENTS_LOOKAHEAD_DAYS + 1,
+  );
   const timeMin = startOfToday.toISOString();
-  const timeMax = startOfTomorrow.toISOString();
+  const timeMax = endOfLookaheadWindow.toISOString();
   const requestedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone?.trim();
   logCalendarDebug('Using event query window', {
     now: now.toISOString(),
     nowTimestamp,
     timeMin,
     timeMax,
+    lookaheadDays: GOOGLE_CALENDAR_EVENTS_LOOKAHEAD_DAYS,
     requestedTimeZone: requestedTimeZone || null,
   });
 
@@ -607,20 +613,20 @@ export const fetchGoogleCalendarEventsAsync = async (
       };
     };
 
-    const sameDayResponses = await fetchCalendarEventResponses({
+    const windowResponses = await fetchCalendarEventResponses({
       requestTimeMin: timeMin,
       requestTimeMax: timeMax,
     });
-    const sameDayErrorResult = resolveResponseErrors(sameDayResponses);
-    if (sameDayErrorResult) return sameDayErrorResult;
+    const windowErrorResult = resolveResponseErrors(windowResponses);
+    if (windowErrorResult) return windowErrorResult;
 
-    const sameDayEvents = toActiveOrUpcomingEvents(
-      sameDayResponses.filter(({ response }) => response.ok),
+    const windowEvents = toActiveOrUpcomingEvents(
+      windowResponses.filter(({ response }) => response.ok),
     );
-    const dedupedEvents = dedupeCalendarEvents(sameDayEvents.map(toGoogleCalendarEventItem));
+    const dedupedEvents = dedupeCalendarEvents(windowEvents.map(toGoogleCalendarEventItem));
 
-    logCalendarDebug('Returning same-day events', {
-      sameDayEventCount: sameDayEvents.length,
+    logCalendarDebug('Returning active/upcoming events', {
+      windowEventCount: windowEvents.length,
       dedupedEventCount: dedupedEvents.length,
       dedupedEvents: dedupedEvents.slice(0, 5).map((event) => ({
         id: event.id,

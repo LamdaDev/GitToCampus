@@ -368,7 +368,6 @@ const renderBottomSheetContent = ({
   handleCloseUpcomingClassesSlider,
   handleCloseCalendarSelectionSlider,
   showUpcomingClassesSlider,
-  handleUpcomingClassPress,
   buildings,
   handleInternalSearch,
   closeSearchBuilding,
@@ -409,7 +408,6 @@ const renderBottomSheetContent = ({
   handleCloseUpcomingClassesSlider: () => void;
   handleCloseCalendarSelectionSlider: () => void;
   showUpcomingClassesSlider: (calendarIds: string[]) => void;
-  handleUpcomingClassPress: (event: GoogleCalendarEventItem) => Promise<string | null>;
   buildings: BuildingShape[];
   handleInternalSearch: (building: BuildingShape) => void;
   closeSearchBuilding: (building: BuildingShape) => void;
@@ -453,7 +451,6 @@ const renderBottomSheetContent = ({
           selectedCalendarIds={selectedCalendarIds}
           onReselectCalendars={handleReselectCalendars}
           onClose={handleCloseUpcomingClassesSlider}
-          onPressEvent={handleUpcomingClassPress}
         />
       );
     }
@@ -1191,7 +1188,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             handleCloseUpcomingClassesSlider,
             handleCloseCalendarSelectionSlider,
             showUpcomingClassesSlider,
-            handleUpcomingClassPress,
             buildings,
             handleInternalSearch,
             closeSearchBuilding,

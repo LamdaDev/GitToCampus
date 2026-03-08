@@ -319,7 +319,7 @@ describe('googleCalendarAuth', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  test('requests upcoming classes within the current local day window', async () => {
+  test('requests upcoming classes within the configured lookahead window', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 8, 14, 10, 30, 0, 0));
 
@@ -350,14 +350,14 @@ describe('googleCalendarAuth', () => {
         now.getMonth(),
         now.getDate(),
       ).toISOString();
-      const expectedStartOfTomorrow = new Date(
+      const expectedEndOfLookaheadWindow = new Date(
         now.getFullYear(),
         now.getMonth(),
-        now.getDate() + 1,
+        now.getDate() + 31,
       ).toISOString();
 
       expect(timeMin).toBe(expectedStartOfDay);
-      expect(timeMax).toBe(expectedStartOfTomorrow);
+      expect(timeMax).toBe(expectedEndOfLookaheadWindow);
     } finally {
       jest.useRealTimers();
     }
@@ -523,6 +523,54 @@ describe('googleCalendarAuth', () => {
       expect(result).toEqual({
         type: 'success',
         events: [],
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('includes the next-day class when there are no remaining classes today', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 2, 8, 16, 42, 0, 0));
+
+    try {
+      await saveGoogleCalendarSession({
+        accessToken: 'calendar-token',
+        tokenType: 'Bearer',
+        scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'next-day-class',
+              summary: 'COMP 346 LEC',
+              location: 'Hall Building 761',
+              start: { dateTime: new Date(2026, 2, 9, 9, 15, 0, 0).toISOString() },
+              end: { dateTime: new Date(2026, 2, 9, 10, 30, 0, 0).toISOString() },
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+      expect(result).toEqual({
+        type: 'success',
+        events: [
+          {
+            id: 'next-day-class',
+            calendarId: 'calendar-1',
+            title: 'COMP 346 LEC',
+            location: 'Hall Building 761',
+            startsAt: new Date(2026, 2, 9, 9, 15, 0, 0).getTime(),
+            endsAt: new Date(2026, 2, 9, 10, 30, 0, 0).getTime(),
+          },
+        ],
       });
     } finally {
       jest.useRealTimers();
