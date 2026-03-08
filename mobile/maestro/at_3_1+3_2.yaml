@@ -1,0 +1,18 @@
+appId: host.exp.exponent
+---
+- tapOn: Connect Google Calendar
+- doubleTapOn:
+    point: 6%,35%
+- assertVisible: GitToCampus already has some access
+- swipe:
+    from:
+      text: Sign in - Google Accounts
+    direction: UP
+- tapOn: Continue
+- assertVisible: Team Git Good
+- tapOn: Team Git Good
+- tapOn:
+    text: 
+    index: 1
+- tapOn: Done
+- assertVisible: User Interface Design
