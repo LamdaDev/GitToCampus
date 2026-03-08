@@ -43,9 +43,63 @@ export const upcomingClassesSliderStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  nextClassSummaryCard: {
+    backgroundColor: 'rgba(25, 8, 12, 0.72)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    paddingHorizontal: 11,
+    paddingVertical: 10,
+    marginBottom: 10,
+    gap: 3,
+  },
+  nextClassSummaryCardUrgent: {
+    borderColor: 'rgba(255, 165, 0, 0.7)',
+    backgroundColor: 'rgba(87, 34, 8, 0.65)',
+  },
+  nextClassSummaryHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  nextClassSummaryLabel: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  nextClassTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  nextClassMeta: {
+    color: 'rgba(255,255,255,0.86)',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  urgencyBadge: {
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 183, 0, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 183, 0, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  urgencyBadgeText: {
+    color: '#FFD775',
+    fontSize: 11,
+    fontWeight: '700',
+  },
   contentArea: {
     flex: 1,
     minHeight: 0,
+  },
+  routeGeneratingWrap: {
+    marginBottom: 10,
+    alignItems: 'center',
+    gap: 6,
   },
   eventsViewport: {
     width: '100%',
@@ -102,6 +156,10 @@ export const upcomingClassesSliderStyles = StyleSheet.create({
     color: '#ffd8ab',
     fontSize: 13,
     textAlign: 'center',
+  },
+  actionErrorWrap: {
+    gap: 8,
+    marginBottom: 8,
   },
   retryButton: {
     alignSelf: 'center',
