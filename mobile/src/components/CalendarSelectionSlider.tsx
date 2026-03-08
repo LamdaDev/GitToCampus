@@ -8,6 +8,18 @@ import {
   type GoogleCalendarListItem,
 } from '../services/googleCalendarAuth';
 
+const logCalendarSelectionDebug = (
+  message: string,
+  details?: Record<string, unknown> | undefined,
+) => {
+  if (!__DEV__) return;
+  if (details) {
+    console.info(`[CalendarSelectionSlider] ${message}`, details);
+    return;
+  }
+  console.info(`[CalendarSelectionSlider] ${message}`);
+};
+
 type CalendarSelectionSliderProps = {
   initialSelectedCalendarIds?: string[];
   onDone?: (selectedCalendarIds: string[]) => void;
@@ -25,21 +37,50 @@ export default function CalendarSelectionSlider({
   const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>(
     initialSelectedCalendarIds,
   );
+  const normalizedInitialSelectionKey = initialSelectedCalendarIds.join('|');
+
+  useEffect(() => {
+    const normalizedSelection = [...new Set(initialSelectedCalendarIds)];
+    logCalendarSelectionDebug('Syncing initial selected calendars', {
+      initialSelectedCalendarIds,
+      normalizedSelection,
+    });
+    setSelectedCalendarIds((previousIds) => {
+      if (
+        previousIds.length === normalizedSelection.length &&
+        previousIds.every((calendarId, index) => calendarId === normalizedSelection[index])
+      ) {
+        return previousIds;
+      }
+
+      return normalizedSelection;
+    });
+  }, [normalizedInitialSelectionKey]);
 
   const loadCalendarList = useCallback(async () => {
     setIsCalendarListLoading(true);
     setCalendarListError(null);
+    logCalendarSelectionDebug('Loading available calendars');
 
     const result = await fetchGoogleCalendarListAsync();
     setIsCalendarListLoading(false);
 
     if (result.type === 'error') {
+      logCalendarSelectionDebug('Failed to load calendars', { message: result.message });
       setAvailableCalendars([]);
       setSelectedCalendarIds([]);
       setCalendarListError(result.message);
       return;
     }
 
+    logCalendarSelectionDebug('Loaded calendars successfully', {
+      calendarCount: result.calendars.length,
+      calendars: result.calendars.map((calendar) => ({
+        id: calendar.id,
+        name: calendar.name,
+        isPrimary: calendar.isPrimary,
+      })),
+    });
     setAvailableCalendars(result.calendars);
     setSelectedCalendarIds((previousIds) => {
       const availableCalendarIds = new Set(result.calendars.map((calendar) => calendar.id));
@@ -47,20 +88,35 @@ export default function CalendarSelectionSlider({
         availableCalendarIds.has(calendarId),
       );
       if (retainedSelection.length > 0) {
+        logCalendarSelectionDebug('Retaining previous selected calendars', {
+          previousIds,
+          retainedSelection,
+        });
         return retainedSelection;
       }
 
       const primaryCalendar = result.calendars.find((calendar) => calendar.isPrimary);
-      return primaryCalendar ? [primaryCalendar.id] : [];
+      const fallbackSelection = primaryCalendar ? [primaryCalendar.id] : [];
+      logCalendarSelectionDebug('Defaulting selected calendar after load', {
+        previousIds,
+        fallbackSelection,
+      });
+      return fallbackSelection;
     });
   }, []);
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
-    setSelectedCalendarIds((previousIds) =>
-      previousIds.includes(calendarId)
+    setSelectedCalendarIds((previousIds) => {
+      const nextIds = previousIds.includes(calendarId)
         ? previousIds.filter((id) => id !== calendarId)
-        : [...previousIds, calendarId],
-    );
+        : [...previousIds, calendarId];
+      logCalendarSelectionDebug('Toggled calendar selection', {
+        calendarId,
+        previousIds,
+        nextIds,
+      });
+      return nextIds;
+    });
   }, []);
 
   useEffect(() => {
@@ -98,7 +154,12 @@ export default function CalendarSelectionSlider({
       <TouchableOpacity
         testID="calendar-selection-done-button"
         style={calendarSelectionSliderStyles.doneButton}
-        onPress={() => onDone?.(selectedCalendarIds)}
+        onPress={() => {
+          logCalendarSelectionDebug('Submitting selected calendars', {
+            selectedCalendarIds,
+          });
+          onDone?.(selectedCalendarIds);
+        }}
       >
         <Text style={calendarSelectionSliderStyles.doneButtonText}>Done</Text>
       </TouchableOpacity>

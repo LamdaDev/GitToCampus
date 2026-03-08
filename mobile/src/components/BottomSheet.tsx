@@ -36,6 +36,11 @@ import { decodePolyline } from '../utils/polyline';
 import { formatEta } from '../utils/directionsFormatting';
 import { buildShuttlePlan } from '../services/shuttlePlanner';
 import type { ShuttlePlan } from '../types/Shuttle';
+import type { GoogleCalendarEventItem } from '../services/googleCalendarAuth';
+import {
+  getManualStartReasonMessage,
+  resolveCalendarRouteLocation,
+} from '../utils/calendarRouteLocation';
 
 import SearchSheet from './SearchSheet';
 import CalendarSelectionSlider from './CalendarSelectionSlider';
@@ -58,6 +63,18 @@ const SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT = '92%';
 
 const METERS_PER_DEGREE_LAT = 110540;
 const METERS_PER_DEGREE_LON_AT_EQUATOR = 111320;
+
+const logBottomSheetCalendarDebug = (
+  message: string,
+  details?: Record<string, unknown> | undefined,
+) => {
+  if (!__DEV__) return;
+  if (details) {
+    console.info(`[BottomSheet] ${message}`, details);
+    return;
+  }
+  console.info(`[BottomSheet] ${message}`);
+};
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
@@ -268,7 +285,7 @@ const getRouteLoadDecision = ({
   destinationBuildingId?: string;
 }): RouteLoadDecision => {
   if (!isRouteUiVisible(activeView)) {
-    return { action: 'reset' };
+    return { action: 'reset', message: null };
   }
 
   if (activeView !== 'directions') {
@@ -276,11 +293,15 @@ const getRouteLoadDecision = ({
   }
 
   if (travelMode === 'shuttle' && !shuttlePickupCoords) {
-    return { action: 'reset' };
+    return { action: 'reset', message: null };
   }
 
-  if (!startCoords || !routeDestinationCoords) {
-    return { action: 'reset' };
+  if (!routeDestinationCoords) {
+    return { action: 'reset', message: 'Set a destination to continue.' };
+  }
+
+  if (!startCoords) {
+    return { action: 'reset', message: 'Set your start location to continue.' };
   }
 
   if (startBuildingId && destinationBuildingId && startBuildingId === destinationBuildingId) {
@@ -318,6 +339,21 @@ const getRouteErrorMessage = (error: unknown): string => {
     if (error.code === 'NO_ROUTE') {
       return 'No route found for this start and destination.';
     }
+    if (error.code === 'NETWORK_ERROR') {
+      return 'Network issue while loading route. Check connection and retry.';
+    }
+    if (error.code === 'OVER_QUERY_LIMIT') {
+      return 'Routing service limit reached. Please wait and retry.';
+    }
+    if (error.code === 'REQUEST_DENIED') {
+      return 'Routing request was denied by Google Directions API.';
+    }
+    if (error.code === 'INVALID_REQUEST') {
+      return 'Routing request was invalid. Update start/destination and retry.';
+    }
+    if (error.code === 'API_ERROR') {
+      return 'Google Directions API is temporarily unavailable. Please retry.';
+    }
   }
 
   return 'Unable to load route. Please try again.';
@@ -332,6 +368,7 @@ const renderBottomSheetContent = ({
   handleCloseUpcomingClassesSlider,
   handleCloseCalendarSelectionSlider,
   showUpcomingClassesSlider,
+  handleUpcomingClassPress,
   buildings,
   handleInternalSearch,
   closeSearchBuilding,
@@ -362,6 +399,7 @@ const renderBottomSheetContent = ({
   setTravelMode,
   handleDirectionsGo,
   showShuttleSchedule,
+  handleRetryRoute,
 }: {
   isSearchActive: boolean;
   calendarSliderMode: 'selection' | 'events' | null;
@@ -371,11 +409,12 @@ const renderBottomSheetContent = ({
   handleCloseUpcomingClassesSlider: () => void;
   handleCloseCalendarSelectionSlider: () => void;
   showUpcomingClassesSlider: (calendarIds: string[]) => void;
+  handleUpcomingClassPress: (event: GoogleCalendarEventItem) => Promise<string | null>;
   buildings: BuildingShape[];
   handleInternalSearch: (building: BuildingShape) => void;
   closeSearchBuilding: (building: BuildingShape) => void;
   openCalendarSelectionAfterConnect: () => void;
-  handleCalendarGoFromSearch: () => void;
+  handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
   activeView: ViewType;
   selectedBuilding: BuildingShape | null;
   closeSheet: () => void;
@@ -405,6 +444,7 @@ const renderBottomSheetContent = ({
   setTravelMode: React.Dispatch<React.SetStateAction<RoutePlannerMode>>;
   handleDirectionsGo: (mode: RoutePlannerMode) => void;
   showShuttleSchedule: () => void;
+  handleRetryRoute: () => void;
 }) => {
   if (isSearchActive) {
     if (calendarSliderMode === 'events' && !isInternalSearch) {
@@ -413,6 +453,7 @@ const renderBottomSheetContent = ({
           selectedCalendarIds={selectedCalendarIds}
           onReselectCalendars={handleReselectCalendars}
           onClose={handleCloseUpcomingClassesSlider}
+          onPressEvent={handleUpcomingClassPress}
         />
       );
     }
@@ -550,6 +591,7 @@ const renderBottomSheetContent = ({
       onTravelModeChange={setTravelMode}
       onPressGo={handleDirectionsGo}
       onPressShuttleSchedule={showShuttleSchedule}
+      onRetryRoute={handleRetryRoute}
     />
   );
 };
@@ -592,6 +634,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [routeEncodedPolyline, setRouteEncodedPolyline] = useState<string>('');
     const [navigationProgressMeters, setNavigationProgressMeters] = useState(0);
     const [routeTransitSteps, setRouteTransitSteps] = useState<TransitInstruction[]>([]);
+    const [routeRetryNonce, setRouteRetryNonce] = useState(0);
     const [travelMode, setTravelMode] = useState<RoutePlannerMode>('walking');
     const [shuttlePlan, setShuttlePlan] = useState<ShuttlePlan | null>(null);
     const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
@@ -615,6 +658,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       },
       [passOutdoorRoute],
     );
+
+    const handleRetryRoute = useCallback(() => {
+      setRouteRetryNonce((currentValue) => currentValue + 1);
+    }, []);
 
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = (index: number = 0) => {
@@ -675,6 +722,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const openCalendarSelectionSlider = useCallback(
       (resetSelection: boolean = false) => {
+        logBottomSheetCalendarDebug('Opening calendar selection slider', {
+          resetSelection,
+          selectedCalendarIds,
+        });
         if (resetSelection) {
           setSelectedCalendarIds([]);
         }
@@ -683,11 +734,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
         });
       },
-      [snapToKnownPosition],
+      [selectedCalendarIds, snapToKnownPosition],
     );
 
     const showUpcomingClassesSlider = useCallback(
       (calendarIds: string[]) => {
+        logBottomSheetCalendarDebug('Opening upcoming classes slider', {
+          calendarIds,
+          uniqueCalendarIds: [...new Set(calendarIds)],
+        });
         setSelectedCalendarIds(calendarIds);
         setCalendarSliderMode('events');
         requestAnimationFrame(() => {
@@ -701,14 +756,23 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       openCalendarSelectionSlider(true);
     }, [openCalendarSelectionSlider]);
 
-    const handleCalendarGoFromSearch = useCallback(() => {
+    const handleCalendarGoFromSearch = (nextClassEvent: GoogleCalendarEventItem | null) => {
+      logBottomSheetCalendarDebug('Pressed calendar GO from search', {
+        hasNextClassEvent: Boolean(nextClassEvent),
+        selectedCalendarIds,
+      });
+      if (nextClassEvent) {
+        void handleUpcomingClassPress(nextClassEvent);
+        return;
+      }
+
       if (selectedCalendarIds.length > 0) {
         showUpcomingClassesSlider(selectedCalendarIds);
         return;
       }
 
       openCalendarSelectionSlider();
-    }, [openCalendarSelectionSlider, selectedCalendarIds, showUpcomingClassesSlider]);
+    };
 
     const handleReselectCalendars = useCallback(() => {
       openCalendarSelectionSlider();
@@ -792,6 +856,70 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onExitSearch();
       snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
     };
+
+    const handleUpcomingClassPress = useCallback(
+      async (event: GoogleCalendarEventItem): Promise<string | null> => {
+        try {
+          logBottomSheetCalendarDebug('Generating route for upcoming class event', {
+            eventId: event.id,
+            calendarId: event.calendarId,
+            title: event.title,
+            location: event.location,
+            startsAt: new Date(event.startsAt).toISOString(),
+            endsAt: typeof event.endsAt === 'number' ? new Date(event.endsAt).toISOString() : null,
+          });
+          const resolved = await resolveCalendarRouteLocation(event.location);
+          if (resolved.type === 'error') {
+            logBottomSheetCalendarDebug('Failed to resolve route location', {
+              eventId: event.id,
+              message: resolved.message,
+            });
+            return resolved.message;
+          }
+
+          const { destinationBuilding: resolvedDestinationBuilding, startPoint } = resolved.value;
+          passSelectedBuilding(resolvedDestinationBuilding);
+          setDestinationBuilding(resolvedDestinationBuilding);
+          setTravelMode('walking');
+          setCalendarSliderMode(null);
+          setSearchFor(null);
+          onExitSearch();
+          setActiveView('directions');
+
+          if (startPoint.type === 'automatic') {
+            setRouteStartSource('current');
+            setRouteErrorMessage(null);
+            if (startPoint.building) {
+              setStartBuilding(startPoint.building);
+              setStartLocationSnapshot(null);
+            } else {
+              setStartBuilding(null);
+              setStartLocationSnapshot(startPoint.coordinates);
+            }
+          } else {
+            setStartBuilding(null);
+            setStartLocationSnapshot(null);
+            setRouteStartSource('manual');
+            setRouteErrorMessage(getManualStartReasonMessage(startPoint.reason));
+          }
+
+          snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+          logBottomSheetCalendarDebug('Route context prepared from upcoming class', {
+            eventId: event.id,
+            destinationBuildingId: resolvedDestinationBuilding.id,
+            startPointType: startPoint.type,
+            startPointBuildingId: startPoint.type === 'automatic' ? startPoint.building?.id : null,
+          });
+          return null;
+        } catch {
+          logBottomSheetCalendarDebug('Route generation failed for upcoming class event', {
+            eventId: event.id,
+          });
+          return 'Could not generate route—try again';
+        }
+      },
+      [onExitSearch, passSelectedBuilding, snapToDirectionsPanel],
+    );
 
     const handleInternalSearch = (building: BuildingShape) => {
       passSelectedBuilding(building);
@@ -1002,6 +1130,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       resetRouteState,
       routeDestinationCoords,
       routeRequestMode,
+      routeRetryNonce,
       shuttlePickupCoords,
       startBuilding?.id,
       startCoords,
@@ -1062,6 +1191,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             handleCloseUpcomingClassesSlider,
             handleCloseCalendarSelectionSlider,
             showUpcomingClassesSlider,
+            handleUpcomingClassPress,
             buildings,
             handleInternalSearch,
             closeSearchBuilding,
@@ -1092,6 +1222,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             setTravelMode,
             handleDirectionsGo,
             showShuttleSchedule,
+            handleRetryRoute,
           })}
         </BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
