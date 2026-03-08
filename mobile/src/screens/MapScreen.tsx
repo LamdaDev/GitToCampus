@@ -2,6 +2,7 @@ import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } fr
 import { useWindowDimensions, View, Text } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
+import * as Linking from 'expo-linking';
 import type { SharedValue } from 'react-native-reanimated';
 
 import type { Campus } from '../types/Campus';
@@ -152,6 +153,23 @@ const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
   longitude: pos.coords.longitude,
 });
 
+const isIosSimulatorInitialFixError = (error: unknown) => {
+  if (Platform.OS !== 'ios') return false;
+  if (!(error instanceof Error)) return false;
+  return error.message.includes('kCLErrorDomain error 0');
+};
+
+const getInitialLocationWarningMessage = (error: unknown) => {
+  if (isIosSimulatorInitialFixError(error)) {
+    return (
+      'Unable to fetch initial location fix. On iOS Simulator, set Features > Location ' +
+      'to Apple/City Run/Custom Location and retry.'
+    );
+  }
+
+  return 'Unable to fetch initial location fix';
+};
+
 const getRouteFitBottomPadding = (
   windowHeight: number,
   bottomSheetTop: number | null | undefined,
@@ -191,15 +209,65 @@ const flattenBuildingsByCampus = (
 const watchUserLocation = async (
   onPositionUpdate: (coords: UserCoords) => void,
 ): Promise<Location.LocationSubscription | null> => {
-  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (typeof Location.hasServicesEnabledAsync === 'function') {
+    try {
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      if (servicesEnabled === false) {
+        console.warn(
+          'Location services are disabled. Enable Location Services in iOS Settings or Simulator.',
+        );
+        return null;
+      }
+    } catch {
+      // If service checks fail, continue with permission and watch requests.
+    }
+  }
+
+  const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') {
+    if (!canAskAgain) {
+      await Linking.openSettings();
+    }
     console.warn('Location permission denied');
     return null;
   }
 
-  return Location.watchPositionAsync(LOCATION_OPTIONS, (pos) => {
-    onPositionUpdate(toUserCoords(pos));
-  });
+  let subscription: Location.LocationSubscription | null = null;
+  try {
+    subscription = await Location.watchPositionAsync(LOCATION_OPTIONS, (pos) => {
+      onPositionUpdate(toUserCoords(pos));
+    });
+  } catch (error) {
+    console.warn('Unable to start location tracking', error);
+  }
+
+  if (typeof Location.getCurrentPositionAsync === 'function') {
+    try {
+      const initialPosition = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      onPositionUpdate(toUserCoords(initialPosition));
+    } catch (error) {
+      if (typeof Location.getLastKnownPositionAsync === 'function') {
+        try {
+          const lastKnownPosition = await Location.getLastKnownPositionAsync({
+            maxAge: 60 * 60 * 1000,
+          });
+          if (lastKnownPosition) {
+            onPositionUpdate(toUserCoords(lastKnownPosition));
+          } else {
+            console.warn(getInitialLocationWarningMessage(error), error);
+          }
+        } catch {
+          console.warn(getInitialLocationWarningMessage(error), error);
+        }
+      } else {
+        console.warn(getInitialLocationWarningMessage(error), error);
+      }
+    }
+  }
+
+  return subscription;
 };
 
 const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]) => {
