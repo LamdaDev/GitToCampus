@@ -1,0 +1,10 @@
+appId: host.exp.exponent
+---
+- assertVisible: User Interface Design
+- assertVisible: Hall Building 435
+- tapOn: 
+- tapOn: Reselect Calendars
+- tapOn: , Team Git Good
+- tapOn: 
+- tapOn: Done
+- assertVisible: No upcoming classes were found for your selected calendars.
