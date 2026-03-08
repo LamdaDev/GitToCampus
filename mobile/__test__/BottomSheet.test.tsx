@@ -178,6 +178,7 @@ jest.mock('../src/components/DirectionDetails', () => {
     routeDistanceText,
     selectedTravelMode,
     shuttlePlan,
+    onRetryRoute,
   }: any) =>
     (() => {
       const [selectedMode, setSelectedMode] = React.useState(
@@ -217,6 +218,9 @@ jest.mock('../src/components/DirectionDetails', () => {
           <Text testID="cross-campus-state">{isCrossCampusRoute ? 'true' : 'false'}</Text>
           <Text testID="route-loading-state">{isRouteLoading ? 'true' : 'false'}</Text>
           <Text testID="route-error-state">{routeErrorMessage ?? 'none'}</Text>
+          <TouchableOpacity testID="route-retry-button" onPress={onRetryRoute}>
+            <Text>Retry Route</Text>
+          </TouchableOpacity>
           <Text testID="route-summary-state">
             {routeDurationText && routeDistanceText
               ? `${routeDurationText} - ${routeDistanceText}`
@@ -1327,6 +1331,74 @@ describe('BottomSheet', () => {
 
     warnSpy.mockRestore();
   });
+
+  test('shows quota error when directions service reports OVER_QUERY_LIMIT', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(
+      new DirectionsServiceError('OVER_QUERY_LIMIT', 'Quota exceeded'),
+    );
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-error-state').props.children).toBe(
+        'Routing service limit reached. Please wait and retry.',
+      );
+    });
+
+    warnSpy.mockRestore();
+  });
+
+  test('retries route request after an error when retry is pressed', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    directionsServiceMock.fetchOutdoorDirections
+      .mockRejectedValueOnce(new DirectionsServiceError('NETWORK_ERROR', 'Network down'))
+      .mockResolvedValueOnce({
+        polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+        distanceMeters: 1200,
+        distanceText: '1.2 km',
+        durationSeconds: 840,
+        durationText: '14 mins',
+        bounds: null,
+      });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-error-state').props.children).toBe(
+        'Network issue while loading route. Check connection and retry.',
+      );
+    });
+
+    fireEvent.press(getByTestId('route-retry-button'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThanOrEqual(
+        2,
+      );
+      expect(getByTestId('route-summary-state').props.children).toContain('14 mins');
+    });
+
+    warnSpy.mockRestore();
+  }, 15000);
 
   test('walking GO opens navigation summary and shows End Navigation button', async () => {
     directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({

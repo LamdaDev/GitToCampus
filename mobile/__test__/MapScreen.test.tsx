@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as Location from 'expo-location';
+import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import * as ReactNative from 'react-native';
 import { Polygon } from 'react-native-maps';
@@ -70,6 +71,10 @@ jest.mock('../src/utils/buildingsRepository', () => ({
   findBuildingAt: jest.fn(),
 }));
 
+jest.mock('expo-linking', () => ({
+  openSettings: jest.fn(),
+}));
+
 jest.mock('../src/utils/geoJson', () => {
   const actual = jest.requireActual('../src/utils/geoJson');
   return {
@@ -129,6 +134,7 @@ const mockBuildings: BuildingShape[] = [
 
 describe('MapScreen', () => {
   const locationMock = Location as jest.Mocked<typeof Location>;
+  const linkingMock = Linking as jest.Mocked<typeof Linking>;
   const repoMock = buildingsRepository as jest.Mocked<typeof buildingsRepository>;
   const geoJsonMock = geoJson as jest.Mocked<typeof geoJson>;
 
@@ -163,6 +169,12 @@ describe('MapScreen', () => {
       granted: true,
       canAskAgain: true,
       expires: 'never',
+    } as any);
+    (locationMock as any).getCurrentPositionAsync = jest.fn().mockResolvedValue({
+      coords: {
+        latitude: 45.5,
+        longitude: -73.57,
+      },
     } as any);
     locationMock.watchPositionAsync.mockResolvedValue({
       remove: jest.fn(),
@@ -373,6 +385,33 @@ describe('MapScreen', () => {
 
     await waitFor(() => {
       expect(locationMock.requestForegroundPermissionsAsync).toHaveBeenCalledTimes(1);
+    });
+
+    expect(locationMock.watchPositionAsync).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith('Location permission denied');
+    warnSpy.mockRestore();
+  });
+
+  test('opens settings when permission is denied and cannot ask again', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
+      status: 'denied',
+      granted: false,
+      canAskAgain: false,
+      expires: 'never',
+    } as any);
+
+    render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(linkingMock.openSettings).toHaveBeenCalledTimes(1);
     });
 
     expect(locationMock.watchPositionAsync).not.toHaveBeenCalled();

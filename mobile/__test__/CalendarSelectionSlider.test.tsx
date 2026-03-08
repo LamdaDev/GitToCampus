@@ -74,6 +74,27 @@ describe('CalendarSelectionSlider', () => {
     expect(getAllByText('checkbox-outline')).toHaveLength(1);
   });
 
+  test('keeps only provided selected calendars checked when reopened', async () => {
+    fetchGoogleCalendarListMock.mockResolvedValueOnce({
+      type: 'success',
+      calendars: mockGoogleCalendars,
+    });
+
+    const onDone = jest.fn();
+    const { getByTestId, findByTestId, getAllByText } = render(
+      <CalendarSelectionSlider
+        initialSelectedCalendarIds={['winter-calendar']}
+        onDone={onDone}
+      />,
+    );
+
+    expect(await findByTestId('calendar-option-winter-calendar')).toBeTruthy();
+    expect(getAllByText('checkbox-outline')).toHaveLength(1);
+
+    fireEvent.press(getByTestId('calendar-selection-done-button'));
+    expect(onDone).toHaveBeenCalledWith(['winter-calendar']);
+  });
+
   test('shows error and retries loading', async () => {
     fetchGoogleCalendarListMock
       .mockResolvedValueOnce({
