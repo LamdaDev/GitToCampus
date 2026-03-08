@@ -9,6 +9,7 @@ import type { BuildingShape } from '../src/types/BuildingShape';
 import * as buildingsRepository from '../src/utils/buildingsRepository';
 import * as geoJson from '../src/utils/geoJson';
 import { getCampusRegion } from '../src/constants/campuses';
+import { POLYGON_THEME } from '../src/styles/MapScreen.styles';
 
 const mockPassSelectedBuilding = jest.fn();
 const mockPassUserLocation = jest.fn();
@@ -203,6 +204,55 @@ describe('MapScreen', () => {
     expect(mockOnMapPress).toHaveBeenCalledTimes(1);
   });
 
+  test('map background press clears manual selection and marker', async () => {
+    const { UNSAFE_getAllByType, getByTestId, queryAllByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    fireEvent(UNSAFE_getAllByType(Polygon)[1], 'press');
+
+    await waitFor(() => {
+      expect(queryAllByTestId('map-marker')).toHaveLength(1);
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    fireEvent.press(getByTestId('campus-map'));
+
+    await waitFor(() => {
+      expect(queryAllByTestId('map-marker')).toHaveLength(0);
+      expect(mockPassSelectedBuilding).toHaveBeenLastCalledWith(null);
+    });
+  });
+
+  test('ignores immediate map press after polygon press to keep selected building', async () => {
+    const { UNSAFE_getAllByType, getByTestId, queryAllByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        onMapPress={mockOnMapPress}
+      />,
+    );
+
+    fireEvent(UNSAFE_getAllByType(Polygon)[1], 'press');
+    fireEvent.press(getByTestId('campus-map'));
+
+    await waitFor(() => {
+      expect(mockPassSelectedBuilding).toHaveBeenCalledWith(mockBuildings[1]);
+      expect(mockOnMapPress).not.toHaveBeenCalled();
+      expect(queryAllByTestId('map-marker')).toHaveLength(1);
+    });
+  });
+
   test('calls onOpenCalendar when the calendar control is pressed', async () => {
     const { getByLabelText } = render(
       <MapScreen
@@ -363,6 +413,40 @@ describe('MapScreen', () => {
     });
   });
 
+  test('highlights current building polygon when location enters a building', async () => {
+    let locationCallback: ((value: any) => void) | undefined;
+    repoMock.findBuildingAt.mockReturnValue(mockBuildings[1]);
+    locationMock.watchPositionAsync.mockImplementationOnce(async (_opts: any, cb: any) => {
+      locationCallback = cb;
+      return { remove: jest.fn() } as any;
+    });
+
+    const { UNSAFE_getAllByType } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(locationMock.watchPositionAsync).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      locationCallback?.({ coords: { latitude: 45.52, longitude: -73.59 } });
+    });
+
+    await waitFor(() => {
+      const polygons = UNSAFE_getAllByType(Polygon);
+      const loyolaPolygon = polygons[1];
+      expect(loyolaPolygon.props.fillColor).toBe(POLYGON_THEME.LOYOLA.currentFill);
+      expect(loyolaPolygon.props.strokeColor).toBe(POLYGON_THEME.LOYOLA.currentStroke);
+      expect(loyolaPolygon.props.strokeWidth).toBe(POLYGON_THEME.LOYOLA.currentStrokeWidth);
+    });
+  });
+
   test('does not clear manually selected building marker when user is not inside a building', async () => {
     let locationCallback: ((value: any) => void) | undefined;
     repoMock.findBuildingAt.mockReturnValue(undefined);
@@ -458,6 +542,45 @@ describe('MapScreen', () => {
     expect(mockAnimateToRegion).not.toHaveBeenCalled();
   });
 
+  test('clears pending polygon press guard timeout on unmount', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    const { UNSAFE_getAllByType, unmount } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    fireEvent(UNSAFE_getAllByType(Polygon)[0], 'press');
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    clearTimeoutSpy.mockRestore();
+  });
+
+  test('replaces pending polygon press guard timeout on rapid consecutive polygon presses', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    const { UNSAFE_getAllByType } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    const polygons = UNSAFE_getAllByType(Polygon);
+    fireEvent(polygons[0], 'press');
+    fireEvent(polygons[1], 'press');
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    clearTimeoutSpy.mockRestore();
+  });
+
   test('recenter animates to user location when available', async () => {
     let locationCallback: ((value: any) => void) | undefined;
     locationMock.watchPositionAsync.mockImplementationOnce(async (_opts: any, cb: any) => {
@@ -538,6 +661,40 @@ describe('MapScreen', () => {
     expect(remove).toHaveBeenCalledTimes(1);
   });
 
+  test('removes late location subscription when component unmounts before watch resolves', async () => {
+    const remove = jest.fn();
+    let resolveWatchSubscription: ((subscription: { remove: jest.Mock }) => void) | null = null;
+
+    locationMock.watchPositionAsync.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveWatchSubscription = resolve as (subscription: { remove: jest.Mock }) => void;
+        }) as any,
+    );
+
+    const { unmount } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(locationMock.watchPositionAsync).toHaveBeenCalledTimes(1);
+    });
+
+    unmount();
+
+    await act(async () => {
+      resolveWatchSubscription?.({ remove });
+      await Promise.resolve();
+    });
+
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+
   test('renders route polyline with start and end markers when outdoorRoute is provided', async () => {
     const { getByTestId } = render(
       <MapScreen
@@ -558,9 +715,7 @@ describe('MapScreen', () => {
       expect(routePolyline).toBeTruthy();
       expect(routePolyline.props.strokeColor).toBe('#0472f8');
       expect(routePolyline.props.strokeWidth).toBe(6);
-      if (Platform.OS === 'ios') {
-        expect(routePolyline.props.strokeColors).toEqual(['#0472f8']);
-      }
+      expect(routePolyline.props.strokeColors).toBeUndefined();
       expect(getByTestId('route-start-marker').props.coordinate).toEqual({
         latitude: 45.5,
         longitude: -73.57,
@@ -579,7 +734,7 @@ describe('MapScreen', () => {
     });
   });
 
-  test('renders dotted route polyline when route requires walking', async () => {
+  test('renders dashed route polyline when route requires walking', async () => {
     const { getByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
@@ -597,11 +752,12 @@ describe('MapScreen', () => {
 
     await waitFor(() => {
       const routePolyline = getByTestId('route-polyline');
-      expect(routePolyline.props.lineDashPattern).toEqual([2, 10]);
+      expect(routePolyline.props.lineDashPattern).toEqual([12, 8]);
+      expect(routePolyline.props.lineCap).toBe('butt');
     });
   });
 
-  test('renders mixed route segments with dotted walking and solid transit polylines', async () => {
+  test('renders mixed route segments with dashed walking and solid transit polylines', async () => {
     const { getByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
@@ -627,8 +783,63 @@ describe('MapScreen', () => {
     );
 
     await waitFor(() => {
-      expect(getByTestId('route-polyline').props.lineDashPattern).toEqual([2, 10]);
+      expect(getByTestId('route-polyline').props.lineDashPattern).toEqual([12, 8]);
+      expect(getByTestId('route-polyline').props.lineCap).toBe('butt');
       expect(getByTestId('route-polyline-segment-1').props.lineDashPattern).toBeUndefined();
+      expect(getByTestId('route-polyline-segment-1').props.lineCap).toBe('round');
+    });
+  });
+
+  test('switches route polyline style cleanly between walking and driving', async () => {
+    const route = {
+      encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      start: { latitude: 45.5, longitude: -73.57 },
+      destination: { latitude: 45.49, longitude: -73.58 },
+    };
+
+    const { getByTestId, rerender } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{ ...route, isWalkingRoute: true }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline').props.lineDashPattern).toEqual([12, 8]);
+      expect(getByTestId('route-polyline').props.lineCap).toBe('butt');
+    });
+
+    rerender(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{ ...route, isWalkingRoute: false }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline').props.lineDashPattern).toBeUndefined();
+      expect(getByTestId('route-polyline').props.lineCap).toBe('round');
+    });
+
+    rerender(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        outdoorRoute={{ ...route, isWalkingRoute: true }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('route-polyline').props.lineDashPattern).toEqual([12, 8]);
+      expect(getByTestId('route-polyline').props.lineCap).toBe('butt');
     });
   });
 
@@ -694,7 +905,7 @@ describe('MapScreen', () => {
       await waitFor(() => {
         const routePolyline = getByTestId('route-polyline');
         expect(routePolyline.props.strokeColor).toBe('#0472f8');
-        expect(routePolyline.props.strokeColors).toEqual(['#0472f8']);
+        expect(routePolyline.props.strokeColors).toBeUndefined();
       });
     } finally {
       restorePlatformOS();

@@ -5,10 +5,13 @@ import { searchBuilding } from '../styles/SearchBuilding.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BuildingShape } from '../types/BuildingShape';
+import type { ListRenderItemInfo } from 'react-native';
 import {
   clearGoogleCalendarSession,
   connectGoogleCalendarAsync,
+  fetchGoogleCalendarEventsAsync,
   getStoredGoogleCalendarSessionState,
+  type GoogleCalendarEventItem,
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
 
@@ -16,28 +19,86 @@ type SearchBarProps = {
   buildings: BuildingShape[];
   onPressBuilding?: (b: BuildingShape) => void;
   onCalendarConnected?: () => void;
+  selectedCalendarIds?: string[];
+  onCalendarGoPress?: () => void;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
+const SEARCH_LIST_INITIAL_NUM_TO_RENDER = 12;
+const SEARCH_LIST_MAX_TO_RENDER_PER_BATCH = 12;
+const SEARCH_LIST_WINDOW_SIZE = 7;
 
 export default function SearchSheet({
   buildings,
   onPressBuilding,
   onCalendarConnected,
+  selectedCalendarIds = [],
+  onCalendarGoPress,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [isCalendarConnecting, setIsCalendarConnecting] = useState(false);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
+  const [nextClassEvent, setNextClassEvent] = useState<GoogleCalendarEventItem | null>(null);
+  const [isNextClassLoading, setIsNextClassLoading] = useState(false);
+
+  const nextClassLabel = useMemo(() => {
+    if (isNextClassLoading) return 'Loading next class...';
+    if (selectedCalendarIds.length === 0) return 'Select calendars to see your next class.';
+    if (!nextClassEvent) return 'No upcoming classes';
+    return nextClassEvent.location ?? 'Location not provided';
+  }, [isNextClassLoading, nextClassEvent, selectedCalendarIds.length]);
+
+  const loadNextClass = useCallback(async () => {
+    if (calendarStatus !== 'connected') {
+      setNextClassEvent(null);
+      return;
+    }
+
+    if (selectedCalendarIds.length === 0) {
+      setNextClassEvent(null);
+      return;
+    }
+
+    setIsNextClassLoading(true);
+    const result = await fetchGoogleCalendarEventsAsync(selectedCalendarIds);
+    setIsNextClassLoading(false);
+
+    if (result.type === 'error') {
+      setNextClassEvent(null);
+      return;
+    }
+
+    const now = Date.now();
+    const next = result.events
+      .filter((event) => Number.isFinite(event.startsAt) && event.startsAt >= now)
+      .sort((a, b) => {
+        if (a.startsAt !== b.startsAt) return a.startsAt - b.startsAt;
+        const calendarComparison = a.calendarId.localeCompare(b.calendarId);
+        if (calendarComparison !== 0) return calendarComparison;
+        return a.id.localeCompare(b.id);
+      })[0];
+
+    setNextClassEvent(next ?? null);
+  }, [calendarStatus, selectedCalendarIds]);
+
+  const searchableBuildings = useMemo(
+    () =>
+      buildings.map((building) => ({
+        building,
+        normalizedSearchText: `${building.name} ${building.address ?? ''}`.toLowerCase(),
+      })),
+    [buildings],
+  );
 
   const filtered = useMemo(() => {
     const searchCriteria = search.trim().toLowerCase();
     if (!searchCriteria) return buildings;
-    return buildings.filter((building) =>
-      (building.name + ' ' + building.address).toLowerCase().includes(searchCriteria),
-    );
-  }, [search, buildings]);
+    return searchableBuildings
+      .filter(({ normalizedSearchText }) => normalizedSearchText.includes(searchCriteria))
+      .map(({ building }) => building);
+  }, [buildings, search, searchableBuildings]);
 
   const markSessionExpired = useCallback(async () => {
     try {
@@ -90,6 +151,10 @@ export default function SearchSheet({
     };
   }, [calendarStatus, markSessionExpired, sessionExpiresAt]);
 
+  useEffect(() => {
+    void loadNextClass();
+  }, [loadNextClass]);
+
   const handleConnectCalendar = useCallback(async () => {
     setIsCalendarConnecting(true);
     setCalendarMessage(null);
@@ -135,23 +200,30 @@ export default function SearchSheet({
     );
   }, [onCalendarConnected]);
 
+  const handleDisconnectCalendar = useCallback(async () => {
+    try {
+      await clearGoogleCalendarSession();
+    } catch {
+      // Force local sign-out UI state even if secure-store cleanup fails.
+    }
+
+    setCalendarStatus('not_connected');
+    setSessionExpiresAt(null);
+    setNextClassEvent(null);
+    setCalendarMessage('Signed out of Google Calendar.');
+  }, []);
+
   const helperText = useMemo(() => {
     if (calendarStatus === 'connected') return '';
     if (calendarStatus === 'expired') return 'Google Calendar session expired.';
     return 'Sign in below to sync your calendar';
   }, [calendarStatus]);
 
-  const statusLabel = useMemo(() => {
-    if (calendarStatus === 'connected') return 'Connected';
-    if (calendarStatus === 'expired') return 'Session expired';
-    if (calendarStatus === 'loading') return 'Checking...';
-    return 'Not connected';
-  }, [calendarStatus]);
-
   const buttonText = useMemo(() => {
     if (isCalendarConnecting) return 'Connecting...';
+    if (calendarStatus === 'connected') return 'Sign Out Google Calendar';
     if (calendarStatus === 'loading') return 'Preparing Google Sign-In';
-    if (calendarStatus === 'connected' || calendarStatus === 'expired') {
+    if (calendarStatus === 'expired') {
       return 'Reconnect Google Calendar';
     }
     return 'Connect Google Calendar';
@@ -161,6 +233,30 @@ export default function SearchSheet({
   const handleSearchChange = useCallback((text?: string) => {
     setSearch(text ?? '');
   }, []);
+  const renderBuildingItem = useCallback(
+    ({ item }: ListRenderItemInfo<BuildingShape>) => (
+      <TouchableOpacity
+        style={searchBuilding.buildingPill}
+        activeOpacity={0.85}
+        onPress={() => onPressBuilding?.(item)}
+      >
+        <View style={searchBuilding.iconWrap}>
+          <Ionicons name="location-outline" size={34} color="#F5F1F2" />
+        </View>
+
+        <View style={searchBuilding.textWrap}>
+          <Text style={searchBuilding.buildingName} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={searchBuilding.buildingAddress} numberOfLines={1}>
+            {'(' + item.shortCode + ') '}
+            {item.address}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    ),
+    [onPressBuilding],
+  );
 
   return (
     <View style={searchBuilding.screen}>
@@ -178,21 +274,36 @@ export default function SearchSheet({
       />
 
       {helperText ? <Text style={searchBuilding.helperText}>{helperText}</Text> : null}
-      <Text
-        testID="calendar-connection-status"
-        style={[
-          searchBuilding.connectionStatus,
-          calendarStatus === 'connected' && searchBuilding.connectionStatusConnected,
-          calendarStatus === 'expired' && searchBuilding.connectionStatusExpired,
-        ]}
-      >
-        Calendar status: {statusLabel}
-      </Text>
+      {calendarStatus === 'connected' ? (
+        <View style={searchBuilding.nextClassCard} testID="next-class-card">
+          <View style={searchBuilding.nextClassTextWrap}>
+            <Text style={searchBuilding.nextClassTitle} numberOfLines={2} ellipsizeMode="tail">
+              {nextClassEvent?.title ?? 'Next Class'}
+            </Text>
+            <Text style={searchBuilding.nextClassMeta} numberOfLines={1}>
+              {nextClassLabel}
+            </Text>
+          </View>
+          <TouchableOpacity
+            testID="next-class-go-button"
+            accessibilityRole="button"
+            style={searchBuilding.nextClassGoButton}
+            disabled={isNextClassLoading}
+            onPress={onCalendarGoPress}
+          >
+            <Text style={searchBuilding.nextClassGoText}>GO</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       <TouchableOpacity
         style={[searchBuilding.signIn, buttonDisabled && searchBuilding.signInDisabled]}
         disabled={buttonDisabled}
-        onPress={() => void handleConnectCalendar()}
+        onPress={() =>
+          void (calendarStatus === 'connected'
+            ? handleDisconnectCalendar()
+            : handleConnectCalendar())
+        }
         testID="connect-google-calendar-button"
       >
         <Ionicons name="logo-google" size={18} color="#111" />
@@ -206,28 +317,13 @@ export default function SearchSheet({
           keyExtractor={(item: BuildingShape) => item.id}
           contentContainerStyle={searchBuilding.listContent}
           showsVerticalScrollIndicator={true}
+          initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
+          maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
+          windowSize={SEARCH_LIST_WINDOW_SIZE}
+          removeClippedSubviews={true}
+          keyboardShouldPersistTaps="handled"
           ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
-          renderItem={({ item }: { item: BuildingShape }) => (
-            <TouchableOpacity
-              style={searchBuilding.buildingPill}
-              activeOpacity={0.85}
-              onPress={() => onPressBuilding?.(item)}
-            >
-              <View style={searchBuilding.iconWrap}>
-                <Ionicons name="location-outline" size={34} color="#F5F1F2" />
-              </View>
-
-              <View style={searchBuilding.textWrap}>
-                <Text style={searchBuilding.buildingName} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <Text style={searchBuilding.buildingAddress} numberOfLines={1}>
-                  {'(' + item.shortCode + ') '}
-                  {item.address}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
+          renderItem={renderBuildingItem}
         />
       </View>
     </View>

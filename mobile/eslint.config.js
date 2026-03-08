@@ -17,6 +17,8 @@ module.exports = [
       'build/**',
       'coverage/**',
       '.expo/**',
+      'android/**',
+      'ios/**',
       // keep ignoring the config file if you want:
       'eslint.config.js',
     ],

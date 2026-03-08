@@ -1,8 +1,7 @@
 import type { DirectionsRequest, DirectionsRoute } from '../types/Directions';
-import { buildDirectionsApiUrl } from './directions/googleDirectionsCore';
 import { getDirectionsStrategy } from './directions/strategies/directionsStrategyFactory';
 
-export { buildDirectionsApiUrl };
+export { buildDirectionsApiUrl } from './directions/googleDirectionsCore';
 
 export const fetchOutdoorDirections = async (
   request: DirectionsRequest,

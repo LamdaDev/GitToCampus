@@ -49,15 +49,15 @@ const App = () => {
     void initializeClarityAsync();
   }, []);
 
-  const toggleSearchBarState = () => {
+  const toggleSearchBarState = useCallback(() => {
     setSheetOpen(false);
-  };
+  }, []);
 
-  const openBuildingDetails = () => {
+  const openBuildingDetails = useCallback(() => {
     setSheetMode('detail');
     setSheetOpen(true);
     bottomSheetRef.current?.open(0);
-  };
+  }, []);
 
   const openSearchBuilding = useCallback(() => {
     setSheetMode('search');
@@ -84,13 +84,19 @@ const App = () => {
     });
   }, [openSearchBuilding]);
 
+  const openCalendarFromMap = useCallback(() => {
+    handleOpenCalendar().catch((error) => {
+      console.warn('Failed to open calendar from map action', error);
+    });
+  }, [handleOpenCalendar]);
+
   const handleMapPress = useCallback(() => {
     bottomSheetRef.current?.closeCalendarSlider();
   }, []);
 
-  const exitSearchMode = () => {
+  const exitSearchMode = useCallback(() => {
     setSheetMode('detail');
-  };
+  }, []);
   /*load once for the searching for specifc buildings
    * buildings gets passed into bottomSheet then into searchBuilding.tsx
    */
@@ -113,13 +119,13 @@ const App = () => {
           passCurrentBuilding={setCurrentBuilding}
           openBottomSheet={openBuildingDetails}
           onMapPress={handleMapPress}
-          onOpenCalendar={() => void handleOpenCalendar()}
+          onOpenCalendar={openCalendarFromMap}
           externalSelectedBuilding={selectedBuilding}
           outdoorRoute={outdoorRoute}
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
         />
 
-        {sheetOpen ? '' : <AppSearchBar openSearch={openSearchBuilding} />}
+        {!sheetOpen ? <AppSearchBar openSearch={openSearchBuilding} /> : null}
 
         <BottomSlider
           userLocation={userLocation}

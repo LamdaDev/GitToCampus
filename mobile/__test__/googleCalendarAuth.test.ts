@@ -136,6 +136,23 @@ describe('googleCalendarAuth', () => {
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledTimes(1);
   });
 
+  test('returns not connected and clears storage for invalid expiresAt shape', async () => {
+    secureStoreMock.__mockStore.set(
+      STORAGE_KEY,
+      JSON.stringify({
+        accessToken: 'token',
+        tokenType: 'Bearer',
+        scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+        expiresAt: null,
+      }),
+    );
+
+    const state = await getStoredGoogleCalendarSessionState();
+
+    expect(state).toEqual({ status: 'not_connected', session: null });
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledTimes(1);
+  });
+
   test('returns not connected when secure store read fails', async () => {
     (SecureStore.getItemAsync as jest.Mock).mockRejectedValueOnce(new Error('read failed'));
 
@@ -225,6 +242,27 @@ describe('googleCalendarAuth', () => {
     });
   });
 
+  test('returns fallback message when calendar list request receives non-auth failure status', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'server-error-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    });
+
+    const result = await fetchGoogleCalendarListAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Unable to load calendar list right now. Please retry.',
+    });
+  });
+
   test('returns fallback message when calendar list request fails', async () => {
     await saveGoogleCalendarSession({
       accessToken: 'live-token',
@@ -240,6 +278,24 @@ describe('googleCalendarAuth', () => {
     expect(result).toEqual({
       type: 'error',
       message: 'Unable to load calendar list right now. Please retry.',
+    });
+  });
+
+  test('returns thrown error message when calendar list request rejects with Error', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'live-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockRejectedValueOnce(new Error('calendar list exploded'));
+
+    const result = await fetchGoogleCalendarListAsync();
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'calendar list exploded',
     });
   });
 
@@ -368,6 +424,27 @@ describe('googleCalendarAuth', () => {
     });
   });
 
+  test('returns fallback message when upcoming classes receives non-auth failure status', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'live-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    });
+
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'Unable to load upcoming classes right now. Please retry.',
+    });
+  });
+
   test('returns fallback message when upcoming classes request fails', async () => {
     await saveGoogleCalendarSession({
       accessToken: 'live-token',
@@ -386,6 +463,24 @@ describe('googleCalendarAuth', () => {
     });
   });
 
+  test('returns thrown error message when upcoming classes request rejects with Error', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'live-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock.mockRejectedValueOnce(new Error('calendar events exploded'));
+
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+    expect(result).toEqual({
+      type: 'error',
+      message: 'calendar events exploded',
+    });
+  });
+
   test('returns error when oauth client id is missing', async () => {
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID = '';
     process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID = '';
@@ -398,6 +493,38 @@ describe('googleCalendarAuth', () => {
       type: 'error',
       message:
         'Google Calendar OAuth client ID is missing. Configure EXPO_PUBLIC_GOOGLE_CALENDAR_*_CLIENT_ID.',
+    });
+  });
+
+  test('builds native redirect uri from the app identifier', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({ type: 'cancel' })),
+    });
+
+    await connectGoogleCalendarAsync();
+
+    expect(authSessionMock.makeRedirectUri).toHaveBeenCalledWith({
+      native: 'com.anonymous.mobile:/oauthredirect',
+      path: 'oauthredirect',
+    });
+  });
+
+  test('uses a Google iOS-client redirect scheme when the iOS client id is valid', async () => {
+    process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID =
+      '84039552841-5f103afd16hji1k39pt9i2tghnsumr9q.apps.googleusercontent.com';
+
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({ type: 'cancel' })),
+    });
+
+    await connectGoogleCalendarAsync();
+
+    expect(authSessionMock.makeRedirectUri).toHaveBeenCalledWith({
+      native:
+        'com.googleusercontent.apps.84039552841-5f103afd16hji1k39pt9i2tghnsumr9q:/oauthredirect',
+      path: 'oauthredirect',
     });
   });
 
@@ -472,6 +599,30 @@ describe('googleCalendarAuth', () => {
       type: 'error',
       message: 'Custom oauth error',
     });
+  });
+
+  test('returns actionable message when oauth client is deleted or invalid', async () => {
+    authSessionMock.loadAsync.mockResolvedValueOnce({
+      codeVerifier: 'verifier',
+      promptAsync: jest.fn(async () => ({
+        type: 'error',
+        params: {
+          error: 'deleted_client',
+          error_description: '   ',
+        },
+        error: null,
+      })),
+    });
+
+    const result = await connectGoogleCalendarAsync();
+
+    expect(result.type).toBe('error');
+    if (result.type !== 'error') {
+      throw new Error('Expected error result');
+    }
+    expect(result.message).toContain('Google OAuth client is invalid or deleted');
+    expect(result.message).toContain('mobile/.env');
+    expect(result.message).toContain('EXPO_PUBLIC_GOOGLE_CALENDAR_');
   });
 
   test('maps auth error code to denied calendar message', async () => {

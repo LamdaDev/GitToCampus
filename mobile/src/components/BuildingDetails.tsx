@@ -1,6 +1,6 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View, Text, TouchableOpacity, Linking, ScrollView, Image } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 
@@ -18,6 +18,50 @@ type BuildingDetailProps = {
   userLocation: UserCoords | null;
 };
 
+type BuildingService = {
+  id: string;
+  name: string;
+  url: string;
+};
+
+type BuildingServicesRow = {
+  id: string;
+  services: BuildingService[];
+};
+
+type BuildingImage = {
+  key: string;
+  url: string;
+};
+
+const toSafeImageUrl = (rawUrl: string): string | null => {
+  const normalizedUrl = rawUrl.trim();
+  if (!normalizedUrl) return null;
+  if (/^https?:\/\//i.test(normalizedUrl)) return normalizedUrl;
+  return `https://${normalizedUrl}`;
+};
+
+const toBuildingImages = (images: string[] | undefined): BuildingImage[] => {
+  if (!images || images.length === 0) return [];
+
+  const seenCountsByUrl = new Map<string, number>();
+  const buildingImages: BuildingImage[] = [];
+
+  for (const imageUrl of images) {
+    const safeUrl = toSafeImageUrl(imageUrl);
+    if (!safeUrl) continue;
+
+    const currentCount = (seenCountsByUrl.get(safeUrl) ?? 0) + 1;
+    seenCountsByUrl.set(safeUrl, currentCount);
+    buildingImages.push({
+      key: `${safeUrl}#${currentCount}`,
+      url: safeUrl,
+    });
+  }
+
+  return buildingImages;
+};
+
 export default function BuildingDetails({
   selectedBuilding,
   onClose,
@@ -29,6 +73,10 @@ export default function BuildingDetails({
   const scrollViewWidth = useRef(0);
   const contentWidth = useRef(0);
   const services = selectedBuilding?.services;
+  const buildingImages = useMemo(
+    () => toBuildingImages(selectedBuilding?.images),
+    [selectedBuilding?.images],
+  );
 
   const handleDirectionsToPress = () => {
     if (selectedBuilding) {
@@ -87,12 +135,20 @@ export default function BuildingDetails({
           contentWidth.current = width;
         }}
       >
-        {selectedBuilding?.images?.map((imgUrl, index) => (
-          <View key={index} style={buildingDetailsStyles.imageWrapper}>
+        {buildingImages.map((image) => (
+          <View key={image.key} style={buildingDetailsStyles.imageWrapper}>
             <Image
               testID="carousel-image"
-              source={{ uri: imgUrl }}
+              source={{ uri: image.url }}
               style={buildingDetailsStyles.carouselImage}
+              onError={(event) => {
+                if (__DEV__) {
+                  console.warn('[BuildingDetails] Failed to load building image', {
+                    url: image.url,
+                    error: event.nativeEvent.error,
+                  });
+                }
+              }}
             />
           </View>
         ))}
@@ -100,18 +156,24 @@ export default function BuildingDetails({
     </View>
   );
 
-  const servicesSection = (buildingServices: Record<string, string>) => {
-    const entries = Object.entries(buildingServices);
-    if (entries.length === 0) return [];
+  const servicesSection = (buildingServices: Record<string, string>): BuildingServicesRow[] => {
+    const serviceEntries = Object.entries(buildingServices).map(([name, url]) => ({
+      id: `${name}-${url}`,
+      name,
+      url,
+    }));
+    if (serviceEntries.length === 0) return [];
 
-    return entries.reduce(
-      (rows, [name, url], index) => {
-        if (index % 3 === 0) rows.push([]);
-        rows[rows.length - 1].push({ name, url });
-        return rows;
-      },
-      [] as Array<Array<{ name: string; url: string }>>,
-    );
+    const rows: BuildingServicesRow[] = [];
+    for (let rowStart = 0; rowStart < serviceEntries.length; rowStart += 3) {
+      const rowServices = serviceEntries.slice(rowStart, rowStart + 3);
+      rows.push({
+        id: rowServices.map((service) => service.id).join('|'),
+        services: rowServices,
+      });
+    }
+
+    return rows;
   };
 
   return (
@@ -137,14 +199,11 @@ export default function BuildingDetails({
           <Text style={buildingDetailsStyles.servicesTitle}>Services</Text>
           <BottomSheetFlatList
             data={servicesSection(services)}
-            renderItem={({
-              item,
-              index,
-            }: ListRenderItemInfo<Array<{ name: string; url: string }>>) => (
-              <View key={index} style={buildingDetailsStyles.row}>
-                {item.map((service: { name: string; url: string }, serviceIndex: number) => (
+            renderItem={({ item }: ListRenderItemInfo<BuildingServicesRow>) => (
+              <View key={item.id} style={buildingDetailsStyles.row}>
+                {item.services.map((service) => (
                   <TouchableOpacity
-                    key={serviceIndex}
+                    key={service.id}
                     style={buildingDetailsStyles.uniqueServiceContainer}
                     onPress={() => Linking.openURL(service.url)}
                   >
@@ -153,9 +212,7 @@ export default function BuildingDetails({
                 ))}
               </View>
             )}
-            keyExtractor={(_item: Array<{ name: string; url: string }>, index: number) =>
-              index.toString()
-            }
+            keyExtractor={(item: BuildingServicesRow) => item.id}
             showsVerticalScrollIndicator={true}
           />
         </View>
