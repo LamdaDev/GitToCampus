@@ -33,6 +33,7 @@ type DirectionDetailProps = {
   onPressTransitGo?: () => void;
   onPressGo?: (mode: RoutePlannerMode) => void;
   onPressShuttleSchedule?: () => void;
+  onRetryRoute?: () => void;
 };
 
 /**
@@ -197,6 +198,7 @@ const renderRouteMetaBody = ({
   showGoButton,
   canPressGo,
   handlePressGo,
+  onRetryRoute,
 }: {
   isRouteLoading: boolean;
   routeErrorMessage: string | null;
@@ -208,6 +210,7 @@ const renderRouteMetaBody = ({
   showGoButton: boolean;
   canPressGo: boolean;
   handlePressGo: () => void;
+  onRetryRoute?: () => void;
 }) => {
   if (isRouteLoading) {
     return (
@@ -219,9 +222,18 @@ const renderRouteMetaBody = ({
 
   if (routeErrorMessage) {
     return (
-      <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
-        {routeErrorMessage}
-      </Text>
+      <View>
+        <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
+          {routeErrorMessage}
+        </Text>
+        <TouchableOpacity
+          testID="route-retry-button"
+          style={directionDetailsStyles.routeRetryButton}
+          onPress={onRetryRoute}
+        >
+          <Text style={directionDetailsStyles.routeRetryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
@@ -306,6 +318,7 @@ export default function DirectionDetails({
   onPressTransitGo,
   onPressGo,
   onPressShuttleSchedule,
+  onRetryRoute,
 }: Readonly<DirectionDetailProps>) {
   const [activeMode, setActiveMode] = useState<RoutePlannerMode>(selectedTravelMode ?? 'walking');
   const isSelected = (mode: RoutePlannerMode) => activeMode === mode;
@@ -499,6 +512,7 @@ export default function DirectionDetails({
             showGoButton,
             canPressGo,
             handlePressGo,
+            onRetryRoute,
           })}
         </View>
       )}

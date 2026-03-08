@@ -11,6 +11,7 @@ import {
   connectGoogleCalendarAsync,
   fetchGoogleCalendarEventsAsync,
   getStoredGoogleCalendarSessionState,
+  isGoogleCalendarEventActiveOrUpcoming,
   type GoogleCalendarEventItem,
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
@@ -20,7 +21,7 @@ type SearchBarProps = {
   onPressBuilding?: (b: BuildingShape) => void;
   onCalendarConnected?: () => void;
   selectedCalendarIds?: string[];
-  onCalendarGoPress?: () => void;
+  onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
@@ -46,7 +47,7 @@ export default function SearchSheet({
   const nextClassLabel = useMemo(() => {
     if (isNextClassLoading) return 'Loading next class...';
     if (selectedCalendarIds.length === 0) return 'Select calendars to see your next class.';
-    if (!nextClassEvent) return 'No upcoming classes';
+    if (!nextClassEvent) return 'No upcoming or in-progress classes';
     return nextClassEvent.location ?? 'Location not provided';
   }, [isNextClassLoading, nextClassEvent, selectedCalendarIds.length]);
 
@@ -72,7 +73,8 @@ export default function SearchSheet({
 
     const now = Date.now();
     const next = result.events
-      .filter((event) => Number.isFinite(event.startsAt) && event.startsAt >= now)
+      .filter((event) => Number.isFinite(event.startsAt))
+      .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, now))
       .sort((a, b) => {
         if (a.startsAt !== b.startsAt) return a.startsAt - b.startsAt;
         const calendarComparison = a.calendarId.localeCompare(b.calendarId);
@@ -289,7 +291,7 @@ export default function SearchSheet({
             accessibilityRole="button"
             style={searchBuilding.nextClassGoButton}
             disabled={isNextClassLoading}
-            onPress={onCalendarGoPress}
+            onPress={() => onCalendarGoPress?.(nextClassEvent)}
           >
             <Text style={searchBuilding.nextClassGoText}>GO</Text>
           </TouchableOpacity>
