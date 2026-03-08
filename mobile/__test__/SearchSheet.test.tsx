@@ -285,6 +285,30 @@ describe('SearchSheet', () => {
     expect(await findByText('No upcoming or in-progress classes')).toBeTruthy();
   });
 
+  test('shows calendar GO error message when provided by parent', async () => {
+    getStoredSessionStateMock.mockResolvedValueOnce({
+      status: 'connected',
+      session: {
+        accessToken: 'token-live',
+        tokenType: 'Bearer',
+        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      },
+    });
+
+    const { getByTestId } = render(
+      <SearchSheet
+        buildings={mockBuildings}
+        calendarGoErrorMessage="Unable to find route: Location Not Provided/Not Found"
+      />,
+    );
+
+    await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
+    expect(getByTestId('calendar-go-error-message')).toHaveTextContent(
+      'Unable to find route: Location Not Provided/Not Found',
+    );
+  });
+
   test('shows expired helper and status when a stored session is already expired', async () => {
     getStoredSessionStateMock.mockResolvedValueOnce({
       status: 'expired',

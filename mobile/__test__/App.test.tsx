@@ -15,12 +15,6 @@ const mockGetStoredGoogleCalendarSessionState = jest.fn(
     session: null,
   }),
 );
-const mockFetchGoogleCalendarListAsync = jest.fn(
-  async (): Promise<any> => ({
-    type: 'success',
-    calendars: [],
-  }),
-);
 
 // Mock GestureHandlerView needed for BottomSheet
 jest.mock('react-native-gesture-handler', () => {
@@ -128,7 +122,6 @@ jest.mock('../src/services/clarity', () => ({
 
 jest.mock('../src/services/googleCalendarAuth', () => ({
   getStoredGoogleCalendarSessionState: () => mockGetStoredGoogleCalendarSessionState(),
-  fetchGoogleCalendarListAsync: () => mockFetchGoogleCalendarListAsync(),
 }));
 
 describe('App', () => {
@@ -141,10 +134,6 @@ describe('App', () => {
     mockGetStoredGoogleCalendarSessionState.mockResolvedValue({
       status: 'not_connected',
       session: null,
-    });
-    mockFetchGoogleCalendarListAsync.mockResolvedValue({
-      type: 'success',
-      calendars: [],
     });
   });
 
@@ -242,33 +231,6 @@ describe('App', () => {
     expect(queryByTestId('search-bar')).toBeNull();
   });
 
-  test('calendar shortcut does not open upcoming classes when calendar fetch fails', async () => {
-    mockGetStoredGoogleCalendarSessionState.mockResolvedValueOnce({
-      status: 'connected',
-      session: {
-        accessToken: 'token',
-        tokenType: 'Bearer',
-        scope: 'scope',
-        expiresAt: Date.now() + 60_000,
-      },
-    });
-    mockFetchGoogleCalendarListAsync.mockResolvedValueOnce({
-      type: 'error',
-      reason: 'network',
-    });
-
-    const { getByTestId, queryByTestId } = render(<App />);
-
-    fireEvent.press(getByTestId('open-calendar-shortcut'));
-
-    await waitFor(() => {
-      expect(mockBottomSheetOpen).toHaveBeenCalledWith(1);
-      expect(mockFetchGoogleCalendarListAsync).toHaveBeenCalledTimes(1);
-      expect(mockOpenCalendarEventsSlider).not.toHaveBeenCalled();
-      expect(queryByTestId('search-bar')).toBeNull();
-    });
-  });
-
   test('calendar shortcut opens upcoming classes when Google Calendar is connected', async () => {
     mockGetStoredGoogleCalendarSessionState.mockResolvedValueOnce({
       status: 'connected',
@@ -279,13 +241,6 @@ describe('App', () => {
         expiresAt: Date.now() + 60_000,
       },
     });
-    mockFetchGoogleCalendarListAsync.mockResolvedValueOnce({
-      type: 'success',
-      calendars: [
-        { id: 'calendar-1', name: 'Primary', accessRole: 'owner', isPrimary: true },
-        { id: 'calendar-2', name: 'Classes', accessRole: 'reader', isPrimary: false },
-      ],
-    });
 
     const { getByTestId } = render(<App />);
 
@@ -293,7 +248,7 @@ describe('App', () => {
 
     await waitFor(() => {
       expect(mockBottomSheetOpen).toHaveBeenCalledWith(1);
-      expect(mockOpenCalendarEventsSlider).toHaveBeenCalledWith(['calendar-1', 'calendar-2']);
+      expect(mockOpenCalendarEventsSlider).toHaveBeenCalledWith();
     });
   });
 });

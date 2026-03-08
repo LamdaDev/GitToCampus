@@ -1,4 +1,5 @@
 import {
+  CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
   getManualStartReasonMessage,
   resolveCalendarRouteLocation,
 } from '../src/utils/calendarRouteLocation';
@@ -50,7 +51,7 @@ describe('calendarRouteLocation', () => {
     expect(result).toEqual({
       type: 'error',
       code: 'MISSING_EVENT_LOCATION',
-      message: 'No location found for this event—please update your calendar',
+      message: CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
     });
   });
 
@@ -72,6 +73,51 @@ describe('calendarRouteLocation', () => {
       coordinates: { latitude: 45.5, longitude: -73.57 },
       building: hallBuilding,
     });
+  });
+
+  test('resolves long-name location Hall Building 435 to Hall building', async () => {
+    locationUtilsMock.getCurrentLocationResult.mockResolvedValueOnce({
+      type: 'success',
+      coords: { latitude: 45.5, longitude: -73.57 },
+    });
+    buildingsRepositoryMock.findBuildingAt.mockReturnValueOnce(hallBuilding);
+
+    const result = await resolveCalendarRouteLocation('Hall Building 435');
+
+    expect(result.type).toBe('success');
+    if (result.type !== 'success') return;
+    expect(result.value.destinationBuilding.id).toBe('hall');
+    expect(result.value.destinationBuilding.name).toBe('Henry F. Hall Building');
+  });
+
+  test('resolves short-code location MB S1.150 to MB building', async () => {
+    locationUtilsMock.getCurrentLocationResult.mockResolvedValueOnce({
+      type: 'success',
+      coords: { latitude: 45.5, longitude: -73.57 },
+    });
+    buildingsRepositoryMock.findBuildingAt.mockReturnValueOnce(hallBuilding);
+
+    const result = await resolveCalendarRouteLocation('MB S1.150');
+
+    expect(result.type).toBe('success');
+    if (result.type !== 'success') return;
+    expect(result.value.destinationBuilding.id).toBe('mb');
+    expect(result.value.destinationBuilding.shortCode).toBe('MB');
+  });
+
+  test('resolves compact room location H435 to Hall building', async () => {
+    locationUtilsMock.getCurrentLocationResult.mockResolvedValueOnce({
+      type: 'success',
+      coords: { latitude: 45.5, longitude: -73.57 },
+    });
+    buildingsRepositoryMock.findBuildingAt.mockReturnValueOnce(hallBuilding);
+
+    const result = await resolveCalendarRouteLocation('H435');
+
+    expect(result.type).toBe('success');
+    if (result.type !== 'success') return;
+    expect(result.value.destinationBuilding.id).toBe('hall');
+    expect(result.value.destinationBuilding.name).toBe('Henry F. Hall Building');
   });
 
   test('resolves Hall H-110 via room format normalization', async () => {
@@ -97,7 +143,7 @@ describe('calendarRouteLocation', () => {
     expect(result).toEqual({
       type: 'error',
       code: 'UNRECOGNIZED_EVENT_LOCATION',
-      message: 'Could not generate route—try again',
+      message: CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
     });
   });
 

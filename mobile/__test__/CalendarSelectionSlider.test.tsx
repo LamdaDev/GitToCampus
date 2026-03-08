@@ -82,10 +82,7 @@ describe('CalendarSelectionSlider', () => {
 
     const onDone = jest.fn();
     const { getByTestId, findByTestId, getAllByText } = render(
-      <CalendarSelectionSlider
-        initialSelectedCalendarIds={['winter-calendar']}
-        onDone={onDone}
-      />,
+      <CalendarSelectionSlider initialSelectedCalendarIds={['winter-calendar']} onDone={onDone} />,
     );
 
     expect(await findByTestId('calendar-option-winter-calendar')).toBeTruthy();

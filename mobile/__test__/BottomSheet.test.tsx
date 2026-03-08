@@ -9,6 +9,8 @@ import * as shuttlePlannerService from '../src/services/shuttlePlanner';
 const mockSnapToIndex = jest.fn();
 const mockSnapToPosition = jest.fn();
 const mockClose = jest.fn();
+const mockResolveCalendarRouteLocation = jest.fn();
+const mockGetManualStartReasonMessage = jest.fn();
 const SNAP_INDEX_NAVIGATION_MAX = 1;
 const SNAP_INDEX_PANEL = 2;
 const SNAP_INDEX_EXPANDED = 3;
@@ -66,6 +68,11 @@ jest.mock('../src/services/googleDirections', () => ({
 
 jest.mock('../src/services/shuttlePlanner', () => ({
   buildShuttlePlan: jest.fn(),
+}));
+
+jest.mock('../src/utils/calendarRouteLocation', () => ({
+  resolveCalendarRouteLocation: (...args: unknown[]) => mockResolveCalendarRouteLocation(...args),
+  getManualStartReasonMessage: (...args: unknown[]) => mockGetManualStartReasonMessage(...args),
 }));
 
 jest.mock('@gorhom/bottom-sheet', () => {
@@ -317,7 +324,12 @@ jest.mock('../src/components/ShuttleScheduleDetails', () => {
 
 jest.mock('../src/components/SearchSheet', () => {
   const { View, TouchableOpacity, Text } = require('react-native');
-  return ({ onPressBuilding, onCalendarConnected, onCalendarGoPress }: any) => (
+  return ({
+    onPressBuilding,
+    onCalendarConnected,
+    onCalendarGoPress,
+    calendarGoErrorMessage,
+  }: any) => (
     <View testID="search-sheet">
       <TouchableOpacity
         testID="press-building-in-search"
@@ -344,6 +356,37 @@ jest.mock('../src/components/SearchSheet', () => {
       <TouchableOpacity testID="trigger-calendar-go" onPress={() => onCalendarGoPress?.()}>
         <Text>Calendar Go</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        testID="trigger-calendar-go-with-event"
+        onPress={() =>
+          onCalendarGoPress?.({
+            id: 'event-1',
+            calendarId: 'calendar-1',
+            title: 'User Interface Design',
+            location: 'Hall Building 435',
+            startsAt: Date.now() + 60_000,
+          })
+        }
+      >
+        <Text>Calendar Go Event</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="trigger-calendar-go-with-missing-location"
+        onPress={() =>
+          onCalendarGoPress?.({
+            id: 'event-2',
+            calendarId: 'calendar-1',
+            title: 'Mystery Event',
+            location: null,
+            startsAt: Date.now() + 60_000,
+          })
+        }
+      >
+        <Text>Calendar Go Missing Location</Text>
+      </TouchableOpacity>
+      {calendarGoErrorMessage ? (
+        <Text testID="calendar-go-error-message">{calendarGoErrorMessage}</Text>
+      ) : null}
     </View>
   );
 });
@@ -391,6 +434,22 @@ describe('BottomSheet', () => {
     jest.useRealTimers();
     delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
     delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;
+    mockGetManualStartReasonMessage.mockReturnValue(
+      'Location permission required—please select your starting building manually',
+    );
+    mockResolveCalendarRouteLocation.mockResolvedValue({
+      type: 'success',
+      value: {
+        destinationBuilding: mockBuildings[1],
+        startPoint: {
+          type: 'automatic',
+          coordinates: { latitude: 45.4585, longitude: -73.6412 },
+          building: mockBuildings[0],
+        },
+        normalizedEventLocation: 'HALL BUILDING 435',
+        rawEventLocation: 'Hall Building 435',
+      },
+    });
     directionsServiceMock.fetchOutdoorDirections.mockImplementation(
       () => new Promise(() => undefined),
     );
@@ -600,6 +659,57 @@ describe('BottomSheet', () => {
 
     expect(getByTestId('calendar-selection-slider')).toBeTruthy();
     expect(queryByTestId('search-sheet')).toBeNull();
+  });
+
+  test('calendar GO with a next-class event keeps destination and opens directions', async () => {
+    const SearchModeHarness = () => {
+      const [mode, setMode] = React.useState<'search' | 'detail'>('search');
+      const [selectedBuilding, setSelectedBuilding] = React.useState<BuildingShape | null>(
+        mockBuildings[0],
+      );
+
+      return (
+        <BottomSlider
+          {...defaultProps}
+          ref={createRef()}
+          mode={mode}
+          selectedBuilding={selectedBuilding}
+          passSelectedBuilding={setSelectedBuilding}
+          onExitSearch={() => setMode('detail')}
+        />
+      );
+    };
+
+    const { getByTestId } = render(<SearchModeHarness />);
+
+    fireEvent.press(getByTestId('trigger-calendar-go-with-event'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(getByTestId('destination-id').props.children).toBe('loy-1');
+      expect(getByTestId('route-loading-state').props.children).toBe('true');
+    });
+  });
+
+  test('calendar GO shows Unable to find route: Location Not Provided/Not Found when event location cannot be resolved', async () => {
+    mockResolveCalendarRouteLocation.mockResolvedValueOnce({
+      type: 'error',
+      code: 'MISSING_EVENT_LOCATION',
+      message: 'Unable to find route: Location Not Provided/Not Found',
+    });
+
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="search" />,
+    );
+
+    fireEvent.press(getByTestId('trigger-calendar-go-with-missing-location'));
+
+    await waitFor(() => {
+      expect(getByTestId('calendar-go-error-message').props.children).toBe(
+        'Unable to find route: Location Not Provided/Not Found',
+      );
+      expect(queryByTestId('direction-details')).toBeNull();
+    });
   });
 
   test('done button on calendar selection slider opens upcoming classes slider', () => {
@@ -1579,6 +1689,33 @@ describe('BottomSheet', () => {
     expect(queryByTestId('upcoming-classes-slider')).toBeNull();
   });
 
+  test('imperative calendar open reuses previously selected calendars when no ids are provided', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} mode="search" />,
+    );
+
+    fireEvent.press(getByTestId('trigger-calendar-connected'));
+    expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+
+    fireEvent.press(getByTestId('calendar-selection-done-button'));
+    expect(getByTestId('upcoming-classes-slider')).toBeTruthy();
+
+    await act(async () => {
+      ref.current?.closeCalendarSlider();
+      await Promise.resolve();
+    });
+    expect(getByTestId('search-sheet')).toBeTruthy();
+
+    await act(async () => {
+      ref.current?.openCalendarEventsSlider();
+      await Promise.resolve();
+    });
+
+    expect(getByTestId('upcoming-classes-slider')).toBeTruthy();
+    expect(queryByTestId('calendar-selection-slider')).toBeNull();
+  });
+
   test('formats long navigation duration with hour text in navigation summary', async () => {
     directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
       polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
@@ -1735,8 +1872,8 @@ describe('BottomSheet', () => {
 
     const shuttlePlanArgs = shuttlePlannerMock.buildShuttlePlan.mock.calls.at(-1)?.[0];
     expect(shuttlePlanArgs).toBeTruthy();
-    if (!shuttlePlanArgs) {
-      throw new Error('Expected shuttle plan args to be defined');
+    if (!shuttlePlanArgs?.now) {
+      throw new Error('Expected shuttle plan args and now to be defined');
     }
     expect(shuttlePlanArgs.now.toISOString()).toBe('2026-02-25T12:30:00.000Z');
   });

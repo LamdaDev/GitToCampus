@@ -500,22 +500,21 @@ describe('googleCalendarAuth', () => {
       const toIso = (dayOffset: number, hour: number, minute: number) =>
         new Date(2026, 8, 14 + dayOffset, hour, minute, 0, 0).toISOString();
 
-      fetchMock
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          json: async () => ({
-            items: [
-              {
-                id: 'ended-class',
-                summary: 'SOEN 321 LEC',
-                location: 'Hall Building H-531',
-                start: { dateTime: toIso(0, 10, 0) },
-                end: { dateTime: toIso(0, 11, 15) },
-              },
-            ],
-          }),
-        });
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'ended-class',
+              summary: 'SOEN 321 LEC',
+              location: 'Hall Building H-531',
+              start: { dateTime: toIso(0, 10, 0) },
+              end: { dateTime: toIso(0, 11, 15) },
+            },
+          ],
+        }),
+      });
 
       const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
 

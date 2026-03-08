@@ -20,10 +20,7 @@ const IOS_BUNDLE_ID_FALLBACK = 'com.gittocampus.mobile';
 const ANDROID_PACKAGE_FALLBACK = 'com.anonymous.mobile';
 const GOOGLE_CLIENT_ID_SUFFIX = '.apps.googleusercontent.com';
 
-const logCalendarDebug = (
-  message: string,
-  details?: Record<string, unknown> | undefined,
-): void => {
+const logCalendarDebug = (message: string, details?: Record<string, unknown> | undefined): void => {
   if (!__DEV__) return;
 
   if (details) {
@@ -335,10 +332,7 @@ const getCalendarPayloadItemCount = (payload: unknown): number => {
 };
 
 const normalizeCalendarEventText = (value: string | null) =>
-  (value ?? '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, ' ');
+  (value ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
 
 const toEventDedupKey = (event: GoogleCalendarEventItem) =>
   `${normalizeCalendarEventText(event.title)}|${normalizeCalendarEventText(event.location)}|${event.startsAt}`;
@@ -381,7 +375,9 @@ const parseCalendarEventItems = (
         : 'Untitled event';
       const location = isNonEmptyString(candidate.location) ? candidate.location.trim() : null;
       const id = isNonEmptyString(rawId) ? rawId.trim() : `${calendarId}-${startsAt}-${index}`;
-      const status = isNonEmptyString(candidate.status) ? candidate.status.toLowerCase().trim() : '';
+      const status = isNonEmptyString(candidate.status)
+        ? candidate.status.toLowerCase().trim()
+        : '';
       if (status === 'cancelled') return null;
 
       return {

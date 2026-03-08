@@ -22,6 +22,7 @@ type SearchBarProps = {
   onCalendarConnected?: () => void;
   selectedCalendarIds?: string[];
   onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  calendarGoErrorMessage?: string | null;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
@@ -35,6 +36,7 @@ export default function SearchSheet({
   onCalendarConnected,
   selectedCalendarIds = [],
   onCalendarGoPress,
+  calendarGoErrorMessage = null,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
@@ -296,6 +298,11 @@ export default function SearchSheet({
             <Text style={searchBuilding.nextClassGoText}>GO</Text>
           </TouchableOpacity>
         </View>
+      ) : null}
+      {calendarStatus === 'connected' && calendarGoErrorMessage ? (
+        <Text testID="calendar-go-error-message" style={searchBuilding.authMessage}>
+          {calendarGoErrorMessage}
+        </Text>
       ) : null}
 
       <TouchableOpacity

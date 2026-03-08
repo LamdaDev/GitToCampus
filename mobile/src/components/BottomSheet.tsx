@@ -38,6 +38,7 @@ import { buildShuttlePlan } from '../services/shuttlePlanner';
 import type { ShuttlePlan } from '../types/Shuttle';
 import type { GoogleCalendarEventItem } from '../services/googleCalendarAuth';
 import {
+  CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
   getManualStartReasonMessage,
   resolveCalendarRouteLocation,
 } from '../utils/calendarRouteLocation';
@@ -236,7 +237,7 @@ export type BottomSliderHandle = {
   close: () => void;
   setSnap: (index: number) => void;
   closeCalendarSlider: () => void;
-  openCalendarEventsSlider: (calendarIds: string[]) => void;
+  openCalendarEventsSlider: (calendarIds?: string[]) => void;
 };
 
 type BottomSheetProps = {
@@ -373,6 +374,7 @@ const renderBottomSheetContent = ({
   closeSearchBuilding,
   openCalendarSelectionAfterConnect,
   handleCalendarGoFromSearch,
+  calendarGoErrorMessage,
   activeView,
   selectedBuilding,
   closeSheet,
@@ -413,6 +415,7 @@ const renderBottomSheetContent = ({
   closeSearchBuilding: (building: BuildingShape) => void;
   openCalendarSelectionAfterConnect: () => void;
   handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  calendarGoErrorMessage: string | null;
   activeView: ViewType;
   selectedBuilding: BuildingShape | null;
   closeSheet: () => void;
@@ -472,6 +475,7 @@ const renderBottomSheetContent = ({
         onCalendarConnected={openCalendarSelectionAfterConnect}
         selectedCalendarIds={selectedCalendarIds}
         onCalendarGoPress={handleCalendarGoFromSearch}
+        calendarGoErrorMessage={calendarGoErrorMessage}
       />
     );
   }
@@ -634,6 +638,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [routeRetryNonce, setRouteRetryNonce] = useState(0);
     const [travelMode, setTravelMode] = useState<RoutePlannerMode>('walking');
     const [shuttlePlan, setShuttlePlan] = useState<ShuttlePlan | null>(null);
+    const previousSelectedBuildingIdRef = useRef<string | null>(selectedBuilding?.id ?? null);
     const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
     const destinationCampus = destinationBuilding?.campus ?? null;
     const isCrossCampusRoute = Boolean(
@@ -713,6 +718,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       null,
     );
     const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
+    const [calendarGoErrorMessage, setCalendarGoErrorMessage] = useState<string | null>(null);
     const isInternalSearch = searchFor !== null;
     const isGlobalSearch = mode === 'search';
     const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
@@ -723,6 +729,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           resetSelection,
           selectedCalendarIds,
         });
+        setCalendarGoErrorMessage(null);
         if (resetSelection) {
           setSelectedCalendarIds([]);
         }
@@ -740,6 +747,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           calendarIds,
           uniqueCalendarIds: [...new Set(calendarIds)],
         });
+        setCalendarGoErrorMessage(null);
         setSelectedCalendarIds(calendarIds);
         setCalendarSliderMode('events');
         requestAnimationFrame(() => {
@@ -758,8 +766,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         hasNextClassEvent: Boolean(nextClassEvent),
         selectedCalendarIds,
       });
+      setCalendarGoErrorMessage(null);
+
       if (nextClassEvent) {
-        void handleUpcomingClassPress(nextClassEvent);
+        void (async () => {
+          const errorMessage = await handleUpcomingClassPress(nextClassEvent);
+          if (errorMessage) {
+            setCalendarGoErrorMessage(errorMessage);
+          }
+        })();
         return;
       }
 
@@ -823,7 +838,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setActiveView('building');
       setSearchFor(null);
       setCalendarSliderMode(null);
-      setSelectedCalendarIds([]);
+      setCalendarGoErrorMessage(null);
       setTravelMode('walking');
       setShuttlePlan(null);
       setRouteStartSource('current');
@@ -886,13 +901,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           if (startPoint.type === 'automatic') {
             setRouteStartSource('current');
             setRouteErrorMessage(null);
-            if (startPoint.building) {
-              setStartBuilding(startPoint.building);
-              setStartLocationSnapshot(null);
-            } else {
-              setStartBuilding(null);
-              setStartLocationSnapshot(startPoint.coordinates);
-            }
+            // Calendar GO should always start from the user's live location coordinates.
+            setStartBuilding(null);
+            setStartLocationSnapshot(startPoint.coordinates);
           } else {
             setStartBuilding(null);
             setStartLocationSnapshot(null);
@@ -912,7 +923,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           logBottomSheetCalendarDebug('Route generation failed for upcoming class event', {
             eventId: event.id,
           });
-          return 'Could not generate route—try again';
+          return CALENDAR_LOCATION_NOT_FOUND_MESSAGE;
         }
       },
       [onExitSearch, passSelectedBuilding, snapToDirectionsPanel],
@@ -930,12 +941,18 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     };
 
     useEffect(() => {
+      const selectedBuildingId = selectedBuilding?.id ?? null;
+      const didSelectedBuildingChange =
+        selectedBuildingId !== previousSelectedBuildingIdRef.current;
+      previousSelectedBuildingIdRef.current = selectedBuildingId;
+
       if (activeView !== 'directions') return;
       if (!selectedBuilding) return;
       if (selectedBuilding.id === startBuilding?.id) return;
+      if (!didSelectedBuildingChange && destinationBuilding) return;
 
       setDestinationBuilding(selectedBuilding);
-    }, [selectedBuilding, activeView]);
+    }, [selectedBuilding, activeView, startBuilding?.id, destinationBuilding]);
 
     const startCoords = useMemo(() => {
       if (startBuilding) return centroidOfPolygons(startBuilding.polygons);
@@ -1158,8 +1175,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       close: closeSheet,
       setSnap: setSnapPoint,
       closeCalendarSlider: () => setCalendarSliderMode(null),
-      openCalendarEventsSlider: (calendarIds: string[]) => {
-        showUpcomingClassesSlider(calendarIds);
+      openCalendarEventsSlider: (calendarIds?: string[]) => {
+        const normalizedIds = [...new Set((calendarIds ?? selectedCalendarIds).filter(Boolean))];
+        if (normalizedIds.length === 0) {
+          openCalendarSelectionSlider();
+          return;
+        }
+        showUpcomingClassesSlider(normalizedIds);
       },
     }));
 
@@ -1193,6 +1215,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             closeSearchBuilding,
             openCalendarSelectionAfterConnect,
             handleCalendarGoFromSearch,
+            calendarGoErrorMessage,
             activeView,
             selectedBuilding,
             closeSheet,
