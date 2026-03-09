@@ -42,8 +42,6 @@ const PUNCTUATION_PATTERN = /[.,;:()[\]{}]/g;
 const WHITESPACE_PATTERN = /\s+/g;
 const CAMPUS_PREFIX_PATTERN = /\b(SGW|LOY|LOYOLA)\b/g;
 const NON_ALPHANUMERIC_PATTERN = /[^A-Z0-9]/g;
-const ROOM_CODE_WITH_SEPARATOR_PATTERN = /\b([A-Z]{1,5})\s*[- ]\s*\d{1,4}[A-Z]?\b/;
-const ROOM_CODE_COMPACT_PATTERN = /\b([A-Z]{1,5})\d{1,4}[A-Z]?\b/;
 
 const normalizeText = (value: string) =>
   value
@@ -59,16 +57,73 @@ const normalizeWithoutCampusPrefix = (value: string) =>
 const normalizeCode = (value: string) =>
   value.toUpperCase().replaceAll(NON_ALPHANUMERIC_PATTERN, '');
 
-const codeFromRoomPattern = (location: string): string | null => {
-  const separatedCodeMatch = ROOM_CODE_WITH_SEPARATOR_PATTERN.exec(location);
-  if (separatedCodeMatch?.[1]) {
-    return normalizeCode(separatedCodeMatch[1]);
+const isUppercaseLetter = (char: string) => char >= 'A' && char <= 'Z';
+const isDigit = (char: string) => char >= '0' && char <= '9';
+
+const getLeadingLetterPrefix = (value: string): string | null => {
+  let index = 0;
+  while (index < value.length && isUppercaseLetter(value[index])) {
+    index += 1;
   }
 
-  // Accept compact classroom formats like "H435" and map to building short code "H".
-  const compactCodeMatch = ROOM_CODE_COMPACT_PATTERN.exec(location);
-  if (compactCodeMatch?.[1]) {
-    return normalizeCode(compactCodeMatch[1]);
+  if (index === 0 || index > 5) return null;
+  return value.slice(0, index);
+};
+
+const isValidRoomSuffix = (value: string): boolean => {
+  if (!value) return false;
+
+  let digitsLength = 0;
+  while (digitsLength < value.length && isDigit(value[digitsLength])) {
+    digitsLength += 1;
+  }
+
+  if (digitsLength === 0 || digitsLength > 4) return false;
+  const trailing = value.slice(digitsLength);
+  if (!trailing) return true;
+  return trailing.length === 1 && isUppercaseLetter(trailing);
+};
+
+const getRoomCodeFromSeparatedToken = (token: string, nextToken?: string): string | null => {
+  const hyphenIndex = token.indexOf('-');
+  if (hyphenIndex > 0 && hyphenIndex < token.length - 1) {
+    const prefix = getLeadingLetterPrefix(token.slice(0, hyphenIndex));
+    const suffix = token.slice(hyphenIndex + 1);
+    if (prefix && isValidRoomSuffix(suffix)) {
+      return normalizeCode(prefix);
+    }
+  }
+
+  const prefix = getLeadingLetterPrefix(token);
+  if (!prefix || token !== prefix || !nextToken) return null;
+
+  return isValidRoomSuffix(nextToken) ? normalizeCode(prefix) : null;
+};
+
+const getRoomCodeFromCompactToken = (token: string): string | null => {
+  const prefix = getLeadingLetterPrefix(token);
+  if (!prefix) return null;
+
+  const suffix = token.slice(prefix.length);
+  if (!isValidRoomSuffix(suffix)) return null;
+  return normalizeCode(prefix);
+};
+
+const codeFromRoomPattern = (location: string): string | null => {
+  const tokens = splitWords(location);
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    const nextToken = tokens[index + 1];
+
+    const separatedCode = getRoomCodeFromSeparatedToken(token, nextToken);
+    if (separatedCode) return separatedCode;
+
+    // Prefer separated room formats (e.g., "MB S1 150") before compact room formats.
+    const shouldSkipCompactMatch = Boolean(nextToken && isValidRoomSuffix(nextToken));
+    if (shouldSkipCompactMatch) continue;
+
+    const compactCode = getRoomCodeFromCompactToken(token);
+    if (compactCode) return compactCode;
   }
 
   return null;
