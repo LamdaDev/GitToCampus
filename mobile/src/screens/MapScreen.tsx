@@ -316,6 +316,34 @@ const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]
   }
 };
 
+const getPolygonRenderColors = (
+  theme: (typeof POLYGON_THEME)[Campus],
+  isSelected: boolean,
+  isCurrent: boolean,
+) => {
+  if (isSelected) {
+    return {
+      strokeColor: theme.selectedStroke,
+      fillColor: theme.selectedFill,
+      strokeWidth: theme.selectedStrokeWidth,
+    };
+  }
+
+  if (isCurrent) {
+    return {
+      strokeColor: theme.currentStroke,
+      fillColor: theme.currentFill,
+      strokeWidth: theme.currentStrokeWidth,
+    };
+  }
+
+  return {
+    strokeColor: theme.stroke,
+    fillColor: theme.fill,
+    strokeWidth: theme.strokeWidth,
+  };
+};
+
 const renderPolygonItem = (
   item: PolygonRenderItem,
   selectedBuildingId: string | null,
@@ -326,18 +354,11 @@ const renderPolygonItem = (
   const isSelected = item.buildingId === selectedBuildingId;
   const isCurrent = item.buildingId === currentBuildingId;
   const center = getPolygonCenter(item.coordinates);
-
-  const strokeColor = isSelected
-    ? theme.selectedStroke
-    : isCurrent
-      ? theme.currentStroke
-      : theme.stroke;
-  const fillColor = isSelected ? theme.selectedFill : isCurrent ? theme.currentFill : theme.fill;
-  const strokeWidth = isSelected
-    ? theme.selectedStrokeWidth
-    : isCurrent
-      ? theme.currentStrokeWidth
-      : theme.strokeWidth;
+  const { strokeColor, fillColor, strokeWidth } = getPolygonRenderColors(
+    theme,
+    isSelected,
+    isCurrent,
+  );
 
   return (
     <Fragment key={item.key}>
@@ -474,9 +495,8 @@ function MapScreen({
   const handleUserPositionUpdate = useCallback((coords: UserCoords) => {
     setUserCoords((previousCoords) => {
       if (
-        previousCoords &&
-        previousCoords.latitude === coords.latitude &&
-        previousCoords.longitude === coords.longitude
+        previousCoords?.latitude === coords.latitude &&
+        previousCoords?.longitude === coords.longitude
       ) {
         return previousCoords;
       }

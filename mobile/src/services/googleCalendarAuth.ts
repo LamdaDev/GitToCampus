@@ -148,19 +148,21 @@ const getGoogleClientRedirectScheme = (clientId: string): string | null => {
   return `com.googleusercontent.apps.${clientIdPrefix}`;
 };
 
-const getRedirectScheme = (): string =>
-  Platform.OS === 'ios'
-    ? (
-        getGoogleClientRedirectScheme(
-          process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID ?? '',
-        ) ??
-        Application.applicationId ??
-        IOS_BUNDLE_ID_FALLBACK
-      ).trim()
-    : (
-        Application.applicationId ??
-        (Platform.OS === 'android' ? ANDROID_PACKAGE_FALLBACK : APP_SCHEME)
-      ).trim();
+const getRedirectScheme = (): string => {
+  if (Platform.OS === 'ios') {
+    return (
+      getGoogleClientRedirectScheme(process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID ?? '') ??
+      Application.applicationId ??
+      IOS_BUNDLE_ID_FALLBACK
+    ).trim();
+  }
+
+  if (Platform.OS === 'android') {
+    return (Application.applicationId ?? ANDROID_PACKAGE_FALLBACK).trim();
+  }
+
+  return (Application.applicationId ?? APP_SCHEME).trim();
+};
 
 const createRedirectUri = () =>
   AuthSession.makeRedirectUri({
@@ -248,12 +250,17 @@ const buildGoogleCalendarEventsEndpoint = ({
   return `${GOOGLE_CALENDAR_EVENTS_ENDPOINT}/${encodeURIComponent(calendarId)}/events?${queryParams.join('&')}`;
 };
 
-const getPlatformClientIdEnvName = (): string =>
-  Platform.OS === 'android'
-    ? 'EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID'
-    : Platform.OS === 'ios'
-      ? 'EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID'
-      : 'EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID';
+const getPlatformClientIdEnvName = (): string => {
+  if (Platform.OS === 'android') {
+    return 'EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID';
+  }
+
+  if (Platform.OS === 'ios') {
+    return 'EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID';
+  }
+
+  return 'EXPO_PUBLIC_GOOGLE_CALENDAR_WEB_CLIENT_ID';
+};
 
 export const saveGoogleCalendarSession = async (session: GoogleCalendarSession): Promise<void> => {
   await SecureStore.setItemAsync(
