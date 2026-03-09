@@ -52,6 +52,13 @@ const WALKING_DASH_PATTERN = [12, 8];
 const ROUTE_POLYLINE_STROKE_PROPS = { strokeColor: ROUTE_LINE_COLOR } as const;
 const POLYGON_PRESS_GUARD_RESET_DELAY_MS = 0;
 
+type PolygonPressGuardTimeoutRef = {
+  current: ReturnType<typeof setTimeout> | null;
+};
+type IgnoreMapPressRef = {
+  current: boolean;
+};
+
 type RoutePolylineSegment = {
   key: string;
   coordinates: { latitude: number; longitude: number }[];
@@ -313,6 +320,34 @@ const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]
   }
 };
 
+const getPolygonRenderColors = (
+  theme: (typeof POLYGON_THEME)[Campus],
+  isSelected: boolean,
+  isCurrent: boolean,
+) => {
+  if (isSelected) {
+    return {
+      strokeColor: theme.selectedStroke,
+      fillColor: theme.selectedFill,
+      strokeWidth: theme.selectedStrokeWidth,
+    };
+  }
+
+  if (isCurrent) {
+    return {
+      strokeColor: theme.currentStroke,
+      fillColor: theme.currentFill,
+      strokeWidth: theme.currentStrokeWidth,
+    };
+  }
+
+  return {
+    strokeColor: theme.stroke,
+    fillColor: theme.fill,
+    strokeWidth: theme.strokeWidth,
+  };
+};
+
 const renderPolygonItem = (
   item: PolygonRenderItem,
   selectedBuildingId: string | null,
@@ -323,18 +358,11 @@ const renderPolygonItem = (
   const isSelected = item.buildingId === selectedBuildingId;
   const isCurrent = item.buildingId === currentBuildingId;
   const center = getPolygonCenter(item.coordinates);
-
-  const strokeColor = isSelected
-    ? theme.selectedStroke
-    : isCurrent
-      ? theme.currentStroke
-      : theme.stroke;
-  const fillColor = isSelected ? theme.selectedFill : isCurrent ? theme.currentFill : theme.fill;
-  const strokeWidth = isSelected
-    ? theme.selectedStrokeWidth
-    : isCurrent
-      ? theme.currentStrokeWidth
-      : theme.strokeWidth;
+  const { strokeColor, fillColor, strokeWidth } = getPolygonRenderColors(
+    theme,
+    isSelected,
+    isCurrent,
+  );
 
   return (
     <Fragment key={item.key}>
@@ -389,6 +417,65 @@ const initLocationTracking = async (
   return watchUserLocation(onPositionUpdate);
 };
 
+type LocationTrackingLifecycle = {
+  isActive: boolean;
+  subscription: Location.LocationSubscription | null;
+};
+
+const startLocationTrackingForLifecycle = async (
+  onPositionUpdate: (coords: UserCoords) => void,
+  lifecycle: LocationTrackingLifecycle,
+) => {
+  const nextSubscription = await initLocationTracking(onPositionUpdate);
+  if (!lifecycle.isActive) {
+    nextSubscription?.remove();
+    return;
+  }
+
+  lifecycle.subscription = nextSubscription;
+};
+
+const clearPolygonPressGuardTimeout = (
+  polygonPressGuardTimeoutRef: PolygonPressGuardTimeoutRef,
+) => {
+  if (polygonPressGuardTimeoutRef.current === null) return;
+  clearTimeout(polygonPressGuardTimeoutRef.current);
+  polygonPressGuardTimeoutRef.current = null;
+};
+
+const resetPolygonPressGuard = (
+  shouldIgnoreNextMapPressRef: IgnoreMapPressRef,
+  polygonPressGuardTimeoutRef: PolygonPressGuardTimeoutRef,
+) => {
+  shouldIgnoreNextMapPressRef.current = false;
+  polygonPressGuardTimeoutRef.current = null;
+};
+
+const armPolygonPressGuard = (
+  shouldIgnoreNextMapPressRef: IgnoreMapPressRef,
+  polygonPressGuardTimeoutRef: PolygonPressGuardTimeoutRef,
+) => {
+  shouldIgnoreNextMapPressRef.current = true;
+  clearPolygonPressGuardTimeout(polygonPressGuardTimeoutRef);
+  polygonPressGuardTimeoutRef.current = setTimeout(
+    resetPolygonPressGuard,
+    POLYGON_PRESS_GUARD_RESET_DELAY_MS,
+    shouldIgnoreNextMapPressRef,
+    polygonPressGuardTimeoutRef,
+  );
+};
+
+const consumePolygonPressGuard = (
+  shouldIgnoreNextMapPressRef: IgnoreMapPressRef,
+  polygonPressGuardTimeoutRef: PolygonPressGuardTimeoutRef,
+): boolean => {
+  if (!shouldIgnoreNextMapPressRef.current) return false;
+
+  shouldIgnoreNextMapPressRef.current = false;
+  clearPolygonPressGuardTimeout(polygonPressGuardTimeoutRef);
+  return true;
+};
+
 function MapScreen({
   passSelectedBuilding,
   passUserLocation,
@@ -412,9 +499,8 @@ function MapScreen({
   const handleUserPositionUpdate = useCallback((coords: UserCoords) => {
     setUserCoords((previousCoords) => {
       if (
-        previousCoords &&
-        previousCoords.latitude === coords.latitude &&
-        previousCoords.longitude === coords.longitude
+        previousCoords?.latitude === coords.latitude &&
+        previousCoords?.longitude === coords.longitude
       ) {
         return previousCoords;
       }
@@ -434,27 +520,16 @@ function MapScreen({
   }, [currentBuildingId, passCurrentBuilding]);
 
   useEffect(() => {
-    let subscription: Location.LocationSubscription | null = null;
-    let isActive = true;
-
-    const startTracking = async () => {
-      const nextSubscription = await initLocationTracking(handleUserPositionUpdate);
-      if (!isActive) {
-        nextSubscription?.remove();
-        return;
-      }
-      subscription = nextSubscription;
+    const lifecycle: LocationTrackingLifecycle = {
+      isActive: true,
+      subscription: null,
     };
-
-    void startTracking();
+    void startLocationTrackingForLifecycle(handleUserPositionUpdate, lifecycle);
 
     return () => {
-      isActive = false;
-      subscription?.remove();
-      if (polygonPressGuardTimeoutRef.current !== null) {
-        clearTimeout(polygonPressGuardTimeoutRef.current);
-        polygonPressGuardTimeoutRef.current = null;
-      }
+      lifecycle.isActive = false;
+      lifecycle.subscription?.remove();
+      clearPolygonPressGuardTimeout(polygonPressGuardTimeoutRef);
     };
   }, [handleUserPositionUpdate]);
 
@@ -502,14 +577,7 @@ function MapScreen({
 
   const handlePolygonPress = useCallback(
     (item: PolygonRenderItem) => {
-      shouldIgnoreNextMapPressRef.current = true;
-      if (polygonPressGuardTimeoutRef.current !== null) {
-        clearTimeout(polygonPressGuardTimeoutRef.current);
-      }
-      polygonPressGuardTimeoutRef.current = setTimeout(() => {
-        shouldIgnoreNextMapPressRef.current = false;
-        polygonPressGuardTimeoutRef.current = null;
-      }, POLYGON_PRESS_GUARD_RESET_DELAY_MS);
+      armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
 
       setSelectedBuildingId(item.buildingId);
       setSelectedCampus(item.campus);
@@ -541,14 +609,7 @@ function MapScreen({
   }, [userCoords]);
 
   const handleMapPress = useCallback(() => {
-    if (shouldIgnoreNextMapPressRef.current) {
-      shouldIgnoreNextMapPressRef.current = false;
-      if (polygonPressGuardTimeoutRef.current !== null) {
-        clearTimeout(polygonPressGuardTimeoutRef.current);
-        polygonPressGuardTimeoutRef.current = null;
-      }
-      return;
-    }
+    if (consumePolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef)) return;
 
     setSelectedBuildingId(null);
     passSelectedBuilding(null);

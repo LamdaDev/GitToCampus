@@ -2,7 +2,7 @@ import { GEOJSON_ASSETS } from '../assets/geojson';
 import type { GeoJsonFeatureCollection } from '../types/GeoJson';
 import type { Campus } from '../types/Campus';
 import type { BuildingShape } from '../types/BuildingShape';
-import { getFeaturePolygons, normalizeCampusCode, isPointInAnyPolygon } from '../utils/geoJson';
+import { getFeaturePolygons, normalizeCampusCode, isPointInAnyPolygon } from './geoJson';
 import { getDistance } from 'geolib';
 import { getCampusRegion } from '../constants/campuses';
 
@@ -45,14 +45,19 @@ const toStableId = (raw: unknown): string | null => {
   return null;
 };
 
-const getBestBuildingName = (props: BuildingListProps): string => {
-  const longName = props['Building Long Name'];
-  if (typeof longName === 'string' && longName.trim()) return longName.trim();
-  if (typeof props.BuildingName === 'string' && props.BuildingName.trim())
-    return props.BuildingName.trim();
-  if (typeof props.Building === 'string' && props.Building.trim()) return props.Building.trim();
+const toTrimmedNonEmptyString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
 
-  return 'Unknown Building';
+const getBestBuildingName = (props: BuildingListProps): string => {
+  return (
+    toTrimmedNonEmptyString(props['Building Long Name']) ??
+    toTrimmedNonEmptyString(props.BuildingName) ??
+    toTrimmedNonEmptyString(props.Building) ??
+    'Unknown Building'
+  );
 };
 
 const getPolygonCentroid = (polygon: { latitude: number; longitude: number }[] | undefined) => {
@@ -171,14 +176,12 @@ const buildBuildingIndexes = (allBuildings: BuildingShape[]) => {
 };
 
 const ensureBuildingsCache = () => {
-  if (!cachedAllBuildings) {
-    cachedAllBuildings = buildAllBuildingsCache();
-  }
+  cachedAllBuildings ??= buildAllBuildingsCache();
 
   if (!cachedBuildingsByCampus || !cachedBuildingById) {
     const indexes = buildBuildingIndexes(cachedAllBuildings);
-    cachedBuildingsByCampus = indexes.buildingsByCampus;
-    cachedBuildingById = indexes.buildingById;
+    cachedBuildingsByCampus ??= indexes.buildingsByCampus;
+    cachedBuildingById ??= indexes.buildingById;
   }
 
   return cachedAllBuildings;
@@ -215,10 +218,9 @@ const joinBoundariesToMeta = (
 };
 
 const buildAllBuildingsCache = (): BuildingShape[] => {
-  const buildingList =
-    GEOJSON_ASSETS.buildingList as unknown as GeoJsonFeatureCollection<BuildingListProps>;
+  const buildingList = GEOJSON_ASSETS.buildingList as GeoJsonFeatureCollection<BuildingListProps>;
   const boundaries =
-    GEOJSON_ASSETS.buildingBoundaries as unknown as GeoJsonFeatureCollection<BuildingBoundaryProps>;
+    GEOJSON_ASSETS.buildingBoundaries as GeoJsonFeatureCollection<BuildingBoundaryProps>;
   return joinBoundariesToMeta(boundaries, buildMetadataMap(buildingList));
 };
 

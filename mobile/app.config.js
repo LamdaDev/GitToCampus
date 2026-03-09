@@ -41,7 +41,7 @@ const appTransportSecurity = {
   NSAllowsArbitraryLoads: false,
   NSAllowsLocalNetworking: true,
   NSExceptionDomains: {
-    ...(expo.ios?.infoPlist?.NSAppTransportSecurity?.NSExceptionDomains ?? {}),
+    ...expo.ios?.infoPlist?.NSAppTransportSecurity?.NSExceptionDomains,
     ...Object.fromEntries(
       BUILDING_IMAGE_HOSTS.map((host) => [host, { ...imageHostTransportException }]),
     ),

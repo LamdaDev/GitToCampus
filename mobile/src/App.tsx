@@ -116,7 +116,7 @@ const App = () => {
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
         />
 
-        {!sheetOpen ? <AppSearchBar openSearch={openSearchBuilding} /> : null}
+        {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
 
         <BottomSlider
           userLocation={userLocation}
