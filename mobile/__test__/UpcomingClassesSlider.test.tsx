@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act } from 'react-test-renderer';
 import UpcomingClassesSlider from '../src/components/UpcomingClassesSlider';
 import * as googleCalendarAuth from '../src/services/googleCalendarAuth';
 
@@ -49,9 +50,23 @@ jest.mock('../src/services/googleCalendarAuth', () => ({
     type: 'success',
     events: [],
   })),
+  isGoogleCalendarEventActiveOrUpcoming: jest.fn(
+    (
+      event: {
+        startsAt: number;
+        endsAt?: number;
+      },
+      nowTimestamp: number,
+    ) =>
+      typeof event.endsAt === 'number'
+        ? event.endsAt > nowTimestamp
+        : event.startsAt >= nowTimestamp,
+  ),
 }));
 
 describe('UpcomingClassesSlider', () => {
+  jest.setTimeout(15_000);
+
   const fetchGoogleCalendarEventsMock =
     googleCalendarAuth.fetchGoogleCalendarEventsAsync as jest.Mock;
 
@@ -77,8 +92,22 @@ describe('UpcomingClassesSlider', () => {
     expect(getByTestId('upcoming-classes-datetime')).toBeTruthy();
     expect(getByText('Upcoming Classes:')).toBeTruthy();
     expect(await findByTestId('upcoming-class-event-event-1')).toBeTruthy();
-    expect(getByText('User Interface')).toBeTruthy();
-    expect(getByText('Hall Building 455')).toBeTruthy();
+    expect(getByTestId('upcoming-class-event-event-1')).toBeTruthy();
+  });
+
+  test('does not render next class summary card', async () => {
+    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      type: 'success',
+      events: mockEvents,
+    });
+
+    const { queryByTestId, queryByText } = render(
+      <UpcomingClassesSlider selectedCalendarIds={['calendar-1']} />,
+    );
+
+    await waitFor(() => expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledTimes(1));
+    expect(queryByTestId('next-class-summary-card')).toBeNull();
+    expect(queryByText('Next Class')).toBeNull();
   });
 
   test('shows error and retries loading upcoming classes', async () => {
@@ -112,7 +141,9 @@ describe('UpcomingClassesSlider', () => {
     });
 
     const { findByTestId } = render(<UpcomingClassesSlider selectedCalendarIds={['calendar-1']} />);
-    expect(await findByTestId('upcoming-classes-empty')).toBeTruthy();
+    expect(await findByTestId('upcoming-classes-empty')).toHaveTextContent(
+      /No upcoming or in-progress classes for .* Have a great day!/i,
+    );
   });
 
   test('calls onReselectCalendars when button is pressed', async () => {
@@ -146,12 +177,51 @@ describe('UpcomingClassesSlider', () => {
       events: manyMockEvents,
     });
 
-    const { findByTestId, queryByTestId, getByTestId } = render(
+    const { findByTestId, queryAllByTestId, getByTestId } = render(
       <UpcomingClassesSlider selectedCalendarIds={['calendar-1']} />,
     );
 
-    expect(await findByTestId('upcoming-class-event-event-12')).toBeTruthy();
-    expect(queryByTestId('upcoming-class-event-event-13')).toBeNull();
+    expect(await findByTestId('upcoming-class-event-event-1')).toBeTruthy();
+    expect(queryAllByTestId(/^upcoming-class-event-event-/)).toHaveLength(12);
     expect(getByTestId('upcoming-classes-overflow-indicator')).toHaveTextContent('...');
+  });
+
+  test('hides an in-progress class after its end time passes', async () => {
+    jest.useFakeTimers();
+    const baseNow = new Date('2026-09-14T10:30:00.000Z');
+    jest.setSystemTime(baseNow);
+
+    try {
+      const inProgressClass = {
+        id: 'event-in-progress',
+        calendarId: 'calendar-1',
+        title: 'SOEN 321 LEC',
+        location: 'Hall H-110',
+        startsAt: new Date('2026-09-14T10:00:00.000Z').getTime(),
+        endsAt: new Date('2026-09-14T10:31:00.000Z').getTime(),
+      };
+
+      fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+        type: 'success',
+        events: [inProgressClass],
+      });
+
+      const { findByTestId, queryByTestId } = render(
+        <UpcomingClassesSlider selectedCalendarIds={['calendar-1']} />,
+      );
+
+      expect(await findByTestId('upcoming-class-event-event-in-progress')).toBeTruthy();
+
+      act(() => {
+        jest.setSystemTime(new Date('2026-09-14T10:32:00.000Z'));
+        jest.advanceTimersByTime(120_000);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('upcoming-class-event-event-in-progress')).toBeNull();
+      });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

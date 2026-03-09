@@ -73,6 +73,18 @@ jest.mock('../src/services/googleCalendarAuth', () => ({
     session: null,
   })),
   clearGoogleCalendarSession: jest.fn(async () => {}),
+  isGoogleCalendarEventActiveOrUpcoming: jest.fn(
+    (
+      event: {
+        startsAt: number;
+        endsAt?: number;
+      },
+      nowTimestamp: number,
+    ) =>
+      typeof event.endsAt === 'number'
+        ? event.endsAt > nowTimestamp
+        : event.startsAt >= nowTimestamp,
+  ),
 }));
 
 describe('SearchSheet', () => {
@@ -235,11 +247,18 @@ describe('SearchSheet', () => {
     );
 
     await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
-    expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledWith(['calendar-1']);
-    expect(getAllByText('Hall Building 435').length).toBeGreaterThan(0);
+    await waitFor(() => expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledWith(['calendar-1']));
+    await waitFor(() => expect(getAllByText('Hall Building 435').length).toBeGreaterThan(0));
 
     fireEvent.press(getByTestId('next-class-go-button'));
     expect(onCalendarGoPress).toHaveBeenCalledTimes(1);
+    expect(onCalendarGoPress).toHaveBeenCalledWith({
+      id: 'event-1',
+      calendarId: 'calendar-1',
+      title: 'Hall Building 435',
+      location: 'Hall Building 435',
+      startsAt: expect.any(Number),
+    });
   });
 
   test('shows no upcoming classes in next class card when events are empty', async () => {
@@ -263,7 +282,31 @@ describe('SearchSheet', () => {
 
     await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
     expect(getByTestId('next-class-card')).toBeTruthy();
-    expect(await findByText('No upcoming classes')).toBeTruthy();
+    expect(await findByText('No upcoming or in-progress classes')).toBeTruthy();
+  });
+
+  test('shows calendar GO error message when provided by parent', async () => {
+    getStoredSessionStateMock.mockResolvedValueOnce({
+      status: 'connected',
+      session: {
+        accessToken: 'token-live',
+        tokenType: 'Bearer',
+        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      },
+    });
+
+    const { getByTestId } = render(
+      <SearchSheet
+        buildings={mockBuildings}
+        calendarGoErrorMessage="Unable to find route: Location Not Provided/Not Found"
+      />,
+    );
+
+    await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
+    expect(getByTestId('calendar-go-error-message')).toHaveTextContent(
+      'Unable to find route: Location Not Provided/Not Found',
+    );
   });
 
   test('shows expired helper and status when a stored session is already expired', async () => {
@@ -274,10 +317,11 @@ describe('SearchSheet', () => {
 
     const { getByText } = render(<SearchSheet buildings={mockBuildings} />);
 
-    await waitFor(() => expect(getByText('Google Calendar session expired.')).toBeTruthy());
-    expect(
-      getByText('Session expired. Reconnect Google Calendar to continue syncing.'),
-    ).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        getByText('Session expired. Reconnect Google Calendar to continue syncing.'),
+      ).toBeTruthy(),
+    );
   });
 
   test('marks connected sessions as expired immediately when token expiry has passed', async () => {

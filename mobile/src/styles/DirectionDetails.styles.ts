@@ -371,6 +371,23 @@ export const directionDetailsStyles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'gabarito',
   },
+  routeRetryButton: {
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  routeRetryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    lineHeight: 17,
+    fontFamily: 'gabarito',
+    fontWeight: '700',
+  },
   routeSummaryRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -2,6 +2,7 @@ import * as Linking from 'expo-linking';
 import * as Location from 'expo-location';
 import {
   getCurrentLocation,
+  getCurrentLocationResult,
   getLocationPermissionStatus,
   hasLocationPermission,
 } from '../src/utils/location';
@@ -59,6 +60,19 @@ describe('location utils', () => {
     expect(linkingMock.openSettings).not.toHaveBeenCalled();
   });
 
+  test('returns permission_denied result when permission is denied', async () => {
+    locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
+      granted: false,
+      canAskAgain: true,
+      status: 'denied',
+      expires: 'never',
+    } as any);
+
+    const result = await getCurrentLocationResult();
+
+    expect(result).toEqual({ type: 'permission_denied', canAskAgain: true });
+  });
+
   test('opens settings and returns null when permission is denied and cannot ask again', async () => {
     locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
       granted: false,
@@ -72,6 +86,23 @@ describe('location utils', () => {
     expect(result).toBeNull();
     expect(linkingMock.openSettings).toHaveBeenCalledTimes(1);
     expect((locationMock as any).getCurrentPositionAsync).not.toHaveBeenCalled();
+  });
+
+  test('returns unavailable result when position request fails', async () => {
+    locationMock.requestForegroundPermissionsAsync.mockResolvedValueOnce({
+      granted: true,
+      canAskAgain: true,
+      status: 'granted',
+      expires: 'never',
+    } as any);
+    (locationMock as any).getCurrentPositionAsync.mockRejectedValueOnce(new Error('GPS timeout'));
+
+    const result = await getCurrentLocationResult();
+
+    expect(result).toEqual({
+      type: 'unavailable',
+      message: 'GPS timeout',
+    });
   });
 
   test('getLocationPermissionStatus returns granted', async () => {

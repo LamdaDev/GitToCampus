@@ -36,6 +36,12 @@ import { decodePolyline } from '../utils/polyline';
 import { formatEta } from '../utils/directionsFormatting';
 import { buildShuttlePlan } from '../services/shuttlePlanner';
 import type { ShuttlePlan } from '../types/Shuttle';
+import type { GoogleCalendarEventItem } from '../services/googleCalendarAuth';
+import {
+  CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
+  getManualStartReasonMessage,
+  resolveCalendarRouteLocation,
+} from '../utils/calendarRouteLocation';
 
 import SearchSheet from './SearchSheet';
 import CalendarSelectionSlider from './CalendarSelectionSlider';
@@ -219,7 +225,7 @@ export type BottomSliderHandle = {
   close: () => void;
   setSnap: (index: number) => void;
   closeCalendarSlider: () => void;
-  openCalendarEventsSlider: (calendarIds: string[]) => void;
+  openCalendarEventsSlider: (calendarIds?: string[]) => void;
 };
 
 type BottomSheetProps = {
@@ -268,7 +274,7 @@ const getRouteLoadDecision = ({
   destinationBuildingId?: string;
 }): RouteLoadDecision => {
   if (!isRouteUiVisible(activeView)) {
-    return { action: 'reset' };
+    return { action: 'reset', message: null };
   }
 
   if (activeView !== 'directions') {
@@ -276,11 +282,15 @@ const getRouteLoadDecision = ({
   }
 
   if (travelMode === 'shuttle' && !shuttlePickupCoords) {
-    return { action: 'reset' };
+    return { action: 'reset', message: null };
   }
 
-  if (!startCoords || !routeDestinationCoords) {
-    return { action: 'reset' };
+  if (!routeDestinationCoords) {
+    return { action: 'reset', message: 'Set a destination to continue.' };
+  }
+
+  if (!startCoords) {
+    return { action: 'reset', message: 'Set your start location to continue.' };
   }
 
   if (startBuildingId && destinationBuildingId && startBuildingId === destinationBuildingId) {
@@ -318,6 +328,21 @@ const getRouteErrorMessage = (error: unknown): string => {
     if (error.code === 'NO_ROUTE') {
       return 'No route found for this start and destination.';
     }
+    if (error.code === 'NETWORK_ERROR') {
+      return 'Network issue while loading route. Check connection and retry.';
+    }
+    if (error.code === 'OVER_QUERY_LIMIT') {
+      return 'Routing service limit reached. Please wait and retry.';
+    }
+    if (error.code === 'REQUEST_DENIED') {
+      return 'Routing request was denied by Google Directions API.';
+    }
+    if (error.code === 'INVALID_REQUEST') {
+      return 'Routing request was invalid. Update start/destination and retry.';
+    }
+    if (error.code === 'API_ERROR') {
+      return 'Google Directions API is temporarily unavailable. Please retry.';
+    }
   }
 
   return 'Unable to load route. Please try again.';
@@ -337,6 +362,7 @@ const renderBottomSheetContent = ({
   closeSearchBuilding,
   openCalendarSelectionAfterConnect,
   handleCalendarGoFromSearch,
+  calendarGoErrorMessage,
   activeView,
   selectedBuilding,
   closeSheet,
@@ -362,6 +388,7 @@ const renderBottomSheetContent = ({
   setTravelMode,
   handleDirectionsGo,
   showShuttleSchedule,
+  handleRetryRoute,
 }: {
   isSearchActive: boolean;
   calendarSliderMode: 'selection' | 'events' | null;
@@ -375,7 +402,8 @@ const renderBottomSheetContent = ({
   handleInternalSearch: (building: BuildingShape) => void;
   closeSearchBuilding: (building: BuildingShape) => void;
   openCalendarSelectionAfterConnect: () => void;
-  handleCalendarGoFromSearch: () => void;
+  handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  calendarGoErrorMessage: string | null;
   activeView: ViewType;
   selectedBuilding: BuildingShape | null;
   closeSheet: () => void;
@@ -405,6 +433,7 @@ const renderBottomSheetContent = ({
   setTravelMode: React.Dispatch<React.SetStateAction<RoutePlannerMode>>;
   handleDirectionsGo: (mode: RoutePlannerMode) => void;
   showShuttleSchedule: () => void;
+  handleRetryRoute: () => void;
 }) => {
   if (isSearchActive) {
     if (calendarSliderMode === 'events' && !isInternalSearch) {
@@ -434,6 +463,7 @@ const renderBottomSheetContent = ({
         onCalendarConnected={openCalendarSelectionAfterConnect}
         selectedCalendarIds={selectedCalendarIds}
         onCalendarGoPress={handleCalendarGoFromSearch}
+        calendarGoErrorMessage={calendarGoErrorMessage}
       />
     );
   }
@@ -550,6 +580,7 @@ const renderBottomSheetContent = ({
       onTravelModeChange={setTravelMode}
       onPressGo={handleDirectionsGo}
       onPressShuttleSchedule={showShuttleSchedule}
+      onRetryRoute={handleRetryRoute}
     />
   );
 };
@@ -592,8 +623,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [routeEncodedPolyline, setRouteEncodedPolyline] = useState<string>('');
     const [navigationProgressMeters, setNavigationProgressMeters] = useState(0);
     const [routeTransitSteps, setRouteTransitSteps] = useState<TransitInstruction[]>([]);
+    const [routeRetryNonce, setRouteRetryNonce] = useState(0);
     const [travelMode, setTravelMode] = useState<RoutePlannerMode>('walking');
     const [shuttlePlan, setShuttlePlan] = useState<ShuttlePlan | null>(null);
+    const previousSelectedBuildingIdRef = useRef<string | null>(selectedBuilding?.id ?? null);
     const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
     const destinationCampus = destinationBuilding?.campus ?? null;
     const isCrossCampusRoute = Boolean(
@@ -615,6 +648,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       },
       [passOutdoorRoute],
     );
+
+    const handleRetryRoute = useCallback(() => {
+      setRouteRetryNonce((currentValue) => currentValue + 1);
+    }, []);
 
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = (index: number = 0) => {
@@ -669,12 +706,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       null,
     );
     const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
+    const [calendarGoErrorMessage, setCalendarGoErrorMessage] = useState<string | null>(null);
     const isInternalSearch = searchFor !== null;
     const isGlobalSearch = mode === 'search';
     const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
 
     const openCalendarSelectionSlider = useCallback(
       (resetSelection: boolean = false) => {
+        setCalendarGoErrorMessage(null);
         if (resetSelection) {
           setSelectedCalendarIds([]);
         }
@@ -683,11 +722,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           snapToKnownPosition(SEARCH_EXPANDED_SNAP_POINT, SHEET_INDEX_EXPANDED);
         });
       },
-      [snapToKnownPosition],
+      [selectedCalendarIds, snapToKnownPosition],
     );
 
     const showUpcomingClassesSlider = useCallback(
       (calendarIds: string[]) => {
+        setCalendarGoErrorMessage(null);
         setSelectedCalendarIds(calendarIds);
         setCalendarSliderMode('events');
         requestAnimationFrame(() => {
@@ -701,14 +741,26 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       openCalendarSelectionSlider(true);
     }, [openCalendarSelectionSlider]);
 
-    const handleCalendarGoFromSearch = useCallback(() => {
+    const handleCalendarGoFromSearch = (nextClassEvent: GoogleCalendarEventItem | null) => {
+      setCalendarGoErrorMessage(null);
+
+      if (nextClassEvent) {
+        void (async () => {
+          const errorMessage = await handleUpcomingClassPress(nextClassEvent);
+          if (errorMessage) {
+            setCalendarGoErrorMessage(errorMessage);
+          }
+        })();
+        return;
+      }
+
       if (selectedCalendarIds.length > 0) {
         showUpcomingClassesSlider(selectedCalendarIds);
         return;
       }
 
       openCalendarSelectionSlider();
-    }, [openCalendarSelectionSlider, selectedCalendarIds, showUpcomingClassesSlider]);
+    };
 
     const handleReselectCalendars = useCallback(() => {
       openCalendarSelectionSlider();
@@ -762,7 +814,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setActiveView('building');
       setSearchFor(null);
       setCalendarSliderMode(null);
-      setSelectedCalendarIds([]);
+      setCalendarGoErrorMessage(null);
       setTravelMode('walking');
       setShuttlePlan(null);
       setRouteStartSource('current');
@@ -793,6 +845,45 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
     };
 
+    const handleUpcomingClassPress = useCallback(
+      async (event: GoogleCalendarEventItem): Promise<string | null> => {
+        try {
+          const resolved = await resolveCalendarRouteLocation(event.location);
+          if (resolved.type === 'error') {
+            return resolved.message;
+          }
+
+          const { destinationBuilding: resolvedDestinationBuilding, startPoint } = resolved.value;
+          passSelectedBuilding(resolvedDestinationBuilding);
+          setDestinationBuilding(resolvedDestinationBuilding);
+          setTravelMode('walking');
+          setCalendarSliderMode(null);
+          setSearchFor(null);
+          onExitSearch();
+          setActiveView('directions');
+
+          if (startPoint.type === 'automatic') {
+            setRouteStartSource('current');
+            setRouteErrorMessage(null);
+            // Calendar GO should always start from the user's live location coordinates.
+            setStartBuilding(null);
+            setStartLocationSnapshot(startPoint.coordinates);
+          } else {
+            setStartBuilding(null);
+            setStartLocationSnapshot(null);
+            setRouteStartSource('manual');
+            setRouteErrorMessage(getManualStartReasonMessage(startPoint.reason));
+          }
+
+          snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+          return null;
+        } catch {
+          return CALENDAR_LOCATION_NOT_FOUND_MESSAGE;
+        }
+      },
+      [onExitSearch, passSelectedBuilding, snapToDirectionsPanel],
+    );
+
     const handleInternalSearch = (building: BuildingShape) => {
       passSelectedBuilding(building);
       if (searchFor === 'start') {
@@ -805,12 +896,18 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     };
 
     useEffect(() => {
+      const selectedBuildingId = selectedBuilding?.id ?? null;
+      const didSelectedBuildingChange =
+        selectedBuildingId !== previousSelectedBuildingIdRef.current;
+      previousSelectedBuildingIdRef.current = selectedBuildingId;
+
       if (activeView !== 'directions') return;
       if (!selectedBuilding) return;
       if (selectedBuilding.id === startBuilding?.id) return;
+      if (!didSelectedBuildingChange && destinationBuilding) return;
 
       setDestinationBuilding(selectedBuilding);
-    }, [selectedBuilding, activeView]);
+    }, [selectedBuilding, activeView, startBuilding?.id, destinationBuilding]);
 
     const startCoords = useMemo(() => {
       if (startBuilding) return centroidOfPolygons(startBuilding.polygons);
@@ -1002,6 +1099,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       resetRouteState,
       routeDestinationCoords,
       routeRequestMode,
+      routeRetryNonce,
       shuttlePickupCoords,
       startBuilding?.id,
       startCoords,
@@ -1032,8 +1130,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       close: closeSheet,
       setSnap: setSnapPoint,
       closeCalendarSlider: () => setCalendarSliderMode(null),
-      openCalendarEventsSlider: (calendarIds: string[]) => {
-        showUpcomingClassesSlider(calendarIds);
+      openCalendarEventsSlider: (calendarIds?: string[]) => {
+        const normalizedIds = [...new Set((calendarIds ?? selectedCalendarIds).filter(Boolean))];
+        if (normalizedIds.length === 0) {
+          openCalendarSelectionSlider();
+          return;
+        }
+        showUpcomingClassesSlider(normalizedIds);
       },
     }));
 
@@ -1067,6 +1170,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             closeSearchBuilding,
             openCalendarSelectionAfterConnect,
             handleCalendarGoFromSearch,
+            calendarGoErrorMessage,
             activeView,
             selectedBuilding,
             closeSheet,
@@ -1092,6 +1196,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             setTravelMode,
             handleDirectionsGo,
             showShuttleSchedule,
+            handleRetryRoute,
           })}
         </BottomSheetView>
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}

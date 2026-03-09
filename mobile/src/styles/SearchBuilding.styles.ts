@@ -22,12 +22,6 @@ export const searchBuilding = StyleSheet.create({
     fontFamily: 'gaborito',
   },
 
-  helperText: {
-    color: '#ffffff',
-    textAlign: 'center',
-    marginTop: 18,
-    opacity: 0.85,
-  },
   connectionStatus: {
     color: 'rgba(255,255,255,0.78)',
     textAlign: 'center',

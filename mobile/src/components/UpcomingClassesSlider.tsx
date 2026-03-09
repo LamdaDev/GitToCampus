@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ListRenderItemInfo } from 'react-native';
 import {
   fetchGoogleCalendarEventsAsync,
+  isGoogleCalendarEventActiveOrUpcoming,
   type GoogleCalendarEventItem,
 } from '../services/googleCalendarAuth';
 import { upcomingClassesSliderStyles } from '../styles/UpcomingClassesSlider.styles';
@@ -89,16 +90,31 @@ export default function UpcomingClassesSlider({
     () => `${formattedDate} ${formattedTime}`,
     [formattedDate, formattedTime],
   );
-  const displayedEvents = useMemo(() => events.slice(0, MAX_EVENTS_TO_RENDER), [events]);
-  const hasMoreEvents = events.length > MAX_EVENTS_TO_RENDER;
+  const activeEvents = useMemo(() => {
+    const nowTimestamp = now.getTime();
+    return events
+      .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, nowTimestamp))
+      .sort((a, b) => a.startsAt - b.startsAt);
+  }, [events, now]);
+
+  const displayedEvents = useMemo(
+    () => activeEvents.slice(0, MAX_EVENTS_TO_RENDER),
+    [activeEvents],
+  );
+  const hasMoreEvents = activeEvents.length > MAX_EVENTS_TO_RENDER;
   const isEventsListScrollable = displayedEvents.length > MAX_VISIBLE_EVENTS;
   const eventsListMaxHeight = isEventsListScrollable ? MAX_VISIBLE_EVENTS_HEIGHT : undefined;
-  const isEmptyUpcomingClasses = !isLoading && !errorMessage && events.length === 0;
-  const shouldRenderUpcomingClassesList = !isLoading && !errorMessage && events.length > 0;
+  const isEmptyUpcomingClasses = !isLoading && !errorMessage && activeEvents.length === 0;
+  const emptyClassesMessage = useMemo(
+    () => `No upcoming or in-progress classes for ${formattedDate}. Have a great day!`,
+    [formattedDate],
+  );
+  const shouldRenderUpcomingClassesList = !isLoading && !errorMessage && activeEvents.length > 0;
   const fixedCardHeight = useMemo(() => {
     const targetHeight = Math.round(windowHeight * 0.68);
     return Math.max(390, Math.min(targetHeight, 680));
   }, [windowHeight]);
+
   const renderEventItem = useCallback(
     ({ item: event }: ListRenderItemInfo<GoogleCalendarEventItem>) => (
       <View
@@ -167,7 +183,7 @@ export default function UpcomingClassesSlider({
 
           {isEmptyUpcomingClasses ? (
             <Text testID="upcoming-classes-empty" style={upcomingClassesSliderStyles.infoText}>
-              No upcoming classes were found for your selected calendars.
+              {emptyClassesMessage}
             </Text>
           ) : null}
 

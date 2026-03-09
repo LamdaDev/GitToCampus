@@ -319,6 +319,263 @@ describe('googleCalendarAuth', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  test('requests upcoming classes within the configured lookahead window', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 14, 10, 30, 0, 0));
+
+    try {
+      await saveGoogleCalendarSession({
+        accessToken: 'calendar-token',
+        tokenType: 'Bearer',
+        scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [] }),
+      });
+
+      await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+      const requestUrl = fetchMock.mock.calls[0][0] as string;
+      const parsedUrl = new URL(requestUrl);
+      const timeMin = parsedUrl.searchParams.get('timeMin');
+      const timeMax = parsedUrl.searchParams.get('timeMax');
+
+      const now = new Date(2026, 8, 14, 10, 30, 0, 0);
+      const expectedStartOfDay = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      ).toISOString();
+      const expectedEndOfLookaheadWindow = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 31,
+      ).toISOString();
+
+      expect(timeMin).toBe(expectedStartOfDay);
+      expect(timeMax).toBe(expectedEndOfLookaheadWindow);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('returns only in-progress and upcoming classes for today', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 14, 10, 30, 0, 0));
+
+    try {
+      await saveGoogleCalendarSession({
+        accessToken: 'calendar-token',
+        tokenType: 'Bearer',
+        scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
+
+      const toIso = (hour: number, minute: number) =>
+        new Date(2026, 8, 14, hour, minute, 0, 0).toISOString();
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'ended-class',
+              summary: 'SOEN 287 LEC',
+              location: 'Hall Building H-110',
+              start: { dateTime: toIso(9, 0) },
+              end: { dateTime: toIso(10, 0) },
+            },
+            {
+              id: 'ongoing-class',
+              summary: 'SOEN 321 LEC',
+              location: 'Hall Building H-531',
+              start: { dateTime: toIso(10, 0) },
+              end: { dateTime: toIso(11, 15) },
+            },
+            {
+              id: 'upcoming-class',
+              summary: 'COMP 249 LAB',
+              location: 'SGW H-937',
+              start: { dateTime: toIso(11, 45) },
+              end: { dateTime: toIso(13, 0) },
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+      expect(result).toEqual({
+        type: 'success',
+        events: [
+          {
+            id: 'ongoing-class',
+            calendarId: 'calendar-1',
+            title: 'SOEN 321 LEC',
+            location: 'Hall Building H-531',
+            startsAt: new Date(toIso(10, 0)).getTime(),
+            endsAt: new Date(toIso(11, 15)).getTime(),
+          },
+          {
+            id: 'upcoming-class',
+            calendarId: 'calendar-1',
+            title: 'COMP 249 LAB',
+            location: 'SGW H-937',
+            startsAt: new Date(toIso(11, 45)).getTime(),
+            endsAt: new Date(toIso(13, 0)).getTime(),
+          },
+        ],
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('keeps an ongoing same-day class without end time for a short fallback window', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 14, 12, 0, 0, 0));
+
+    try {
+      await saveGoogleCalendarSession({
+        accessToken: 'calendar-token',
+        tokenType: 'Bearer',
+        scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
+
+      const toIso = (hour: number, minute: number) =>
+        new Date(2026, 8, 14, hour, minute, 0, 0).toISOString();
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'class-without-end',
+              summary: 'SOEN 321 LEC',
+              location: 'Hall Building H-531',
+              start: { dateTime: toIso(10, 45) },
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+      expect(result).toEqual({
+        type: 'success',
+        events: [
+          {
+            id: 'class-without-end',
+            calendarId: 'calendar-1',
+            title: 'SOEN 321 LEC',
+            location: 'Hall Building H-531',
+            startsAt: new Date(toIso(10, 45)).getTime(),
+          },
+        ],
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('returns no events when there are no remaining classes for today', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 14, 18, 30, 0, 0));
+
+    try {
+      await saveGoogleCalendarSession({
+        accessToken: 'calendar-token',
+        tokenType: 'Bearer',
+        scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
+
+      const toIso = (dayOffset: number, hour: number, minute: number) =>
+        new Date(2026, 8, 14 + dayOffset, hour, minute, 0, 0).toISOString();
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'ended-class',
+              summary: 'SOEN 321 LEC',
+              location: 'Hall Building H-531',
+              start: { dateTime: toIso(0, 10, 0) },
+              end: { dateTime: toIso(0, 11, 15) },
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({
+        type: 'success',
+        events: [],
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('includes the next-day class when there are no remaining classes today', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 2, 8, 16, 42, 0, 0));
+
+    try {
+      await saveGoogleCalendarSession({
+        accessToken: 'calendar-token',
+        tokenType: 'Bearer',
+        scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'next-day-class',
+              summary: 'COMP 346 LEC',
+              location: 'Hall Building 761',
+              start: { dateTime: new Date(2026, 2, 9, 9, 15, 0, 0).toISOString() },
+              end: { dateTime: new Date(2026, 2, 9, 10, 30, 0, 0).toISOString() },
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchGoogleCalendarEventsAsync(['calendar-1']);
+
+      expect(result).toEqual({
+        type: 'success',
+        events: [
+          {
+            id: 'next-day-class',
+            calendarId: 'calendar-1',
+            title: 'COMP 346 LEC',
+            location: 'Hall Building 761',
+            startsAt: new Date(2026, 2, 9, 9, 15, 0, 0).getTime(),
+            endsAt: new Date(2026, 2, 9, 10, 30, 0, 0).getTime(),
+          },
+        ],
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test('fetches and merges upcoming classes across selected calendars', async () => {
     await saveGoogleCalendarSession({
       accessToken: 'calendar-token',
@@ -335,7 +592,7 @@ describe('googleCalendarAuth', () => {
           items: [
             {
               id: 'event-b',
-              summary: 'Software Testing',
+              summary: 'SOEN 341 LEC',
               location: 'MB 5.105',
               start: { dateTime: '2030-02-19T13:00:00.000Z' },
             },
@@ -349,7 +606,7 @@ describe('googleCalendarAuth', () => {
           items: [
             {
               id: 'event-a',
-              summary: 'Data Structures',
+              summary: 'SOEN 321 LEC',
               location: 'Faubourg Building C080',
               start: { dateTime: '2030-02-19T12:00:00.000Z' },
             },
@@ -381,14 +638,14 @@ describe('googleCalendarAuth', () => {
         {
           id: 'event-a',
           calendarId: 'calendar-2',
-          title: 'Data Structures',
+          title: 'SOEN 321 LEC',
           location: 'Faubourg Building C080',
           startsAt: new Date('2030-02-19T12:00:00.000Z').getTime(),
         },
         {
           id: 'event-b',
           calendarId: 'calendar-1',
-          title: 'Software Testing',
+          title: 'SOEN 341 LEC',
           location: 'MB 5.105',
           startsAt: new Date('2030-02-19T13:00:00.000Z').getTime(),
         },
@@ -398,6 +655,132 @@ describe('googleCalendarAuth', () => {
           title: 'Untitled event',
           location: null,
           startsAt: new Date('2030-02-19T14:00:00.000Z').getTime(),
+        },
+      ],
+    });
+  });
+
+  test('keeps scheduled events and deduplicates duplicates by title/location/start', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'calendar-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'event-dup-1',
+              summary: 'SOEN 321 LEC',
+              location: 'Hall Building H-531',
+              start: { dateTime: '2030-02-19T12:00:00.000Z' },
+            },
+            {
+              id: 'event-social',
+              summary: 'Dinner with friends',
+              location: 'Downtown',
+              start: { dateTime: '2030-02-19T15:00:00.000Z' },
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'event-dup-2',
+              summary: 'SOEN 321 LEC',
+              location: 'Hall Building H-531',
+              start: { dateTime: '2030-02-19T12:00:00.000Z' },
+            },
+            {
+              id: 'event-lab',
+              summary: 'COMP 249 LAB',
+              location: 'SGW H-937',
+              start: { dateTime: '2030-02-19T16:00:00.000Z' },
+            },
+          ],
+        }),
+      });
+
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1', 'calendar-2']);
+
+    expect(result).toEqual({
+      type: 'success',
+      events: [
+        {
+          id: 'event-dup-1',
+          calendarId: 'calendar-1',
+          title: 'SOEN 321 LEC',
+          location: 'Hall Building H-531',
+          startsAt: new Date('2030-02-19T12:00:00.000Z').getTime(),
+        },
+        {
+          id: 'event-social',
+          calendarId: 'calendar-1',
+          title: 'Dinner with friends',
+          location: 'Downtown',
+          startsAt: new Date('2030-02-19T15:00:00.000Z').getTime(),
+        },
+        {
+          id: 'event-lab',
+          calendarId: 'calendar-2',
+          title: 'COMP 249 LAB',
+          location: 'SGW H-937',
+          startsAt: new Date('2030-02-19T16:00:00.000Z').getTime(),
+        },
+      ],
+    });
+  });
+
+  test('keeps events from successful calendars when one selected calendar request fails', async () => {
+    await saveGoogleCalendarSession({
+      accessToken: 'calendar-token',
+      tokenType: 'Bearer',
+      scope: GOOGLE_CALENDAR_READONLY_SCOPE,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          items: [
+            {
+              id: 'event-survives',
+              summary: 'SOEN 341 LEC',
+              location: 'MB 5.105',
+              start: { dateTime: '2030-02-19T13:00:00.000Z' },
+              end: { dateTime: '2030-02-19T14:15:00.000Z' },
+            },
+          ],
+        }),
+      });
+
+    const result = await fetchGoogleCalendarEventsAsync(['calendar-1', 'calendar-2']);
+
+    expect(result).toEqual({
+      type: 'success',
+      events: [
+        {
+          id: 'event-survives',
+          calendarId: 'calendar-2',
+          title: 'SOEN 341 LEC',
+          location: 'MB 5.105',
+          startsAt: new Date('2030-02-19T13:00:00.000Z').getTime(),
+          endsAt: new Date('2030-02-19T14:15:00.000Z').getTime(),
         },
       ],
     });

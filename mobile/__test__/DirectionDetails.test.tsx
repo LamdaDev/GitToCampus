@@ -179,6 +179,25 @@ describe('Direction Details', () => {
     expect(getByTestId('transport-shuttle')).toBeTruthy();
   });
 
+  test('renders route retry button and calls callback on route error', () => {
+    const onRetryRoute = jest.fn();
+    const { getByTestId, getByText } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeErrorMessage="Unable to load route. Please try again."
+        onRetryRoute={onRetryRoute}
+      />,
+    );
+
+    expect(getByText('Unable to load route. Please try again.')).toBeTruthy();
+    fireEvent.press(getByTestId('route-retry-button'));
+    expect(onRetryRoute).toHaveBeenCalledTimes(1);
+  });
+
   test('renders shuttle card details when shuttle is selected on cross-campus routes', () => {
     const onTravelModeChange = jest.fn();
     const { getByTestId, queryByTestId } = render(

@@ -11,6 +11,7 @@ import {
   connectGoogleCalendarAsync,
   fetchGoogleCalendarEventsAsync,
   getStoredGoogleCalendarSessionState,
+  isGoogleCalendarEventActiveOrUpcoming,
   type GoogleCalendarEventItem,
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
@@ -20,7 +21,8 @@ type SearchBarProps = {
   onPressBuilding?: (b: BuildingShape) => void;
   onCalendarConnected?: () => void;
   selectedCalendarIds?: string[];
-  onCalendarGoPress?: () => void;
+  onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  calendarGoErrorMessage?: string | null;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
@@ -34,6 +36,7 @@ export default function SearchSheet({
   onCalendarConnected,
   selectedCalendarIds = [],
   onCalendarGoPress,
+  calendarGoErrorMessage = null,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
@@ -46,7 +49,7 @@ export default function SearchSheet({
   const nextClassLabel = useMemo(() => {
     if (isNextClassLoading) return 'Loading next class...';
     if (selectedCalendarIds.length === 0) return 'Select calendars to see your next class.';
-    if (!nextClassEvent) return 'No upcoming classes';
+    if (!nextClassEvent) return 'No upcoming or in-progress classes';
     return nextClassEvent.location ?? 'Location not provided';
   }, [isNextClassLoading, nextClassEvent, selectedCalendarIds.length]);
 
@@ -72,7 +75,8 @@ export default function SearchSheet({
 
     const now = Date.now();
     const next = result.events
-      .filter((event) => Number.isFinite(event.startsAt) && event.startsAt >= now)
+      .filter((event) => Number.isFinite(event.startsAt))
+      .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, now))
       .sort((a, b) => {
         if (a.startsAt !== b.startsAt) return a.startsAt - b.startsAt;
         const calendarComparison = a.calendarId.localeCompare(b.calendarId);
@@ -213,12 +217,6 @@ export default function SearchSheet({
     setCalendarMessage('Signed out of Google Calendar.');
   }, []);
 
-  const helperText = useMemo(() => {
-    if (calendarStatus === 'connected') return '';
-    if (calendarStatus === 'expired') return 'Google Calendar session expired.';
-    return 'Sign in below to sync your calendar';
-  }, [calendarStatus]);
-
   const buttonText = useMemo(() => {
     if (isCalendarConnecting) return 'Connecting...';
     if (calendarStatus === 'connected') return 'Sign Out Google Calendar';
@@ -273,7 +271,6 @@ export default function SearchSheet({
         searchIcon={{ name: 'search', type: 'ionicon', size: 25, color: '#d7c9cf' }}
       />
 
-      {helperText ? <Text style={searchBuilding.helperText}>{helperText}</Text> : null}
       {calendarStatus === 'connected' ? (
         <View style={searchBuilding.nextClassCard} testID="next-class-card">
           <View style={searchBuilding.nextClassTextWrap}>
@@ -289,11 +286,16 @@ export default function SearchSheet({
             accessibilityRole="button"
             style={searchBuilding.nextClassGoButton}
             disabled={isNextClassLoading}
-            onPress={onCalendarGoPress}
+            onPress={() => onCalendarGoPress?.(nextClassEvent)}
           >
             <Text style={searchBuilding.nextClassGoText}>GO</Text>
           </TouchableOpacity>
         </View>
+      ) : null}
+      {calendarStatus === 'connected' && calendarGoErrorMessage ? (
+        <Text testID="calendar-go-error-message" style={searchBuilding.authMessage}>
+          {calendarGoErrorMessage}
+        </Text>
       ) : null}
 
       <TouchableOpacity

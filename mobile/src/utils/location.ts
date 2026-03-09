@@ -12,6 +12,10 @@ type CoordinateLike = {
 };
 
 export type LocationPermissionStatus = 'granted' | 'denied' | 'undetermined';
+export type CurrentLocationResult =
+  | { type: 'success'; coords: UserLocationCoords }
+  | { type: 'permission_denied'; canAskAgain: boolean }
+  | { type: 'unavailable'; message: string };
 
 /**
  * Request and return foreground location permission status.
@@ -29,23 +33,43 @@ export async function getLocationPermissionStatus(): Promise<LocationPermissionS
  * Returns null if permission is not granted.
  */
 export async function getCurrentLocation(): Promise<UserLocationCoords | null> {
+  const result = await getCurrentLocationResult();
+  if (result.type !== 'success') return null;
+  return result.coords;
+}
+
+/**
+ * Get detailed location resolution result for permission-aware flows.
+ */
+export async function getCurrentLocationResult(): Promise<CurrentLocationResult> {
   const { granted, canAskAgain } = await Location.requestForegroundPermissionsAsync();
 
   if (!granted) {
     if (!canAskAgain) {
       await Linking.openSettings();
     }
-    return null;
+    return { type: 'permission_denied', canAskAgain };
   }
 
-  const location = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy.Balanced,
-  });
+  try {
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
 
-  return {
-    latitude: location.coords.latitude,
-    longitude: location.coords.longitude,
-  };
+    return {
+      type: 'success',
+      coords: {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      },
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message.trim().length > 0
+        ? error.message
+        : 'Unable to determine your current location.';
+    return { type: 'unavailable', message };
+  }
 }
 
 /**

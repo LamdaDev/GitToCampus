@@ -1,7 +1,8 @@
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useWindowDimensions, View, Text } from 'react-native';
+import { useWindowDimensions, View, Text, Platform } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
+import * as Linking from 'expo-linking';
 import type { SharedValue } from 'react-native-reanimated';
 
 import type { Campus } from '../types/Campus';
@@ -152,6 +153,23 @@ const toUserCoords = (pos: Location.LocationObject): UserCoords => ({
   longitude: pos.coords.longitude,
 });
 
+const isIosSimulatorInitialFixError = (error: unknown) => {
+  if (Platform.OS !== 'ios') return false;
+  if (!(error instanceof Error)) return false;
+  return error.message.includes('kCLErrorDomain error 0');
+};
+
+const getInitialLocationWarningMessage = (error: unknown) => {
+  if (isIosSimulatorInitialFixError(error)) {
+    return (
+      'Unable to fetch initial location fix. On iOS Simulator, set Features > Location ' +
+      'to Apple/City Run/Custom Location and retry.'
+    );
+  }
+
+  return 'Unable to fetch initial location fix';
+};
+
 const getRouteFitBottomPadding = (
   windowHeight: number,
   bottomSheetTop: number | null | undefined,
@@ -188,18 +206,98 @@ const flattenBuildingsByCampus = (
   return items;
 };
 
+const areLocationServicesEnabled = async (): Promise<boolean> => {
+  if (typeof Location.hasServicesEnabledAsync !== 'function') {
+    return true;
+  }
+
+  try {
+    const servicesEnabled = await Location.hasServicesEnabledAsync();
+    if (servicesEnabled) return true;
+
+    console.warn(
+      'Location services are disabled. Enable Location Services in iOS Settings or Simulator.',
+    );
+    return false;
+  } catch {
+    // If service checks fail, continue with permission and watch requests.
+    return true;
+  }
+};
+
+const requestLocationPermission = async (): Promise<boolean> => {
+  const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+  if (status === 'granted') return true;
+
+  if (!canAskAgain) {
+    await Linking.openSettings();
+  }
+  console.warn('Location permission denied');
+  return false;
+};
+
+const startLocationSubscription = async (
+  onPositionUpdate: (coords: UserCoords) => void,
+): Promise<Location.LocationSubscription | null> => {
+  try {
+    return await Location.watchPositionAsync(LOCATION_OPTIONS, (pos) => {
+      onPositionUpdate(toUserCoords(pos));
+    });
+  } catch (error) {
+    console.warn('Unable to start location tracking', error);
+    return null;
+  }
+};
+
+const applyLastKnownLocationFix = async (
+  onPositionUpdate: (coords: UserCoords) => void,
+  initialError: unknown,
+) => {
+  if (typeof Location.getLastKnownPositionAsync !== 'function') {
+    console.warn(getInitialLocationWarningMessage(initialError), initialError);
+    return;
+  }
+
+  try {
+    const lastKnownPosition = await Location.getLastKnownPositionAsync({
+      maxAge: 60 * 60 * 1000,
+    });
+    if (lastKnownPosition) {
+      onPositionUpdate(toUserCoords(lastKnownPosition));
+      return;
+    }
+  } catch {
+    // Fall through to a single warning message below.
+  }
+
+  console.warn(getInitialLocationWarningMessage(initialError), initialError);
+};
+
+const applyInitialLocationFix = async (onPositionUpdate: (coords: UserCoords) => void) => {
+  if (typeof Location.getCurrentPositionAsync !== 'function') return;
+
+  try {
+    const initialPosition = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    onPositionUpdate(toUserCoords(initialPosition));
+  } catch (error) {
+    await applyLastKnownLocationFix(onPositionUpdate, error);
+  }
+};
+
 const watchUserLocation = async (
   onPositionUpdate: (coords: UserCoords) => void,
 ): Promise<Location.LocationSubscription | null> => {
-  const { status } = await Location.requestForegroundPermissionsAsync();
-  if (status !== 'granted') {
-    console.warn('Location permission denied');
-    return null;
-  }
+  const servicesEnabled = await areLocationServicesEnabled();
+  if (!servicesEnabled) return null;
 
-  return Location.watchPositionAsync(LOCATION_OPTIONS, (pos) => {
-    onPositionUpdate(toUserCoords(pos));
-  });
+  const hasPermission = await requestLocationPermission();
+  if (!hasPermission) return null;
+
+  const subscription = await startLocationSubscription(onPositionUpdate);
+  await applyInitialLocationFix(onPositionUpdate);
+  return subscription;
 };
 
 const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]) => {

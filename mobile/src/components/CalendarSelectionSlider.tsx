@@ -25,6 +25,21 @@ export default function CalendarSelectionSlider({
   const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>(
     initialSelectedCalendarIds,
   );
+  const normalizedInitialSelectionKey = initialSelectedCalendarIds.join('|');
+
+  useEffect(() => {
+    const normalizedSelection = [...new Set(initialSelectedCalendarIds)];
+    setSelectedCalendarIds((previousIds) => {
+      if (
+        previousIds.length === normalizedSelection.length &&
+        previousIds.every((calendarId, index) => calendarId === normalizedSelection[index])
+      ) {
+        return previousIds;
+      }
+
+      return normalizedSelection;
+    });
+  }, [normalizedInitialSelectionKey]);
 
   const loadCalendarList = useCallback(async () => {
     setIsCalendarListLoading(true);
@@ -51,16 +66,18 @@ export default function CalendarSelectionSlider({
       }
 
       const primaryCalendar = result.calendars.find((calendar) => calendar.isPrimary);
-      return primaryCalendar ? [primaryCalendar.id] : [];
+      const fallbackSelection = primaryCalendar ? [primaryCalendar.id] : [];
+      return fallbackSelection;
     });
   }, []);
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
-    setSelectedCalendarIds((previousIds) =>
-      previousIds.includes(calendarId)
+    setSelectedCalendarIds((previousIds) => {
+      const nextIds = previousIds.includes(calendarId)
         ? previousIds.filter((id) => id !== calendarId)
-        : [...previousIds, calendarId],
-    );
+        : [...previousIds, calendarId];
+      return nextIds;
+    });
   }, []);
 
   useEffect(() => {

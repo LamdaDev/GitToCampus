@@ -12,10 +12,7 @@ import { SheetMode } from './types/SheetMode';
 import type { OutdoorRouteOverlay } from './types/Map';
 import { useSharedValue } from 'react-native-reanimated';
 import { initializeClarityAsync } from './services/clarity';
-import {
-  fetchGoogleCalendarListAsync,
-  getStoredGoogleCalendarSessionState,
-} from './services/googleCalendarAuth';
+import { getStoredGoogleCalendarSessionState } from './services/googleCalendarAuth';
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -73,14 +70,8 @@ const App = () => {
       return;
     }
 
-    const calendarListResult = await fetchGoogleCalendarListAsync();
-    if (calendarListResult.type !== 'success') {
-      return;
-    }
-
-    const allCalendarIds = calendarListResult.calendars.map((calendar) => calendar.id);
     requestAnimationFrame(() => {
-      bottomSheetRef.current?.openCalendarEventsSlider(allCalendarIds);
+      bottomSheetRef.current?.openCalendarEventsSlider();
     });
   }, [openSearchBuilding]);
 
