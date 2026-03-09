@@ -587,6 +587,122 @@ export const fetchGoogleCalendarEventsAsync = async (
   }
 };
 
+type SuccessfulPromptResult = Extract<AuthSession.AuthSessionResult, { type: 'success' }>;
+type PromptErrorResult = Extract<AuthSession.AuthSessionResult, { type: 'error' }>;
+
+type PromptResolution =
+  | { shouldContinue: true; promptResult: SuccessfulPromptResult }
+  | { shouldContinue: false; result: GoogleCalendarConnectResult };
+
+type TokenResponseResolution =
+  | { ok: true; tokenResponse: AuthSession.TokenResponse }
+  | { ok: false; result: GoogleCalendarConnectResult };
+
+const resolvePromptError = (promptResult: PromptErrorResult): GoogleCalendarConnectResult => {
+  const oauthErrorCode = (promptResult.params.error ?? '').toLowerCase();
+  if (oauthErrorCode === 'access_denied') {
+    return { type: 'denied' };
+  }
+
+  if (oauthErrorCode === 'deleted_client' || oauthErrorCode === 'invalid_client') {
+    return {
+      type: 'error',
+      message:
+        `Google OAuth client is invalid or deleted. Update ${getPlatformClientIdEnvName()} ` +
+        'in mobile/.env and rebuild the dev client.',
+    };
+  }
+
+  const oauthErrorDescription = (promptResult.params.error_description ?? '').trim();
+  return {
+    type: 'error',
+    message: oauthErrorDescription || mapPromptErrorToMessage(promptResult.error),
+  };
+};
+
+const resolvePromptResult = (promptResult: AuthSession.AuthSessionResult): PromptResolution => {
+  if (promptResult.type === 'success') {
+    return {
+      shouldContinue: true,
+      promptResult,
+    };
+  }
+
+  if (promptResult.type === 'cancel' || promptResult.type === 'dismiss') {
+    return {
+      shouldContinue: false,
+      result: { type: 'cancel' },
+    };
+  }
+
+  if (promptResult.type === 'locked') {
+    return {
+      shouldContinue: false,
+      result: {
+        type: 'error',
+        message: 'Google sign-in is already active. Please wait and try again.',
+      },
+    };
+  }
+
+  if (promptResult.type === 'error') {
+    return {
+      shouldContinue: false,
+      result: resolvePromptError(promptResult),
+    };
+  }
+
+  return {
+    shouldContinue: false,
+    result: {
+      type: 'error',
+      message: 'Google sign-in did not complete. Please try again.',
+    },
+  };
+};
+
+const resolveTokenResponse = async ({
+  promptResult,
+  request,
+  clientId,
+  redirectUri,
+}: {
+  promptResult: SuccessfulPromptResult;
+  request: Awaited<ReturnType<typeof AuthSession.loadAsync>>;
+  clientId: string;
+  redirectUri: string;
+}): Promise<TokenResponseResolution> => {
+  if (promptResult.authentication) {
+    return { ok: true, tokenResponse: promptResult.authentication };
+  }
+
+  const authCode = promptResult.params.code;
+  if (!isNonEmptyString(authCode)) {
+    return {
+      ok: false,
+      result: {
+        type: 'error',
+        message: 'Google authentication completed without an authorization code.',
+      },
+    };
+  }
+
+  const tokenResponse = await AuthSession.exchangeCodeAsync(
+    {
+      clientId,
+      code: authCode,
+      redirectUri,
+      extraParams: request.codeVerifier
+        ? {
+            code_verifier: request.codeVerifier,
+          }
+        : undefined,
+    },
+    GOOGLE_CALENDAR_DISCOVERY,
+  );
+  return { ok: true, tokenResponse };
+};
+
 export const connectGoogleCalendarAsync = async (): Promise<GoogleCalendarConnectResult> => {
   const clientId = getConfiguredClientId();
   if (!clientId) {
@@ -629,75 +745,22 @@ export const connectGoogleCalendarAsync = async (): Promise<GoogleCalendarConnec
     );
 
     const promptResult = await request.promptAsync(GOOGLE_CALENDAR_DISCOVERY);
-
-    if (promptResult.type === 'cancel' || promptResult.type === 'dismiss') {
-      return { type: 'cancel' };
+    const promptResolution = resolvePromptResult(promptResult);
+    if (!promptResolution.shouldContinue) {
+      return promptResolution.result;
     }
 
-    if (promptResult.type === 'locked') {
-      return {
-        type: 'error',
-        message: 'Google sign-in is already active. Please wait and try again.',
-      };
+    const tokenResolution = await resolveTokenResponse({
+      promptResult: promptResolution.promptResult,
+      request,
+      clientId,
+      redirectUri,
+    });
+    if (!tokenResolution.ok) {
+      return tokenResolution.result;
     }
 
-    if (promptResult.type === 'error') {
-      const oauthErrorCode = (promptResult.params.error ?? '').toLowerCase();
-
-      if (oauthErrorCode === 'access_denied') {
-        return { type: 'denied' };
-      }
-
-      if (oauthErrorCode === 'deleted_client' || oauthErrorCode === 'invalid_client') {
-        return {
-          type: 'error',
-          message:
-            `Google OAuth client is invalid or deleted. Update ${getPlatformClientIdEnvName()} ` +
-            'in mobile/.env and rebuild the dev client.',
-        };
-      }
-
-      const oauthErrorDescription = (promptResult.params.error_description ?? '').trim();
-      return {
-        type: 'error',
-        message: oauthErrorDescription || mapPromptErrorToMessage(promptResult.error),
-      };
-    }
-
-    if (promptResult.type !== 'success') {
-      return {
-        type: 'error',
-        message: 'Google sign-in did not complete. Please try again.',
-      };
-    }
-
-    let tokenResponse = promptResult.authentication;
-
-    if (!tokenResponse) {
-      const authCode = promptResult.params.code;
-      if (!isNonEmptyString(authCode)) {
-        return {
-          type: 'error',
-          message: 'Google authentication completed without an authorization code.',
-        };
-      }
-
-      tokenResponse = await AuthSession.exchangeCodeAsync(
-        {
-          clientId,
-          code: authCode,
-          redirectUri,
-          extraParams: request.codeVerifier
-            ? {
-                code_verifier: request.codeVerifier,
-              }
-            : undefined,
-        },
-        GOOGLE_CALENDAR_DISCOVERY,
-      );
-    }
-
-    const session = toSession(tokenResponse);
+    const session = toSession(tokenResolution.tokenResponse);
     await saveGoogleCalendarSession(session);
 
     return {
