@@ -1,0 +1,18 @@
+appId: com.anonymous.mobile
+---
+- launchApp
+- tapOn: Enter building name
+- tapOn: GO
+- assertVisible: Team Git Good
+- tapOn: Team Git Good
+- tapOn: Done
+- tapOn: 
+- tapOn: GO
+- assertVisible: ' Directions '
+- tapOn: 
+- tapOn: Reselect Calendars
+- tapOn: Team Git Good
+- tapOn: Done
+- tapOn: 
+- tapOn: GO
+- assertVisible: 'Unable to find route: Location Not Provided/Not Found'
