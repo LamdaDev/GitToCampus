@@ -206,67 +206,97 @@ const flattenBuildingsByCampus = (
   return items;
 };
 
-const watchUserLocation = async (
+const areLocationServicesEnabled = async (): Promise<boolean> => {
+  if (typeof Location.hasServicesEnabledAsync !== 'function') {
+    return true;
+  }
+
+  try {
+    const servicesEnabled = await Location.hasServicesEnabledAsync();
+    if (servicesEnabled) return true;
+
+    console.warn(
+      'Location services are disabled. Enable Location Services in iOS Settings or Simulator.',
+    );
+    return false;
+  } catch {
+    // If service checks fail, continue with permission and watch requests.
+    return true;
+  }
+};
+
+const requestLocationPermission = async (): Promise<boolean> => {
+  const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+  if (status === 'granted') return true;
+
+  if (!canAskAgain) {
+    await Linking.openSettings();
+  }
+  console.warn('Location permission denied');
+  return false;
+};
+
+const startLocationSubscription = async (
   onPositionUpdate: (coords: UserCoords) => void,
 ): Promise<Location.LocationSubscription | null> => {
-  if (typeof Location.hasServicesEnabledAsync === 'function') {
-    try {
-      const servicesEnabled = await Location.hasServicesEnabledAsync();
-      if (servicesEnabled === false) {
-        console.warn(
-          'Location services are disabled. Enable Location Services in iOS Settings or Simulator.',
-        );
-        return null;
-      }
-    } catch {
-      // If service checks fail, continue with permission and watch requests.
-    }
-  }
-
-  const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
-  if (status !== 'granted') {
-    if (!canAskAgain) {
-      await Linking.openSettings();
-    }
-    console.warn('Location permission denied');
-    return null;
-  }
-
-  let subscription: Location.LocationSubscription | null = null;
   try {
-    subscription = await Location.watchPositionAsync(LOCATION_OPTIONS, (pos) => {
+    return await Location.watchPositionAsync(LOCATION_OPTIONS, (pos) => {
       onPositionUpdate(toUserCoords(pos));
     });
   } catch (error) {
     console.warn('Unable to start location tracking', error);
+    return null;
+  }
+};
+
+const applyLastKnownLocationFix = async (
+  onPositionUpdate: (coords: UserCoords) => void,
+  initialError: unknown,
+) => {
+  if (typeof Location.getLastKnownPositionAsync !== 'function') {
+    console.warn(getInitialLocationWarningMessage(initialError), initialError);
+    return;
   }
 
-  if (typeof Location.getCurrentPositionAsync === 'function') {
-    try {
-      const initialPosition = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      onPositionUpdate(toUserCoords(initialPosition));
-    } catch (error) {
-      if (typeof Location.getLastKnownPositionAsync === 'function') {
-        try {
-          const lastKnownPosition = await Location.getLastKnownPositionAsync({
-            maxAge: 60 * 60 * 1000,
-          });
-          if (lastKnownPosition) {
-            onPositionUpdate(toUserCoords(lastKnownPosition));
-          } else {
-            console.warn(getInitialLocationWarningMessage(error), error);
-          }
-        } catch {
-          console.warn(getInitialLocationWarningMessage(error), error);
-        }
-      } else {
-        console.warn(getInitialLocationWarningMessage(error), error);
-      }
+  try {
+    const lastKnownPosition = await Location.getLastKnownPositionAsync({
+      maxAge: 60 * 60 * 1000,
+    });
+    if (lastKnownPosition) {
+      onPositionUpdate(toUserCoords(lastKnownPosition));
+      return;
     }
+  } catch {
+    // Fall through to a single warning message below.
   }
 
+  console.warn(getInitialLocationWarningMessage(initialError), initialError);
+};
+
+const applyInitialLocationFix = async (onPositionUpdate: (coords: UserCoords) => void) => {
+  if (typeof Location.getCurrentPositionAsync !== 'function') return;
+
+  try {
+    const initialPosition = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    onPositionUpdate(toUserCoords(initialPosition));
+  } catch (error) {
+    await applyLastKnownLocationFix(onPositionUpdate, error);
+  }
+};
+
+const watchUserLocation = async (
+  onPositionUpdate: (coords: UserCoords) => void,
+): Promise<Location.LocationSubscription | null> => {
+  const servicesEnabled = await areLocationServicesEnabled();
+  if (!servicesEnabled) return null;
+
+  const hasPermission = await requestLocationPermission();
+  if (!hasPermission) return null;
+
+  const subscription = await startLocationSubscription(onPositionUpdate);
+  await applyInitialLocationFix(onPositionUpdate);
   return subscription;
 };
 

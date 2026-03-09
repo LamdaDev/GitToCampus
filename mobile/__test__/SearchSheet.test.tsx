@@ -317,10 +317,11 @@ describe('SearchSheet', () => {
 
     const { getByText } = render(<SearchSheet buildings={mockBuildings} />);
 
-    await waitFor(() => expect(getByText('Google Calendar session expired.')).toBeTruthy());
-    expect(
-      getByText('Session expired. Reconnect Google Calendar to continue syncing.'),
-    ).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        getByText('Session expired. Reconnect Google Calendar to continue syncing.'),
+      ).toBeTruthy(),
+    );
   });
 
   test('marks connected sessions as expired immediately when token expiry has passed', async () => {

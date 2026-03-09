@@ -217,12 +217,6 @@ export default function SearchSheet({
     setCalendarMessage('Signed out of Google Calendar.');
   }, []);
 
-  const helperText = useMemo(() => {
-    if (calendarStatus === 'connected') return '';
-    if (calendarStatus === 'expired') return 'Google Calendar session expired.';
-    return 'Sign in below to sync your calendar';
-  }, [calendarStatus]);
-
   const buttonText = useMemo(() => {
     if (isCalendarConnecting) return 'Connecting...';
     if (calendarStatus === 'connected') return 'Sign Out Google Calendar';
@@ -277,7 +271,6 @@ export default function SearchSheet({
         searchIcon={{ name: 'search', type: 'ionicon', size: 25, color: '#d7c9cf' }}
       />
 
-      {helperText ? <Text style={searchBuilding.helperText}>{helperText}</Text> : null}
       {calendarStatus === 'connected' ? (
         <View style={searchBuilding.nextClassCard} testID="next-class-card">
           <View style={searchBuilding.nextClassTextWrap}>

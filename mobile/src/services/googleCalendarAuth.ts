@@ -20,17 +20,6 @@ const IOS_BUNDLE_ID_FALLBACK = 'com.gittocampus.mobile';
 const ANDROID_PACKAGE_FALLBACK = 'com.anonymous.mobile';
 const GOOGLE_CLIENT_ID_SUFFIX = '.apps.googleusercontent.com';
 
-const logCalendarDebug = (message: string, details?: Record<string, unknown> | undefined): void => {
-  if (!__DEV__) return;
-
-  if (details) {
-    console.info(`[GoogleCalendarAuth] ${message}`, details);
-    return;
-  }
-
-  console.info(`[GoogleCalendarAuth] ${message}`);
-};
-
 const GOOGLE_CALENDAR_DISCOVERY = {
   authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
   tokenEndpoint: 'https://oauth2.googleapis.com/token',
@@ -230,6 +219,35 @@ const mapCalendarEventsErrorToMessage = (error: unknown): string => {
   return 'Unable to load upcoming classes right now. Please retry.';
 };
 
+const buildGoogleCalendarEventsEndpoint = ({
+  calendarId,
+  requestTimeMin,
+  requestTimeMax,
+  requestedTimeZone,
+}: {
+  calendarId: string;
+  requestTimeMin: string;
+  requestTimeMax?: string;
+  requestedTimeZone?: string;
+}) => {
+  const queryParams = [
+    'singleEvents=true',
+    'orderBy=startTime',
+    `timeMin=${encodeURIComponent(requestTimeMin)}`,
+    `maxResults=${GOOGLE_CALENDAR_EVENTS_MAX_RESULTS}`,
+  ];
+
+  if (requestTimeMax) {
+    queryParams.push(`timeMax=${encodeURIComponent(requestTimeMax)}`);
+  }
+
+  if (requestedTimeZone) {
+    queryParams.push(`timeZone=${encodeURIComponent(requestedTimeZone)}`);
+  }
+
+  return `${GOOGLE_CALENDAR_EVENTS_ENDPOINT}/${encodeURIComponent(calendarId)}/events?${queryParams.join('&')}`;
+};
+
 const getPlatformClientIdEnvName = (): string =>
   Platform.OS === 'android'
     ? 'EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID'
@@ -324,15 +342,8 @@ const parseCalendarEventEndTime = (value: unknown): number | null => {
   return Number.isFinite(endsAt) ? endsAt : null;
 };
 
-const getCalendarPayloadItemCount = (payload: unknown): number => {
-  if (!payload || typeof payload !== 'object') return 0;
-
-  const candidate = payload as { items?: unknown };
-  return Array.isArray(candidate.items) ? candidate.items.length : 0;
-};
-
 const normalizeCalendarEventText = (value: string | null) =>
-  (value ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
+  (value ?? '').trim().toUpperCase().replaceAll(/\s+/g, ' ');
 
 const toEventDedupKey = (event: GoogleCalendarEventItem) =>
   `${normalizeCalendarEventText(event.title)}|${normalizeCalendarEventText(event.location)}|${event.startsAt}`;
@@ -456,21 +467,13 @@ export const fetchGoogleCalendarEventsAsync = async (
   calendarIds: string[],
 ): Promise<GoogleCalendarEventsResult> => {
   const uniqueCalendarIds = [...new Set(calendarIds.map((id) => id.trim()).filter(Boolean))];
-  logCalendarDebug('Fetching calendar events', {
-    requestedCalendarIds: calendarIds,
-    uniqueCalendarIds,
-  });
 
   if (uniqueCalendarIds.length === 0) {
-    logCalendarDebug('Skipping event fetch because no calendars are selected');
     return { type: 'success', events: [] };
   }
 
   const state = await getStoredGoogleCalendarSessionState();
   if (state.status !== 'connected' || !state.session) {
-    logCalendarDebug('Cannot fetch events because calendar session is unavailable', {
-      status: state.status,
-    });
     return {
       type: 'error',
       message: 'Connect Google Calendar before loading your upcoming classes.',
@@ -488,14 +491,6 @@ export const fetchGoogleCalendarEventsAsync = async (
   const timeMin = startOfToday.toISOString();
   const timeMax = endOfLookaheadWindow.toISOString();
   const requestedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone?.trim();
-  logCalendarDebug('Using event query window', {
-    now: now.toISOString(),
-    nowTimestamp,
-    timeMin,
-    timeMax,
-    lookaheadDays: GOOGLE_CALENDAR_EVENTS_LOOKAHEAD_DAYS,
-    requestedTimeZone: requestedTimeZone || null,
-  });
 
   try {
     const fetchCalendarEventResponses = async ({
@@ -505,22 +500,14 @@ export const fetchGoogleCalendarEventsAsync = async (
       requestTimeMin: string;
       requestTimeMax?: string;
     }) => {
-      logCalendarDebug('Requesting events for window', {
-        requestTimeMin,
-        requestTimeMax: requestTimeMax ?? null,
-        calendarCount: uniqueCalendarIds.length,
-      });
-
       const responses = await Promise.all(
         uniqueCalendarIds.map(async (calendarId) => {
-          const endpoint =
-            `${GOOGLE_CALENDAR_EVENTS_ENDPOINT}/${encodeURIComponent(calendarId)}` +
-            `/events?singleEvents=true&orderBy=startTime&timeMin=${encodeURIComponent(
-              requestTimeMin,
-            )}` +
-            `${requestTimeMax ? `&timeMax=${encodeURIComponent(requestTimeMax)}` : ''}` +
-            `${requestedTimeZone ? `&timeZone=${encodeURIComponent(requestedTimeZone)}` : ''}` +
-            `&maxResults=${GOOGLE_CALENDAR_EVENTS_MAX_RESULTS}`;
+          const endpoint = buildGoogleCalendarEventsEndpoint({
+            calendarId,
+            requestTimeMin,
+            requestTimeMax,
+            requestedTimeZone,
+          });
 
           const response = await fetch(endpoint, {
             method: 'GET',
@@ -539,15 +526,6 @@ export const fetchGoogleCalendarEventsAsync = async (
         }),
       );
 
-      logCalendarDebug('Received calendar event responses', {
-        statuses: responses.map(({ calendarId, response, payload }) => ({
-          calendarId,
-          status: response.status,
-          ok: response.ok,
-          itemCount: response.ok ? getCalendarPayloadItemCount(payload) : null,
-        })),
-      });
-
       return responses;
     };
 
@@ -560,20 +538,6 @@ export const fetchGoogleCalendarEventsAsync = async (
       const activeOrUpcomingEvents = parsedEvents
         .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, nowTimestamp))
         .sort((a, b) => a.startsAt - b.startsAt);
-
-      logCalendarDebug('Applied active/upcoming event filter', {
-        parsedEventCount: parsedEvents.length,
-        activeOrUpcomingCount: activeOrUpcomingEvents.length,
-        droppedEventCount: parsedEvents.length - activeOrUpcomingEvents.length,
-        sampleActiveOrUpcomingEvents: activeOrUpcomingEvents.slice(0, 5).map((event) => ({
-          id: event.id,
-          calendarId: event.calendarId,
-          title: event.title,
-          location: event.location,
-          startsAt: new Date(event.startsAt).toISOString(),
-          endsAt: typeof event.endsAt === 'number' ? new Date(event.endsAt).toISOString() : null,
-        })),
-      });
 
       return activeOrUpcomingEvents;
     };
@@ -588,21 +552,11 @@ export const fetchGoogleCalendarEventsAsync = async (
         ({ response }) => response.status === 401 || response.status === 403,
       );
       if (unauthorizedResponses.length > 0) {
-        logCalendarDebug('Calendar event request unauthorized', {
-          unauthorizedCalendarIds: unauthorizedResponses.map(({ calendarId }) => calendarId),
-        });
         return {
           type: 'error',
           message: 'Calendar authorization expired. Reconnect Google Calendar and try again.',
         };
       }
-
-      logCalendarDebug('Calendar event requests failed', {
-        statuses: responses.map(({ calendarId, response }) => ({
-          calendarId,
-          status: response.status,
-        })),
-      });
       return {
         type: 'error',
         message: 'Unable to load upcoming classes right now. Please retry.',
@@ -621,27 +575,11 @@ export const fetchGoogleCalendarEventsAsync = async (
     );
     const dedupedEvents = dedupeCalendarEvents(windowEvents.map(toGoogleCalendarEventItem));
 
-    logCalendarDebug('Returning active/upcoming events', {
-      windowEventCount: windowEvents.length,
-      dedupedEventCount: dedupedEvents.length,
-      dedupedEvents: dedupedEvents.slice(0, 5).map((event) => ({
-        id: event.id,
-        calendarId: event.calendarId,
-        title: event.title,
-        location: event.location,
-        startsAt: new Date(event.startsAt).toISOString(),
-        endsAt: typeof event.endsAt === 'number' ? new Date(event.endsAt).toISOString() : null,
-      })),
-    });
-
     return {
       type: 'success',
       events: dedupedEvents,
     };
   } catch (error) {
-    logCalendarDebug('Calendar event request threw an error', {
-      message: error instanceof Error ? error.message : String(error),
-    });
     return {
       type: 'error',
       message: mapCalendarEventsErrorToMessage(error),

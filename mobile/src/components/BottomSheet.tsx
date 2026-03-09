@@ -65,18 +65,6 @@ const SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT = '92%';
 const METERS_PER_DEGREE_LAT = 110540;
 const METERS_PER_DEGREE_LON_AT_EQUATOR = 111320;
 
-const logBottomSheetCalendarDebug = (
-  message: string,
-  details?: Record<string, unknown> | undefined,
-) => {
-  if (!__DEV__) return;
-  if (details) {
-    console.info(`[BottomSheet] ${message}`, details);
-    return;
-  }
-  console.info(`[BottomSheet] ${message}`);
-};
-
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -725,10 +713,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const openCalendarSelectionSlider = useCallback(
       (resetSelection: boolean = false) => {
-        logBottomSheetCalendarDebug('Opening calendar selection slider', {
-          resetSelection,
-          selectedCalendarIds,
-        });
         setCalendarGoErrorMessage(null);
         if (resetSelection) {
           setSelectedCalendarIds([]);
@@ -743,10 +727,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const showUpcomingClassesSlider = useCallback(
       (calendarIds: string[]) => {
-        logBottomSheetCalendarDebug('Opening upcoming classes slider', {
-          calendarIds,
-          uniqueCalendarIds: [...new Set(calendarIds)],
-        });
         setCalendarGoErrorMessage(null);
         setSelectedCalendarIds(calendarIds);
         setCalendarSliderMode('events');
@@ -762,10 +742,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [openCalendarSelectionSlider]);
 
     const handleCalendarGoFromSearch = (nextClassEvent: GoogleCalendarEventItem | null) => {
-      logBottomSheetCalendarDebug('Pressed calendar GO from search', {
-        hasNextClassEvent: Boolean(nextClassEvent),
-        selectedCalendarIds,
-      });
       setCalendarGoErrorMessage(null);
 
       if (nextClassEvent) {
@@ -872,20 +848,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleUpcomingClassPress = useCallback(
       async (event: GoogleCalendarEventItem): Promise<string | null> => {
         try {
-          logBottomSheetCalendarDebug('Generating route for upcoming class event', {
-            eventId: event.id,
-            calendarId: event.calendarId,
-            title: event.title,
-            location: event.location,
-            startsAt: new Date(event.startsAt).toISOString(),
-            endsAt: typeof event.endsAt === 'number' ? new Date(event.endsAt).toISOString() : null,
-          });
           const resolved = await resolveCalendarRouteLocation(event.location);
           if (resolved.type === 'error') {
-            logBottomSheetCalendarDebug('Failed to resolve route location', {
-              eventId: event.id,
-              message: resolved.message,
-            });
             return resolved.message;
           }
 
@@ -912,17 +876,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           }
 
           snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
-          logBottomSheetCalendarDebug('Route context prepared from upcoming class', {
-            eventId: event.id,
-            destinationBuildingId: resolvedDestinationBuilding.id,
-            startPointType: startPoint.type,
-            startPointBuildingId: startPoint.type === 'automatic' ? startPoint.building?.id : null,
-          });
           return null;
         } catch {
-          logBottomSheetCalendarDebug('Route generation failed for upcoming class event', {
-            eventId: event.id,
-          });
           return CALENDAR_LOCATION_NOT_FOUND_MESSAGE;
         }
       },

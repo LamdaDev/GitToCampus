@@ -31,12 +31,12 @@ const MapControls = ({
     Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : IOS_SAFE_TOP_OFFSET;
   const calendarTopOffset = statusBarTopOffset + BASE_CALENDAR_TOP_OFFSET;
   const animatedContainerStyle = useAnimatedStyle(() => {
-    const requestedBottom = !bottomSheetAnimatedPosition
-      ? BASE_BOTTOM_OFFSET
-      : Math.max(
+    const requestedBottom = bottomSheetAnimatedPosition
+      ? Math.max(
           BASE_BOTTOM_OFFSET,
           Math.max(0, windowHeight - bottomSheetAnimatedPosition.value) + SHEET_SPACING,
-        );
+        )
+      : BASE_BOTTOM_OFFSET;
 
     return { bottom: requestedBottom };
   }, [bottomSheetAnimatedPosition, windowHeight]);

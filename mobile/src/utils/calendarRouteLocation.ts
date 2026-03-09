@@ -38,30 +38,35 @@ export type CalendarRouteLocationResult =
 export const CALENDAR_LOCATION_NOT_FOUND_MESSAGE =
   'Unable to find route: Location Not Provided/Not Found';
 
+const PUNCTUATION_PATTERN = /[.,;:()[\]{}]/g;
+const WHITESPACE_PATTERN = /\s+/g;
+const CAMPUS_PREFIX_PATTERN = /\b(SGW|LOY|LOYOLA)\b/g;
+const NON_ALPHANUMERIC_PATTERN = /[^A-Z0-9]/g;
+const ROOM_CODE_WITH_SEPARATOR_PATTERN = /\b([A-Z]{1,5})\s*[- ]\s*\d{1,4}[A-Z]?\b/;
+const ROOM_CODE_COMPACT_PATTERN = /\b([A-Z]{1,5})\d{1,4}[A-Z]?\b/;
+
 const normalizeText = (value: string) =>
   value
     .trim()
     .toUpperCase()
-    .replace(/[.,;:()[\]{}]/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replaceAll(PUNCTUATION_PATTERN, ' ')
+    .replaceAll(WHITESPACE_PATTERN, ' ')
     .trim();
 
 const normalizeWithoutCampusPrefix = (value: string) =>
-  value
-    .replace(/\b(SGW|LOY|LOYOLA)\b/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  value.replaceAll(CAMPUS_PREFIX_PATTERN, ' ').replaceAll(WHITESPACE_PATTERN, ' ').trim();
 
-const normalizeCode = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+const normalizeCode = (value: string) =>
+  value.toUpperCase().replaceAll(NON_ALPHANUMERIC_PATTERN, '');
 
 const codeFromRoomPattern = (location: string): string | null => {
-  const separatedCodeMatch = location.match(/\b([A-Z]{1,5})\s*[- ]\s*\d{1,4}[A-Z]?\b/);
+  const separatedCodeMatch = ROOM_CODE_WITH_SEPARATOR_PATTERN.exec(location);
   if (separatedCodeMatch?.[1]) {
     return normalizeCode(separatedCodeMatch[1]);
   }
 
   // Accept compact classroom formats like "H435" and map to building short code "H".
-  const compactCodeMatch = location.match(/\b([A-Z]{1,5})\d{1,4}[A-Z]?\b/);
+  const compactCodeMatch = ROOM_CODE_COMPACT_PATTERN.exec(location);
   if (compactCodeMatch?.[1]) {
     return normalizeCode(compactCodeMatch[1]);
   }
@@ -158,44 +163,31 @@ const matchByLongNameHeuristic = (
   return { building: bestMatch.building, method: 'name' };
 };
 
-const matchDestinationBuilding = (
-  normalizedLocation: string,
+const getShortCodeMatch = (
+  code: string,
+  indexes: ReturnType<typeof buildDestinationIndexes>,
 ): { building: BuildingShape; method: DestinationMatchMethod } | null => {
-  const buildings = getAllBuildingShapes();
-  const indexes = buildDestinationIndexes(buildings);
-  const tokens = getBuildingSearchTokens(normalizedLocation);
-  const firstToken = tokens[0] ?? '';
-  const firstTokenCode = normalizeCode(firstToken);
-  const shouldPreferShortCode = firstTokenCode.length > 0 && firstTokenCode.length <= 2;
-  const shouldPreferLongName = firstTokenCode.length >= 4;
+  if (!code) return null;
+  const building = indexes.byShortCode.get(code);
+  return building ? { building, method: 'short_code' } : null;
+};
 
-  const roomCodeHint = codeFromRoomPattern(normalizedLocation);
-  if (roomCodeHint) {
-    const building = indexes.byShortCode.get(roomCodeHint);
-    if (building) return { building, method: 'short_code' };
-  }
-
-  if (shouldPreferShortCode) {
-    const shortCodeMatch = indexes.byShortCode.get(firstTokenCode);
-    if (shortCodeMatch) return { building: shortCodeMatch, method: 'short_code' };
-  }
-
-  if (shouldPreferLongName) {
-    const longNameHeuristicMatch = matchByLongNameHeuristic(normalizedLocation, indexes);
-    if (longNameHeuristicMatch) return longNameHeuristicMatch;
-  }
-
+const matchByAnyShortCodeToken = (
+  tokens: string[],
+  indexes: ReturnType<typeof buildDestinationIndexes>,
+): { building: BuildingShape; method: DestinationMatchMethod } | null => {
   for (const token of tokens) {
-    const shortCodeMatch = indexes.byShortCode.get(normalizeCode(token));
-    if (shortCodeMatch) return { building: shortCodeMatch, method: 'short_code' };
+    const shortCodeMatch = getShortCodeMatch(normalizeCode(token), indexes);
+    if (shortCodeMatch) return shortCodeMatch;
   }
 
-  {
-    const longNameHeuristicMatch = matchByLongNameHeuristic(normalizedLocation, indexes);
-    if (longNameHeuristicMatch) return longNameHeuristicMatch;
-  }
+  return null;
+};
 
-  const canonicalLocation = normalizeCode(normalizedLocation);
+const matchByCanonicalName = (
+  canonicalLocation: string,
+  indexes: ReturnType<typeof buildDestinationIndexes>,
+): { building: BuildingShape; method: DestinationMatchMethod } | null => {
   if (!canonicalLocation) return null;
 
   for (const [canonicalName, building] of indexes.byName.entries()) {
@@ -203,6 +195,15 @@ const matchDestinationBuilding = (
       return { building, method: 'name' };
     }
   }
+
+  return null;
+};
+
+const matchByCanonicalAddress = (
+  canonicalLocation: string,
+  indexes: ReturnType<typeof buildDestinationIndexes>,
+): { building: BuildingShape; method: DestinationMatchMethod } | null => {
+  if (!canonicalLocation) return null;
 
   for (const [canonicalAddress, building] of indexes.byAddress.entries()) {
     if (
@@ -214,6 +215,37 @@ const matchDestinationBuilding = (
   }
 
   return null;
+};
+
+const matchDestinationBuilding = (
+  normalizedLocation: string,
+): { building: BuildingShape; method: DestinationMatchMethod } | null => {
+  const indexes = buildDestinationIndexes(getAllBuildingShapes());
+  const tokens = getBuildingSearchTokens(normalizedLocation);
+  const firstTokenCode = normalizeCode(tokens[0] ?? '');
+  const shouldPreferShortCode = firstTokenCode.length > 0 && firstTokenCode.length <= 2;
+  const shouldPreferLongName = firstTokenCode.length >= 4;
+
+  const prioritizedMatches: Array<{
+    building: BuildingShape;
+    method: DestinationMatchMethod;
+  } | null> = [
+    getShortCodeMatch(codeFromRoomPattern(normalizedLocation) ?? '', indexes),
+    shouldPreferShortCode ? getShortCodeMatch(firstTokenCode, indexes) : null,
+    shouldPreferLongName ? matchByLongNameHeuristic(normalizedLocation, indexes) : null,
+    matchByAnyShortCodeToken(tokens, indexes),
+    matchByLongNameHeuristic(normalizedLocation, indexes),
+  ];
+
+  for (const match of prioritizedMatches) {
+    if (match) return match;
+  }
+
+  const canonicalLocation = normalizeCode(normalizedLocation);
+  return (
+    matchByCanonicalName(canonicalLocation, indexes) ??
+    matchByCanonicalAddress(canonicalLocation, indexes)
+  );
 };
 
 const resolveStartPoint = async (): Promise<CalendarRouteStartPoint> => {
@@ -253,7 +285,7 @@ export const getManualStartReasonMessage = (reason: ManualStartReason): string =
 export const resolveCalendarRouteLocation = async (
   eventLocation: string | null,
 ): Promise<CalendarRouteLocationResult> => {
-  if (!eventLocation || !eventLocation.trim()) {
+  if (!eventLocation?.trim()) {
     return {
       type: 'error',
       code: 'MISSING_EVENT_LOCATION',

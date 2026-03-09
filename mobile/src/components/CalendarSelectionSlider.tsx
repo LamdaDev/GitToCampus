@@ -8,18 +8,6 @@ import {
   type GoogleCalendarListItem,
 } from '../services/googleCalendarAuth';
 
-const logCalendarSelectionDebug = (
-  message: string,
-  details?: Record<string, unknown> | undefined,
-) => {
-  if (!__DEV__) return;
-  if (details) {
-    console.info(`[CalendarSelectionSlider] ${message}`, details);
-    return;
-  }
-  console.info(`[CalendarSelectionSlider] ${message}`);
-};
-
 type CalendarSelectionSliderProps = {
   initialSelectedCalendarIds?: string[];
   onDone?: (selectedCalendarIds: string[]) => void;
@@ -41,10 +29,6 @@ export default function CalendarSelectionSlider({
 
   useEffect(() => {
     const normalizedSelection = [...new Set(initialSelectedCalendarIds)];
-    logCalendarSelectionDebug('Syncing initial selected calendars', {
-      initialSelectedCalendarIds,
-      normalizedSelection,
-    });
     setSelectedCalendarIds((previousIds) => {
       if (
         previousIds.length === normalizedSelection.length &&
@@ -60,27 +44,17 @@ export default function CalendarSelectionSlider({
   const loadCalendarList = useCallback(async () => {
     setIsCalendarListLoading(true);
     setCalendarListError(null);
-    logCalendarSelectionDebug('Loading available calendars');
 
     const result = await fetchGoogleCalendarListAsync();
     setIsCalendarListLoading(false);
 
     if (result.type === 'error') {
-      logCalendarSelectionDebug('Failed to load calendars', { message: result.message });
       setAvailableCalendars([]);
       setSelectedCalendarIds([]);
       setCalendarListError(result.message);
       return;
     }
 
-    logCalendarSelectionDebug('Loaded calendars successfully', {
-      calendarCount: result.calendars.length,
-      calendars: result.calendars.map((calendar) => ({
-        id: calendar.id,
-        name: calendar.name,
-        isPrimary: calendar.isPrimary,
-      })),
-    });
     setAvailableCalendars(result.calendars);
     setSelectedCalendarIds((previousIds) => {
       const availableCalendarIds = new Set(result.calendars.map((calendar) => calendar.id));
@@ -88,19 +62,11 @@ export default function CalendarSelectionSlider({
         availableCalendarIds.has(calendarId),
       );
       if (retainedSelection.length > 0) {
-        logCalendarSelectionDebug('Retaining previous selected calendars', {
-          previousIds,
-          retainedSelection,
-        });
         return retainedSelection;
       }
 
       const primaryCalendar = result.calendars.find((calendar) => calendar.isPrimary);
       const fallbackSelection = primaryCalendar ? [primaryCalendar.id] : [];
-      logCalendarSelectionDebug('Defaulting selected calendar after load', {
-        previousIds,
-        fallbackSelection,
-      });
       return fallbackSelection;
     });
   }, []);
@@ -110,11 +76,6 @@ export default function CalendarSelectionSlider({
       const nextIds = previousIds.includes(calendarId)
         ? previousIds.filter((id) => id !== calendarId)
         : [...previousIds, calendarId];
-      logCalendarSelectionDebug('Toggled calendar selection', {
-        calendarId,
-        previousIds,
-        nextIds,
-      });
       return nextIds;
     });
   }, []);
@@ -154,12 +115,7 @@ export default function CalendarSelectionSlider({
       <TouchableOpacity
         testID="calendar-selection-done-button"
         style={calendarSelectionSliderStyles.doneButton}
-        onPress={() => {
-          logCalendarSelectionDebug('Submitting selected calendars', {
-            selectedCalendarIds,
-          });
-          onDone?.(selectedCalendarIds);
-        }}
+        onPress={() => onDone?.(selectedCalendarIds)}
       >
         <Text style={calendarSelectionSliderStyles.doneButtonText}>Done</Text>
       </TouchableOpacity>

@@ -10,18 +10,6 @@ import {
 } from '../services/googleCalendarAuth';
 import { upcomingClassesSliderStyles } from '../styles/UpcomingClassesSlider.styles';
 
-const logUpcomingClassesDebug = (
-  message: string,
-  details?: Record<string, unknown> | undefined,
-) => {
-  if (!__DEV__) return;
-  if (details) {
-    console.info(`[UpcomingClassesSlider] ${message}`, details);
-    return;
-  }
-  console.info(`[UpcomingClassesSlider] ${message}`);
-};
-
 type UpcomingClassesSliderProps = {
   selectedCalendarIds: string[];
   onReselectCalendars?: () => void;
@@ -69,36 +57,16 @@ export default function UpcomingClassesSlider({
   const loadUpcomingClasses = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
-    logUpcomingClassesDebug('Loading upcoming classes', {
-      selectedCalendarIds,
-      requestedAt: new Date().toISOString(),
-    });
 
     const result = await fetchGoogleCalendarEventsAsync(selectedCalendarIds);
     setIsLoading(false);
 
     if (result.type === 'error') {
-      logUpcomingClassesDebug('Failed to load upcoming classes', {
-        selectedCalendarIds,
-        message: result.message,
-      });
       setEvents([]);
       setErrorMessage(result.message);
       return;
     }
 
-    logUpcomingClassesDebug('Loaded upcoming classes', {
-      selectedCalendarIds,
-      eventCount: result.events.length,
-      events: result.events.slice(0, 8).map((event) => ({
-        id: event.id,
-        calendarId: event.calendarId,
-        title: event.title,
-        location: event.location,
-        startsAt: new Date(event.startsAt).toISOString(),
-        endsAt: typeof event.endsAt === 'number' ? new Date(event.endsAt).toISOString() : null,
-      })),
-    });
     setEvents(result.events);
   }, [selectedCalendarIds]);
 
@@ -128,17 +96,6 @@ export default function UpcomingClassesSlider({
       .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, nowTimestamp))
       .sort((a, b) => a.startsAt - b.startsAt);
   }, [events, now]);
-
-  useEffect(() => {
-    logUpcomingClassesDebug('Computed visible upcoming classes', {
-      selectedCalendarIds,
-      now: now.toISOString(),
-      totalFetchedEvents: events.length,
-      visibleEvents: activeEvents.length,
-      hiddenEvents: events.length - activeEvents.length,
-      visibleEventIds: activeEvents.map((event) => event.id),
-    });
-  }, [activeEvents, events.length, now, selectedCalendarIds]);
 
   const displayedEvents = useMemo(
     () => activeEvents.slice(0, MAX_EVENTS_TO_RENDER),
