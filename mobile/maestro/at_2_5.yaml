@@ -13,4 +13,3 @@ appId: host.exp.exponent
     repeat: 4
 - tapOn:
     point: '50%,45%'
-    
