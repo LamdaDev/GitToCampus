@@ -103,4 +103,58 @@ describe('app.config', () => {
     warnSpy.mockRestore();
     jest.dontMock('../app.json');
   });
+
+  test('handles single string scheme and skips empty google client-id prefixes', () => {
+    delete process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_ANDROID_CLIENT_ID;
+    process.env.EXPO_PUBLIC_GOOGLE_CALENDAR_IOS_CLIENT_ID = '.apps.googleusercontent.com';
+
+    jest.resetModules();
+    jest.doMock('../app.json', () => ({
+      expo: {
+        name: 'mobile',
+        slug: 'mobile',
+        scheme: 'gittocampus-single',
+        ios: {
+          infoPlist: {
+            NSAppTransportSecurity: {
+              NSExceptionDomains: {
+                'legacy.example.com': {
+                  NSIncludesSubdomains: false,
+                },
+              },
+            },
+          },
+        },
+        android: {
+          package: 'com.anonymous.mobile',
+          config: {
+            googleMaps: {},
+          },
+        },
+      },
+    }));
+
+    const config = require('../app.config.js');
+
+    expect(config.scheme).toEqual(
+      expect.arrayContaining(['gittocampus-single', 'com.anonymous.mobile']),
+    );
+    expect(
+      config.scheme.some(
+        (scheme: string) =>
+          scheme.startsWith('com.googleusercontent.apps.') &&
+          scheme !== 'com.googleusercontent.apps.',
+      ),
+    ).toBe(false);
+    expect(config.ios.infoPlist.NSAppTransportSecurity.NSExceptionDomains).toMatchObject({
+      'legacy.example.com': {
+        NSIncludesSubdomains: false,
+      },
+      'iili.io': {
+        NSIncludesSubdomains: true,
+      },
+    });
+
+    jest.dontMock('../app.json');
+  });
 });

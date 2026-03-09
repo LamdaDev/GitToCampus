@@ -251,4 +251,21 @@ describe('App', () => {
       expect(mockOpenCalendarEventsSlider).toHaveBeenCalledWith();
     });
   });
+
+  test('calendar shortcut logs warning when calendar state loading fails', async () => {
+    const error = new Error('calendar auth read failed');
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    mockGetStoredGoogleCalendarSessionState.mockRejectedValueOnce(error);
+
+    const { getByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('open-calendar-shortcut'));
+
+    await waitFor(() => {
+      expect(mockBottomSheetOpen).toHaveBeenCalledWith(1);
+      expect(warnSpy).toHaveBeenCalledWith('Failed to open calendar from map action', error);
+    });
+
+    warnSpy.mockRestore();
+  });
 });
