@@ -991,19 +991,19 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
       const canComputeShuttlePlan =
         shouldComputeShuttlePlan && startCampus !== null && destinationCampus !== null;
-      if (!canComputeShuttlePlan) {
-        setShuttlePlan(null);
+      if (canComputeShuttlePlan) {
+        setShuttlePlan(
+          buildShuttlePlan({
+            startCampus,
+            destinationCampus,
+            startCoords: startCoords ?? null,
+            now: getShuttlePlanningDate(new Date()),
+          }),
+        );
         return;
       }
 
-      setShuttlePlan(
-        buildShuttlePlan({
-          startCampus,
-          destinationCampus,
-          startCoords: startCoords ?? null,
-          now: getShuttlePlanningDate(new Date()),
-        }),
-      );
+      setShuttlePlan(null);
     }, [activeView, destinationCampus, startCampus, startCoords, travelMode]);
 
     const showNavigationSummary = useCallback(() => {

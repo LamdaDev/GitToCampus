@@ -52,8 +52,12 @@ const WALKING_DASH_PATTERN = [12, 8];
 const ROUTE_POLYLINE_STROKE_PROPS = { strokeColor: ROUTE_LINE_COLOR } as const;
 const POLYGON_PRESS_GUARD_RESET_DELAY_MS = 0;
 
-type PolygonPressGuardTimeoutRef = React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
-type IgnoreMapPressRef = React.MutableRefObject<boolean>;
+type PolygonPressGuardTimeoutRef = {
+  current: ReturnType<typeof setTimeout> | null;
+};
+type IgnoreMapPressRef = {
+  current: boolean;
+};
 
 type RoutePolylineSegment = {
   key: string;

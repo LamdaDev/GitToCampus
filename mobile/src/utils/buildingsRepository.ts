@@ -2,7 +2,7 @@ import { GEOJSON_ASSETS } from '../assets/geojson';
 import type { GeoJsonFeatureCollection } from '../types/GeoJson';
 import type { Campus } from '../types/Campus';
 import type { BuildingShape } from '../types/BuildingShape';
-import { getFeaturePolygons, normalizeCampusCode, isPointInAnyPolygon } from '../utils/geoJson';
+import { getFeaturePolygons, normalizeCampusCode, isPointInAnyPolygon } from './geoJson';
 import { getDistance } from 'geolib';
 import { getCampusRegion } from '../constants/campuses';
 
@@ -176,14 +176,12 @@ const buildBuildingIndexes = (allBuildings: BuildingShape[]) => {
 };
 
 const ensureBuildingsCache = () => {
-  if (!cachedAllBuildings) {
-    cachedAllBuildings = buildAllBuildingsCache();
-  }
+  cachedAllBuildings ??= buildAllBuildingsCache();
 
   if (!cachedBuildingsByCampus || !cachedBuildingById) {
     const indexes = buildBuildingIndexes(cachedAllBuildings);
-    cachedBuildingsByCampus = indexes.buildingsByCampus;
-    cachedBuildingById = indexes.buildingById;
+    cachedBuildingsByCampus ??= indexes.buildingsByCampus;
+    cachedBuildingById ??= indexes.buildingById;
   }
 
   return cachedAllBuildings;
@@ -220,10 +218,9 @@ const joinBoundariesToMeta = (
 };
 
 const buildAllBuildingsCache = (): BuildingShape[] => {
-  const buildingList =
-    GEOJSON_ASSETS.buildingList as unknown as GeoJsonFeatureCollection<BuildingListProps>;
+  const buildingList = GEOJSON_ASSETS.buildingList as GeoJsonFeatureCollection<BuildingListProps>;
   const boundaries =
-    GEOJSON_ASSETS.buildingBoundaries as unknown as GeoJsonFeatureCollection<BuildingBoundaryProps>;
+    GEOJSON_ASSETS.buildingBoundaries as GeoJsonFeatureCollection<BuildingBoundaryProps>;
   return joinBoundariesToMeta(boundaries, buildMetadataMap(buildingList));
 };
 
