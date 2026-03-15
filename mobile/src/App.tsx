@@ -3,7 +3,7 @@ import { LogBox, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
-import MapScreen, { UserCoords } from './screens/MapScreen';
+import MapScreen, { MapScreenHandle, UserCoords } from './screens/MapScreen';
 import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
@@ -37,6 +37,7 @@ const App = () => {
 
   // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
   const [sheetOpen, setSheetOpen] = useState(false);
+  const mapRef = useRef<MapScreenHandle>(null);
 
   useEffect(() => {
     bottomSheetAnimatedPosition.value = windowHeight;
@@ -99,6 +100,10 @@ const App = () => {
     'gabarito-bold': require('./assets/fonts/Gabarito-Bold.ttf'),
   });
 
+  const handleShowIndoor = useCallback((building: BuildingShape) => {
+    mapRef.current?.showIndoor(building);
+  }, []);
+
   if (!fontsLoaded) return null;
 
   return (
@@ -114,6 +119,7 @@ const App = () => {
           externalSelectedBuilding={selectedBuilding}
           outdoorRoute={outdoorRoute}
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
+          mapHandle={mapRef}
         />
 
         {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -130,6 +136,7 @@ const App = () => {
           passSelectedBuilding={setSelectedBuilding}
           passOutdoorRoute={setOutdoorRoute}
           animatedPosition={bottomSheetAnimatedPosition}
+          onEnterBuilding={handleShowIndoor}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

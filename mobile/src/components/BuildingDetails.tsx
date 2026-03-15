@@ -16,6 +16,7 @@ type BuildingDetailProps = {
   onShowDirections: (building: BuildingShape, asDestination?: boolean) => void;
   currentBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
+  onEnterBuilding: (building: BuildingShape) => void;
 };
 
 type BuildingService = {
@@ -66,6 +67,7 @@ export default function BuildingDetails({
   selectedBuilding,
   onClose,
   onShowDirections,
+  onEnterBuilding,
   currentBuilding: _currentBuilding,
   userLocation: _userLocation,
 }: Readonly<BuildingDetailProps>) {
@@ -77,7 +79,11 @@ export default function BuildingDetails({
     () => toBuildingImages(selectedBuilding?.images),
     [selectedBuilding?.images],
   );
-
+  const handleEnterBuildingPress = () => {
+    if (selectedBuilding) {
+      onEnterBuilding(selectedBuilding);
+    }
+  };
   const handleDirectionsToPress = () => {
     if (selectedBuilding) {
       onShowDirections(selectedBuilding, true);
@@ -184,7 +190,10 @@ export default function BuildingDetails({
           <Text style={buildingDetailsStyles.subtitle}>{selectedBuilding?.address}</Text>
         </View>
         <View style={buildingDetailsStyles.headerIcons}>
-          <TouchableOpacity style={buildingDetailsStyles.iconButton}>
+          <TouchableOpacity
+            style={buildingDetailsStyles.iconButton}
+            onPress={handleEnterBuildingPress}
+          >
             <Ionicons name="enter-outline" size={25} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={buildingDetailsStyles.iconButton} onPress={onClose}>

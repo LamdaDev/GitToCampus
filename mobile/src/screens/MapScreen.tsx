@@ -1,4 +1,12 @@
-import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useWindowDimensions, View, Text, Platform } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -21,6 +29,8 @@ import { decodePolyline } from '../utils/polyline';
 
 import MapControls from '../components/MapControls';
 import * as turf from '@turf/turf';
+import IndoorMapScreen from './IndoorMapScreen';
+import IndoorControls from '../components/IndoorControls';
 
 type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
@@ -32,6 +42,12 @@ type MapScreenProps = {
   externalSelectedBuilding?: BuildingShape | null;
   outdoorRoute?: OutdoorRouteOverlay | null;
   bottomSheetAnimatedPosition?: SharedValue<number>;
+  mapHandle?: React.RefObject<MapScreenHandle | null>;
+};
+
+export type MapScreenHandle = {
+  showIndoor: (building: BuildingShape) => void;
+  hideIndoor: () => void;
 };
 
 export type UserCoords = { latitude: number; longitude: number };
@@ -486,6 +502,7 @@ function MapScreen({
   externalSelectedBuilding,
   outdoorRoute,
   bottomSheetAnimatedPosition,
+  mapHandle,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -680,6 +697,23 @@ function MapScreen({
     onPress: handleMapPress,
   } as const;
 
+  const [indoorBuilding, setIndoorBuilding] = useState<BuildingShape | null>(null);
+
+  useImperativeHandle(mapHandle, () => ({
+    showIndoor: (building: BuildingShape) => setIndoorBuilding(building),
+    hideIndoor: () => setIndoorBuilding(null),
+  }));
+
+  const [currentFloor, setCurrentFloor] = useState(1);
+
+  const handleFloorUp = useCallback(() => {
+    setCurrentFloor((prev) => prev + 1);
+  }, []);
+
+  const handleFloorDown = useCallback(() => {
+    setCurrentFloor((prev) => Math.max(1, prev - 1));
+  }, []);
+
   return (
     <View style={styles.container}>
       <MapView {...mapProps}>
@@ -703,13 +737,27 @@ function MapScreen({
           </>
         )}
       </MapView>
-      <MapControls
-        selectedCampus={selectedCampus}
-        onToggleCampus={handleToggleCampus}
-        onRecenter={handleRecenter}
-        onOpenCalendar={onOpenCalendar}
-        bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
-      />
+
+      {indoorBuilding && <IndoorMapScreen />}
+
+      {!indoorBuilding ? (
+        <MapControls
+          selectedCampus={selectedCampus}
+          onToggleCampus={handleToggleCampus}
+          onRecenter={handleRecenter}
+          onOpenCalendar={onOpenCalendar}
+          bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
+        />
+      ) : (
+        <IndoorControls
+          onExitIndoor={() => setIndoorBuilding(null)}
+          onOpenCalendar={onOpenCalendar}
+          onFloorUp={handleFloorUp}
+          onFloorDown={handleFloorDown}
+          currentFloor={currentFloor}
+          building={indoorBuilding}
+        />
+      )}
     </View>
   );
 }
