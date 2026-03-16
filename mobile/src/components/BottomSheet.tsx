@@ -983,14 +983,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const canStartNavigationFromCurrentLocation = routeStartSource === 'current';
     const hasAvailableShuttlePlan = Boolean(
       travelMode === 'shuttle' &&
-        shuttlePlan?.isServiceAvailable &&
-        shuttlePlan.nextDepartureInMinutes !== null &&
-        shuttlePlan.preShuttleWalk?.origin &&
-        shuttlePlan.preShuttleWalk.destination &&
-        shuttlePlan.shuttleRide?.origin &&
-        shuttlePlan.shuttleRide.destination &&
-        shuttlePlan.postShuttleWalk?.origin &&
-        shuttlePlan.postShuttleWalk.destination,
+      shuttlePlan?.isServiceAvailable &&
+      shuttlePlan.nextDepartureInMinutes !== null &&
+      shuttlePlan.preShuttleWalk?.origin &&
+      shuttlePlan.preShuttleWalk.destination &&
+      shuttlePlan.shuttleRide?.origin &&
+      shuttlePlan.shuttleRide.destination &&
+      shuttlePlan.postShuttleWalk?.origin &&
+      shuttlePlan.postShuttleWalk.destination,
     );
     const routeRequestMode: DirectionsTravelMode = toDirectionsTravelMode(travelMode);
 

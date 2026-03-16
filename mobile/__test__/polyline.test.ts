@@ -50,8 +50,6 @@ describe('encodePolyline', () => {
   });
 
   test('returns empty string for invalid coordinate input', () => {
-    expect(
-      encodePolyline([{ latitude: Number.NaN, longitude: -73.57 } as any]),
-    ).toBe('');
+    expect(encodePolyline([{ latitude: Number.NaN, longitude: -73.57 } as any])).toBe('');
   });
 });
