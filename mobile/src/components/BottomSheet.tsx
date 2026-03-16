@@ -36,7 +36,7 @@ import { decodePolyline } from '../utils/polyline';
 import { formatEta } from '../utils/directionsFormatting';
 import { buildShuttlePlan } from '../services/shuttlePlanner';
 import type { ShuttlePlan } from '../types/Shuttle';
-import { fetchShuttleCompositeDirections } from '../services/shuttleDirections';
+import { fetchShuttleCompositeDirections } from '../services/directions/shuttleCompositeDirections';
 import type { GoogleCalendarEventItem } from '../services/googleCalendarAuth';
 import {
   CALENDAR_LOCATION_NOT_FOUND_MESSAGE,

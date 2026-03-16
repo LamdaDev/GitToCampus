@@ -5,12 +5,12 @@ import type {
   DirectionsRouteSegment,
   DirectionsTravelMode,
   DirectionsUnits,
-} from '../types/Directions';
-import { DirectionsServiceError } from '../types/Directions';
-import type { ShuttlePlan, ShuttlePlanLeg } from '../types/Shuttle';
-import { formatDistance, formatDuration } from '../utils/directionsFormatting';
-import { decodePolyline, encodePolyline } from '../utils/polyline';
-import { fetchOutdoorDirections } from './googleDirections';
+} from '../../types/Directions';
+import { DirectionsServiceError } from '../../types/Directions';
+import type { ShuttlePlan, ShuttlePlanLeg } from '../../types/Shuttle';
+import { formatDistance, formatDuration } from '../../utils/directionsFormatting';
+import { decodePolyline, encodePolyline } from '../../utils/polyline';
+import { fetchOutdoorDirections } from '../googleDirections';
 
 type FetchDirectionsFn = (request: DirectionsRequest) => Promise<DirectionsRoute>;
 

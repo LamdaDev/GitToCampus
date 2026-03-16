@@ -1,8 +1,8 @@
 import { DirectionsServiceError } from '../src/types/Directions';
-import { fetchShuttleCompositeDirections } from '../src/services/shuttleDirections';
+import { fetchShuttleCompositeDirections } from '../src/services/directions/shuttleCompositeDirections';
 import { encodePolyline } from '../src/utils/polyline';
 
-describe('shuttleDirections service', () => {
+describe('shuttleCompositeDirections service', () => {
   test('builds a composite shuttle route with ordered walking and shuttle segments', async () => {
     const preWalkPolyline = encodePolyline([
       { latitude: 45.4585, longitude: -73.6406 },
