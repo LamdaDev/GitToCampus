@@ -9,6 +9,7 @@ import type { Campus } from '../types/Campus';
 import type {
   ShuttleDepartureLookup,
   ShuttleDirection,
+  ShuttlePlanLeg,
   ShuttlePlan,
   ShuttlePlanRequest,
 } from '../types/Shuttle';
@@ -33,6 +34,12 @@ type SelectPickupDropoffParams = {
   startCampus: Campus;
   destinationCampus: Campus;
   startCoords?: LatLng | null;
+};
+
+type ShuttlePlanLegs = {
+  preShuttleWalk: ShuttlePlanLeg | null;
+  shuttleRide: ShuttlePlanLeg | null;
+  postShuttleWalk: ShuttlePlanLeg | null;
 };
 
 const getScheduleDayBucket = (now: Date): ShuttleScheduleDayBucket | null => {
@@ -107,15 +114,65 @@ const toMinutesUntilDeparture = (now: Date, departure: Date) => {
   return Math.ceil(diffMs / 60000);
 };
 
+const buildEmptyPlanLegs = (): ShuttlePlanLegs => ({
+  preShuttleWalk: null,
+  shuttleRide: null,
+  postShuttleWalk: null,
+});
+
+const buildPlanLegs = ({
+  startCoords,
+  destinationCoords,
+  pickup,
+  dropoff,
+}: {
+  startCoords?: LatLng | null;
+  destinationCoords?: LatLng | null;
+  pickup: ShuttleStop | null;
+  dropoff: ShuttleStop | null;
+}): ShuttlePlanLegs => ({
+  preShuttleWalk: pickup
+    ? {
+        kind: 'pre_shuttle_walk',
+        mode: 'walking',
+        origin: startCoords ?? null,
+        destination: pickup.coords,
+        destinationStop: pickup,
+      }
+    : null,
+  shuttleRide:
+    pickup && dropoff
+      ? {
+          kind: 'shuttle_ride',
+          mode: 'shuttle',
+          origin: pickup.coords,
+          destination: dropoff.coords,
+          originStop: pickup,
+          destinationStop: dropoff,
+        }
+      : null,
+  postShuttleWalk: dropoff
+    ? {
+        kind: 'post_shuttle_walk',
+        mode: 'walking',
+        origin: dropoff.coords,
+        destination: destinationCoords ?? null,
+        originStop: dropoff,
+      }
+    : null,
+});
+
 const buildUnavailablePlan = (
   direction: ShuttleDirection,
   message: string,
   pickup: ShuttleStop | null = null,
   dropoff: ShuttleStop | null = null,
+  legs: ShuttlePlanLegs = buildEmptyPlanLegs(),
 ): ShuttlePlan => ({
   direction,
   pickup,
   dropoff,
+  ...legs,
   nextDepartures: [],
   nextDepartureDates: [],
   nextDepartureInMinutes: null,
@@ -216,6 +273,7 @@ export const buildDefaultShuttlePlan = ({
   startCampus,
   destinationCampus,
   startCoords,
+  destinationCoords,
   now = new Date(),
   count = DEFAULT_DEPARTURE_COUNT,
 }: ShuttlePlanRequest): ShuttlePlan => {
@@ -240,6 +298,12 @@ export const buildDefaultShuttlePlan = ({
 
   const pickup = selectedStops.pickup;
   const dropoff = selectedStops.dropoff;
+  const legs = buildPlanLegs({
+    startCoords: startCoords ?? null,
+    destinationCoords: destinationCoords ?? null,
+    pickup,
+    dropoff,
+  });
 
   const departuresLookup = getNextShuttleDepartures(now, direction, count);
   if (!departuresLookup.isServiceAvailable) {
@@ -248,7 +312,7 @@ export const buildDefaultShuttlePlan = ({
         ? SCHEDULE_MISSING_MESSAGE
         : NO_SERVICE_MESSAGE;
 
-    return buildUnavailablePlan(direction, unavailableMessage, pickup, dropoff);
+    return buildUnavailablePlan(direction, unavailableMessage, pickup, dropoff, legs);
   }
 
   const nextDeparture = departuresLookup.departures[0] ?? null;
@@ -258,6 +322,7 @@ export const buildDefaultShuttlePlan = ({
     direction,
     pickup,
     dropoff,
+    ...legs,
     nextDepartures: formatDepartureTimes(departuresLookup.departures),
     nextDepartureDates: departuresLookup.departures,
     nextDepartureInMinutes,

@@ -36,6 +36,7 @@ import { decodePolyline } from '../utils/polyline';
 import { formatEta } from '../utils/directionsFormatting';
 import { buildShuttlePlan } from '../services/shuttlePlanner';
 import type { ShuttlePlan } from '../types/Shuttle';
+import { fetchShuttleCompositeDirections } from '../services/shuttleDirections';
 import type { GoogleCalendarEventItem } from '../services/googleCalendarAuth';
 import {
   CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
@@ -220,6 +221,12 @@ const getDirectionsPanelSnapPoint = (travelMode: RoutePlannerMode, isCrossCampus
 const toDirectionsTravelMode = (travelMode: RoutePlannerMode): DirectionsTravelMode =>
   travelMode === 'shuttle' ? 'transit' : travelMode;
 
+const toRouteOverlayMode = (travelMode: RoutePlannerMode): DirectionsTravelMode => {
+  if (travelMode === 'walking') return 'walking';
+  if (travelMode === 'transit') return 'transit';
+  return 'driving';
+};
+
 export type BottomSliderHandle = {
   open: (index?: number) => void;
   close: () => void;
@@ -259,16 +266,16 @@ type RouteLoadDecision =
 const getRouteLoadDecision = ({
   activeView,
   travelMode,
-  shuttlePickupCoords,
-  routeDestinationCoords,
+  hasAvailableShuttlePlan,
+  destinationCoords,
   startCoords,
   startBuildingId,
   destinationBuildingId,
 }: {
   activeView: ViewType;
   travelMode: RoutePlannerMode;
-  shuttlePickupCoords: LatLng | null;
-  routeDestinationCoords: LatLng | null;
+  hasAvailableShuttlePlan: boolean;
+  destinationCoords: LatLng | null;
   startCoords: LatLng | null;
   startBuildingId?: string;
   destinationBuildingId?: string;
@@ -281,11 +288,11 @@ const getRouteLoadDecision = ({
     return { action: 'skip' };
   }
 
-  if (travelMode === 'shuttle' && !shuttlePickupCoords) {
+  if (travelMode === 'shuttle' && !hasAvailableShuttlePlan) {
     return { action: 'reset', message: null };
   }
 
-  if (!routeDestinationCoords) {
+  if (!destinationCoords) {
     return { action: 'reset', message: 'Set a destination to continue.' };
   }
 
@@ -297,7 +304,7 @@ const getRouteLoadDecision = ({
     return { action: 'reset', message: 'Start and destination cannot be the same.' };
   }
 
-  return { action: 'load', origin: startCoords, destination: routeDestinationCoords };
+  return { action: 'load', origin: startCoords, destination: destinationCoords };
 };
 
 const toOutdoorRouteOverlay = (
@@ -974,15 +981,18 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ]);
 
     const canStartNavigationFromCurrentLocation = routeStartSource === 'current';
-    const shuttlePickupCoords =
+    const hasAvailableShuttlePlan = Boolean(
       travelMode === 'shuttle' &&
-      shuttlePlan?.isServiceAvailable &&
-      shuttlePlan.nextDepartureInMinutes !== null
-        ? (shuttlePlan.pickup?.coords ?? null)
-        : null;
-    const routeDestinationCoords = shuttlePickupCoords ?? destinationCoords;
-    const routeRequestMode: DirectionsTravelMode =
-      shuttlePickupCoords !== null ? 'walking' : toDirectionsTravelMode(travelMode);
+        shuttlePlan?.isServiceAvailable &&
+        shuttlePlan.nextDepartureInMinutes !== null &&
+        shuttlePlan.preShuttleWalk?.origin &&
+        shuttlePlan.preShuttleWalk.destination &&
+        shuttlePlan.shuttleRide?.origin &&
+        shuttlePlan.shuttleRide.destination &&
+        shuttlePlan.postShuttleWalk?.origin &&
+        shuttlePlan.postShuttleWalk.destination,
+    );
+    const routeRequestMode: DirectionsTravelMode = toDirectionsTravelMode(travelMode);
 
     useEffect(() => {
       const shouldComputeShuttlePlan =
@@ -997,6 +1007,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             startCampus,
             destinationCampus,
             startCoords: startCoords ?? null,
+            destinationCoords: destinationCoords ?? null,
             now: getShuttlePlanningDate(new Date()),
           }),
         );
@@ -1004,7 +1015,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       }
 
       setShuttlePlan(null);
-    }, [activeView, destinationCampus, startCampus, startCoords, travelMode]);
+    }, [activeView, destinationCampus, destinationCoords, startCampus, startCoords, travelMode]);
 
     const showNavigationSummary = useCallback(() => {
       setActiveView('navigation');
@@ -1037,8 +1048,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       const routeLoadDecision = getRouteLoadDecision({
         activeView,
         travelMode,
-        shuttlePickupCoords,
-        routeDestinationCoords,
+        hasAvailableShuttlePlan,
+        destinationCoords,
         startCoords,
         startBuildingId: startBuilding?.id,
         destinationBuildingId: destinationBuilding?.id,
@@ -1056,11 +1067,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setIsRouteLoading(true);
         setRouteErrorMessage(null);
         try {
-          const route = await fetchOutdoorDirections({
-            origin: routeLoadDecision.origin,
-            destination: routeLoadDecision.destination,
-            mode: routeRequestMode,
-          });
+          const route =
+            travelMode === 'shuttle' && shuttlePlan
+              ? await fetchShuttleCompositeDirections(shuttlePlan)
+              : await fetchOutdoorDirections({
+                  origin: routeLoadDecision.origin,
+                  destination: routeLoadDecision.destination,
+                  mode: routeRequestMode,
+                });
 
           if (cancelled) return;
 
@@ -1077,7 +1091,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
               route,
               routeLoadDecision.origin,
               routeLoadDecision.destination,
-              routeRequestMode,
+              toRouteOverlayMode(travelMode),
             ),
           );
         } catch (error) {
@@ -1095,12 +1109,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [
       activeView,
       destinationBuilding?.id,
+      destinationCoords,
+      hasAvailableShuttlePlan,
       passOutdoorRoute,
       resetRouteState,
-      routeDestinationCoords,
       routeRequestMode,
       routeRetryNonce,
-      shuttlePickupCoords,
+      shuttlePlan,
       startBuilding?.id,
       startCoords,
       travelMode,

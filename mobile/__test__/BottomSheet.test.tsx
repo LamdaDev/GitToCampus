@@ -954,18 +954,48 @@ describe('BottomSheet', () => {
     });
   });
 
-  test('shuttle mode routes map path to pickup stop when next bus is available', async () => {
+  test('shuttle mode routes map path through pickup, shuttle ride, and destination walk', async () => {
     const passOutdoorRoute = jest.fn();
     const shuttlePickupCoords = { latitude: 45.458317, longitude: -73.640225 };
+    const shuttleDropoffCoords = { latitude: 45.497193, longitude: -73.578985 };
+    const destinationCoords = {
+      latitude: 45.49766666666667,
+      longitude: -73.57933333333334,
+    };
 
-    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
-      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
-      distanceMeters: 450,
-      distanceText: '450 m',
-      durationSeconds: 360,
-      durationText: '6 mins',
-      bounds: null,
-    });
+    directionsServiceMock.fetchOutdoorDirections
+      .mockResolvedValueOnce({
+        polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+        distanceMeters: 1200,
+        distanceText: '1.2 km',
+        durationSeconds: 840,
+        durationText: '14 mins',
+        bounds: null,
+      })
+      .mockResolvedValueOnce({
+        polyline: 'walk-to-pickup',
+        distanceMeters: 450,
+        distanceText: '450 m',
+        durationSeconds: 360,
+        durationText: '6 mins',
+        bounds: null,
+      })
+      .mockResolvedValueOnce({
+        polyline: 'shuttle-ride',
+        distanceMeters: 8200,
+        distanceText: '8.2 km',
+        durationSeconds: 1200,
+        durationText: '20 mins',
+        bounds: null,
+      })
+      .mockResolvedValueOnce({
+        polyline: 'walk-to-destination',
+        distanceMeters: 300,
+        distanceText: '300 m',
+        durationSeconds: 240,
+        durationText: '4 mins',
+        bounds: null,
+      });
     shuttlePlannerMock.buildShuttlePlan.mockReturnValueOnce({
       direction: 'LOYOLA_TO_SGW',
       pickup: {
@@ -978,7 +1008,25 @@ describe('BottomSheet', () => {
         id: 'sgw-hall',
         campus: 'SGW',
         name: 'SGW Shuttle Stop (Hall Building)',
-        coords: { latitude: 45.497193, longitude: -73.578985 },
+        coords: shuttleDropoffCoords,
+      },
+      preShuttleWalk: {
+        kind: 'pre_shuttle_walk',
+        mode: 'walking',
+        origin: { latitude: 45.458, longitude: -73.641 },
+        destination: shuttlePickupCoords,
+      },
+      shuttleRide: {
+        kind: 'shuttle_ride',
+        mode: 'shuttle',
+        origin: shuttlePickupCoords,
+        destination: shuttleDropoffCoords,
+      },
+      postShuttleWalk: {
+        kind: 'post_shuttle_walk',
+        mode: 'walking',
+        origin: shuttleDropoffCoords,
+        destination: destinationCoords,
       },
       nextDepartures: ['10:15 AM', '10:30 AM'],
       nextDepartureDates: [],
@@ -1005,19 +1053,42 @@ describe('BottomSheet', () => {
     await pressAndFlush(getByTestId('transport-shuttle'));
 
     await waitFor(() => {
-      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThan(
-        initialCallCount,
+      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBe(
+        initialCallCount + 3,
       );
-      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenNthCalledWith(
+        initialCallCount + 1,
         expect.objectContaining({
           mode: 'walking',
           destination: shuttlePickupCoords,
         }),
       );
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenNthCalledWith(
+        initialCallCount + 2,
+        expect.objectContaining({
+          mode: 'driving',
+          origin: shuttlePickupCoords,
+          destination: shuttleDropoffCoords,
+        }),
+      );
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenNthCalledWith(
+        initialCallCount + 3,
+        expect.objectContaining({
+          mode: 'walking',
+          origin: shuttleDropoffCoords,
+        }),
+      );
       expect(passOutdoorRoute).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
-          destination: shuttlePickupCoords,
+          destination: destinationCoords,
+          routeSegments: [
+            expect.objectContaining({ encodedPolyline: 'walk-to-pickup', requiresWalking: true }),
+            expect.objectContaining({ encodedPolyline: 'shuttle-ride', requiresWalking: false }),
+            expect.objectContaining({
+              encodedPolyline: 'walk-to-destination',
+              requiresWalking: true,
+            }),
+          ],
         }),
       );
     });
