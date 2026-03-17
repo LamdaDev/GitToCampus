@@ -1165,6 +1165,50 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       },
     }));
 
+    const renderedContent = renderBottomSheetContent({
+      isSearchActive,
+      calendarSliderMode,
+      isInternalSearch,
+      selectedCalendarIds,
+      handleReselectCalendars,
+      handleCloseUpcomingClassesSlider,
+      handleCloseCalendarSelectionSlider,
+      showUpcomingClassesSlider,
+      buildings,
+      handleInternalSearch,
+      closeSearchBuilding,
+      openCalendarSelectionAfterConnect,
+      handleCalendarGoFromSearch,
+      calendarGoErrorMessage,
+      activeView,
+      selectedBuilding,
+      closeSheet,
+      showDirections,
+      currentBuilding,
+      userLocation,
+      destinationBuilding,
+      routeTransitSteps,
+      showDirectionsPanel,
+      startBuilding,
+      shuttlePlan,
+      navigationSummary,
+      endNavigation,
+      isCrossCampusRoute,
+      isRouteLoading,
+      routeErrorMessage,
+      routeDistanceText,
+      routeDurationText,
+      routeDurationSeconds,
+      travelMode,
+      canStartNavigationFromCurrentLocation,
+      setSearchFor,
+      setTravelMode,
+      handleDirectionsGo,
+      showShuttleSchedule,
+      handleRetryRoute,
+    });
+    const usesDirectScrollableContent = activeView === 'transit-plan';
+
     return (
       <BottomSheet
         ref={sheetRef}
@@ -1180,50 +1224,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         onAnimate={handleSheetAnimate}
         onClose={handleSheetClose}
       >
-        <BottomSheetView style={buildingDetailsStyles.container}>
-          {renderBottomSheetContent({
-            isSearchActive,
-            calendarSliderMode,
-            isInternalSearch,
-            selectedCalendarIds,
-            handleReselectCalendars,
-            handleCloseUpcomingClassesSlider,
-            handleCloseCalendarSelectionSlider,
-            showUpcomingClassesSlider,
-            buildings,
-            handleInternalSearch,
-            closeSearchBuilding,
-            openCalendarSelectionAfterConnect,
-            handleCalendarGoFromSearch,
-            calendarGoErrorMessage,
-            activeView,
-            selectedBuilding,
-            closeSheet,
-            showDirections,
-            currentBuilding,
-            userLocation,
-            destinationBuilding,
-            routeTransitSteps,
-            showDirectionsPanel,
-            startBuilding,
-            shuttlePlan,
-            navigationSummary,
-            endNavigation,
-            isCrossCampusRoute,
-            isRouteLoading,
-            routeErrorMessage,
-            routeDistanceText,
-            routeDurationText,
-            routeDurationSeconds,
-            travelMode,
-            canStartNavigationFromCurrentLocation,
-            setSearchFor,
-            setTravelMode,
-            handleDirectionsGo,
-            showShuttleSchedule,
-            handleRetryRoute,
-          })}
-        </BottomSheetView>
+        {usesDirectScrollableContent ? (
+          renderedContent
+        ) : (
+          <BottomSheetView style={buildingDetailsStyles.container}>
+            {renderedContent}
+          </BottomSheetView>
+        )}
         {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>
     );

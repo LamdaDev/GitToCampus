@@ -377,6 +377,8 @@ describe('Direction Details', () => {
     );
 
     expect(getByTestId('route-summary-text').props.children).toBe('14 mins');
+    expect(getByTestId('route-summary-text').props.adjustsFontSizeToFit).toBe(true);
+    expect(getByTestId('route-summary-text').props.minimumFontScale).toBe(0.72);
     expect(getByTestId('route-secondary-text').props.children).toBe('1.2 km');
     expect(getByTestId('route-go-button')).toBeTruthy();
   });

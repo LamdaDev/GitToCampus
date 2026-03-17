@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
-import { ScrollView } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import TransitPlanDetails from '../src/components/TransitPlanDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import type { TransitInstruction } from '../src/types/Directions';
@@ -58,6 +58,17 @@ describe('TransitPlanDetails', () => {
     expect(getByTestId('transit-empty-text')).toBeTruthy();
     expect(getByTestId('transit-plan-scroll').props.nestedScrollEnabled).toBe(true);
     expect(getByTestId('transit-plan-scroll').props.keyboardShouldPersistTaps).toBe('handled');
+    expect(StyleSheet.flatten(getByTestId('transit-plan-scroll').props.style)).toMatchObject({
+      flex: 1,
+      width: '100%',
+    });
+    expect(
+      StyleSheet.flatten(getByTestId('transit-plan-scroll').props.contentContainerStyle),
+    ).toMatchObject({
+      flexGrow: 1,
+      paddingHorizontal: 16,
+      paddingBottom: 96,
+    });
     expect(getByTestId('icon-arrow-back')).toBeTruthy();
     expect(getByTestId('icon-close-sharp')).toBeTruthy();
 
