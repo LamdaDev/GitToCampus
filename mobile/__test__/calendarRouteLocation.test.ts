@@ -1,6 +1,8 @@
 import {
   CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
   getManualStartReasonMessage,
+  isSupportedCalendarEventLocation,
+  resolveCalendarEventDestination,
   resolveCalendarRouteLocation,
 } from '../src/utils/calendarRouteLocation';
 
@@ -175,5 +177,22 @@ describe('calendarRouteLocation', () => {
     expect(getManualStartReasonMessage('outside_campus')).toBe(
       'Location permission required—please select your starting building manually',
     );
+  });
+
+  test('resolves a supported event destination without requiring async start-point lookup', () => {
+    const result = resolveCalendarEventDestination('MB S1.150');
+
+    expect(result.type).toBe('success');
+    if (result.type !== 'success') return;
+    expect(result.value.destinationBuilding.id).toBe('mb');
+    expect(result.value.normalizedEventLocation).toBe('MB S1 150');
+    expect(result.value.rawEventLocation).toBe('MB S1.150');
+  });
+
+  test('reports supported-location eligibility using the shared destination parser', () => {
+    expect(isSupportedCalendarEventLocation('H 110')).toBe(true);
+    expect(isSupportedCalendarEventLocation('Hall Building 435')).toBe(true);
+    expect(isSupportedCalendarEventLocation('Zoom')).toBe(false);
+    expect(isSupportedCalendarEventLocation(null)).toBe(false);
   });
 });

@@ -261,6 +261,58 @@ describe('SearchSheet', () => {
     });
   });
 
+  test('filters unsupported locations and chooses the next supported class for GO', async () => {
+    getStoredSessionStateMock.mockResolvedValueOnce({
+      status: 'connected',
+      session: {
+        accessToken: 'token-live',
+        tokenType: 'Bearer',
+        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      },
+    });
+    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      type: 'success',
+      events: [
+        {
+          id: 'event-unsupported',
+          calendarId: 'calendar-1',
+          title: 'Dinner',
+          location: 'Downtown Cafe',
+          startsAt: Date.now() + 15 * 60 * 1000,
+        },
+        {
+          id: 'event-supported',
+          calendarId: 'calendar-1',
+          title: 'SOEN 321',
+          location: 'Hall Building 435',
+          startsAt: Date.now() + 30 * 60 * 1000,
+        },
+      ],
+    });
+
+    const onCalendarGoPress = jest.fn();
+    const { getByTestId, findByText } = render(
+      <SearchSheet
+        buildings={mockBuildings}
+        selectedCalendarIds={['calendar-1']}
+        onCalendarGoPress={onCalendarGoPress}
+      />,
+    );
+
+    await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
+    expect(await findByText('SOEN 321')).toBeTruthy();
+    expect(await findByText('Hall Building 435')).toBeTruthy();
+
+    fireEvent.press(getByTestId('next-class-go-button'));
+    expect(onCalendarGoPress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'event-supported',
+        location: 'Hall Building 435',
+      }),
+    );
+  });
+
   test('shows no upcoming classes in next class card when events are empty', async () => {
     getStoredSessionStateMock.mockResolvedValueOnce({
       status: 'connected',
@@ -283,6 +335,37 @@ describe('SearchSheet', () => {
     await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
     expect(getByTestId('next-class-card')).toBeTruthy();
     expect(await findByText('No upcoming or in-progress classes')).toBeTruthy();
+  });
+
+  test('shows supported-location empty state when upcoming events are filtered out', async () => {
+    getStoredSessionStateMock.mockResolvedValueOnce({
+      status: 'connected',
+      session: {
+        accessToken: 'token-live',
+        tokenType: 'Bearer',
+        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      },
+    });
+    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      type: 'success',
+      events: [
+        {
+          id: 'event-unsupported',
+          calendarId: 'calendar-1',
+          title: 'Team Dinner',
+          location: 'Downtown Cafe',
+          startsAt: Date.now() + 30 * 60 * 1000,
+        },
+      ],
+    });
+
+    const { findByText, getByTestId } = render(
+      <SearchSheet buildings={mockBuildings} selectedCalendarIds={['calendar-1']} />,
+    );
+
+    await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
+    expect(await findByText('No upcoming classes with supported Concordia locations')).toBeTruthy();
   });
 
   test('shows calendar GO error message when provided by parent', async () => {

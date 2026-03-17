@@ -10,14 +10,16 @@ const mockEvents = [
     calendarId: 'calendar-1',
     title: 'User Interface',
     location: 'Hall Building 455',
-    startsAt: new Date('2030-02-19T12:00:00.000Z').getTime(),
+    startsAt: new Date(2030, 1, 19, 10, 0, 0).getTime(),
+    endsAt: new Date(2030, 1, 19, 13, 0, 0).getTime(),
   },
   {
     id: 'event-2',
     calendarId: 'calendar-2',
     title: 'Data Structures',
     location: 'Faubourg Building C080',
-    startsAt: new Date('2030-02-19T13:00:00.000Z').getTime(),
+    startsAt: new Date(2030, 1, 19, 14, 0, 0).getTime(),
+    endsAt: new Date(2030, 1, 19, 15, 15, 0).getTime(),
   },
 ];
 
@@ -25,10 +27,9 @@ const manyMockEvents = Array.from({ length: 13 }, (_value, index) => ({
   id: `event-${index + 1}`,
   calendarId: 'calendar-1',
   title: `Event ${index + 1}`,
-  location: `Location ${index + 1}`,
-  startsAt: new Date(
-    `2030-02-19T${String((index % 12) + 1).padStart(2, '0')}:00:00.000Z`,
-  ).getTime(),
+  location: `H ${100 + index}`,
+  startsAt: new Date(2030, 1, 19, (index % 12) + 1, 0, 0).getTime(),
+  endsAt: new Date(2030, 1, 19, (index % 12) + 2, 15, 0).getTime(),
 }));
 
 jest.mock('@expo/vector-icons', () => {
@@ -93,6 +94,40 @@ describe('UpcomingClassesSlider', () => {
     expect(getByText('Upcoming Classes:')).toBeTruthy();
     expect(await findByTestId('upcoming-class-event-event-1')).toBeTruthy();
     expect(getByTestId('upcoming-class-event-event-1')).toBeTruthy();
+    expect(getByTestId('upcoming-class-event-datetime-event-1')).toHaveTextContent(
+      'Tue, Feb 19 10:00 - 13:00',
+    );
+  });
+
+  test('filters out upcoming events without supported Concordia locations', async () => {
+    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      type: 'success',
+      events: [
+        {
+          id: 'valid-event',
+          calendarId: 'calendar-1',
+          title: 'SOEN 321',
+          location: 'Hall Building 455',
+          startsAt: new Date(2030, 1, 19, 12, 0, 0).getTime(),
+          endsAt: new Date(2030, 1, 19, 13, 15, 0).getTime(),
+        },
+        {
+          id: 'invalid-event',
+          calendarId: 'calendar-1',
+          title: 'Personal Errand',
+          location: 'Downtown Cafe',
+          startsAt: new Date(2030, 1, 19, 13, 0, 0).getTime(),
+          endsAt: new Date(2030, 1, 19, 14, 0, 0).getTime(),
+        },
+      ],
+    });
+
+    const { findByTestId, queryByTestId } = render(
+      <UpcomingClassesSlider selectedCalendarIds={['calendar-1']} />,
+    );
+
+    expect(await findByTestId('upcoming-class-event-valid-event')).toBeTruthy();
+    expect(queryByTestId('upcoming-class-event-invalid-event')).toBeNull();
   });
 
   test('does not render next class summary card', async () => {
@@ -146,6 +181,27 @@ describe('UpcomingClassesSlider', () => {
     );
   });
 
+  test('shows supported-location empty state when upcoming events are filtered out', async () => {
+    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      type: 'success',
+      events: [
+        {
+          id: 'event-invalid-location',
+          calendarId: 'calendar-1',
+          title: 'Team Dinner',
+          location: 'Downtown Cafe',
+          startsAt: new Date(2030, 1, 19, 12, 0, 0).getTime(),
+          endsAt: new Date(2030, 1, 19, 13, 0, 0).getTime(),
+        },
+      ],
+    });
+
+    const { findByTestId } = render(<UpcomingClassesSlider selectedCalendarIds={['calendar-1']} />);
+    expect(await findByTestId('upcoming-classes-empty')).toHaveTextContent(
+      /No upcoming classes with supported Concordia locations/i,
+    );
+  });
+
   test('calls onReselectCalendars when button is pressed', async () => {
     const onReselectCalendars = jest.fn();
     const { getByTestId } = render(
@@ -188,7 +244,7 @@ describe('UpcomingClassesSlider', () => {
 
   test('hides an in-progress class after its end time passes', async () => {
     jest.useFakeTimers();
-    const baseNow = new Date('2026-09-14T10:30:00.000Z');
+    const baseNow = new Date(2026, 8, 14, 10, 30, 0);
     jest.setSystemTime(baseNow);
 
     try {
@@ -197,8 +253,8 @@ describe('UpcomingClassesSlider', () => {
         calendarId: 'calendar-1',
         title: 'SOEN 321 LEC',
         location: 'Hall H-110',
-        startsAt: new Date('2026-09-14T10:00:00.000Z').getTime(),
-        endsAt: new Date('2026-09-14T10:31:00.000Z').getTime(),
+        startsAt: new Date(2026, 8, 14, 10, 0, 0).getTime(),
+        endsAt: new Date(2026, 8, 14, 10, 31, 0).getTime(),
       };
 
       fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
@@ -213,7 +269,7 @@ describe('UpcomingClassesSlider', () => {
       expect(await findByTestId('upcoming-class-event-event-in-progress')).toBeTruthy();
 
       act(() => {
-        jest.setSystemTime(new Date('2026-09-14T10:32:00.000Z'));
+        jest.setSystemTime(new Date(2026, 8, 14, 10, 32, 0));
         jest.advanceTimersByTime(120_000);
       });
 
@@ -223,5 +279,26 @@ describe('UpcomingClassesSlider', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  test('shows only the start time when an event end time is unavailable', async () => {
+    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      type: 'success',
+      events: [
+        {
+          id: 'event-no-end',
+          calendarId: 'calendar-1',
+          title: 'Seminar',
+          location: 'H 810',
+          startsAt: new Date(2030, 1, 19, 16, 0, 0).getTime(),
+        },
+      ],
+    });
+
+    const { findByTestId } = render(<UpcomingClassesSlider selectedCalendarIds={['calendar-1']} />);
+
+    expect(await findByTestId('upcoming-class-event-datetime-event-no-end')).toHaveTextContent(
+      'Tue, Feb 19 16:00',
+    );
   });
 });
