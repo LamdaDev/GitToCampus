@@ -30,7 +30,6 @@ import { decodePolyline } from '../utils/polyline';
 import MapControls from '../components/MapControls';
 import * as turf from '@turf/turf';
 import IndoorMapScreen from './IndoorMapScreen';
-import IndoorControls from '../components/IndoorControls';
 
 type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
@@ -384,8 +383,7 @@ const PolygonMarker = React.memo(function PolygonMarker({
   }, []);
 
   return (
-    <Marker coordinate={center} tracksViewChanges={tracksViewChanges}
-    tappable={false}>
+    <Marker coordinate={center} tracksViewChanges={tracksViewChanges} tappable={false}>
       <View style={[styles.labels, { backgroundColor }]}>
         <Text style={styles.labelText}>{label}</Text>
       </View>
@@ -735,16 +733,6 @@ function MapScreen({
     hideIndoor: () => setIndoorBuilding(null),
   }));
 
-  const [currentFloor, setCurrentFloor] = useState(1);
-
-  const handleFloorUp = useCallback(() => {
-    setCurrentFloor((prev) => prev + 1);
-  }, []);
-
-  const handleFloorDown = useCallback(() => {
-    setCurrentFloor((prev) => Math.max(1, prev - 1));
-  }, []);
-
   return (
     <View style={styles.container}>
       <MapView {...mapProps}>
@@ -769,24 +757,19 @@ function MapScreen({
         )}
       </MapView>
 
-      {indoorBuilding && <IndoorMapScreen />}
-
-      {!indoorBuilding ? (
+      {indoorBuilding ? (
+        <IndoorMapScreen
+          onExitIndoor={() => setIndoorBuilding(null)}
+          onOpenCalendar={onOpenCalendar}
+          building={indoorBuilding}
+        />
+      ) : (
         <MapControls
           selectedCampus={selectedCampus}
           onToggleCampus={handleToggleCampus}
           onRecenter={handleRecenter}
           onOpenCalendar={onOpenCalendar}
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
-        />
-      ) : (
-        <IndoorControls
-          onExitIndoor={() => setIndoorBuilding(null)}
-          onOpenCalendar={onOpenCalendar}
-          onFloorUp={handleFloorUp}
-          onFloorDown={handleFloorDown}
-          currentFloor={currentFloor}
-          building={indoorBuilding}
         />
       )}
     </View>

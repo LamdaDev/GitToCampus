@@ -1,0 +1,43 @@
+import CC_1 from '../assets/floor_plans/CC_1.svg';
+
+import H_1 from '../assets/floor_plans/H_1.svg';
+import H_2 from '../assets/floor_plans/H_2.svg';
+import H_8 from '../assets/floor_plans/H_8.svg';
+import H_9 from '../assets/floor_plans/H_9.svg';
+
+import MB_1 from '../assets/floor_plans/MB_1.png';
+import MB_S2 from '../assets/floor_plans/MB_S2.png';
+
+import VE_1 from '../assets/floor_plans/VE_1.svg';
+import VE_2 from '../assets/floor_plans/VE_2.svg';
+
+import VL_1 from '../assets/floor_plans/VL_1.png';
+import VL_2 from '../assets/floor_plans/VL_2.png';
+
+export const floorPlans = {
+  CC: {
+    1: CC_1,
+  },
+
+  H: {
+    1: H_1,
+    2: H_2,
+    8: H_8,
+    9: H_9,
+  },
+
+  MB: {
+    1: MB_1,
+    S2: MB_S2, 
+  },
+
+  VE: {
+    1: VE_1,
+    2: VE_2,
+  },
+
+  VL: {
+    1: VL_1,
+    2: VL_2,
+  },
+} as const;

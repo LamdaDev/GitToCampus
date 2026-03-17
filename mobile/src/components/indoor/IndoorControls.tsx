@@ -1,8 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import styles from '../styles/IndoorControls.styles';
-import type { BuildingShape } from '../types/BuildingShape';
+import styles from '../../styles/IndoorControls.styles';
+import type { BuildingShape } from '../../types/BuildingShape';
 
 type Props = {
   onExitIndoor: () => void;
