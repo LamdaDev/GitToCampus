@@ -348,6 +348,31 @@ const getRouteErrorMessage = (error: unknown): string => {
   return 'Unable to load route. Please try again.';
 };
 
+const getRouteErrorLogDetails = (error: unknown) => {
+  if (error instanceof DirectionsServiceError) {
+    return {
+      name: error.name,
+      code: error.code,
+      message: error.message,
+      providerStatus: error.providerStatus ?? null,
+      providerMessage: error.providerMessage ?? null,
+      requestUrl: error.requestUrl ?? null,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+    };
+  }
+
+  return {
+    message: 'Unknown route error',
+    rawError: error,
+  };
+};
+
 const renderBottomSheetContent = ({
   isSearchActive,
   calendarSliderMode,
@@ -1082,7 +1107,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           );
         } catch (error) {
           if (cancelled) return;
-          console.warn('Failed to fetch outdoor directions', error);
+          console.warn('Failed to fetch outdoor directions', getRouteErrorLogDetails(error));
           resetRouteState(getRouteErrorMessage(error));
         }
       };

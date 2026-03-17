@@ -64,16 +64,18 @@ export class DirectionsServiceError extends Error {
   code: DirectionsErrorCode;
   providerStatus?: string;
   providerMessage?: string;
+  requestUrl?: string;
 
   constructor(
     code: DirectionsErrorCode,
     message: string,
-    options?: { providerStatus?: string; providerMessage?: string },
+    options?: { providerStatus?: string; providerMessage?: string; requestUrl?: string },
   ) {
     super(message);
     this.name = 'DirectionsServiceError';
     this.code = code;
     this.providerStatus = options?.providerStatus;
     this.providerMessage = options?.providerMessage;
+    this.requestUrl = options?.requestUrl;
   }
 }
