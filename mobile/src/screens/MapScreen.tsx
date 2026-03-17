@@ -364,6 +364,35 @@ const getPolygonRenderColors = (
   };
 };
 
+const PolygonMarker = React.memo(function PolygonMarker({
+  center,
+  label,
+  backgroundColor,
+}: {
+  center: { latitude: number; longitude: number };
+  label: string;
+  backgroundColor: string;
+}) {
+  const [tracksViewChanges, setTracksViewChanges] = React.useState(true);
+
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      setTracksViewChanges(false);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return (
+    <Marker coordinate={center} tracksViewChanges={tracksViewChanges}
+    tappable={false}>
+      <View style={[styles.labels, { backgroundColor }]}>
+        <Text style={styles.labelText}>{label}</Text>
+      </View>
+    </Marker>
+  );
+});
+
 const renderPolygonItem = (
   item: PolygonRenderItem,
   selectedBuildingId: string | null,
@@ -373,7 +402,9 @@ const renderPolygonItem = (
   const theme = POLYGON_THEME[item.campus];
   const isSelected = item.buildingId === selectedBuildingId;
   const isCurrent = item.buildingId === currentBuildingId;
+
   const center = getPolygonCenter(item.coordinates);
+
   const { strokeColor, fillColor, strokeWidth } = getPolygonRenderColors(
     theme,
     isSelected,
@@ -383,7 +414,6 @@ const renderPolygonItem = (
   return (
     <Fragment key={item.key}>
       <Polygon
-        key={item.key}
         coordinates={item.coordinates}
         tappable
         strokeColor={strokeColor}
@@ -391,11 +421,12 @@ const renderPolygonItem = (
         strokeWidth={strokeWidth}
         onPress={() => onPolygonPress(item)}
       />
-      <Marker coordinate={center} tracksViewChanges={true} testID={'map-label'}>
-        <View style={[styles.labels, { backgroundColor: theme.labelFill }]}>
-          <Text style={styles.labelText}>{item.buildingShortCode}</Text>
-        </View>
-      </Marker>
+
+      <PolygonMarker
+        center={center}
+        label={item.buildingShortCode}
+        backgroundColor={theme.labelFill}
+      />
     </Fragment>
   );
 };
