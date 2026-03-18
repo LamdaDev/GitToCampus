@@ -136,9 +136,7 @@ describe('IndoorBottomSheet', () => {
   });
 
   test('filters buildings by search query and clears when query is empty', async () => {
-    const { getByTestId, getByText, queryByText } = render(
-      <IndoorBottomSheet {...defaultProps} />,
-    );
+    const { getByTestId, getByText, queryByText } = render(<IndoorBottomSheet {...defaultProps} />);
 
     // Type a query that matches only H Building
     fireEvent.changeText(getByTestId('search-bar'), 'H Building');
@@ -160,9 +158,7 @@ describe('IndoorBottomSheet', () => {
   });
 
   test('filters buildings by partial address match', async () => {
-    const { getByTestId, getByText, queryByText } = render(
-      <IndoorBottomSheet {...defaultProps} />,
-    );
+    const { getByTestId, getByText, queryByText } = render(<IndoorBottomSheet {...defaultProps} />);
 
     // H and MB share '1455 De Maisonneuve' — MB has '1450 Guy St.'
     fireEvent.changeText(getByTestId('search-bar'), 'guy');

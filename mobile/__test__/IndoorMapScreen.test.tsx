@@ -3,7 +3,6 @@ import { render, waitFor } from '@testing-library/react-native';
 import IndoorControls from '../src/components/indoor/IndoorControls';
 import type { BuildingShape } from '../src/types/BuildingShape';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const IndoorMapScreen = require('../src/screens/IndoorMapScreen').default;
 
 // ─── Top-level mock fns ───────────────────────────────────────────────────────
