@@ -240,6 +240,7 @@ type BottomSheetProps = {
   passSelectedBuilding: (b: BuildingShape | null) => void;
   passOutdoorRoute: (route: OutdoorRouteOverlay | null) => void;
   animatedPosition?: SharedValue<number>;
+  onEnterBuilding: (building: BuildingShape) => void;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -367,6 +368,7 @@ const renderBottomSheetContent = ({
   selectedBuilding,
   closeSheet,
   showDirections,
+  onEnterBuilding,
   currentBuilding,
   userLocation,
   destinationBuilding,
@@ -408,6 +410,7 @@ const renderBottomSheetContent = ({
   selectedBuilding: BuildingShape | null;
   closeSheet: () => void;
   showDirections: (building: BuildingShape, asDestination?: boolean) => void;
+  onEnterBuilding: (building: BuildingShape) => void;
   currentBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
   destinationBuilding: BuildingShape | null;
@@ -476,6 +479,7 @@ const renderBottomSheetContent = ({
         onShowDirections={showDirections}
         currentBuilding={currentBuilding}
         userLocation={userLocation}
+        onEnterBuilding={onEnterBuilding}
       />
     );
   }
@@ -598,6 +602,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       passSelectedBuilding,
       passOutdoorRoute,
       animatedPosition,
+      onEnterBuilding,
     },
     ref,
   ) => {
@@ -647,6 +652,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         passOutdoorRoute(null);
       },
       [passOutdoorRoute],
+    );
+
+    const handleEnterBuilding = useCallback(
+      (building: BuildingShape) => {
+        closeSheet();
+        onEnterBuilding(building);
+      },
+      [onEnterBuilding],
     );
 
     const handleRetryRoute = useCallback(() => {
@@ -820,6 +833,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setRouteStartSource('current');
       setStartLocationSnapshot(null);
       resetRouteState();
+      passSelectedBuilding(null);
     };
 
     const handleSheetAnimate = useCallback(
@@ -1175,6 +1189,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             selectedBuilding,
             closeSheet,
             showDirections,
+            onEnterBuilding: handleEnterBuilding,
             currentBuilding,
             userLocation,
             destinationBuilding,
@@ -1199,7 +1214,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             handleRetryRoute,
           })}
         </BottomSheetView>
-        {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>
     );
   },
