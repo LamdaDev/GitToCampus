@@ -9,6 +9,7 @@ type Props = {
   onOpenCalendar?: () => void;
   onFloorUp: () => void;
   onFloorDown: () => void;
+  openAvailableBuildings:()=>void;
   currentFloor: number;
   building: BuildingShape;
 };
@@ -18,6 +19,7 @@ const IndoorControls = ({
   onOpenCalendar,
   onFloorUp,
   onFloorDown,
+  openAvailableBuildings,
   currentFloor,
   building,
 }: Props) => {
@@ -36,9 +38,11 @@ const IndoorControls = ({
 
       {/* Building name */}
       <View style={styles.buildingNamePill}>
+        <TouchableOpacity onPress={openAvailableBuildings}>
         <Text style={styles.buildingNameText}>
           {building.shortCode}({building.name})
         </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Icon buttons */}

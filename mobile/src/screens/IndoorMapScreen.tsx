@@ -1,9 +1,10 @@
-import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import IndoorControls from '../components/indoor/IndoorControls';
 import { BuildingShape } from '../types/BuildingShape';
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 import { floorPlans } from '../utils/floorPlans';
+import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/BuildingListSheet';
 
 type props = {
   onExitIndoor: () => void;
@@ -16,6 +17,12 @@ export default function IndoorMapScreen({
   onOpenCalendar,
   building,
 }: Readonly<props>) {
+  const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
+
+  const openAvailableBuildings = () => {
+    bottomSheetRef.current?.open();
+    console.log('Opening available buildings sheet'); // Debug log
+  };
 
   const indoorFloorPlans = useMemo(() => {
     const code = building?.shortCode;
@@ -65,16 +72,18 @@ export default function IndoorMapScreen({
 
   return (
     <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'white' }}>
-      
+      {/* CONTROLS */}
       <IndoorControls
         onExitIndoor={onExitIndoor}
         onOpenCalendar={onOpenCalendar}
         onFloorUp={handleFloorUp}
         onFloorDown={handleFloorDown}
         currentFloor={currentFloor}
+        openAvailableBuildings={openAvailableBuildings} 
         building={building}
       />
 
+      {/* MAP */}
       <ReactNativeZoomableView
         maxZoom={10}
         minZoom={0.3}
@@ -82,18 +91,14 @@ export default function IndoorMapScreen({
         initialZoom={1}
         bindToBorders={false}
       >
-        {plan?.type === 'svg' && (
-          <plan.data width={'100%'} height={'100%'} />
-        )}
+        {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
 
         {plan?.type === 'png' && (
-          <Image
-            source={plan.data}
-            style={{ width: 1000, height: 1000 }}
-            resizeMode="contain"
-          />
+          <Image source={plan.data} style={{ width: 1000, height: 1000 }} resizeMode="contain" />
         )}
       </ReactNativeZoomableView>
+
+      <IndoorBottomSheet ref={bottomSheetRef} />
     </View>
   );
 }

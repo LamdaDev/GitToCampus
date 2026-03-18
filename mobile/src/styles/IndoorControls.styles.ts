@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
   // ─── Root overlay container ───────────────────────────────────────────────
   overlayRow: {
     position: 'absolute',
-    top: 16,
+    top: 20,
     left: 0,
     right: 0,
     flexDirection: 'row',

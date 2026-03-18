@@ -248,6 +248,7 @@ const ROUTE_UI_VIEWS = new Set<ViewType>([
   'transit-plan',
   'shuttle-schedule',
   'navigation',
+  
 ]);
 
 const isRouteUiVisible = (activeView: ViewType) => ROUTE_UI_VIEWS.has(activeView);
@@ -1214,7 +1215,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             handleRetryRoute,
           })}
         </BottomSheetView>
-        {/**TO DO: Add in GoogleCalendar Bottom sheet view */}
       </BottomSheet>
     );
   },
