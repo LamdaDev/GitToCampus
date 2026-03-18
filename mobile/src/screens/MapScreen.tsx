@@ -385,7 +385,12 @@ const PolygonMarker = React.memo(function PolygonMarker({
   }, []);
 
   return (
-    <Marker coordinate={center} tracksViewChanges={tracksViewChanges} tappable={false}>
+    <Marker
+      testID="map-label"
+      coordinate={center}
+      tracksViewChanges={tracksViewChanges}
+      tappable={false}
+    >
       <View style={[styles.labels, { backgroundColor }]}>
         <Text style={styles.labelText}>{label}</Text>
       </View>

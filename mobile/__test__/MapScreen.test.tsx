@@ -20,6 +20,8 @@ const mockOnMapPress = jest.fn();
 const mockOnOpenCalendar = jest.fn();
 const mockAnimateToRegion = jest.fn();
 const mockFitToCoordinates = jest.fn();
+const mockHideAppSearchBar = jest.fn();
+const mockRevealSearchBar = jest.fn();
 let mockHasAnimateToRegion = true;
 const originalPlatformOSDescriptor = Object.getOwnPropertyDescriptor(Platform, 'OS');
 
@@ -188,6 +190,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -208,6 +212,8 @@ describe('MapScreen', () => {
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
         onMapPress={mockOnMapPress}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -223,6 +229,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -252,6 +260,8 @@ describe('MapScreen', () => {
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
         onMapPress={mockOnMapPress}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -273,6 +283,8 @@ describe('MapScreen', () => {
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
         onOpenCalendar={mockOnOpenCalendar}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -287,6 +299,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -311,6 +325,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -329,6 +345,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -353,6 +371,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -380,6 +400,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -407,6 +429,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -433,6 +457,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -466,6 +492,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -500,6 +528,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -536,6 +566,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -567,6 +599,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -590,6 +624,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -609,6 +645,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -633,6 +671,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -667,6 +707,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -689,6 +731,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -717,6 +761,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -741,6 +787,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         outdoorRoute={{
           encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
           start: { latitude: 45.5, longitude: -73.57 },
@@ -780,6 +828,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         outdoorRoute={{
           encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
           start: { latitude: 45.5, longitude: -73.57 },
@@ -803,6 +853,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         outdoorRoute={{
           encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
           start: { latitude: 45.5, longitude: -73.57 },
@@ -842,6 +894,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         outdoorRoute={{ ...route, isWalkingRoute: true }}
       />,
     );
@@ -857,6 +911,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         outdoorRoute={{ ...route, isWalkingRoute: false }}
       />,
     );
@@ -872,6 +928,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         outdoorRoute={{ ...route, isWalkingRoute: true }}
       />,
     );
@@ -891,6 +949,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         outdoorRoute={{
           encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
           start: { latitude: 45.5, longitude: -73.57 },
@@ -913,6 +973,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         externalSelectedBuilding={mockBuildings[1]}
       />,
     );
@@ -933,6 +995,8 @@ describe('MapScreen', () => {
           passUserLocation={mockPassUserLocation}
           passCurrentBuilding={mockPassCurrentBuilding}
           openBottomSheet={mockOpenBottomSheet}
+          hideAppSearchBar={mockHideAppSearchBar}
+          revealSearchBar={mockRevealSearchBar}
           outdoorRoute={{
             encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
             start: { latitude: 45.5, longitude: -73.57 },
@@ -961,6 +1025,8 @@ describe('MapScreen', () => {
           passUserLocation={mockPassUserLocation}
           passCurrentBuilding={mockPassCurrentBuilding}
           openBottomSheet={mockOpenBottomSheet}
+          hideAppSearchBar={mockHideAppSearchBar}
+          revealSearchBar={mockRevealSearchBar}
           outdoorRoute={{
             encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
             start: { latitude: 45.5, longitude: -73.57 },
@@ -986,6 +1052,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         bottomSheetAnimatedPosition={{ value: 100 } as any}
         outdoorRoute={{
           encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
@@ -1017,6 +1085,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
         bottomSheetAnimatedPosition={{ value: Number.NaN } as any}
         outdoorRoute={{
           encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
@@ -1044,6 +1114,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
@@ -1062,6 +1134,8 @@ describe('MapScreen', () => {
         passUserLocation={mockPassUserLocation}
         passCurrentBuilding={mockPassCurrentBuilding}
         openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
       />,
     );
 
