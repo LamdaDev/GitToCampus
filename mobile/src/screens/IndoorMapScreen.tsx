@@ -117,11 +117,7 @@ export default function IndoorMapScreen({
         {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
 
         {plan?.type === 'png' && (
-          <Image
-            source={plan.data}
-            style={{ width: 1000, height: 1000 }}
-            resizeMode="contain"
-          />
+          <Image source={plan.data} style={{ width: 1000, height: 1000 }} resizeMode="contain" />
         )}
       </ReactNativeZoomableView>
 

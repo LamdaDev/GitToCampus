@@ -105,11 +105,10 @@ const App = () => {
   }, []);
 
   const hideSearchBar = useCallback(() => {
-  setSheetOpen(true);
-}, []);
+    setSheetOpen(true);
+  }, []);
 
   if (!fontsLoaded) return null;
-
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

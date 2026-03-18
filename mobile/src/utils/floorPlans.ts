@@ -28,7 +28,7 @@ export const floorPlans = {
 
   MB: {
     S2: { type: 'png', data: MB_S2 },
-    1: { type: 'png', data: MB_1 }
+    1: { type: 'png', data: MB_1 },
   },
 
   VE: {

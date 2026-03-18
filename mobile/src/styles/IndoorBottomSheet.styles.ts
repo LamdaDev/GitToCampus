@@ -20,7 +20,7 @@ export const indoorBuildingSheetStyles = StyleSheet.create({
     paddingTop: 0,
     marginBottom: 50,
   },
-    handle: {
+  handle: {
     backgroundColor: '#000000',
     width: SCREEN_WIDTH * 0.35,
     top: SCREEN_HEIGHT * -0.005,
@@ -97,14 +97,14 @@ export const indoorBuildingSheetStyles = StyleSheet.create({
     gap: 0, // spacing between pills
     marginHorizontal: 8,
   },
-   buildingPill: {
+  buildingPill: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 22,
     paddingVertical: 18,
     paddingHorizontal: 8,
-    marginRight:25,
-    borderBottomColor:'#6E1A2ABF',
-    borderBottomWidth:1,
+    marginRight: 25,
+    borderBottomColor: '#6E1A2ABF',
+    borderBottomWidth: 1,
   },
 });

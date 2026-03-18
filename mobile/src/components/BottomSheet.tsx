@@ -248,7 +248,6 @@ const ROUTE_UI_VIEWS = new Set<ViewType>([
   'transit-plan',
   'shuttle-schedule',
   'navigation',
-  
 ]);
 
 const isRouteUiVisible = (activeView: ViewType) => ROUTE_UI_VIEWS.has(activeView);

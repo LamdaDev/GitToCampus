@@ -28,133 +28,133 @@ const SearchBarCompat = SearchBar as React.ComponentType<any>;
 
 const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
   ({ onPressBuilding, reOpenSearchBar }, ref) => {
-  const sheetRef = useRef<BottomSheet>(null);
-  const [search, setSearch] = useState('');
+    const sheetRef = useRef<BottomSheet>(null);
+    const [search, setSearch] = useState('');
 
-  const snapPoints = useMemo(() => ['25%', '65%'], []);
+    const snapPoints = useMemo(() => ['25%', '65%'], []);
 
-  useImperativeHandle(ref, () => ({
-    open: () => sheetRef.current?.expand(),
-    close: () => sheetRef.current?.close(),
-  }));
+    useImperativeHandle(ref, () => ({
+      open: () => sheetRef.current?.expand(),
+      close: () => sheetRef.current?.close(),
+    }));
 
-  const buildings = useMemo(() => {
-    const buildingMeta = {
-      CC: {
-        name: 'CC Building',
-        address: '1455 De Maisonneuve Blvd W.',
-      },
-      H: {
-        name: 'H Building',
-        address: '1455 De Maisonneuve Blvd W.',
-      },
-      MB: {
-        name: 'MB Building',
-        address: '1450 Guy St.',
-      },
-      VE: {
-        name: 'VE Building',
-        address: '1515 Ste-Catherine St W.',
-      },
-      VL: {
-        name: 'Vanier Library',
-        address: '7141 Sherbrooke St W.',
-      },
+    const buildings = useMemo(() => {
+      const buildingMeta = {
+        CC: {
+          name: 'CC Building',
+          address: '1455 De Maisonneuve Blvd W.',
+        },
+        H: {
+          name: 'H Building',
+          address: '1455 De Maisonneuve Blvd W.',
+        },
+        MB: {
+          name: 'MB Building',
+          address: '1450 Guy St.',
+        },
+        VE: {
+          name: 'VE Building',
+          address: '1515 Ste-Catherine St W.',
+        },
+        VL: {
+          name: 'Vanier Library',
+          address: '7141 Sherbrooke St W.',
+        },
+      };
+
+      return Object.keys(floorPlans).map((code) => ({
+        id: code,
+        shortCode: code,
+        name: buildingMeta[code as keyof typeof buildingMeta]?.name ?? code,
+        address: buildingMeta[code as keyof typeof buildingMeta]?.address ?? '',
+      }));
+    }, []);
+
+    const searchableBuildings = useMemo(
+      () =>
+        buildings.map((building) => ({
+          building,
+          normalizedSearchText: `${building.name} ${building.address ?? ''}`.toLowerCase(),
+        })),
+      [buildings],
+    );
+
+    const filtered = useMemo(() => {
+      const searchCriteria = search.trim().toLowerCase();
+      if (!searchCriteria) return buildings;
+
+      return searchableBuildings
+        .filter(({ normalizedSearchText }) => normalizedSearchText.includes(searchCriteria))
+        .map(({ building }) => building);
+    }, [search, buildings, searchableBuildings]);
+
+    const renderBuildingItem = useCallback(
+      ({ item }: ListRenderItemInfo<BuildingShape>) => (
+        <TouchableOpacity
+          style={indoorBuildingSheetStyles.buildingPill}
+          activeOpacity={0.45}
+          onPress={() => onPressBuilding?.(item)}
+        >
+          <View style={searchBuilding.iconWrap}>
+            <Ionicons name="location-outline" size={42} color="#F5F1F2" />
+          </View>
+
+          <View style={searchBuilding.textWrap}>
+            <Text style={searchBuilding.buildingName} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text style={searchBuilding.buildingAddress} numberOfLines={1}>
+              {item.address}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      ),
+      [onPressBuilding],
+    );
+    const revealAppSearchBar = () => {
+      reOpenSearchBar();
     };
 
-    return Object.keys(floorPlans).map((code) => ({
-      id: code,
-      shortCode: code,
-      name: buildingMeta[code as keyof typeof buildingMeta]?.name ?? code,
-      address: buildingMeta[code as keyof typeof buildingMeta]?.address ?? '',
-    }));
-  }, []);
-
-  const searchableBuildings = useMemo(
-    () =>
-      buildings.map((building) => ({
-        building,
-        normalizedSearchText: `${building.name} ${building.address ?? ''}`.toLowerCase(),
-      })),
-    [buildings],
-  );
-
-  const filtered = useMemo(() => {
-    const searchCriteria = search.trim().toLowerCase();
-    if (!searchCriteria) return buildings;
-
-    return searchableBuildings
-      .filter(({ normalizedSearchText }) => normalizedSearchText.includes(searchCriteria))
-      .map(({ building }) => building);
-  }, [search, buildings, searchableBuildings]);
-
-  const renderBuildingItem = useCallback(
-    ({ item }: ListRenderItemInfo<BuildingShape>) => (
-      <TouchableOpacity
-        style={indoorBuildingSheetStyles.buildingPill}
-        activeOpacity={0.45}
-        onPress={() => onPressBuilding?.(item)}
+    return (
+      <BottomSheet
+        ref={sheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        backgroundStyle={indoorBuildingSheetStyles.sheetBackground}
+        handleIndicatorStyle={indoorBuildingSheetStyles.handle}
+        enablePanDownToClose={true}
+        enableHandlePanningGesture={true}
+        enableContentPanningGesture={true}
+        enableDynamicSizing={false}
+        onClose={revealAppSearchBar}
       >
-        <View style={searchBuilding.iconWrap}>
-          <Ionicons name="location-outline" size={42} color="#F5F1F2" />
+        <View style={searchBuilding.screen}>
+          <SearchBarCompat
+            placeholder="Change building..."
+            onChangeText={(text: string) => setSearch(text)}
+            value={search}
+            platform="default"
+            containerStyle={indoorBuildingSheetStyles.searchOuter}
+            inputContainerStyle={indoorBuildingSheetStyles.searchInner}
+            inputStyle={indoorBuildingSheetStyles.searchText}
+            placeholderTextColor={'#ffffffc9'}
+            leftIconContainerStyle={{ opacity: 0.9, paddingLeft: 2 }}
+            searchIcon={{ name: 'search', type: 'ionicon', size: 25, color: '#d7c9cf' }}
+          />
+          <BottomSheetFlatList<BuildingShape>
+            data={filtered}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={[indoorBuildingSheetStyles.listContent, { paddingBottom: 250 }]}
+            renderItem={renderBuildingItem}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={true}
+            removeClippedSubviews={true}
+            nestedScrollEnabled
+          />
         </View>
-
-        <View style={searchBuilding.textWrap}>
-          <Text style={searchBuilding.buildingName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text style={searchBuilding.buildingAddress} numberOfLines={1}>
-            {item.address}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    ),
-    [onPressBuilding],
-  );
-const revealAppSearchBar = ()=>{
-  reOpenSearchBar();
-}
-  
-  return (
-    <BottomSheet
-      ref={sheetRef}
-      index={-1}
-      snapPoints={snapPoints}
-      backgroundStyle={indoorBuildingSheetStyles.sheetBackground}
-      handleIndicatorStyle={indoorBuildingSheetStyles.handle}
-      enablePanDownToClose={true}
-      enableHandlePanningGesture={true}
-      enableContentPanningGesture={true}
-      enableDynamicSizing={false}
-      onClose={revealAppSearchBar}
-    >
-      <View style={searchBuilding.screen}>
-        <SearchBarCompat
-          placeholder="Change building..."
-          onChangeText={(text: string) => setSearch(text)}
-          value={search}
-          platform="default"
-          containerStyle={indoorBuildingSheetStyles.searchOuter}
-          inputContainerStyle={indoorBuildingSheetStyles.searchInner}
-          inputStyle={indoorBuildingSheetStyles.searchText}
-          placeholderTextColor={'#ffffffc9'}
-          leftIconContainerStyle={{ opacity: 0.9, paddingLeft: 2 }}
-          searchIcon={{ name: 'search', type: 'ionicon', size: 25, color: '#d7c9cf' }}
-        />
-        <BottomSheetFlatList<BuildingShape>
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={[indoorBuildingSheetStyles.listContent,{paddingBottom:250}]}
-          renderItem={renderBuildingItem}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={true}
-          removeClippedSubviews={true}
-          nestedScrollEnabled
-          
-        />
-      </View>
-    </BottomSheet>
-  );
-});
+      </BottomSheet>
+    );
+  },
+);
 
 export default IndoorBottomSheet;

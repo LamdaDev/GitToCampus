@@ -38,8 +38,8 @@ type MapScreenProps = {
   openBottomSheet: () => void;
   onMapPress?: () => void;
   onOpenCalendar?: () => void;
-  hideAppSearchBar:()=>void;
-  revealSearchBar:()=>void;
+  hideAppSearchBar: () => void;
+  revealSearchBar: () => void;
   externalSelectedBuilding?: BuildingShape | null;
   outdoorRoute?: OutdoorRouteOverlay | null;
   bottomSheetAnimatedPosition?: SharedValue<number>;
@@ -536,7 +536,6 @@ function MapScreen({
   outdoorRoute,
   bottomSheetAnimatedPosition,
   mapHandle,
-  
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);

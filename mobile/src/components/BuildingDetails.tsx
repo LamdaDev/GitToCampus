@@ -194,14 +194,16 @@ export default function BuildingDetails({
         </View>
         <View style={buildingDetailsStyles.headerIcons}>
           {/**Hides the 'enter building' button if no floor plan exists  */}
-          {hasIndoor?
+          {hasIndoor ? (
             <TouchableOpacity
               style={buildingDetailsStyles.iconButton}
               onPress={handleEnterBuildingPress}
             >
               <Ionicons name="enter-outline" size={25} color="#fff" />
-            </TouchableOpacity>:''
-          }
+            </TouchableOpacity>
+          ) : (
+            ''
+          )}
           <TouchableOpacity style={buildingDetailsStyles.iconButton} onPress={onClose}>
             <Ionicons name="close-sharp" size={25} color="#fff" />
           </TouchableOpacity>

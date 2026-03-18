@@ -23,7 +23,7 @@ const IndoorControls = ({
   openAvailableBuildings,
   currentFloor,
   building,
-  isIndoorSheetOpen
+  isIndoorSheetOpen,
 }: Props) => {
   const openBuildingList = () => {
     openAvailableBuildings();
@@ -57,7 +57,7 @@ const IndoorControls = ({
         </TouchableOpacity>
         <TouchableOpacity
           disabled={isIndoorSheetOpen}
-          style={isIndoorSheetOpen? styles.iconButtonDisabled : styles.iconButton}
+          style={isIndoorSheetOpen ? styles.iconButtonDisabled : styles.iconButton}
           onPress={onOpenCalendar}
         >
           <Ionicons name="calendar-outline" size={22} color="#fff" />
