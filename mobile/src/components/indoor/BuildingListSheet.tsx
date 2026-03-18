@@ -111,9 +111,6 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
       ),
       [onPressBuilding],
     );
-    const revealAppSearchBar = () => {
-      reOpenSearchBar();
-    };
 
     return (
       <BottomSheet
@@ -126,7 +123,7 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
         enableHandlePanningGesture={true}
         enableContentPanningGesture={true}
         enableDynamicSizing={false}
-        onClose={revealAppSearchBar}
+        onClose={reOpenSearchBar}
       >
         <View style={searchBuilding.screen}>
           <SearchBarCompat
