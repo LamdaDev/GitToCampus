@@ -241,6 +241,8 @@ type BottomSheetProps = {
   passOutdoorRoute: (route: OutdoorRouteOverlay | null) => void;
   animatedPosition?: SharedValue<number>;
   onEnterBuilding: (building: BuildingShape) => void;
+  isIndoor: boolean;
+  enterIndoorView: () => void;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -391,6 +393,7 @@ const renderBottomSheetContent = ({
   handleDirectionsGo,
   showShuttleSchedule,
   handleRetryRoute,
+  isIndoor,
 }: {
   isSearchActive: boolean;
   calendarSliderMode: 'selection' | 'events' | null;
@@ -437,6 +440,7 @@ const renderBottomSheetContent = ({
   handleDirectionsGo: (mode: RoutePlannerMode) => void;
   showShuttleSchedule: () => void;
   handleRetryRoute: () => void;
+  isIndoor: boolean;
 }) => {
   if (isSearchActive) {
     if (calendarSliderMode === 'events' && !isInternalSearch) {
@@ -467,6 +471,7 @@ const renderBottomSheetContent = ({
         selectedCalendarIds={selectedCalendarIds}
         onCalendarGoPress={handleCalendarGoFromSearch}
         calendarGoErrorMessage={calendarGoErrorMessage}
+        isIndoor={isIndoor}
       />
     );
   }
@@ -603,6 +608,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       passOutdoorRoute,
       animatedPosition,
       onEnterBuilding,
+      isIndoor,
+      enterIndoorView
     },
     ref,
   ) => {
@@ -653,10 +660,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       },
       [passOutdoorRoute],
     );
-
     const handleEnterBuilding = useCallback(
       (building: BuildingShape) => {
         closeSheet();
+
+        enterIndoorView();
         onEnterBuilding(building);
       },
       [onEnterBuilding],
@@ -1212,6 +1220,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             handleDirectionsGo,
             showShuttleSchedule,
             handleRetryRoute,
+            isIndoor,
           })}
         </BottomSheetView>
       </BottomSheet>

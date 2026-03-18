@@ -23,6 +23,7 @@ type SearchBarProps = {
   selectedCalendarIds?: string[];
   onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
   calendarGoErrorMessage?: string | null;
+  isIndoor?: boolean;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
@@ -37,6 +38,7 @@ export default function SearchSheet({
   selectedCalendarIds = [],
   onCalendarGoPress,
   calendarGoErrorMessage = null,
+  isIndoor,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
@@ -314,19 +316,23 @@ export default function SearchSheet({
       {calendarMessage ? <Text style={searchBuilding.authMessage}>{calendarMessage}</Text> : null}
 
       <View style={[searchBuilding.buildingsContainer, { maxHeight: 400 }]}>
-        <BottomSheetFlatList<BuildingShape>
-          data={filtered}
-          keyExtractor={(item: BuildingShape) => item.id}
-          contentContainerStyle={searchBuilding.listContent}
-          showsVerticalScrollIndicator={true}
-          initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
-          maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
-          windowSize={SEARCH_LIST_WINDOW_SIZE}
-          removeClippedSubviews={true}
-          keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
-          renderItem={renderBuildingItem}
-        />
+        {
+          isIndoor?
+          null:<BottomSheetFlatList<BuildingShape>
+            data={filtered}
+            keyExtractor={(item: BuildingShape) => item.id}
+            contentContainerStyle={searchBuilding.listContent}
+            showsVerticalScrollIndicator={true}
+            initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
+            maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
+            windowSize={SEARCH_LIST_WINDOW_SIZE}
+            removeClippedSubviews={true}
+            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
+            renderItem={renderBuildingItem}
+            />
+            
+          }<Text>{String(isIndoor)}</Text>
       </View>
     </View>
   );
