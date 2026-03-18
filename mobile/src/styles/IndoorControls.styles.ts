@@ -88,6 +88,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...SHADOW,
   },
+  iconButtonDisabled:{
+     width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: ACCENT,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOW,
+    opacity:0.5,
+  }
 });
 
 export default styles;

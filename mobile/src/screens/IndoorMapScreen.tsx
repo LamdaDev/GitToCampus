@@ -22,13 +22,13 @@ export default function IndoorMapScreen({
   building,
 }: Readonly<props>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
+const [isIndoorSheetOpen, setIndoorSheetOpen] = useState(false);
 
-  const openAvailableBuildings = () => {
-    bottomSheetRef.current?.open();
-    hideAppSearchBar();
-
-  };
-
+ const openAvailableBuildings = () => {
+  bottomSheetRef.current?.open();
+  hideAppSearchBar();
+  setIndoorSheetOpen(true);
+};
   const indoorFloorPlans = useMemo(() => {
     const code = building?.shortCode;
     if (!code || !(code in floorPlans)) return null;
@@ -41,7 +41,6 @@ export default function IndoorMapScreen({
   }, [indoorFloorPlans]);
 
   const [currentFloor, setCurrentFloor] = useState<string | null>(null);
-
   useEffect(() => {
     if (floorLevels.length > 0) {
       setCurrentFloor(floorLevels[0]);
@@ -74,6 +73,10 @@ export default function IndoorMapScreen({
     indoorFloorPlans && currentFloor !== null
       ? indoorFloorPlans[currentFloor as keyof typeof indoorFloorPlans]
       : null;
+const handleRevealSearchBar = () => {
+  revealSearchBar();
+  setIndoorSheetOpen(false);
+};
 
   return (
     <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'white' }}>
@@ -85,6 +88,7 @@ export default function IndoorMapScreen({
         onFloorDown={handleFloorDown}
         currentFloor={currentFloor}
         openAvailableBuildings={openAvailableBuildings} 
+          isIndoorSheetOpen={isIndoorSheetOpen}
         building={building}
       />
 
@@ -104,7 +108,7 @@ export default function IndoorMapScreen({
       </ReactNativeZoomableView>
 
       <IndoorBottomSheet ref={bottomSheetRef} 
-      reOpenSearchBar={revealSearchBar}/>
+      reOpenSearchBar={handleRevealSearchBar}/>
     </View>
   );
 }

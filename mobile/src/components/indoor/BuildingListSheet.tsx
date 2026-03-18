@@ -7,10 +7,9 @@ import React, {
   useCallback,
 } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import BottomSheet, { BottomSheetView, BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { SearchBar } from 'react-native-elements';
 import { Ionicons } from '@expo/vector-icons';
-import { buildingDetailsStyles } from '../../styles/BuildingDetails.styles';
 import { searchBuilding } from '../../styles/SearchBuilding.styles';
 import { floorPlans } from '../../utils/floorPlans';
 import type { BuildingShape } from '../../types/BuildingShape';

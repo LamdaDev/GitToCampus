@@ -9,9 +9,10 @@ type Props = {
   onOpenCalendar?: () => void;
   onFloorUp: () => void;
   onFloorDown: () => void;
-  openAvailableBuildings:()=>void;
+  openAvailableBuildings: () => void;
   currentFloor: number;
   building: BuildingShape;
+  isIndoorSheetOpen: boolean;
 };
 
 const IndoorControls = ({
@@ -22,7 +23,11 @@ const IndoorControls = ({
   openAvailableBuildings,
   currentFloor,
   building,
+  isIndoorSheetOpen
 }: Props) => {
+  const openBuildingList = () => {
+    openAvailableBuildings();
+  };
   return (
     <View style={styles.overlayRow}>
       {/* Floor selector */}
@@ -38,10 +43,10 @@ const IndoorControls = ({
 
       {/* Building name */}
       <View style={styles.buildingNamePill}>
-        <TouchableOpacity onPress={openAvailableBuildings}>
-        <Text style={styles.buildingNameText}>
-          {building.shortCode}({building.name})
-        </Text>
+        <TouchableOpacity onPress={openBuildingList}>
+          <Text style={styles.buildingNameText}>
+            {building.shortCode}({building.name})
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -50,7 +55,11 @@ const IndoorControls = ({
         <TouchableOpacity style={styles.iconButton} onPress={onExitIndoor}>
           <Ionicons name="map-outline" size={22} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={onOpenCalendar}>
+        <TouchableOpacity
+          disabled={isIndoorSheetOpen}
+          style={isIndoorSheetOpen? styles.iconButtonDisabled : styles.iconButton}
+          onPress={onOpenCalendar}
+        >
           <Ionicons name="calendar-outline" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
