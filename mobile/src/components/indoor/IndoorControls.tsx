@@ -29,7 +29,7 @@ const IndoorControls = ({
     openAvailableBuildings();
   };
   return (
-    <View style={styles.overlayRow}>
+    <View testID="indoor-controls" style={styles.overlayRow}>
       {/* Floor selector */}
       <View style={styles.floorSelector}>
         <TouchableOpacity style={styles.floorArrowButton} onPress={onFloorUp}>
