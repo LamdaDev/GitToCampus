@@ -16,28 +16,28 @@ import VL_2 from '../assets/floor_plans/VL_2.png';
 
 export const floorPlans = {
   CC: {
-    1: CC_1,
+    1: { type: 'svg', data: CC_1 },
   },
 
   H: {
-    1: H_1,
-    2: H_2,
-    8: H_8,
-    9: H_9,
+    1: { type: 'svg', data: H_1 },
+    2: { type: 'svg', data: H_2 },
+    8: { type: 'svg', data: H_8 },
+    9: { type: 'svg', data: H_9 },
   },
 
   MB: {
-    1: MB_1,
-    S2: MB_S2, 
+    S2: { type: 'png', data: MB_S2 },
+    1: { type: 'png', data: MB_1 }
   },
 
   VE: {
-    1: VE_1,
-    2: VE_2,
+    1: { type: 'svg', data: VE_1 },
+    2: { type: 'svg', data: VE_2 },
   },
 
   VL: {
-    1: VL_1,
-    2: VL_2,
+    1: { type: 'png', data: VL_1 },
+    2: { type: 'png', data: VL_2 },
   },
 } as const;
