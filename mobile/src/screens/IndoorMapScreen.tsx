@@ -9,8 +9,8 @@ import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/Bu
 type props = {
   onExitIndoor: () => void;
   onOpenCalendar?: () => void;
-  hideAppSearchBar:()=>void;
-  revealSearchBar:()=>void;
+  hideAppSearchBar: () => void;
+  revealSearchBar: () => void;
   building: BuildingShape;
 };
 
@@ -22,30 +22,48 @@ export default function IndoorMapScreen({
   building,
 }: Readonly<props>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
-const [isIndoorSheetOpen, setIndoorSheetOpen] = useState(false);
 
- const openAvailableBuildings = () => {
-  bottomSheetRef.current?.open();
-  hideAppSearchBar();
-  setIndoorSheetOpen(true);
-};
+  const [isIndoorSheetOpen, setIndoorSheetOpen] = useState(false);
+  const [selectedBuilding, setSelectedBuilding] = useState(building);
+  const [currentFloor, setCurrentFloor] = useState<string | null>(null);
+
+  // OPEN SHEET
+  const openAvailableBuildings = () => {
+    bottomSheetRef.current?.open();
+    hideAppSearchBar();
+    setIndoorSheetOpen(true);
+  };
+
+  // CLOSE SHEET
+  const handleRevealSearchBar = () => {
+    revealSearchBar();
+    setIndoorSheetOpen(false);
+  };
+
+  // WHEN USER SELECTS BUILDING
+  const handleSelectBuilding = (b: BuildingShape) => {
+    setSelectedBuilding(b);
+    bottomSheetRef.current?.close();
+  };
+
+  // FLOOR PLANS BASED ON SELECTED BUILDING
   const indoorFloorPlans = useMemo(() => {
-    const code = building?.shortCode;
+    const code = selectedBuilding?.shortCode;
     if (!code || !(code in floorPlans)) return null;
 
     return floorPlans[code as keyof typeof floorPlans];
-  }, [building?.shortCode]);
+  }, [selectedBuilding?.shortCode]);
 
   const floorLevels = useMemo(() => {
     return indoorFloorPlans ? Object.keys(indoorFloorPlans) : [];
   }, [indoorFloorPlans]);
 
-  const [currentFloor, setCurrentFloor] = useState<string | null>(null);
+  // RESET FLOOR WHEN BUILDING CHANGES
   useEffect(() => {
     if (floorLevels.length > 0) {
       setCurrentFloor(floorLevels[0]);
     }
-  }, [floorLevels]);
+  }, [floorLevels, selectedBuilding]);
 
   const handleFloorUp = useCallback(() => {
     setCurrentFloor((prev) => {
@@ -73,10 +91,6 @@ const [isIndoorSheetOpen, setIndoorSheetOpen] = useState(false);
     indoorFloorPlans && currentFloor !== null
       ? indoorFloorPlans[currentFloor as keyof typeof indoorFloorPlans]
       : null;
-const handleRevealSearchBar = () => {
-  revealSearchBar();
-  setIndoorSheetOpen(false);
-};
 
   return (
     <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'white' }}>
@@ -87,9 +101,9 @@ const handleRevealSearchBar = () => {
         onFloorUp={handleFloorUp}
         onFloorDown={handleFloorDown}
         currentFloor={currentFloor}
-        openAvailableBuildings={openAvailableBuildings} 
-          isIndoorSheetOpen={isIndoorSheetOpen}
-        building={building}
+        openAvailableBuildings={openAvailableBuildings}
+        isIndoorSheetOpen={isIndoorSheetOpen}
+        building={selectedBuilding}
       />
 
       {/* MAP */}
@@ -103,12 +117,20 @@ const handleRevealSearchBar = () => {
         {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
 
         {plan?.type === 'png' && (
-          <Image source={plan.data} style={{ width: 1000, height: 1000 }} resizeMode="contain" />
+          <Image
+            source={plan.data}
+            style={{ width: 1000, height: 1000 }}
+            resizeMode="contain"
+          />
         )}
       </ReactNativeZoomableView>
 
-      <IndoorBottomSheet ref={bottomSheetRef} 
-      reOpenSearchBar={handleRevealSearchBar}/>
+      {/* BOTTOM SHEET */}
+      <IndoorBottomSheet
+        ref={bottomSheetRef}
+        reOpenSearchBar={handleRevealSearchBar}
+        onPressBuilding={handleSelectBuilding}
+      />
     </View>
   );
 }

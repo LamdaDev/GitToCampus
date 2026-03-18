@@ -10,7 +10,7 @@ type Props = {
   onFloorUp: () => void;
   onFloorDown: () => void;
   openAvailableBuildings: () => void;
-  currentFloor: number;
+  currentFloor: number | string | null;
   building: BuildingShape;
   isIndoorSheetOpen: boolean;
 };
@@ -45,7 +45,7 @@ const IndoorControls = ({
       <View style={styles.buildingNamePill}>
         <TouchableOpacity onPress={openBuildingList}>
           <Text style={styles.buildingNameText}>
-            {building.shortCode}({building.name})
+            {building.shortCode} ({building.name})
           </Text>
         </TouchableOpacity>
       </View>
