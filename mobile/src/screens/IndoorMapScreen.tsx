@@ -9,19 +9,24 @@ import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/Bu
 type props = {
   onExitIndoor: () => void;
   onOpenCalendar?: () => void;
+  hideAppSearchBar:()=>void;
+  revealSearchBar:()=>void;
   building: BuildingShape;
 };
 
 export default function IndoorMapScreen({
   onExitIndoor,
   onOpenCalendar,
+  hideAppSearchBar,
+  revealSearchBar,
   building,
 }: Readonly<props>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
 
   const openAvailableBuildings = () => {
     bottomSheetRef.current?.open();
-    console.log('Opening available buildings sheet'); // Debug log
+    hideAppSearchBar();
+
   };
 
   const indoorFloorPlans = useMemo(() => {
@@ -98,7 +103,8 @@ export default function IndoorMapScreen({
         )}
       </ReactNativeZoomableView>
 
-      <IndoorBottomSheet ref={bottomSheetRef} />
+      <IndoorBottomSheet ref={bottomSheetRef} 
+      reOpenSearchBar={revealSearchBar}/>
     </View>
   );
 }

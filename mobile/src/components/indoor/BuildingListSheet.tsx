@@ -21,15 +21,14 @@ export type IndoorBottomSheetRef = {
   open: () => void;
   close: () => void;
 };
-
+type Props = {
+  onPressBuilding?: (b: BuildingShape) => void;
+  reOpenSearchBar?: () => void;
+};
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
 
-const IndoorBottomSheet = forwardRef<
-  IndoorBottomSheetRef,
-  {
-    onPressBuilding?: (b: BuildingShape) => void;
-  }
->(({ onPressBuilding }, ref) => {
+const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
+  ({ onPressBuilding, reOpenSearchBar }, ref) => {
   const sheetRef = useRef<BottomSheet>(null);
   const [search, setSearch] = useState('');
 
@@ -113,7 +112,10 @@ const IndoorBottomSheet = forwardRef<
     ),
     [onPressBuilding],
   );
-
+const revealAppSearchBar = ()=>{
+  reOpenSearchBar();
+}
+  
   return (
     <BottomSheet
       ref={sheetRef}
@@ -125,6 +127,7 @@ const IndoorBottomSheet = forwardRef<
       enableHandlePanningGesture={true}
       enableContentPanningGesture={true}
       enableDynamicSizing={false}
+      onClose={revealAppSearchBar}
     >
       <View style={searchBuilding.screen}>
         <SearchBarCompat

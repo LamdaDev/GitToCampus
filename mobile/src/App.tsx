@@ -104,7 +104,12 @@ const App = () => {
     mapRef.current?.showIndoor(building);
   }, []);
 
+  const hideSearchBar = useCallback(() => {
+  setSheetOpen(true);
+}, []);
+
   if (!fontsLoaded) return null;
+
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -120,6 +125,8 @@ const App = () => {
           outdoorRoute={outdoorRoute}
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
           mapHandle={mapRef}
+          hideAppSearchBar={hideSearchBar}
+          revealSearchBar={toggleSearchBarState}
         />
 
         {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}

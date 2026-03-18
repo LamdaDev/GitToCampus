@@ -38,6 +38,8 @@ type MapScreenProps = {
   openBottomSheet: () => void;
   onMapPress?: () => void;
   onOpenCalendar?: () => void;
+  hideAppSearchBar:()=>void;
+  revealSearchBar:()=>void;
   externalSelectedBuilding?: BuildingShape | null;
   outdoorRoute?: OutdoorRouteOverlay | null;
   bottomSheetAnimatedPosition?: SharedValue<number>;
@@ -528,10 +530,13 @@ function MapScreen({
   openBottomSheet,
   onMapPress,
   onOpenCalendar,
+  hideAppSearchBar,
+  revealSearchBar,
   externalSelectedBuilding,
   outdoorRoute,
   bottomSheetAnimatedPosition,
   mapHandle,
+  
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -762,6 +767,8 @@ function MapScreen({
           onExitIndoor={() => setIndoorBuilding(null)}
           onOpenCalendar={onOpenCalendar}
           building={indoorBuilding}
+          hideAppSearchBar={hideAppSearchBar}
+          revealSearchBar={revealSearchBar}
         />
       ) : (
         <MapControls
