@@ -16,26 +16,22 @@ import VL_2 from '../assets/floor_plans/VL_2.png';
 
 export const floorPlans = {
   CC: {
-    1: { type: 'svg', data: CC_1 },
+    1: { type: 'svg', data: CC_1, viewBox: { width: 4096, height: 1024 } },
   },
-
   H: {
-    1: { type: 'svg', data: H_1 },
-    2: { type: 'svg', data: H_2 },
-    8: { type: 'svg', data: H_8 },
-    9: { type: 'svg', data: H_9 },
+    1: { type: 'svg', data: H_1, viewBox: { width: 1024, height: 1024 } },
+    2: { type: 'svg', data: H_2, viewBox: { width: 1024, height: 1024 } },
+    8: { type: 'svg', data: H_8, viewBox: { width: 1024, height: 1024 } },
+    9: { type: 'svg', data: H_9, viewBox: { width: 1024, height: 1024 } },
   },
-
   MB: {
     S2: { type: 'png', data: MB_S2 },
     1: { type: 'png', data: MB_1 },
   },
-
   VE: {
-    1: { type: 'svg', data: VE_1 },
-    2: { type: 'svg', data: VE_2 },
+    1: { type: 'svg', data: VE_1, viewBox: { width: 1024, height: 1024 } },
+    2: { type: 'svg', data: VE_2, viewBox: { width: 1024, height: 1024 } },
   },
-
   VL: {
     1: { type: 'png', data: VL_1 },
     2: { type: 'png', data: VL_2 },

@@ -13,6 +13,9 @@ type Props = {
   currentFloor: number | string | null;
   building: BuildingShape;
   isIndoorSheetOpen: boolean;
+  onPrevPathFloor?: () => void;
+  onNextPathFloor?: () => void;
+  hasPath?: boolean;
 };
 
 const IndoorControls = ({
@@ -23,7 +26,10 @@ const IndoorControls = ({
   openAvailableBuildings,
   currentFloor,
   building,
-  isIndoorSheetOpen,
+  isIndoorSheetOpen, 
+  onPrevPathFloor,
+  onNextPathFloor,
+  hasPath,
 }: Props) => {
   const openBuildingList = () => {
     openAvailableBuildings();
