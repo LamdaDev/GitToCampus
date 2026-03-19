@@ -107,9 +107,13 @@ const App = () => {
   const hideSearchBar = useCallback(() => {
     setSheetOpen(true);
   }, []);
+  const [isIndoor, setIsIndoor] = useState(false);
 
+  const toggleIndoorView = () => {
+    setSheetOpen(false);
+    setIsIndoor(true);
+  };
   if (!fontsLoaded) return null;
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
@@ -126,6 +130,7 @@ const App = () => {
           mapHandle={mapRef}
           hideAppSearchBar={hideSearchBar}
           revealSearchBar={toggleSearchBarState}
+          exitIndoorView={() => setIsIndoor(false)}
         />
 
         {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -143,6 +148,8 @@ const App = () => {
           passOutdoorRoute={setOutdoorRoute}
           animatedPosition={bottomSheetAnimatedPosition}
           onEnterBuilding={handleShowIndoor}
+          isIndoor={isIndoor}
+          enterIndoorView={toggleIndoorView}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

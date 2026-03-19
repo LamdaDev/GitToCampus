@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BuildingShape } from '../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
+import { roomListStyles as inDoorList } from '../styles/RoomList.Styles';
 import {
   clearGoogleCalendarSession,
   connectGoogleCalendarAsync,
@@ -15,6 +16,8 @@ import {
   type GoogleCalendarEventItem,
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
+import type { RoomNode } from './indoor/RoomList';
+import RoomList from './indoor/RoomList';
 
 type SearchBarProps = {
   buildings: BuildingShape[];
@@ -23,6 +26,8 @@ type SearchBarProps = {
   selectedCalendarIds?: string[];
   onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
   calendarGoErrorMessage?: string | null;
+  isIndoor?: boolean;
+  onSelectRoom?: (room: RoomNode) => void;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
@@ -37,6 +42,8 @@ export default function SearchSheet({
   selectedCalendarIds = [],
   onCalendarGoPress,
   calendarGoErrorMessage = null,
+  isIndoor,
+  onSelectRoom,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
@@ -313,20 +320,29 @@ export default function SearchSheet({
       </TouchableOpacity>
       {calendarMessage ? <Text style={searchBuilding.authMessage}>{calendarMessage}</Text> : null}
 
-      <View style={[searchBuilding.buildingsContainer, { maxHeight: 400 }]}>
-        <BottomSheetFlatList<BuildingShape>
-          data={filtered}
-          keyExtractor={(item: BuildingShape) => item.id}
-          contentContainerStyle={searchBuilding.listContent}
-          showsVerticalScrollIndicator={true}
-          initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
-          maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
-          windowSize={SEARCH_LIST_WINDOW_SIZE}
-          removeClippedSubviews={true}
-          keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
-          renderItem={renderBuildingItem}
-        />
+      <View
+        style={[
+          isIndoor ? inDoorList.indoorContainer : searchBuilding.buildingsContainer,
+          { maxHeight: 400 },
+        ]}
+      >
+        {isIndoor ? (
+          <RoomList search={search} onSelectRoom={onSelectRoom} />
+        ) : (
+          <BottomSheetFlatList<BuildingShape>
+            data={filtered}
+            keyExtractor={(item: BuildingShape) => item.id}
+            contentContainerStyle={searchBuilding.listContent}
+            showsVerticalScrollIndicator={true}
+            initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
+            maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
+            windowSize={SEARCH_LIST_WINDOW_SIZE}
+            removeClippedSubviews={true}
+            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
+            renderItem={renderBuildingItem}
+          />
+        )}
       </View>
     </View>
   );

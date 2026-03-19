@@ -109,15 +109,19 @@ export default function IndoorMapScreen({
       {/* MAP */}
       <ReactNativeZoomableView
         maxZoom={10}
-        minZoom={0.3}
+        minZoom={1}
         zoomStep={0.5}
         initialZoom={1}
-        bindToBorders={false}
+        bindToBorders={true}
       >
         {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
 
         {plan?.type === 'png' && (
-          <Image source={plan.data} style={{ width: 1000, height: 1000 }} resizeMode="contain" />
+          <Image
+            source={plan.data}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="contain"
+          />
         )}
       </ReactNativeZoomableView>
 

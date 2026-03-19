@@ -42,19 +42,19 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
       const buildingMeta = {
         CC: {
           name: 'CC Building',
-          address: '1455 De Maisonneuve Blvd W.',
+          address: '7141 Sherbrooke West',
         },
         H: {
           name: 'H Building',
-          address: '1455 De Maisonneuve Blvd W.',
+          address: '1450 De Maisonneuve Blvd W.',
         },
         MB: {
           name: 'MB Building',
-          address: '1450 Guy St.',
+          address: '1450 Guy Street',
         },
         VE: {
           name: 'VE Building',
-          address: '1515 Ste-Catherine St W.',
+          address: '7141 Sherbrooke West',
         },
         VL: {
           name: 'Vanier Library',
@@ -74,7 +74,7 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
       () =>
         buildings.map((building) => ({
           building,
-          normalizedSearchText: `${building.name} ${building.address ?? ''}`.toLowerCase(),
+          normalizedSearchText: `${building.name}`.toLowerCase(),
         })),
       [buildings],
     );
