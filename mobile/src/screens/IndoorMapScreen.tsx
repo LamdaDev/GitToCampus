@@ -5,7 +5,6 @@ import { BuildingShape } from '../types/BuildingShape';
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 import { floorPlans } from '../utils/floorPlans';
 import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/BuildingListSheet';
-import IndoorDirectionDetails from '../components/indoor/IndoorDirectionDetails';
 
 type props = {
   onExitIndoor: () => void;
@@ -27,7 +26,6 @@ export default function IndoorMapScreen({
   const [isIndoorSheetOpen, setIndoorSheetOpen] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState(building);
   const [currentFloor, setCurrentFloor] = useState<string | null>(null);
-  const [showDirectionDetails, setShowDirectionDetails] = useState(false);
 
   // OPEN SHEET
   const openAvailableBuildings = () => {

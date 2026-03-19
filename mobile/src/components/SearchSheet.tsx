@@ -16,6 +16,7 @@ import {
   type GoogleCalendarEventItem,
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
+import type { RoomNode } from './indoor/RoomList';
 import RoomList from './indoor/RoomList';
 
 type SearchBarProps = {
@@ -26,6 +27,7 @@ type SearchBarProps = {
   onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
   calendarGoErrorMessage?: string | null;
   isIndoor?: boolean;
+  onSelectRoom?: (room: RoomNode) => void;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
@@ -41,6 +43,7 @@ export default function SearchSheet({
   onCalendarGoPress,
   calendarGoErrorMessage = null,
   isIndoor,
+  onSelectRoom,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
@@ -324,7 +327,7 @@ export default function SearchSheet({
         ]}
       >
         {isIndoor ? (
-          <RoomList search={search} />
+          <RoomList search={search} onSelectRoom={onSelectRoom}/>
         ) : (
           <BottomSheetFlatList<BuildingShape>
             data={filtered}

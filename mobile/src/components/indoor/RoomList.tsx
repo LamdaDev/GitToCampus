@@ -34,7 +34,7 @@ const buildingMeta: Record<BuildingKey, { name: string; address: string }> = {
   },
 };
 
-type RoomNode = {
+export type RoomNode = {
   id: string;
   label: string;
   buildingId: string;
@@ -42,8 +42,8 @@ type RoomNode = {
 };
 
 type Props = {
-  onSelectRoom?: (room: RoomNode) => void;
   search?: string;
+  onSelectRoom?: (room: RoomNode) => void;
 };
 
 const buildingGraphs: Record<string, any> = {
