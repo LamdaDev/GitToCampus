@@ -750,7 +750,7 @@ function MapScreen({
   };
   return (
     <View style={styles.container}>
-      <MapView {...mapProps}>
+      <MapView {...mapProps} toolbarEnabled={false} moveOnMarkerPress={false}>
         {renderedPolygons}
         {selectedMarker}
         {showRoute && (

@@ -108,6 +108,11 @@ const App = () => {
     setSheetOpen(true);
   }, []);
   const [isIndoor, setIsIndoor] = useState(false);
+
+  const toggleIndoorView = ()=>{
+    setSheetOpen(false);
+    setIsIndoor(true);
+  }
   if (!fontsLoaded) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -144,7 +149,8 @@ const App = () => {
           animatedPosition={bottomSheetAnimatedPosition}
           onEnterBuilding={handleShowIndoor}
           isIndoor={isIndoor}
-          enterIndoorView={() => setIsIndoor(true)}
+          enterIndoorView={toggleIndoorView}
+          
         />
       </SafeAreaView>
     </GestureHandlerRootView>
