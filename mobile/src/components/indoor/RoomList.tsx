@@ -10,6 +10,29 @@ import cc from '../../assets/floor_plans_json/cc1.json';
 import mb from '../../assets/floor_plans_json/mb_floors_combined.json';
 
 import { roomListStyles as styles } from '../../styles/RoomList.Styles';
+type BuildingKey = 'CC' | 'H' | 'MB' | 'VE' | 'VL';
+const buildingMeta: Record<BuildingKey, { name: string; address: string }> = {
+  CC: {
+    name: 'CC Building',
+    address: '7141 Sherbrooke West',
+  },
+  Hall: {
+    name: 'H Building',
+    address: '1450 De Maisonneuve Blvd W.',
+  },
+  MB: {
+    name: 'MB Building',
+    address: '1450 Guy Street',
+  },
+  VE: {
+    name: 'VE Building',
+    address: '7141 Sherbrooke West',
+  },
+  VL: {
+    name: 'Vanier Library',
+    address: '7141 Sherbrooke St W.',
+  },
+};
 
 type RoomNode = {
   id: string;
@@ -156,7 +179,16 @@ const RoomList = ({ onSelectRoom, search = '' }: Props) => {
               color="white"
               style={styles.icon}
             />
-            <Text style={styles.buildingTitle}>{buildingId} Building</Text>
+            <Ionicons name="location-outline" size={34} color="#F5F1F2" />
+            <View>
+              <Text style={styles.buildingTitle}>
+                {buildingMeta[buildingId as BuildingKey]?.name ?? `${buildingId} Building`}
+              </Text>
+
+              <Text style={styles.buildingAddress}>
+                {buildingMeta[buildingId as BuildingKey]?.address ?? ''}
+              </Text>
+            </View>
           </TouchableOpacity>
 
           {isOpen && floors && (

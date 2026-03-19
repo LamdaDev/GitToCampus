@@ -1,5 +1,4 @@
 import { StyleSheet } from 'react-native';
-
 export const roomListStyles = StyleSheet.create({
   container: {
     padding: 16,
@@ -25,9 +24,15 @@ export const roomListStyles = StyleSheet.create({
   icon: {
     marginRight: 8,
   },
-
+  buildingAddress: {
+    fontSize: 12,
+    color: '#ffffffb0',
+    marginTop: 2,
+  },
   contentContainer: {
+    width:'65%',
     marginTop: 8,
+    marginLeft:42,
     padding: 12,
     borderRadius: 24,
     backgroundColor: '#812236',
@@ -48,6 +53,7 @@ export const roomListStyles = StyleSheet.create({
 
   roomText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 18,
+    fontFamily:'ga'
   },
 });

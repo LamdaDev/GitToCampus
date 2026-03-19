@@ -1077,6 +1077,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       const loadRoute = async () => {
         setIsRouteLoading(true);
         setRouteErrorMessage(null);
+        
         try {
           const route = await fetchOutdoorDirections({
             origin: routeLoadDecision.origin,
