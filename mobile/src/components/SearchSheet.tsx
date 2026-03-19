@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { BuildingShape } from '../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
+import { roomListStyles as inDoorList } from '../styles/RoomList.Styles';
 import {
   clearGoogleCalendarSession,
   connectGoogleCalendarAsync,
@@ -15,6 +16,7 @@ import {
   type GoogleCalendarEventItem,
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
+import RoomList from './indoor/RoomList';
 
 type SearchBarProps = {
   buildings: BuildingShape[];
@@ -315,10 +317,16 @@ export default function SearchSheet({
       </TouchableOpacity>
       {calendarMessage ? <Text style={searchBuilding.authMessage}>{calendarMessage}</Text> : null}
 
-      <View style={[searchBuilding.buildingsContainer, { maxHeight: 400 }]}>
-        {
-          isIndoor?
-          null:<BottomSheetFlatList<BuildingShape>
+      <View
+        style={[
+          isIndoor ? inDoorList.indoorContainer : searchBuilding.buildingsContainer,
+          { maxHeight: 400 },
+        ]}
+      >
+        {isIndoor ? (
+          <RoomList search={search} />
+        ) : (
+          <BottomSheetFlatList<BuildingShape>
             data={filtered}
             keyExtractor={(item: BuildingShape) => item.id}
             contentContainerStyle={searchBuilding.listContent}
@@ -330,9 +338,8 @@ export default function SearchSheet({
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
             renderItem={renderBuildingItem}
-            />
-            
-          }<Text>{String(isIndoor)}</Text>
+          />
+        )}
       </View>
     </View>
   );
