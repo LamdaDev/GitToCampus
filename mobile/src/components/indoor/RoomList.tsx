@@ -11,7 +11,7 @@ import mb from '../../assets/floor_plans_json/mb_floors_combined.json';
 
 import { roomListStyles as styles } from '../../styles/RoomList.Styles';
 
-type RoomNode = {
+export type RoomNode = {
   id: string;
   label: string;
   buildingId: string;
@@ -19,8 +19,8 @@ type RoomNode = {
 };
 
 type Props = {
-  onSelectRoom?: (room: RoomNode) => void;
   search?: string;
+  onSelectRoom?: (room: RoomNode) => void;
 };
 
 const buildingGraphs: Record<string, any> = {

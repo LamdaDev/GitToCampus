@@ -46,6 +46,8 @@ import {
 import SearchSheet from './SearchSheet';
 import CalendarSelectionSlider from './CalendarSelectionSlider';
 import UpcomingClassesSlider from './UpcomingClassesSlider';
+import type { RoomNode } from '../components/indoor/RoomList';
+import IndoorDirectionDetails from './indoor/IndoorDirectionDetails';
 
 const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
@@ -243,6 +245,12 @@ type BottomSheetProps = {
   onEnterBuilding: (building: BuildingShape) => void;
   isIndoor: boolean;
   enterIndoorView: () => void;
+  onSelectRoom: (room: RoomNode) => void;
+  startRoom: string | null;
+  destinationRoom: string | null;
+  setStartRoom: React.Dispatch<React.SetStateAction<string | null>>;
+  setDestinationRoom: React.Dispatch<React.SetStateAction<string | null>>;
+  setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -394,6 +402,9 @@ const renderBottomSheetContent = ({
   showShuttleSchedule,
   handleRetryRoute,
   isIndoor,
+  onSelectRoom,
+  startRoom,
+  destinationRoom,
 }: {
   isSearchActive: boolean;
   calendarSliderMode: 'selection' | 'events' | null;
@@ -441,7 +452,11 @@ const renderBottomSheetContent = ({
   showShuttleSchedule: () => void;
   handleRetryRoute: () => void;
   isIndoor: boolean;
+  onSelectRoom: (room: RoomNode) => void;
+  startRoom: string | null;
+  destinationRoom: string | null;
 }) => {
+
   if (isSearchActive) {
     if (calendarSliderMode === 'events' && !isInternalSearch) {
       return (
@@ -472,6 +487,7 @@ const renderBottomSheetContent = ({
         onCalendarGoPress={handleCalendarGoFromSearch}
         calendarGoErrorMessage={calendarGoErrorMessage}
         isIndoor={isIndoor}
+        onSelectRoom={onSelectRoom}
       />
     );
   }
@@ -568,6 +584,16 @@ const renderBottomSheetContent = ({
     );
   }
 
+  if (activeView === 'indoor-directions') {
+    return (
+      <IndoorDirectionDetails
+        startRoom={"Set Starting Point"}
+        destinationRoom={destinationRoom}
+        onClose={closeSheet}
+      />
+    );
+  }
+
   return (
     <DirectionDetails
       onClose={closeSheet}
@@ -644,6 +670,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const isCrossCampusRoute = Boolean(
       startCampus && destinationCampus && startCampus !== destinationCampus,
     );
+
+    const [startRoom, setStartRoom] = useState<string | null>(null);
+    const [destinationRoom, setDestinationRoom] = useState<string | null>(null);
 
     const resetRouteState = useCallback(
       (errorMessage: string | null = null) => {
@@ -730,7 +759,19 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [calendarGoErrorMessage, setCalendarGoErrorMessage] = useState<string | null>(null);
     const isInternalSearch = searchFor !== null;
     const isGlobalSearch = mode === 'search';
-    const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
+    const isSearchActive = (isInternalSearch || isGlobalSearch || calendarSliderMode !== null) && activeView !== 'indoor-directions';
+
+    const handleSelectRoom = useCallback((room: RoomNode) => {
+      if (!startRoom) {
+        setStartRoom(room.label);
+      } else {
+        setDestinationRoom(room.label);
+        setSearchFor(null);
+        onExitSearch();
+        setCalendarSliderMode(null);
+        setActiveView('indoor-directions');
+      }
+    }, [startRoom]);
 
     const openCalendarSelectionSlider = useCallback(
       (resetSelection: boolean = false) => {
@@ -1221,6 +1262,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             showShuttleSchedule,
             handleRetryRoute,
             isIndoor,
+            onSelectRoom: handleSelectRoom,
+            startRoom,
+            destinationRoom,
           })}
         </BottomSheetView>
       </BottomSheet>
