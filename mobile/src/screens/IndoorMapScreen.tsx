@@ -315,10 +315,10 @@ export default function IndoorMapScreen({
       {/* MAP */}
       <ReactNativeZoomableView
         maxZoom={10}
-        minZoom={0.3}
+        minZoom={1}
         zoomStep={0.5}
-        initialZoom={0.3}
-        bindToBorders={false}
+        initialZoom={1}
+        bindToBorders={true}
       >
         <View style={{ width: 1000, height: 1000 }}>
           {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}

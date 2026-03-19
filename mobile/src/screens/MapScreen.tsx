@@ -44,6 +44,7 @@ type MapScreenProps = {
   outdoorRoute?: OutdoorRouteOverlay | null;
   bottomSheetAnimatedPosition?: SharedValue<number>;
   mapHandle?: React.RefObject<MapScreenHandle | null>;
+  exitIndoorView: () => void;
 };
 
 export type MapScreenHandle = {
@@ -541,6 +542,7 @@ function MapScreen({
   outdoorRoute,
   bottomSheetAnimatedPosition,
   mapHandle,
+  exitIndoorView,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -742,9 +744,13 @@ function MapScreen({
     hideIndoor: () => setIndoorBuilding(null),
   }));
 
+  const resetIndoorBuilding = () => {
+    setIndoorBuilding(null);
+    exitIndoorView();
+  };
   return (
     <View style={styles.container}>
-      <MapView {...mapProps}>
+      <MapView {...mapProps} toolbarEnabled={false} moveOnMarkerPress={false}>
         {renderedPolygons}
         {selectedMarker}
         {showRoute && (
@@ -768,7 +774,7 @@ function MapScreen({
 
       {indoorBuilding ? (
         <IndoorMapScreen
-          onExitIndoor={() => setIndoorBuilding(null)}
+          onExitIndoor={() => resetIndoorBuilding()}
           onOpenCalendar={onOpenCalendar}
           building={indoorBuilding}
           hideAppSearchBar={hideAppSearchBar}

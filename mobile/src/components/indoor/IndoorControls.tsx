@@ -38,18 +38,20 @@ const IndoorControls = ({
     <View testID="indoor-controls" style={styles.overlayRow}>
       {/* Floor selector */}
       <View style={styles.floorSelector}>
-        <TouchableOpacity style={styles.floorArrowButton} onPress={onFloorUp}>
+        <TouchableOpacity testID="floor-up" style={styles.floorArrowButton} onPress={onFloorUp}>
           <MaterialIcons name="keyboard-arrow-up" size={22} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.floorNumber}>{currentFloor}</Text>
-        <TouchableOpacity style={styles.floorArrowButton} onPress={onFloorDown}>
+
+        <TouchableOpacity testID="floor-down" style={styles.floorArrowButton} onPress={onFloorDown}>
           <MaterialIcons name="keyboard-arrow-down" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
 
       {/* Building name */}
       <View style={styles.buildingNamePill}>
-        <TouchableOpacity onPress={openBuildingList}>
+        <TouchableOpacity testID="building-button" onPress={openBuildingList}>
           <Text style={styles.buildingNameText}>
             {building.shortCode} ({building.name})
           </Text>
@@ -58,10 +60,12 @@ const IndoorControls = ({
 
       {/* Icon buttons */}
       <View style={styles.iconButtonGroup}>
-        <TouchableOpacity style={styles.iconButton} onPress={onExitIndoor}>
+        <TouchableOpacity testID="exit-button" style={styles.iconButton} onPress={onExitIndoor}>
           <Ionicons name="map-outline" size={22} color="#fff" />
         </TouchableOpacity>
+
         <TouchableOpacity
+          testID="calendar-button"
           disabled={isIndoorSheetOpen}
           style={isIndoorSheetOpen ? styles.iconButtonDisabled : styles.iconButton}
           onPress={onOpenCalendar}
