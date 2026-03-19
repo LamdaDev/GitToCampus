@@ -30,9 +30,9 @@ export const roomListStyles = StyleSheet.create({
     marginTop: 2,
   },
   contentContainer: {
-    width:'65%',
+    width: '65%',
     marginTop: 8,
-    marginLeft:42,
+    marginLeft: 42,
     padding: 12,
     borderRadius: 24,
     backgroundColor: '#812236',
@@ -54,6 +54,6 @@ export const roomListStyles = StyleSheet.create({
   roomText: {
     color: 'white',
     fontSize: 18,
-    fontFamily:'ga'
+    fontFamily: 'ga',
   },
 });

@@ -456,7 +456,6 @@ const renderBottomSheetContent = ({
   startRoom: string | null;
   destinationRoom: string | null;
 }) => {
-
   if (isSearchActive) {
     if (calendarSliderMode === 'events' && !isInternalSearch) {
       return (
@@ -587,7 +586,7 @@ const renderBottomSheetContent = ({
   if (activeView === 'indoor-directions') {
     return (
       <IndoorDirectionDetails
-        startRoom={"Set Starting Point"}
+        startRoom={'Set Starting Point'}
         destinationRoom={destinationRoom}
         onClose={closeSheet}
       />
@@ -759,19 +758,24 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [calendarGoErrorMessage, setCalendarGoErrorMessage] = useState<string | null>(null);
     const isInternalSearch = searchFor !== null;
     const isGlobalSearch = mode === 'search';
-    const isSearchActive = (isInternalSearch || isGlobalSearch || calendarSliderMode !== null) && activeView !== 'indoor-directions';
+    const isSearchActive =
+      (isInternalSearch || isGlobalSearch || calendarSliderMode !== null) &&
+      activeView !== 'indoor-directions';
 
-    const handleSelectRoom = useCallback((room: RoomNode) => {
-      if (!startRoom) {
-        setStartRoom(room.label);
-      } else {
-        setDestinationRoom(room.label);
-        setSearchFor(null);
-        onExitSearch();
-        setCalendarSliderMode(null);
-        setActiveView('indoor-directions');
-      }
-    }, [startRoom]);
+    const handleSelectRoom = useCallback(
+      (room: RoomNode) => {
+        if (!startRoom) {
+          setStartRoom(room.label);
+        } else {
+          setDestinationRoom(room.label);
+          setSearchFor(null);
+          onExitSearch();
+          setCalendarSliderMode(null);
+          setActiveView('indoor-directions');
+        }
+      },
+      [startRoom],
+    );
 
     const openCalendarSelectionSlider = useCallback(
       (resetSelection: boolean = false) => {
@@ -1118,7 +1122,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       const loadRoute = async () => {
         setIsRouteLoading(true);
         setRouteErrorMessage(null);
-        
+
         try {
           const route = await fetchOutdoorDirections({
             origin: routeLoadDecision.origin,

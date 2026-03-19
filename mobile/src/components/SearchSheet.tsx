@@ -327,7 +327,7 @@ export default function SearchSheet({
         ]}
       >
         {isIndoor ? (
-          <RoomList search={search} onSelectRoom={onSelectRoom}/>
+          <RoomList search={search} onSelectRoom={onSelectRoom} />
         ) : (
           <BottomSheetFlatList<BuildingShape>
             data={filtered}
