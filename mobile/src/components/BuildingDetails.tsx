@@ -9,13 +9,14 @@ import { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import type { ListRenderItemInfo } from 'react-native';
-
+import { floorPlans } from '../utils/floorPlans';
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
   onClose: () => void;
   onShowDirections: (building: BuildingShape, asDestination?: boolean) => void;
   currentBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
+  onEnterBuilding: (building: BuildingShape) => void;
 };
 
 type BuildingService = {
@@ -66,6 +67,7 @@ export default function BuildingDetails({
   selectedBuilding,
   onClose,
   onShowDirections,
+  onEnterBuilding,
   currentBuilding: _currentBuilding,
   userLocation: _userLocation,
 }: Readonly<BuildingDetailProps>) {
@@ -77,7 +79,11 @@ export default function BuildingDetails({
     () => toBuildingImages(selectedBuilding?.images),
     [selectedBuilding?.images],
   );
-
+  const handleEnterBuildingPress = () => {
+    if (selectedBuilding) {
+      onEnterBuilding(selectedBuilding);
+    }
+  };
   const handleDirectionsToPress = () => {
     if (selectedBuilding) {
       onShowDirections(selectedBuilding, true);
@@ -101,6 +107,8 @@ export default function BuildingDetails({
   /**
    * hotspotsSection & servicesSection loads any information if present, else it will render nothing
    */
+  const hasIndoor = selectedBuilding?.shortCode ? selectedBuilding.shortCode in floorPlans : false;
+
   const navigationSection = (
     <View style={buildingDetailsStyles.navigationSection}>
       <TouchableOpacity
@@ -110,6 +118,7 @@ export default function BuildingDetails({
         <Feather name="corner-down-right" size={20} color="#fff" />
         <Text style={buildingDetailsStyles.navigationButtonText}>Directions To</Text>
       </TouchableOpacity>
+
       <TouchableOpacity
         style={buildingDetailsStyles.navigationButton}
         onPress={handleStartFromPress}
@@ -184,9 +193,17 @@ export default function BuildingDetails({
           <Text style={buildingDetailsStyles.subtitle}>{selectedBuilding?.address}</Text>
         </View>
         <View style={buildingDetailsStyles.headerIcons}>
-          <TouchableOpacity style={buildingDetailsStyles.iconButton}>
-            <Ionicons name="enter-outline" size={25} color="#fff" />
-          </TouchableOpacity>
+          {/**Hides the 'enter building' button if no floor plan exists  */}
+          {hasIndoor ? (
+            <TouchableOpacity
+              style={buildingDetailsStyles.iconButton}
+              onPress={handleEnterBuildingPress}
+            >
+              <Ionicons name="enter-outline" size={25} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            ''
+          )}
           <TouchableOpacity style={buildingDetailsStyles.iconButton} onPress={onClose}>
             <Ionicons name="close-sharp" size={25} color="#fff" />
           </TouchableOpacity>

@@ -19,6 +19,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@gorhom/bottom-sheet": "^5.2.8",
     "@microsoft/react-native-clarity": "^4.5.3",
+    "@openspacelabs/react-native-zoomable-view": "^2.4.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@turf/turf": "^7.3.4",
     "expo": "~54.0.33",
@@ -43,6 +44,8 @@
     "react-native-paper": "^5.14.5",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
+    "react-native-svg": "15.12.1",
+    "react-native-svg-transformer": "^1.5.3",
     "react-native-web": "^0.21.0",
     "react-native-worklets": "0.5.1"
   },
