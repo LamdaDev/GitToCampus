@@ -10,119 +10,73 @@ type DirectionDetailProps = {
   onClose: () => void;
   startRoom: string | null;
   destinationRoom: string | null;
-  isRouteLoading?: boolean;
-  routeErrorMessage?: string | null;
-  routeDistanceText?: string | null;
-  routeAdditionalText?: string | null;
   onPressStart?: () => void;
   onPressDestination?: () => void;
   onTravelModeChange?: (mode: IndoorRoutePlannerMode) => void;
   selectedTravelMode?: IndoorRoutePlannerMode;
-  canStartNavigation?: boolean;
-  onPressTransitGo?: () => void;
-  onPressGo?: (mode: IndoorRoutePlannerMode) => void;
 };
 
-const getStartDisplayText = (startRoom: string | null): string => {
-  if (startRoom != null) return startRoom;
-  else return 'Set as starting point';
-};
+const getDisplayText = (value: string | null, fallback: string) => value ?? fallback;
 
-const renderRouteMetaBody = ({
-  isRouteLoading,
-  routeErrorMessage,
-  hasRouteSummary,
-  routeDurationText,
-  routeDistanceText,
-  routeEtaText,
-  showGoButton,
-  canPressGo,
-  handlePressGo,
-  onRetryRoute,
+/* ---------- Location Row (UNCHANGED STRUCTURE) ---------- */
+const LocationRow = ({
+  icon,
+  text,
+  testID,
+  onPress,
 }: {
-  isRouteLoading: boolean;
-  routeErrorMessage: string | null;
-  hasRouteSummary: boolean;
-  routeDurationText: string | null;
-  routeDistanceText: string | null;
-  routeEtaText: string | null;
-  showGoButton: boolean;
-  canPressGo: boolean;
-  handlePressGo: () => void;
-  onRetryRoute?: () => void;
-}) => {
-  if (isRouteLoading) {
-    return (
-      <Text testID="route-loading-text" style={directionDetailsStyles.routeMetaText}>
-        Loading route...
-      </Text>
-    );
-  }
-
-  if (routeErrorMessage) {
-    return (
-      <View>
-        <Text testID="route-error-text" style={directionDetailsStyles.routeErrorText}>
-          {routeErrorMessage}
+  icon: string;
+  text: string;
+  testID: string;
+  onPress?: () => void;
+}) => (
+  <View style={directionDetailsStyles.header}>
+    <View style={directionDetailsStyles.inlineHeader}>
+      <Ionicons name={icon as any} size={20} style={directionDetailsStyles.frontIcon} />
+      <TouchableOpacity
+        testID={testID}
+        style={directionDetailsStyles.locationButton}
+        onPress={onPress}
+      >
+        <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
+          {text}
         </Text>
-        <TouchableOpacity
-          testID="route-retry-button"
-          style={directionDetailsStyles.routeRetryButton}
-          onPress={onRetryRoute}
-        >
-          <Text style={directionDetailsStyles.routeRetryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+      </TouchableOpacity>
+    </View>
+    <View style={directionDetailsStyles.subLocationHeader}>
+      <Ionicons name="menu-outline" size={20} style={directionDetailsStyles.dragIcon} />
+    </View>
+  </View>
+);
 
-  if (!hasRouteSummary) {
-    return (
-      <Text testID="route-empty-text" style={directionDetailsStyles.routeMetaText}>
-        Select start and destination to view route details.
-      </Text>
-    );
-  }
-
-  const routeSecondaryText = routeEtaText
-    ? `${routeEtaText} ETA - ${routeDistanceText}`
-    : routeDistanceText;
+/* ---------- Transport Button ---------- */
+const TransportButton = ({
+  mode,
+  activeMode,
+  icon,
+  onPress,
+  testID,
+}: {
+  mode: IndoorRoutePlannerMode;
+  activeMode: IndoorRoutePlannerMode;
+  icon: React.ReactNode;
+  onPress: () => void;
+  testID: string;
+}) => {
+  const isActive = activeMode === mode;
 
   return (
-    <View style={directionDetailsStyles.routeSummaryRow}>
-      <View style={directionDetailsStyles.routeSummaryTextWrap}>
-        <Text
-          testID="route-summary-text"
-          numberOfLines={1}
-          style={directionDetailsStyles.routePrimaryText}
-        >
-          {routeDurationText}
-        </Text>
-        <View style={directionDetailsStyles.routeSecondaryInlineRow}>
-          <Text
-            testID="route-secondary-text"
-            numberOfLines={1}
-            style={directionDetailsStyles.routeSecondaryText}
-          >
-            {routeSecondaryText}
-          </Text>
-        </View>
-      </View>
-      {showGoButton ? (
-        <TouchableOpacity
-          testID="route-go-button"
-          disabled={!canPressGo}
-          activeOpacity={canPressGo ? 0.85 : 1}
-          onPress={handlePressGo}
-          style={[
-            directionDetailsStyles.routeGoButton,
-            !canPressGo && directionDetailsStyles.routeGoButtonDisabled,
-          ]}
-        >
-          <Text style={directionDetailsStyles.routeGoText}>GO</Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
+    <TouchableOpacity
+      testID={testID}
+      accessibilityState={{ selected: isActive }}
+      style={[
+        directionDetailsStyles.transportationButton,
+        isActive && directionDetailsStyles.activeTransportationButton,
+      ]}
+      onPress={onPress}
+    >
+      {icon}
+    </TouchableOpacity>
   );
 };
 
@@ -130,29 +84,17 @@ export default function IndoorDirectionDetails({
   onClose,
   startRoom,
   destinationRoom,
-  isRouteLoading,
-  routeErrorMessage,
-  routeDistanceText,
-  routeAdditionalText,
   onPressStart,
   onPressDestination,
   selectedTravelMode,
   onTravelModeChange,
-  canStartNavigation,
-  onPressTransitGo,
-  onPressGo,
 }: Readonly<DirectionDetailProps>) {
   const [activeMode, setActiveMode] = useState<IndoorRoutePlannerMode>(
     selectedTravelMode ?? 'walking',
   );
-  const isSelected = (mode: IndoorRoutePlannerMode) => activeMode === mode;
-  const hasRouteSummary = Boolean(routeDistanceText && routeAdditionalText);
-  const showGoButton = hasRouteSummary && canStartNavigation;
-  const canPressGo = showGoButton && !isRouteLoading && !routeErrorMessage;
 
   React.useEffect(() => {
-    if (!selectedTravelMode) return;
-    setActiveMode(selectedTravelMode);
+    if (selectedTravelMode) setActiveMode(selectedTravelMode);
   }, [selectedTravelMode]);
 
   const handleSelectMode = (mode: IndoorRoutePlannerMode) => {
@@ -160,20 +102,9 @@ export default function IndoorDirectionDetails({
     onTravelModeChange?.(mode);
   };
 
-  const handlePressGo = () => {
-    const selectedMode: IndoorRoutePlannerMode = activeMode;
-    const isNavigationMode = selectedMode === 'walking' || selectedMode === 'disability';
-
-    if (!canPressGo) return;
-    if (isNavigationMode && !canStartNavigation) return;
-
-    onPressGo?.(selectedMode);
-  };
-
-  const startDisplayText = getStartDisplayText(startRoom);
-
   return (
     <>
+      {/* HEADER — EXACT ORIGINAL STRUCTURE */}
       <View style={directionDetailsStyles.header}>
         <View>
           <Text style={directionDetailsStyles.directionTitle}> Directions </Text>
@@ -188,94 +119,65 @@ export default function IndoorDirectionDetails({
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* LOCATIONS */}
       <View style={directionDetailsStyles.locationHeader}>
-        <View style={directionDetailsStyles.header}>
-          <View style={directionDetailsStyles.inlineHeader}>
-            <Ionicons name="navigate" size={20} style={directionDetailsStyles.frontIcon} />
-            <TouchableOpacity
-              testID="start-location-button"
-              style={directionDetailsStyles.locationButton}
-              onPress={onPressStart}
-            >
-              <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
-                {startDisplayText}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={directionDetailsStyles.subLocationHeader}>
-            <Ionicons name="menu-outline" size={20} style={directionDetailsStyles.dragIcon} />
-          </View>
-        </View>
+        <LocationRow
+          icon="navigate"
+          text={getDisplayText(startRoom, 'Set as starting point')}
+          testID="start-location-button"
+          onPress={onPressStart}
+        />
+
+        {/* SEPARATOR — FIXED */}
         <View style={directionDetailsStyles.separationHeader}>
           <Ionicons name="ellipsis-vertical" size={20} style={directionDetailsStyles.dragIcon} />
           <Divider
-            style={{ backgroundColor: '#9B9B9B', height: 1.5, flex: 1, alignSelf: 'center' }}
+            style={{
+              backgroundColor: '#9B9B9B',
+              height: 1.5,
+              flex: 1,
+              alignSelf: 'center', // IMPORTANT
+            }}
           />
         </View>
-        <View style={directionDetailsStyles.header}>
-          <View style={directionDetailsStyles.inlineHeader}>
-            <Ionicons name="location-outline" size={20} style={directionDetailsStyles.frontIcon} />
-            <TouchableOpacity
-              testID="destination-location-button"
-              style={directionDetailsStyles.locationButton}
-              onPress={onPressDestination}
-            >
-              <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 15, color: 'white' }}>
-                {destinationRoom ?? 'Set destination'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={directionDetailsStyles.subLocationHeader}>
-            <Ionicons name="menu-outline" size={20} style={directionDetailsStyles.dragIcon} />
-          </View>
-        </View>
+
+        <LocationRow
+          icon="location-outline"
+          text={getDisplayText(destinationRoom, 'Set destination')}
+          testID="destination-location-button"
+          onPress={onPressDestination}
+        />
       </View>
+
+      {/* TRANSPORT */}
       <View style={directionDetailsStyles.transportationHeader}>
         <View style={directionDetailsStyles.transportationSubHeader}>
-          <TouchableOpacity
+          <TransportButton
+            mode="walking"
+            activeMode={activeMode}
             testID="transport-walk"
-            accessibilityState={{ selected: isSelected('walking') }}
-            style={[
-              directionDetailsStyles.transportationButton,
-              isSelected('walking') && directionDetailsStyles.activeTransportationButton,
-            ]}
             onPress={() => handleSelectMode('walking')}
-          >
-            <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity
+            icon={
+              <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
+            }
+          />
+
+          <TransportButton
+            mode="disability"
+            activeMode={activeMode}
             testID="transport-car"
-            accessibilityState={{ selected: isSelected('disability') }}
-            style={[
-              directionDetailsStyles.transportationButton,
-              isSelected('disability') && directionDetailsStyles.activeTransportationButton,
-            ]}
             onPress={() => handleSelectMode('disability')}
-          >
-            <FontAwesome
-              name="wheelchair"
-              size={30}
-              style={directionDetailsStyles.transportationIcon}
-            />
-          </TouchableOpacity>
+            icon={
+              <FontAwesome
+                name="wheelchair"
+                size={30}
+                style={directionDetailsStyles.transportationIcon}
+              />
+            }
+          />
         </View>
       </View>
-      {/*
-      <View style={directionDetailsStyles.routeMetaContainer}>
-        {renderRouteMetaBody({
-            isRouteLoading,
-            routeErrorMessage,
-            hasRouteSummary,
-            routeDurationText,
-            routeDistanceText,
-            routeEtaText,
-            showGoButton,
-            canPressGo,
-            handlePressGo,
-            onRetryRoute,
-        })}
-      </View>
-      */}
     </>
   );
 }

@@ -2,50 +2,57 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import IndoorDirectionDetails from '../src/components/indoor/IndoorDirectionDetails';
 
-// mock icons
+/* ---------- MOCKS ---------- */
+
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
   FontAwesome: 'FontAwesome',
 }));
 
-describe('IndoorDirectionDetails', () => {
-  const baseProps = {
-    onClose: jest.fn(),
-    startRoom: null,
-    destinationRoom: null,
-  };
+jest.mock('react-native-paper', () => ({
+  Divider: 'Divider',
+}));
 
-  it('renders default texts', () => {
-    const { getByText } = render(<IndoorDirectionDetails {...baseProps} />);
+/* ---------- TESTS ---------- */
 
-    expect(getByText('Directions')).toBeTruthy();
+describe('IndoorDirectionDetails FULL COVERAGE', () => {
+  it('renders header and buttons', () => {
+    const { getByText, getByTestId } = render(
+      <IndoorDirectionDetails onClose={jest.fn()} startRoom={null} destinationRoom={null} />,
+    );
+
+    expect(getByText(/Directions/i)).toBeTruthy();
+    expect(getByTestId('directions-close-button')).toBeTruthy();
+  });
+
+  it('shows fallback text when start/destination are null', () => {
+    const { getByText } = render(
+      <IndoorDirectionDetails onClose={jest.fn()} startRoom={null} destinationRoom={null} />,
+    );
+
     expect(getByText('Set as starting point')).toBeTruthy();
     expect(getByText('Set destination')).toBeTruthy();
   });
 
   it('renders provided start and destination', () => {
     const { getByText } = render(
-      <IndoorDirectionDetails
-        {...baseProps}
-        startRoom="H101"
-        destinationRoom="H202"
-      />,
+      <IndoorDirectionDetails onClose={jest.fn()} startRoom="H-101" destinationRoom="H-202" />,
     );
 
-    expect(getByText('H101')).toBeTruthy();
-    expect(getByText('H202')).toBeTruthy();
+    expect(getByText('H-101')).toBeTruthy();
+    expect(getByText('H-202')).toBeTruthy();
   });
 
-  it('calls onClose when close button pressed', () => {
+  it('calls onClose when close button is pressed', () => {
     const mockClose = jest.fn();
 
     const { getByTestId } = render(
-      <IndoorDirectionDetails {...baseProps} onClose={mockClose} />,
+      <IndoorDirectionDetails onClose={mockClose} startRoom={null} destinationRoom={null} />,
     );
 
     fireEvent.press(getByTestId('directions-close-button'));
 
-    expect(mockClose).toHaveBeenCalled();
+    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('calls onPressStart and onPressDestination', () => {
@@ -54,7 +61,9 @@ describe('IndoorDirectionDetails', () => {
 
     const { getByTestId } = render(
       <IndoorDirectionDetails
-        {...baseProps}
+        onClose={jest.fn()}
+        startRoom={null}
+        destinationRoom={null}
         onPressStart={mockStart}
         onPressDestination={mockDest}
       />,
@@ -63,16 +72,26 @@ describe('IndoorDirectionDetails', () => {
     fireEvent.press(getByTestId('start-location-button'));
     fireEvent.press(getByTestId('destination-location-button'));
 
-    expect(mockStart).toHaveBeenCalled();
-    expect(mockDest).toHaveBeenCalled();
+    expect(mockStart).toHaveBeenCalledTimes(1);
+    expect(mockDest).toHaveBeenCalledTimes(1);
   });
 
-  it('changes travel mode when pressed', () => {
+  it('default mode is walking', () => {
+    const { getByTestId } = render(
+      <IndoorDirectionDetails onClose={jest.fn()} startRoom={null} destinationRoom={null} />,
+    );
+
+    expect(getByTestId('transport-walk').props.accessibilityState.selected).toBe(true);
+  });
+
+  it('switches travel mode', () => {
     const mockChange = jest.fn();
 
     const { getByTestId } = render(
       <IndoorDirectionDetails
-        {...baseProps}
+        onClose={jest.fn()}
+        startRoom={null}
+        destinationRoom={null}
         onTravelModeChange={mockChange}
       />,
     );
@@ -82,23 +101,48 @@ describe('IndoorDirectionDetails', () => {
     expect(mockChange).toHaveBeenCalledWith('disability');
   });
 
-  it('calls onPressGo when conditions are met', () => {
-    const mockGo = jest.fn();
+  it('updates selected mode visually', () => {
+    const { getByTestId } = render(
+      <IndoorDirectionDetails onClose={jest.fn()} startRoom={null} destinationRoom={null} />,
+    );
 
+    fireEvent.press(getByTestId('transport-car'));
+
+    expect(getByTestId('transport-car').props.accessibilityState.selected).toBe(true);
+  });
+
+  it('respects selectedTravelMode prop', () => {
     const { getByTestId } = render(
       <IndoorDirectionDetails
-        {...baseProps}
-        routeDistanceText="100m"
-        routeAdditionalText="2 min"
-        canStartNavigation={true}
-        onPressGo={mockGo}
+        onClose={jest.fn()}
+        startRoom={null}
+        destinationRoom={null}
+        selectedTravelMode="disability"
       />,
     );
 
-    // NOTE: GO button is commented out in your component
-    // so we can't press it directly.
-    // This test ensures logic is safe if you re-enable it.
+    expect(getByTestId('transport-car').props.accessibilityState.selected).toBe(true);
+  });
 
-    expect(mockGo).not.toHaveBeenCalled();
+  it('updates when selectedTravelMode prop changes', () => {
+    const { rerender, getByTestId } = render(
+      <IndoorDirectionDetails
+        onClose={jest.fn()}
+        startRoom={null}
+        destinationRoom={null}
+        selectedTravelMode="walking"
+      />,
+    );
+
+    rerender(
+      <IndoorDirectionDetails
+        onClose={jest.fn()}
+        startRoom={null}
+        destinationRoom={null}
+        selectedTravelMode="disability"
+      />,
+    );
+
+    expect(getByTestId('transport-car').props.accessibilityState.selected).toBe(true);
   });
 });
