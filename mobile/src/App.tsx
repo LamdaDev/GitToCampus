@@ -107,7 +107,7 @@ const App = () => {
   const hideSearchBar = useCallback(() => {
     setSheetOpen(true);
   }, []);
-  const [isIndoor,setIsIndoor] = useState(false);
+  const [isIndoor, setIsIndoor] = useState(false);
   if (!fontsLoaded) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

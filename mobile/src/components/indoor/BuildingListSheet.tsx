@@ -74,7 +74,7 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
       () =>
         buildings.map((building) => ({
           building,
-          normalizedSearchText: `${building.name} ${building.address ?? ''}`.toLowerCase(),
+          normalizedSearchText: `${building.name}`.toLowerCase(),
         })),
       [buildings],
     );

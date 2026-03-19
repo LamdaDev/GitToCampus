@@ -157,18 +157,6 @@ describe('IndoorBottomSheet', () => {
     });
   });
 
-  test('filters buildings by partial address match', async () => {
-    const { getByTestId, getByText, queryByText } = render(<IndoorBottomSheet {...defaultProps} />);
-
-    // H and MB share '1455 De Maisonneuve' — MB has '1450 Guy St.'
-    fireEvent.changeText(getByTestId('search-bar'), 'guy');
-
-    await waitFor(() => {
-      expect(getByText('MB Building')).toBeTruthy();
-      expect(queryByText('H Building')).toBeNull();
-    });
-  });
-
   test('shows no buildings when query matches nothing', async () => {
     const { getByTestId, queryByText } = render(<IndoorBottomSheet {...defaultProps} />);
 

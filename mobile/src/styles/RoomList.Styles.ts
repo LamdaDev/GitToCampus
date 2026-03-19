@@ -8,10 +8,7 @@ export const roomListStyles = StyleSheet.create({
   buildingContainer: {
     marginBottom: 14,
   },
- indoorContainer: {
-
-
- },
+  indoorContainer: {},
   buildingHeader: {
     flexDirection: 'row',
     alignItems: 'center',

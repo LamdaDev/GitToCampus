@@ -44,7 +44,7 @@ type MapScreenProps = {
   outdoorRoute?: OutdoorRouteOverlay | null;
   bottomSheetAnimatedPosition?: SharedValue<number>;
   mapHandle?: React.RefObject<MapScreenHandle | null>;
-  exitIndoorView:()=>void;
+  exitIndoorView: () => void;
 };
 
 export type MapScreenHandle = {
@@ -743,11 +743,11 @@ function MapScreen({
     showIndoor: (building: BuildingShape) => setIndoorBuilding(building),
     hideIndoor: () => setIndoorBuilding(null),
   }));
-  
-  const resetIndoorBuilding = ()=>{
+
+  const resetIndoorBuilding = () => {
     setIndoorBuilding(null);
     exitIndoorView();
-  }
+  };
   return (
     <View style={styles.container}>
       <MapView {...mapProps}>

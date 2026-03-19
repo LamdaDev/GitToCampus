@@ -609,7 +609,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       animatedPosition,
       onEnterBuilding,
       isIndoor,
-      enterIndoorView
+      enterIndoorView,
     },
     ref,
   ) => {

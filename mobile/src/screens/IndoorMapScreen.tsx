@@ -5,6 +5,7 @@ import { BuildingShape } from '../types/BuildingShape';
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 import { floorPlans } from '../utils/floorPlans';
 import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/BuildingListSheet';
+import IndoorDirectionDetails from '../components/indoor/IndoorDirectionDetails';
 
 type props = {
   onExitIndoor: () => void;
@@ -26,6 +27,7 @@ export default function IndoorMapScreen({
   const [isIndoorSheetOpen, setIndoorSheetOpen] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState(building);
   const [currentFloor, setCurrentFloor] = useState<string | null>(null);
+  const [showDirectionDetails, setShowDirectionDetails] = useState(false);
 
   // OPEN SHEET
   const openAvailableBuildings = () => {
@@ -109,15 +111,19 @@ export default function IndoorMapScreen({
       {/* MAP */}
       <ReactNativeZoomableView
         maxZoom={10}
-        minZoom={0.3}
+        minZoom={1}
         zoomStep={0.5}
         initialZoom={1}
-        bindToBorders={false}
+        bindToBorders={true}
       >
         {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
 
         {plan?.type === 'png' && (
-          <Image source={plan.data} style={{ width: 1000, height: 1000 }} resizeMode="contain" />
+          <Image
+            source={plan.data}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="contain"
+          />
         )}
       </ReactNativeZoomableView>
 
