@@ -102,8 +102,13 @@ const appendCoordinates = (
     return;
   }
 
-  const lastCoordinate = target[target.length - 1];
+  const lastCoordinate = target.at(-1);
   const firstNextCoordinate = nextCoordinates[0];
+  if (!lastCoordinate) {
+    target.push(...nextCoordinates);
+    return;
+  }
+
   const shouldSkipFirstCoordinate =
     Math.abs(lastCoordinate.latitude - firstNextCoordinate.latitude) <= COORDINATE_EPSILON &&
     Math.abs(lastCoordinate.longitude - firstNextCoordinate.longitude) <= COORDINATE_EPSILON;

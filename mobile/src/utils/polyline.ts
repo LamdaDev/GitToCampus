@@ -61,11 +61,11 @@ const encodeSignedValue = (value: number) => {
   let output = '';
 
   while (encodedValue >= 0x20) {
-    output += String.fromCharCode((0x20 | (encodedValue & 0x1f)) + 63);
+    output += String.fromCodePoint((0x20 | (encodedValue & 0x1f)) + 63);
     encodedValue >>= 5;
   }
 
-  output += String.fromCharCode(encodedValue + 63);
+  output += String.fromCodePoint(encodedValue + 63);
   return output;
 };
 

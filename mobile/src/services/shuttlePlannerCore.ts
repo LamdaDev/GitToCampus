@@ -120,7 +120,7 @@ const buildEmptyPlanLegs = (): ShuttlePlanLegs => ({
   postShuttleWalk: null,
 });
 
-const buildPlanLegs = ({
+const createPlanLegs = ({
   startCoords,
   destinationCoords,
   pickup,
@@ -298,7 +298,7 @@ export const buildDefaultShuttlePlan = ({
 
   const pickup = selectedStops.pickup;
   const dropoff = selectedStops.dropoff;
-  const legs = buildPlanLegs({
+  const legs = createPlanLegs({
     startCoords: startCoords ?? null,
     destinationCoords: destinationCoords ?? null,
     pickup,
