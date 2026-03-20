@@ -4,6 +4,7 @@ import IndoorControls from '../src/components/indoor/IndoorControls';
 import type { BuildingShape } from '../src/types/BuildingShape';
 
 const IndoorMapScreen = require('../src/screens/IndoorMapScreen').default;
+const { findIndoorPath } = require('../src/utils/indoor/indoorPathFinding');
 
 // ─── Top-level mock fns ───────────────────────────────────────────────────────
 
@@ -64,6 +65,11 @@ jest.mock('../src/utils/floorPlans', () => ({
       1: { type: 'png', data: { uri: 'MB_1.png' } },
     },
   },
+}));
+
+jest.mock('../src/utils/indoor/indoorPathFinding', () => ({
+  getRoomNodes: jest.fn(() => []),
+  findIndoorPath: jest.fn(),
 }));
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -265,5 +271,167 @@ describe('IndoorMapScreen', () => {
     }).not.toThrow();
 
     expect(getControlsProps().currentFloor).toBeNull();
+  });
+
+  test('externalStartRoomId and externalEndRoomId are applied when provided', async () => {
+    const mockPathStepsChange = jest.fn();
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        externalStartRoomId="h-101"
+        externalEndRoomId="h-202"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => expect(mockPathStepsChange).toHaveBeenCalled());
+  });
+
+  test('onPathStepsChange fires with empty array when no valid path exists', async () => {
+    const mockPathStepsChange = jest.fn();
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => expect(mockPathStepsChange).toHaveBeenCalledWith([]));
+  });
+
+  test('onFloorNavReady is called with prev and next floor handlers', async () => {
+    const mockFloorNavReady = jest.fn();
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        onFloorNavReady={mockFloorNavReady}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(mockFloorNavReady).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.any(Function),
+      );
+    });
+  });
+
+  test('renders a PNG plan for a building with png floor plans', () => {
+    const { UNSAFE_getByType } = render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingMB}
+      />,
+    );
+    const { Image } = require('react-native');
+    expect(UNSAFE_getByType(Image)).toBeTruthy();
+  });
+
+  test('handleNextPathFloor and handlePrevPathFloor are passed as functions via onFloorNavReady', async () => {
+    const mockFloorNavReady = jest.fn();
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        onFloorNavReady={mockFloorNavReady}
+      />,
+    );
+
+    await waitFor(() => {
+      const [prevFn, nextFn] = mockFloorNavReady.mock.calls[0];
+      expect(() => prevFn()).not.toThrow();
+      expect(() => nextFn()).not.toThrow();
+    });
+  });
+
+  test('onPathStepsChange includes start and end labels when path is found', async () => {
+    const mockPathStepsChange = jest.fn();
+    findIndoorPath.mockReturnValue([
+      { id: 'a', type: 'room', floor: 1, label: 'Room A', buildingId: 'H', x: 0, y: 0, accessible: true },
+      { id: 'b', type: 'room', floor: 1, label: 'Room B', buildingId: 'H', x: 0, y: 0, accessible: true },
+    ]);
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        externalStartRoomId="a"
+        externalEndRoomId="b"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => {
+      const steps = mockPathStepsChange.mock.calls.flat(2);
+      expect(steps.some((s: any) => s.label?.includes('Start'))).toBe(true);
+      expect(steps.some((s: any) => s.label?.includes('End'))).toBe(true);
+    });
+  });
+
+  test('onPathStepsChange includes elevator label when path crosses floors via elevator', async () => {
+    const mockPathStepsChange = jest.fn();
+    findIndoorPath.mockReturnValue([
+      { id: 'a', type: 'room', floor: 1, label: 'Room A', buildingId: 'H', x: 0, y: 0, accessible: true },
+      { id: 'b', type: 'elevator_door', floor: 1, label: '', buildingId: 'H', x: 0, y: 0, accessible: true },
+      { id: 'c', type: 'room', floor: 2, label: 'Room C', buildingId: 'H', x: 0, y: 0, accessible: true },
+    ]);
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        externalStartRoomId="a"
+        externalEndRoomId="c"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => {
+      const steps = mockPathStepsChange.mock.calls.flat(2);
+      expect(steps.some((s: any) => s.label?.toLowerCase().includes('elevator'))).toBe(true);
+    });
+  });
+
+  test('onPathStepsChange includes stair label when path crosses floors via stair_landing', async () => {
+    const mockPathStepsChange = jest.fn();
+    findIndoorPath.mockReturnValue([
+      { id: 'a', type: 'room', floor: 1, label: 'Room A', buildingId: 'H', x: 0, y: 0, accessible: true },
+      { id: 'b', type: 'stair_landing', floor: 1, label: '', buildingId: 'H', x: 0, y: 0, accessible: true },
+      { id: 'c', type: 'room', floor: 2, label: 'Room C', buildingId: 'H', x: 0, y: 0, accessible: true },
+    ]);
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        externalStartRoomId="a"
+        externalEndRoomId="c"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => {
+      const steps = mockPathStepsChange.mock.calls.flat(2);
+      expect(steps.some((s: any) => s.label?.toLowerCase().includes('stair'))).toBe(true);
+    });
   });
 });

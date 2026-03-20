@@ -6,7 +6,6 @@ import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-vi
 import { floorPlans } from '../utils/floorPlans';
 import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/BuildingListSheet';
 import PathOverlay from '../components/indoor/PathOverlay';
-import RoomSelectorModal from '../components/indoor/RoomSelectorModal';
 import {
   findIndoorPath,
   getRoomNodes,
@@ -19,7 +18,6 @@ import mbGraph from '../assets/floor_plans_json/mb_floors_combined.json';
 import veGraph from '../assets/floor_plans_json/ve.json';
 import vlGraph from '../assets/floor_plans_json/vl_floors_combined.json';
 import styles from '../styles/IndoorMapScreen.styles';
-
 
 type props = {
   onExitIndoor: () => void;
@@ -100,7 +98,6 @@ export default function IndoorMapScreen({
   externalEndRoomId,
   onPathStepsChange,
   onFloorNavReady,
-  onIndoorRouteChange,
 }: Readonly<props>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
 
@@ -113,6 +110,7 @@ export default function IndoorMapScreen({
   const [endRoomId, setEndRoomId] = useState<string | null>(null);
   const [selectorTarget, setSelectorTarget] = useState<'start' | 'end' | null>(null);
 
+  // ── Path Logic ──────────────────────────────────────────────────────────────
   const buildingGraph = useMemo(() => {
     const code = selectedBuilding?.shortCode;
     const graph = code ? (BUILDING_GRAPHS[code] ?? null) : null;
@@ -161,6 +159,7 @@ export default function IndoorMapScreen({
     return floors;
   }, [fullPath]);
 
+  // ── Path Prev/Next Floor ──────────────────────────────────────────────────────────────
   const handleNextPathFloor = useCallback(() => {
     if (!currentFloor || pathFloors.length === 0) return;
     const index = pathFloors.indexOf(currentFloor);
@@ -214,6 +213,7 @@ export default function IndoorMapScreen({
     setEndRoomId(null);
   }, [floorLevels]);
 
+  // SAME AS ABOVE
   useEffect(() => {
     setStartRoomId(null);
     setEndRoomId(null);
@@ -301,7 +301,11 @@ export default function IndoorMapScreen({
           <View style={{ width: 1000, height: 1000 }}>
             {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
             {plan?.type === 'png' && (
-              <Image source={plan.data} style={{ width: 1000, height: 1000 }} resizeMode="contain" />
+              <Image
+                source={plan.data}
+                style={{ width: 1000, height: 1000 }}
+                resizeMode="contain"
+              />
             )}
             <PathOverlay
               pathNodes={currentFloorPath}
@@ -319,14 +323,6 @@ export default function IndoorMapScreen({
         ref={bottomSheetRef}
         reOpenSearchBar={handleRevealSearchBar}
         onPressBuilding={handleSelectBuilding}
-      />
-
-      <RoomSelectorModal
-        visible={selectorTarget !== null}
-        rooms={allRooms}
-        title={selectorTarget === 'start' ? 'Select start room' : 'Select destination'}
-        onSelect={handleRoomSelect}
-        onClose={() => setSelectorTarget(null)}
       />
     </View>
   );

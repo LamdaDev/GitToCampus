@@ -91,7 +91,7 @@ export default function IndoorDirectionDetails({
   selectedTravelMode,
   onTravelModeChange,
   onPressGo,
-  hasPath
+  hasPath,
 }: Readonly<DirectionDetailProps>) {
   const [activeMode, setActiveMode] = useState<IndoorRoutePlannerMode>(
     selectedTravelMode ?? 'walking',
@@ -184,14 +184,13 @@ export default function IndoorDirectionDetails({
       </View>
 
       {/* GO SECTION */}
-      {!!(startRoom) && !!(destinationRoom) && (
+      {!!startRoom && !!destinationRoom && (
         <View style={directionDetailsStyles.routeMetaContainer}>
           <View style={directionDetailsStyles.routeSummaryRow}>
-            <Text style={[
-              directionDetailsStyles.routePrimaryText,
-              !hasPath && { color: '#FF4444' }
-            ]}>
-              {hasPath ? 'PATH READY' : "NO PATH"}
+            <Text
+              style={[directionDetailsStyles.routePrimaryText, !hasPath && { color: '#FF4444' }]}
+            >
+              {hasPath ? 'PATH READY' : 'NO PATH'}
             </Text>
             <TouchableOpacity
               style={[
