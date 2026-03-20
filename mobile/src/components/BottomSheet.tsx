@@ -811,7 +811,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         }
         onIndoorRouteChange?.(
           searchFor === 'start' ? room.id : startRoomId,
-          searchFor === 'destination' ? endRoomId : room.id,
+          searchFor === 'start' ? endRoomId : room.id,
         );
       },
       [searchFor, activeView, startRoomId, endRoomId],
@@ -1083,8 +1083,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const canStartNavigationFromCurrentLocation = routeStartSource === 'current';
     const shuttlePickupCoords =
       travelMode === 'shuttle' &&
-      shuttlePlan?.isServiceAvailable &&
-      shuttlePlan.nextDepartureInMinutes !== null
+        shuttlePlan?.isServiceAvailable &&
+        shuttlePlan.nextDepartureInMinutes !== null
         ? (shuttlePlan.pickup?.coords ?? null)
         : null;
     const routeDestinationCoords = shuttlePickupCoords ?? destinationCoords;

@@ -37,8 +37,8 @@ const App = () => {
   const [indoorStartRoomId, setIndoorStartRoomId] = useState<string | null>(null);
   const [indoorEndRoomId, setIndoorEndRoomId] = useState<string | null>(null);
   const [indoorPathSteps, setIndoorPathSteps] = useState<{ icon: string; label: string }[]>([]);
-  const prevFloorRef = useRef<() => void>(() => {});
-  const nextFloorRef = useRef<() => void>(() => {});
+  const prevFloorRef = useRef<() => void>(() => { });
+  const nextFloorRef = useRef<() => void>(() => { });
 
   // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -114,10 +114,33 @@ const App = () => {
   }, []);
   const [isIndoor, setIsIndoor] = useState(false);
 
-  const toggleIndoorView = () => {
+  const handleIndoorFloorNavReady = useCallback((prev: () => void, next: () => void) => {
+    prevFloorRef.current = prev;
+    nextFloorRef.current = next;
+  }, []);
+
+  const handleIndoorRouteChange = useCallback((startId: string | null, endId: string | null) => {
+    setIndoorStartRoomId(startId);
+    setIndoorEndRoomId(endId);
+  }, []);
+
+  const toggleIndoorView = useCallback(() => {
     setSheetOpen(false);
     setIsIndoor(true);
-  };
+  }, []);
+
+  const handleExitIndoorView = useCallback(() => {
+    setIsIndoor(false);
+  }, []);
+
+  const handlePrevPathFloor = useCallback(() => {
+    prevFloorRef.current?.();
+  }, []);
+
+  const handleNextPathFloor = useCallback(() => {
+    nextFloorRef.current?.();
+  }, []);
+
   if (!fontsLoaded) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -135,14 +158,11 @@ const App = () => {
           mapHandle={mapRef}
           hideAppSearchBar={hideSearchBar}
           revealSearchBar={toggleSearchBarState}
-          exitIndoorView={() => setIsIndoor(false)}
+          exitIndoorView={handleExitIndoorView}
           indoorStartRoomId={indoorStartRoomId}
           indoorEndRoomId={indoorEndRoomId}
           indoorPathStepsChange={setIndoorPathSteps}
-          onIndoorFloorNavReady={(prev, next) => {
-            prevFloorRef.current = prev;
-            nextFloorRef.current = next;
-          }}
+          onIndoorFloorNavReady={handleIndoorFloorNavReady}
         />
 
         {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -163,12 +183,9 @@ const App = () => {
           isIndoor={isIndoor}
           enterIndoorView={toggleIndoorView}
           indoorPathSteps={indoorPathSteps}
-          onPrevPathFloor={() => prevFloorRef.current?.()}
-          onNextPathFloor={() => nextFloorRef.current?.()}
-          onIndoorRouteChange={(startId, endId) => {
-            setIndoorStartRoomId(startId);
-            setIndoorEndRoomId(endId);
-          }}
+          onPrevPathFloor={handlePrevPathFloor}
+          onNextPathFloor={handleNextPathFloor}
+          onIndoorRouteChange={handleIndoorRouteChange}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

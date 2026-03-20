@@ -272,6 +272,9 @@ export default function IndoorMapScreen({
       ? indoorFloorPlans[currentFloor as unknown as keyof typeof indoorFloorPlans]
       : null;
 
+  console.log('fullPath:', fullPath?.length, 'start:', startRoomId, 'end:', endRoomId);
+  console.log('currentFloorPath:', currentFloorPath.length, 'currentFloor:', currentFloor);
+
   return (
     <View style={styles.container}>
       {/* CONTROLS */}
