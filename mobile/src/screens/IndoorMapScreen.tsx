@@ -39,6 +39,22 @@ const BUILDING_GRAPHS: Record<string, { nodes: IndoorNode[]; edges: IndoorEdge[]
   VL: vlGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
 };
 
+const NODE_SPACES: Record<string, { width: number; height: number }> = {
+  H:  { width: 2040, height: 2040 }, // actual recorded node space from console log
+  CC: { width: 4096, height: 1024 },
+  VE: { width: 1623, height: 622 },
+  MB: { width: 949, height: 977 },
+  VL: { width: 831, height: 940 },
+};
+
+const SVG_VIEWBOXES: Record<string, { width: number; height: number }> = {
+  H:  { width: 1024, height: 1024 },
+  CC: { width: 4096, height: 1024 },
+  VE: { width: 1024, height: 1024 },
+  MB: { width: 1000, height: 1000 },
+  VL: { width: 1000, height: 1000 },
+};
+
 const getPathSteps = (path: IndoorNode[]) => {
   const steps: { icon: string; label: string }[] = [];
   let prevFloor = path[0]?.floor;
@@ -94,7 +110,11 @@ export default function IndoorMapScreen({
   const buildingGraph = useMemo(() => {
     const code = selectedBuilding?.shortCode;
     const graph = code ? (BUILDING_GRAPHS[code] ?? null) : null;
-    console.log('shortCode:', code, '| graph found:', !!graph, '| nodes:', graph?.nodes?.length);
+    if (graph) {
+      const xs = graph.nodes.map((n: IndoorNode) => n.x);
+      const ys = graph.nodes.map((n: IndoorNode) => n.y);
+      console.log('nodeMaxX:', Math.max(...xs), 'nodeMaxY:', Math.max(...ys));
+    }
     return graph;
   }, [selectedBuilding?.shortCode]);
 
@@ -315,17 +335,23 @@ export default function IndoorMapScreen({
         zoomStep={0.5}
         initialZoom={0.4}
         bindToBorders={true}
+        contentWidth={2000}
+        contentHeight={2000}
       >
-        <View style={{ width: 1000, height: 1000 }}>
-          {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
-          {plan?.type === 'png' && (
-            <Image source={plan.data} style={{ width: 1000, height: 1000 }} resizeMode="contain" />
-          )}
-          <PathOverlay
-            pathNodes={currentFloorPath}
-            planType={plan?.type}
-            allNodes={buildingGraph?.nodes ?? []}
-          />
+        <View style={{ width: 2000, height: 2000, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 1000, height: 1000 }}>
+            {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
+            {plan?.type === 'png' && (
+              <Image source={plan.data} style={{ width: 1000, height: 1000 }} resizeMode="contain" />
+            )}
+            <PathOverlay
+              pathNodes={currentFloorPath}
+              planType={plan?.type}
+              allNodes={buildingGraph?.nodes ?? []}
+              svgViewBox={SVG_VIEWBOXES[selectedBuilding?.shortCode ?? '']}
+              nodeSpace={NODE_SPACES[selectedBuilding?.shortCode ?? '']}
+            />
+          </View>
         </View>
       </ReactNativeZoomableView>
 
