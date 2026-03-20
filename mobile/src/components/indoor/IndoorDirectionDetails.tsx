@@ -14,6 +14,8 @@ type DirectionDetailProps = {
   onPressDestination?: () => void;
   onTravelModeChange?: (mode: IndoorRoutePlannerMode) => void;
   selectedTravelMode?: IndoorRoutePlannerMode;
+  onPressGo?: () => void;
+  hasPath?: boolean;
 };
 
 const getDisplayText = (value: string | null, fallback: string) => value ?? fallback;
@@ -88,6 +90,8 @@ export default function IndoorDirectionDetails({
   onPressDestination,
   selectedTravelMode,
   onTravelModeChange,
+  onPressGo,
+  hasPath
 }: Readonly<DirectionDetailProps>) {
   const [activeMode, setActiveMode] = useState<IndoorRoutePlannerMode>(
     selectedTravelMode ?? 'walking',
@@ -178,6 +182,30 @@ export default function IndoorDirectionDetails({
           />
         </View>
       </View>
+
+      {/* GO SECTION */}
+      {!!(startRoom) && !!(destinationRoom) && (
+        <View style={directionDetailsStyles.routeMetaContainer}>
+          <View style={directionDetailsStyles.routeSummaryRow}>
+            <Text style={[
+              directionDetailsStyles.routePrimaryText,
+              !hasPath && { color: '#FF4444' }
+            ]}>
+              {hasPath ? 'PATH READY' : "NO PATH"}
+            </Text>
+            <TouchableOpacity
+              style={[
+                directionDetailsStyles.routeGoButton,
+                !hasPath && directionDetailsStyles.routeGoButtonDisabled,
+              ]}
+              onPress={hasPath ? onPressGo : undefined}
+              disabled={!hasPath}
+            >
+              <Text style={directionDetailsStyles.routeGoText}>GO</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </>
   );
 }

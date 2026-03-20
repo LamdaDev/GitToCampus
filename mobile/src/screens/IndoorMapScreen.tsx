@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Text } from 'react-native';
+import { View, Image } from 'react-native';
 import IndoorControls from '../components/indoor/IndoorControls';
 import { BuildingShape } from '../types/BuildingShape';
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
@@ -18,8 +18,8 @@ import ccGraph from '../assets/floor_plans_json/cc1.json';
 import mbGraph from '../assets/floor_plans_json/mb_floors_combined.json';
 import veGraph from '../assets/floor_plans_json/ve.json';
 import vlGraph from '../assets/floor_plans_json/vl_floors_combined.json';
+import styles from '../styles/IndoorMapScreen.styles';
 
-const containerStyle = { ...StyleSheet.absoluteFillObject, backgroundColor: 'white' };
 
 type props = {
   onExitIndoor: () => void;
@@ -29,6 +29,9 @@ type props = {
   building: BuildingShape;
   externalStartRoomId?: string | null;
   externalEndRoomId?: string | null;
+  onPathStepsChange?: (steps: { icon: string; label: string }[]) => void;
+  onFloorNavReady?: (prev: () => void, next: () => void) => void;
+  onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
 };
 
 const BUILDING_GRAPHS: Record<string, { nodes: IndoorNode[]; edges: IndoorEdge[] }> = {
@@ -40,7 +43,7 @@ const BUILDING_GRAPHS: Record<string, { nodes: IndoorNode[]; edges: IndoorEdge[]
 };
 
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
-  H:  { width: 2040, height: 2040 }, // actual recorded node space from console log
+  H: { width: 2040, height: 2040 },
   CC: { width: 4096, height: 1024 },
   VE: { width: 1623, height: 622 },
   MB: { width: 949, height: 977 },
@@ -48,7 +51,7 @@ const NODE_SPACES: Record<string, { width: number; height: number }> = {
 };
 
 const SVG_VIEWBOXES: Record<string, { width: number; height: number }> = {
-  H:  { width: 1024, height: 1024 },
+  H: { width: 1024, height: 1024 },
   CC: { width: 4096, height: 1024 },
   VE: { width: 1024, height: 1024 },
   MB: { width: 1000, height: 1000 },
@@ -95,6 +98,9 @@ export default function IndoorMapScreen({
   building,
   externalStartRoomId,
   externalEndRoomId,
+  onPathStepsChange,
+  onFloorNavReady,
+  onIndoorRouteChange,
 }: Readonly<props>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
 
@@ -110,11 +116,6 @@ export default function IndoorMapScreen({
   const buildingGraph = useMemo(() => {
     const code = selectedBuilding?.shortCode;
     const graph = code ? (BUILDING_GRAPHS[code] ?? null) : null;
-    if (graph) {
-      const xs = graph.nodes.map((n: IndoorNode) => n.x);
-      const ys = graph.nodes.map((n: IndoorNode) => n.y);
-      console.log('nodeMaxX:', Math.max(...xs), 'nodeMaxY:', Math.max(...ys));
-    }
     return graph;
   }, [selectedBuilding?.shortCode]);
 
@@ -127,42 +128,15 @@ export default function IndoorMapScreen({
   const fullPath = useMemo(() => {
     if (!startRoomId || !endRoomId || !buildingGraph) return null;
 
-    const startEdges = buildingGraph.edges.filter(
-      (e) => e.source === startRoomId || e.target === startRoomId,
-    );
-    const endEdges = buildingGraph.edges.filter(
-      (e) => e.source === endRoomId || e.target === endRoomId,
-    );
-    console.log('start edges:', startEdges.length, 'end edges:', endEdges.length);
-
     const result = findIndoorPath(buildingGraph.nodes, buildingGraph.edges, startRoomId, endRoomId);
-    console.log(
-      'fullPath result:',
-      result?.length,
-      'nodes',
-      'start:',
-      startRoomId,
-      'end:',
-      endRoomId,
-    );
     return result;
   }, [startRoomId, endRoomId, buildingGraph]);
 
-  // Only show the portion of the path that belongs to the current floor
   const currentFloorPath = useMemo(() => {
     if (!fullPath || currentFloor === null) return [];
     const floorNum = Number(currentFloor);
     return fullPath.filter((n) => n.floor === floorNum);
   }, [fullPath, currentFloor]);
-
-  const startRoom = useMemo(
-    () => allRooms.find((r) => r.id === startRoomId) ?? null,
-    [allRooms, startRoomId],
-  );
-  const endRoom = useMemo(
-    () => allRooms.find((r) => r.id === endRoomId) ?? null,
-    [allRooms, endRoomId],
-  );
 
   const handleRoomSelect = useCallback(
     (room: IndoorNode) => {
@@ -173,28 +147,30 @@ export default function IndoorMapScreen({
     [selectorTarget],
   );
 
-  const clearPath = useCallback(() => {
-    setStartRoomId(null);
-    setEndRoomId(null);
-  }, []);
-
-  // Floors where the path actually exists, in order
   const pathFloors = useMemo(() => {
     if (!fullPath) return [];
-    const floors = [...new Set(fullPath.map((n) => String(n.floor)))];
-    return floors.sort((a, b) => Number(a) - Number(b));
+    const seen = new Set<string>();
+    const floors: string[] = [];
+    for (const node of fullPath) {
+      const f = String(node.floor);
+      if (!seen.has(f)) {
+        seen.add(f);
+        floors.push(f);
+      }
+    }
+    return floors;
   }, [fullPath]);
 
   const handleNextPathFloor = useCallback(() => {
     if (!currentFloor || pathFloors.length === 0) return;
     const index = pathFloors.indexOf(currentFloor);
-    if (index > 0) setCurrentFloor(pathFloors[index - 1]);
+    if (index < pathFloors.length - 1) setCurrentFloor(pathFloors[index + 1]);
   }, [currentFloor, pathFloors]);
 
   const handlePrevPathFloor = useCallback(() => {
     if (!currentFloor || pathFloors.length === 0) return;
     const index = pathFloors.indexOf(currentFloor);
-    if (index < pathFloors.length - 1) setCurrentFloor(pathFloors[index + 1]);
+    if (index > 0) setCurrentFloor(pathFloors[index - 1]);
   }, [currentFloor, pathFloors]);
 
   // OPEN SHEET
@@ -257,6 +233,18 @@ export default function IndoorMapScreen({
     if (externalEndRoomId !== undefined) setEndRoomId(externalEndRoomId ?? null);
   }, [externalEndRoomId]);
 
+  useEffect(() => {
+    if (fullPath && fullPath.length > 0) {
+      onPathStepsChange?.(getPathSteps(fullPath));
+    } else {
+      onPathStepsChange?.([]);
+    }
+  }, [fullPath]);
+
+  useEffect(() => {
+    onFloorNavReady?.(handlePrevPathFloor, handleNextPathFloor);
+  }, [handlePrevPathFloor, handleNextPathFloor]);
+
   const handleFloorUp = useCallback(() => {
     setCurrentFloor((prev) => {
       if (prev === null) return prev;
@@ -284,10 +272,8 @@ export default function IndoorMapScreen({
       ? indoorFloorPlans[currentFloor as unknown as keyof typeof indoorFloorPlans]
       : null;
 
-  console.log('plan:', plan?.type, plan);
-
   return (
-    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'white' }}>
+    <View style={styles.container}>
       {/* CONTROLS */}
       <IndoorControls
         onExitIndoor={onExitIndoor}
@@ -298,35 +284,8 @@ export default function IndoorMapScreen({
         openAvailableBuildings={openAvailableBuildings}
         isIndoorSheetOpen={isIndoorSheetOpen}
         building={selectedBuilding}
-        onPrevPathFloor={handlePrevPathFloor}
-        onNextPathFloor={handleNextPathFloor}
         hasPath={!!fullPath && pathFloors.length > 1}
       />
-
-      {/* PATH NAV */}
-      {fullPath && pathFloors.length > 1 && (
-        <View style={styles.pathNavBar}>
-          <TouchableOpacity style={styles.pathNavBtn} onPress={handlePrevPathFloor}>
-            <Text style={styles.pathNavText}>PREV</Text>
-          </TouchableOpacity>
-          <View style={styles.pathNavDivider} />
-          <TouchableOpacity style={styles.pathNavBtn} onPress={handleNextPathFloor}>
-            <Text style={styles.pathNavText}>NEXT</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* PATH NAV MSG */}
-      {fullPath && fullPath.length > 0 && (
-        <View style={styles.pathSteps}>
-          {getPathSteps(fullPath).map((step, i) => (
-            <View key={i} style={styles.stepRow}>
-              <Text style={styles.stepIcon}>{step.icon}</Text>
-              <Text style={styles.stepText}>{step.label}</Text>
-            </View>
-          ))}
-        </View>
-      )}
 
       {/* MAP */}
       <ReactNativeZoomableView
@@ -336,9 +295,9 @@ export default function IndoorMapScreen({
         initialZoom={0.4}
         bindToBorders={true}
         contentWidth={2000}
-        contentHeight={2000}
+        contentHeight={3000}
       >
-        <View style={{ width: 2000, height: 2000, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 2000, height: 3000, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ width: 1000, height: 1000 }}>
             {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
             {plan?.type === 'png' && (
@@ -372,97 +331,3 @@ export default function IndoorMapScreen({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  pathBar: {
-    position: 'absolute',
-    bottom: 160,
-    left: 16,
-    right: 16,
-    zIndex: 100,
-    elevation: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-  },
-  pathBtn: {
-    flex: 1,
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  pathBtnActive: {
-    backgroundColor: '#ddeeff',
-    borderWidth: 1,
-    borderColor: '#0057FF',
-  },
-  pathBtnText: { fontSize: 13, color: '#333' },
-  clearBtn: {
-    backgroundColor: '#ffdddd',
-    borderRadius: 8,
-    padding: 8,
-  },
-  clearBtnText: { color: '#FF4444', fontSize: 14, fontWeight: '600' },
-  pathSteps: {
-    position: 'absolute',
-    bottom: 210,
-    right: 16,
-    zIndex: 100,
-    elevation: 10,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 12,
-    padding: 8,
-    width: 175,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    gap: 4,
-    opacity: 0.7,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  stepIcon: { fontSize: 11 },
-  stepText: { fontSize: 11, color: '#333', flexShrink: 1 },
-  pathNavBar: {
-    position: 'absolute',
-    bottom: 120,
-    left: 16,
-    right: 16,
-    zIndex: 100,
-    elevation: 10,
-    flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-  },
-  pathNavBtn: {
-    flex: 1,
-    backgroundColor: '#922338',
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  pathNavDivider: {
-    width: 1,
-    backgroundColor: '#ffffff40',
-  },
-  pathNavText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-});

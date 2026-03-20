@@ -48,6 +48,7 @@ import CalendarSelectionSlider from './CalendarSelectionSlider';
 import UpcomingClassesSlider from './UpcomingClassesSlider';
 import type { RoomNode } from '../components/indoor/RoomList';
 import IndoorDirectionDetails from './indoor/IndoorDirectionDetails';
+import IndoorNavigationDetails from './indoor/IndoorNavigationDetails';
 
 const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
@@ -228,6 +229,7 @@ export type BottomSliderHandle = {
   setSnap: (index: number) => void;
   closeCalendarSlider: () => void;
   openCalendarEventsSlider: (calendarIds?: string[]) => void;
+  openIndoorNavigation: () => void;
 };
 
 type BottomSheetProps = {
@@ -245,13 +247,10 @@ type BottomSheetProps = {
   onEnterBuilding: (building: BuildingShape) => void;
   isIndoor: boolean;
   enterIndoorView: () => void;
-  onSelectRoom: (room: RoomNode) => void;
-  startRoom: string | null;
-  destinationRoom: string | null;
-  setStartRoom: React.Dispatch<React.SetStateAction<string | null>>;
-  setDestinationRoom: React.Dispatch<React.SetStateAction<string | null>>;
-  setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
+  indoorPathSteps: { icon: string; label: string }[];
+  onPrevPathFloor?: () => void;
+  onNextPathFloor?: () => void;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -406,6 +405,10 @@ const renderBottomSheetContent = ({
   onSelectRoom,
   startRoom,
   destinationRoom,
+  indoorPathSteps,
+  setActiveView,
+  onPrevPathFloor,
+  onNextPathFloor,
 }: {
   isSearchActive: boolean;
   calendarSliderMode: 'selection' | 'events' | null;
@@ -456,6 +459,10 @@ const renderBottomSheetContent = ({
   onSelectRoom: (room: RoomNode) => void;
   startRoom: string | null;
   destinationRoom: string | null;
+  indoorPathSteps: { icon: string; label: string }[];
+  setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
+  onPrevPathFloor?: () => void;
+  onNextPathFloor?: () => void;
 }) => {
   if (isSearchActive) {
     if (calendarSliderMode === 'events' && !isInternalSearch) {
@@ -592,6 +599,23 @@ const renderBottomSheetContent = ({
         onClose={closeSheet}
         onPressStart={() => setSearchFor('start')}
         onPressDestination={() => setSearchFor('destination')}
+        hasPath={indoorPathSteps.length > 0}
+        onPressGo={() => setActiveView('indoor-navigation')}
+      />
+    );
+  }
+
+  if (activeView === 'indoor-navigation') {
+    return (
+      <IndoorNavigationDetails
+        startRoom={startRoom}
+        destinationRoom={destinationRoom}
+        buildingName={selectedBuilding?.name ?? undefined}
+        pathSteps={indoorPathSteps}
+        onBack={() => setActiveView('indoor-directions')}
+        onClose={closeSheet}
+        onPrevFloor={indoorPathSteps.length > 0 ? onPrevPathFloor : undefined}
+        onNextFloor={indoorPathSteps.length > 0 ? onNextPathFloor : undefined}
       />
     );
   }
@@ -639,6 +663,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       isIndoor,
       enterIndoorView,
       onIndoorRouteChange,
+      indoorPathSteps,
+      onPrevPathFloor,
+      onNextPathFloor,
     },
     ref,
   ) => {
@@ -1056,8 +1083,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const canStartNavigationFromCurrentLocation = routeStartSource === 'current';
     const shuttlePickupCoords =
       travelMode === 'shuttle' &&
-      shuttlePlan?.isServiceAvailable &&
-      shuttlePlan.nextDepartureInMinutes !== null
+        shuttlePlan?.isServiceAvailable &&
+        shuttlePlan.nextDepartureInMinutes !== null
         ? (shuttlePlan.pickup?.coords ?? null)
         : null;
     const routeDestinationCoords = shuttlePickupCoords ?? destinationCoords;
@@ -1211,6 +1238,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       close: closeSheet,
       setSnap: setSnapPoint,
       closeCalendarSlider: () => setCalendarSliderMode(null),
+
       openCalendarEventsSlider: (calendarIds?: string[]) => {
         const normalizedIds = [...new Set((calendarIds ?? selectedCalendarIds).filter(Boolean))];
         if (normalizedIds.length === 0) {
@@ -1218,6 +1246,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           return;
         }
         showUpcomingClassesSlider(normalizedIds);
+      },
+
+      openIndoorNavigation: () => {
+        setActiveView('indoor-navigation');
+        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
       },
     }));
 
@@ -1283,6 +1316,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             onSelectRoom: handleSelectRoom,
             startRoom,
             destinationRoom,
+            indoorPathSteps,
+            setActiveView,
+            onPrevPathFloor,
+            onNextPathFloor,
           })}
         </BottomSheetView>
       </BottomSheet>

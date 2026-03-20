@@ -25,18 +25,20 @@ export default function PathOverlay({ pathNodes, planType, allNodes, svgViewBox,
 
     const xs = allNodes.map((n) => n.x);
     const ys = allNodes.map((n) => n.y);
+    
     const nodeMinX = xs.length > 0 ? Math.min(...xs) : 0;
     const nodeMinY = ys.length > 0 ? Math.min(...ys) : 0;
     const nodeMaxX = xs.length > 0 ? Math.max(...xs) : 2100;
     const nodeMaxY = ys.length > 0 ? Math.max(...ys) : 2100;
 
-    const viewWidth = svgViewBox?.width ?? 1024;
-    const viewHeight = svgViewBox?.height ?? 1024;
-    const scaleX = svgViewBox && nodeSpace ? svgViewBox.width / nodeSpace.width : 1;    // CHANGED
-    const scaleY = svgViewBox && nodeSpace ? svgViewBox.height / nodeSpace.height : 1;  // CHANGED
-
+    // Used to fine tune accuracy pathing logic, can comment out if bothersome   
     console.log('nodeMinX:', nodeMinX, 'nodeMinY:', nodeMinY);
     console.log('nodeMaxX:', nodeMaxX, 'nodeMaxY:', nodeMaxY);
+
+    const viewWidth = svgViewBox?.width ?? 1024;
+    const viewHeight = svgViewBox?.height ?? 1024;
+    const scaleX = svgViewBox && nodeSpace ? svgViewBox.width / nodeSpace.width : 1;
+    const scaleY = svgViewBox && nodeSpace ? svgViewBox.height / nodeSpace.height : 1;
 
     const size = planType === 'png' ? 1000 : ('100%' as const);
 

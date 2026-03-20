@@ -36,6 +36,9 @@ const App = () => {
   const [sheetMode, setSheetMode] = useState<SheetMode>('detail');
   const [indoorStartRoomId, setIndoorStartRoomId] = useState<string | null>(null);
   const [indoorEndRoomId, setIndoorEndRoomId] = useState<string | null>(null);
+  const [indoorPathSteps, setIndoorPathSteps] = useState<{ icon: string; label: string }[]>([]);
+  const prevFloorRef = useRef<() => void>(() => { });
+  const nextFloorRef = useRef<() => void>(() => { });
 
   // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -135,6 +138,12 @@ const App = () => {
           exitIndoorView={() => setIsIndoor(false)}
           indoorStartRoomId={indoorStartRoomId}
           indoorEndRoomId={indoorEndRoomId}
+          indoorPathStepsChange={setIndoorPathSteps}
+          
+          onIndoorFloorNavReady={(prev, next) => {
+            prevFloorRef.current = prev;
+            nextFloorRef.current = next;
+          }}
         />
 
         {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -154,6 +163,10 @@ const App = () => {
           onEnterBuilding={handleShowIndoor}
           isIndoor={isIndoor}
           enterIndoorView={toggleIndoorView}
+          indoorPathSteps={indoorPathSteps}
+          onPrevPathFloor={() => prevFloorRef.current?.()}
+          onNextPathFloor={() => nextFloorRef.current?.()}
+
           onIndoorRouteChange={(startId, endId) => {
             setIndoorStartRoomId(startId);
             setIndoorEndRoomId(endId);
