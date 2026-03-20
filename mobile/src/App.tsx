@@ -37,12 +37,13 @@ const App = () => {
   const [indoorStartRoomId, setIndoorStartRoomId] = useState<string | null>(null);
   const [indoorEndRoomId, setIndoorEndRoomId] = useState<string | null>(null);
   const [indoorPathSteps, setIndoorPathSteps] = useState<{ icon: string; label: string }[]>([]);
-  const prevFloorRef = useRef<() => void>(() => { });
-  const nextFloorRef = useRef<() => void>(() => { });
+  const prevFloorRef = useRef<() => void>(() => {});
+  const nextFloorRef = useRef<() => void>(() => {});
 
   // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
   const [sheetOpen, setSheetOpen] = useState(false);
   const mapRef = useRef<MapScreenHandle>(null);
+  const [isIndoor, setIsIndoor] = useState(false);
 
   useEffect(() => {
     bottomSheetAnimatedPosition.value = windowHeight;
@@ -62,11 +63,16 @@ const App = () => {
     bottomSheetRef.current?.open(0);
   }, []);
 
-  const openSearchBuilding = useCallback(() => {
+const openSearchBuilding = useCallback(() => {
+  setSheetOpen(true);
+
+  if (isIndoor) {
+    bottomSheetRef.current?.openIndoorDirections();
+  } else {
     setSheetMode('search');
-    setSheetOpen(true);
     bottomSheetRef.current?.open(1);
-  }, []);
+  }
+}, [isIndoor]);
 
   const handleOpenCalendar = useCallback(async () => {
     openSearchBuilding();
@@ -112,7 +118,6 @@ const App = () => {
   const hideSearchBar = useCallback(() => {
     setSheetOpen(true);
   }, []);
-  const [isIndoor, setIsIndoor] = useState(false);
 
   const handleIndoorFloorNavReady = useCallback((prev: () => void, next: () => void) => {
     prevFloorRef.current = prev;
@@ -165,7 +170,7 @@ const App = () => {
           onIndoorFloorNavReady={handleIndoorFloorNavReady}
         />
 
-        {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
+        {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} isIndoor={isIndoor} />}
 
         <BottomSlider
           userLocation={userLocation}

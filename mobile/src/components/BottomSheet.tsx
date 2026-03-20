@@ -230,6 +230,7 @@ export type BottomSliderHandle = {
   closeCalendarSlider: () => void;
   openCalendarEventsSlider: (calendarIds?: string[]) => void;
   openIndoorNavigation: () => void;
+  openIndoorDirections: () => void;
 };
 
 type BottomSheetProps = {
@@ -376,14 +377,22 @@ const NavigationView = ({
     <View style={directionDetailsStyles.navigationSummaryCard}>
       <View style={directionDetailsStyles.navigationSummaryRow}>
         <View style={directionDetailsStyles.navigationSummaryStat}>
-          <Text numberOfLines={1} adjustsFontSizeToFit style={directionDetailsStyles.navigationSummaryValue}>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={directionDetailsStyles.navigationSummaryValue}
+          >
             {navigationSummary?.arrivalValue ?? '--:--'}
           </Text>
           <Text style={directionDetailsStyles.navigationSummaryLabel}>arrival</Text>
         </View>
         <View style={directionDetailsStyles.navigationSummaryDivider} />
         <View style={directionDetailsStyles.navigationSummaryStat}>
-          <Text numberOfLines={1} adjustsFontSizeToFit style={directionDetailsStyles.navigationSummaryValue}>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={directionDetailsStyles.navigationSummaryValue}
+          >
             {navigationSummary?.durationStat.value ?? '--'}
           </Text>
           <Text style={directionDetailsStyles.navigationSummaryLabel}>
@@ -392,7 +401,11 @@ const NavigationView = ({
         </View>
         <View style={directionDetailsStyles.navigationSummaryDivider} />
         <View style={directionDetailsStyles.navigationSummaryStat}>
-          <Text numberOfLines={1} adjustsFontSizeToFit style={directionDetailsStyles.navigationSummaryValue}>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={directionDetailsStyles.navigationSummaryValue}
+          >
             {navigationSummary?.distanceStat.value ?? '--'}
           </Text>
           <Text style={directionDetailsStyles.navigationSummaryLabel}>
@@ -564,7 +577,11 @@ const renderBottomSheetContent = (props: {
   showDirectionsPanel: () => void;
   startBuilding: BuildingShape | null;
   shuttlePlan: ShuttlePlan | null;
-  navigationSummary: { arrivalValue: string; durationStat: { value: string; label: string }; distanceStat: { value: string; label: string } } | null;
+  navigationSummary: {
+    arrivalValue: string;
+    durationStat: { value: string; label: string };
+    distanceStat: { value: string; label: string };
+  } | null;
   endNavigation: () => void;
   isCrossCampusRoute: boolean;
   isRouteLoading: boolean;
@@ -629,7 +646,12 @@ const renderBottomSheetContent = (props: {
   }
 
   if (props.activeView === 'navigation') {
-    return <NavigationView navigationSummary={props.navigationSummary} endNavigation={props.endNavigation} />;
+    return (
+      <NavigationView
+        navigationSummary={props.navigationSummary}
+        endNavigation={props.endNavigation}
+      />
+    );
   }
 
   if (props.activeView === 'indoor-directions') {
@@ -1123,8 +1145,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const canStartNavigationFromCurrentLocation = routeStartSource === 'current';
     const shuttlePickupCoords =
       travelMode === 'shuttle' &&
-        shuttlePlan?.isServiceAvailable &&
-        shuttlePlan.nextDepartureInMinutes !== null
+      shuttlePlan?.isServiceAvailable &&
+      shuttlePlan.nextDepartureInMinutes !== null
         ? (shuttlePlan.pickup?.coords ?? null)
         : null;
     const routeDestinationCoords = shuttlePickupCoords ?? destinationCoords;
@@ -1287,7 +1309,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         }
         showUpcomingClassesSlider(normalizedIds);
       },
-
+      openIndoorDirections: () => {
+        setActiveView('indoor-directions');
+        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+      },
       openIndoorNavigation: () => {
         setActiveView('indoor-navigation');
         sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
