@@ -426,6 +426,7 @@ const NavigationView = ({
   </>
 );
 
+
 const IndoorDirectionsView = ({
   startRoom,
   destinationRoom,
@@ -433,6 +434,7 @@ const IndoorDirectionsView = ({
   closeSheet,
   setSearchFor,
   setActiveView,
+  clearSearchOptions,
 }: {
   startRoom: string | null;
   destinationRoom: string | null;
@@ -440,6 +442,7 @@ const IndoorDirectionsView = ({
   closeSheet: () => void;
   setSearchFor: React.Dispatch<React.SetStateAction<'start' | 'destination' | null>>;
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
+  clearSearchOptions: () => void;
 }) => (
   <IndoorDirectionDetails
     startRoom={startRoom}
@@ -449,6 +452,7 @@ const IndoorDirectionsView = ({
     onPressDestination={() => setSearchFor('destination')}
     hasPath={indoorPathSteps.length > 0}
     onPressGo={() => setActiveView('indoor-navigation')}
+    onClear={clearSearchOptions}
   />
 );
 
@@ -604,6 +608,7 @@ const renderBottomSheetContent = (props: {
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   onPrevPathFloor?: () => void;
   onNextPathFloor?: () => void;
+  clearIndoorSearch?:()=>void;
 }) => {
   if (props.isSearchActive) {
     return <SearchContent {...props} />;
@@ -663,6 +668,7 @@ const renderBottomSheetContent = (props: {
         closeSheet={props.closeSheet}
         setSearchFor={props.setSearchFor}
         setActiveView={props.setActiveView}
+        clearSearchOptions={props.clearIndoorSearch}
       />
     );
   }
@@ -740,6 +746,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       return [...DEFAULT_SNAP_POINTS];
     }, [activeView]);
 
+const clearIndoorSearch = useCallback(() => {
+  setStartRoom(null);
+  setDestinationRoom(null);
+  setStartRoomId(null);
+  setEndRoomId(null);
+
+  onIndoorRouteChange?.(null, null);
+}, [onIndoorRouteChange]);
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
     const [startLocationSnapshot, setStartLocationSnapshot] = useState<UserCoords | null>(null);
@@ -1385,6 +1399,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             setActiveView,
             onPrevPathFloor,
             onNextPathFloor,
+            clearIndoorSearch,
           })}
         </BottomSheetView>
       </BottomSheet>

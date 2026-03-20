@@ -1,3 +1,12 @@
 appId: host.exp.exponent
 ---
--
+- tapOn: Get to...
+- tapOn: Set as starting point
+- tapOn: H Building
+- tapOn: Search buildings...
+- tapOn: H-102-3
+- tapOn: Set Destination
+- tapOn: H Building
+- swipe:
+    direction: UP
+

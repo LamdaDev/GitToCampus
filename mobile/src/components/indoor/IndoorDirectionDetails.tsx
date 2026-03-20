@@ -16,11 +16,11 @@ type DirectionDetailProps = {
   selectedTravelMode?: IndoorRoutePlannerMode;
   onPressGo?: () => void;
   hasPath?: boolean;
+  onClear?: () => void;
 };
 
 const getDisplayText = (value: string | null, fallback: string) => value ?? fallback;
 
-/* ---------- Location Row (UNCHANGED STRUCTURE) ---------- */
 const LocationRow = ({
   icon,
   text,
@@ -51,7 +51,6 @@ const LocationRow = ({
   </View>
 );
 
-/* ---------- Transport Button ---------- */
 const TransportButton = ({
   mode,
   activeMode,
@@ -92,6 +91,7 @@ export default function IndoorDirectionDetails({
   onTravelModeChange,
   onPressGo,
   hasPath,
+  onClear,
 }: Readonly<DirectionDetailProps>) {
   const [activeMode, setActiveMode] = useState<IndoorRoutePlannerMode>(
     selectedTravelMode ?? 'walking',
@@ -108,23 +108,29 @@ export default function IndoorDirectionDetails({
 
   return (
     <>
-      {/* HEADER — EXACT ORIGINAL STRUCTURE */}
       <View style={directionDetailsStyles.header}>
         <View>
           <Text style={directionDetailsStyles.directionTitle}> Directions </Text>
         </View>
         <View style={directionDetailsStyles.headerIcons}>
           <TouchableOpacity
+            testID="clear-button"
+            style={directionDetailsStyles.iconButton}
+            onPress={onClear}
+          >
+     <Ionicons name="close-sharp" size={22} color="#fff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
             testID="directions-close-button"
             style={directionDetailsStyles.iconButton}
             onPress={onClose}
           >
-            <Ionicons name="close-sharp" size={25} color="#fff" />
+            <Ionicons name="chevron-down-outline" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* LOCATIONS */}
       <View style={directionDetailsStyles.locationHeader}>
         <LocationRow
           icon="navigate"
@@ -133,7 +139,6 @@ export default function IndoorDirectionDetails({
           onPress={onPressStart}
         />
 
-        {/* SEPARATOR — FIXED */}
         <View style={directionDetailsStyles.separationHeader}>
           <Ionicons name="ellipsis-vertical" size={20} style={directionDetailsStyles.dragIcon} />
           <Divider
@@ -141,7 +146,7 @@ export default function IndoorDirectionDetails({
               backgroundColor: '#9B9B9B',
               height: 1.5,
               flex: 1,
-              alignSelf: 'center', // IMPORTANT
+              alignSelf: 'center',
             }}
           />
         </View>
@@ -154,7 +159,6 @@ export default function IndoorDirectionDetails({
         />
       </View>
 
-      {/* TRANSPORT */}
       <View style={directionDetailsStyles.transportationHeader}>
         <View style={directionDetailsStyles.transportationSubHeader}>
           <TransportButton
@@ -183,7 +187,6 @@ export default function IndoorDirectionDetails({
         </View>
       </View>
 
-      {/* GO SECTION */}
       {!!startRoom && !!destinationRoom && (
         <View style={directionDetailsStyles.routeMetaContainer}>
           <View style={directionDetailsStyles.routeSummaryRow}>
