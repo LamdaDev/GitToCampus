@@ -26,7 +26,7 @@ const IndoorControls = ({
   openAvailableBuildings,
   currentFloor,
   building,
-  isIndoorSheetOpen, 
+  isIndoorSheetOpen,
   onPrevPathFloor,
   onNextPathFloor,
   hasPath,

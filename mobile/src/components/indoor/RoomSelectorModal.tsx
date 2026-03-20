@@ -26,7 +26,7 @@ export default function RoomSelectorModal({ visible, rooms, title, onSelect, onC
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rooms;
-    return rooms.filter(r => r.label.toLowerCase().includes(q));
+    return rooms.filter((r) => r.label.toLowerCase().includes(q));
   }, [search, rooms]);
 
   const handleSelect = (room: IndoorNode) => {
@@ -46,7 +46,10 @@ export default function RoomSelectorModal({ visible, rooms, title, onSelect, onC
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
-          <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity
+            onPress={onClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Text style={styles.closeBtn}>✕</Text>
           </TouchableOpacity>
         </View>
@@ -62,7 +65,7 @@ export default function RoomSelectorModal({ visible, rooms, title, onSelect, onC
 
         <FlatList
           data={filtered}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
           keyboardShouldPersistTaps="handled"
         />

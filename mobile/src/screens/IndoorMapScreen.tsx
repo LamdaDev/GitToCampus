@@ -7,7 +7,12 @@ import { floorPlans } from '../utils/floorPlans';
 import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/BuildingListSheet';
 import PathOverlay from '../components/indoor/PathOverlay';
 import RoomSelectorModal from '../components/indoor/RoomSelectorModal';
-import { findIndoorPath, getRoomNodes, type IndoorNode, type IndoorEdge } from '../utils/indoor/indoorPathFinding';
+import {
+  findIndoorPath,
+  getRoomNodes,
+  type IndoorNode,
+  type IndoorEdge,
+} from '../utils/indoor/indoorPathFinding';
 import hallGraph from '../assets/floor_plans_json/hall.json';
 import ccGraph from '../assets/floor_plans_json/cc1.json';
 import mbGraph from '../assets/floor_plans_json/mb_floors_combined.json';
@@ -22,6 +27,8 @@ type props = {
   hideAppSearchBar: () => void;
   revealSearchBar: () => void;
   building: BuildingShape;
+  externalStartRoomId?: string | null;
+  externalEndRoomId?: string | null;
 };
 
 const BUILDING_GRAPHS: Record<string, { nodes: IndoorNode[]; edges: IndoorEdge[] }> = {
@@ -31,7 +38,6 @@ const BUILDING_GRAPHS: Record<string, { nodes: IndoorNode[]; edges: IndoorEdge[]
   VE: veGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
   VL: vlGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
 };
-
 
 const getPathSteps = (path: IndoorNode[]) => {
   const steps: { icon: string; label: string }[] = [];
@@ -56,7 +62,10 @@ const getPathSteps = (path: IndoorNode[]) => {
 
   const start = path[0];
   const end = path[path.length - 1];
-  steps.unshift({ icon: '🟢', label: `Start: ${start.label || start.type} (Floor ${start.floor})` });
+  steps.unshift({
+    icon: '🟢',
+    label: `Start: ${start.label || start.type} (Floor ${start.floor})`,
+  });
   steps.push({ icon: '🔴', label: `End: ${end.label || end.type} (Floor ${end.floor})` });
 
   return steps;
@@ -68,6 +77,8 @@ export default function IndoorMapScreen({
   hideAppSearchBar,
   revealSearchBar,
   building,
+  externalStartRoomId,
+  externalEndRoomId,
 }: Readonly<props>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
 
@@ -82,33 +93,38 @@ export default function IndoorMapScreen({
 
   const buildingGraph = useMemo(() => {
     const code = selectedBuilding?.shortCode;
-    const graph = code ? BUILDING_GRAPHS[code] ?? null : null;
+    const graph = code ? (BUILDING_GRAPHS[code] ?? null) : null;
     console.log('shortCode:', code, '| graph found:', !!graph, '| nodes:', graph?.nodes?.length);
     return graph;
   }, [selectedBuilding?.shortCode]);
 
   const allRooms = useMemo(() => {
     if (!buildingGraph) return [];
-    const connectedIds = new Set(
-      buildingGraph.edges.flatMap(e => [e.source, e.target])
-    );
-    return getRoomNodes(buildingGraph.nodes).filter(n => connectedIds.has(n.id));
+    const connectedIds = new Set(buildingGraph.edges.flatMap((e) => [e.source, e.target]));
+    return getRoomNodes(buildingGraph.nodes).filter((n) => connectedIds.has(n.id));
   }, [buildingGraph]);
 
   const fullPath = useMemo(() => {
     if (!startRoomId || !endRoomId || !buildingGraph) return null;
 
-    const startEdges = buildingGraph.edges.filter(e => e.source === startRoomId || e.target === startRoomId);
-    const endEdges = buildingGraph.edges.filter(e => e.source === endRoomId || e.target === endRoomId);
+    const startEdges = buildingGraph.edges.filter(
+      (e) => e.source === startRoomId || e.target === startRoomId,
+    );
+    const endEdges = buildingGraph.edges.filter(
+      (e) => e.source === endRoomId || e.target === endRoomId,
+    );
     console.log('start edges:', startEdges.length, 'end edges:', endEdges.length);
 
-    const result = findIndoorPath(
-      buildingGraph.nodes,
-      buildingGraph.edges,
+    const result = findIndoorPath(buildingGraph.nodes, buildingGraph.edges, startRoomId, endRoomId);
+    console.log(
+      'fullPath result:',
+      result?.length,
+      'nodes',
+      'start:',
       startRoomId,
+      'end:',
       endRoomId,
     );
-    console.log('fullPath result:', result?.length, 'nodes', 'start:', startRoomId, 'end:', endRoomId);
     return result;
   }, [startRoomId, endRoomId, buildingGraph]);
 
@@ -116,15 +132,15 @@ export default function IndoorMapScreen({
   const currentFloorPath = useMemo(() => {
     if (!fullPath || currentFloor === null) return [];
     const floorNum = Number(currentFloor);
-    return fullPath.filter(n => n.floor === floorNum);
+    return fullPath.filter((n) => n.floor === floorNum);
   }, [fullPath, currentFloor]);
 
   const startRoom = useMemo(
-    () => allRooms.find(r => r.id === startRoomId) ?? null,
+    () => allRooms.find((r) => r.id === startRoomId) ?? null,
     [allRooms, startRoomId],
   );
   const endRoom = useMemo(
-    () => allRooms.find(r => r.id === endRoomId) ?? null,
+    () => allRooms.find((r) => r.id === endRoomId) ?? null,
     [allRooms, endRoomId],
   );
 
@@ -145,7 +161,7 @@ export default function IndoorMapScreen({
   // Floors where the path actually exists, in order
   const pathFloors = useMemo(() => {
     if (!fullPath) return [];
-    const floors = [...new Set(fullPath.map(n => String(n.floor)))];
+    const floors = [...new Set(fullPath.map((n) => String(n.floor)))];
     return floors.sort((a, b) => Number(a) - Number(b));
   }, [fullPath]);
 
@@ -209,9 +225,17 @@ export default function IndoorMapScreen({
 
   useEffect(() => {
     if (!startRoomId || !endRoomId || !buildingGraph) return;
-    const node = buildingGraph.nodes.find(n => n.id === startRoomId);
+    const node = buildingGraph.nodes.find((n) => n.id === startRoomId);
     if (node) setCurrentFloor(String(node.floor));
   }, [startRoomId, endRoomId, buildingGraph]);
+
+  useEffect(() => {
+    if (externalStartRoomId !== undefined) setStartRoomId(externalStartRoomId ?? null);
+  }, [externalStartRoomId]);
+
+  useEffect(() => {
+    if (externalEndRoomId !== undefined) setEndRoomId(externalEndRoomId ?? null);
+  }, [externalEndRoomId]);
 
   const handleFloorUp = useCallback(() => {
     setCurrentFloor((prev) => {
@@ -240,9 +264,8 @@ export default function IndoorMapScreen({
       ? indoorFloorPlans[currentFloor as unknown as keyof typeof indoorFloorPlans]
       : null;
 
-
   console.log('plan:', plan?.type, plan);
-  
+
   return (
     <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'white' }}>
       {/* CONTROLS */}
@@ -259,33 +282,6 @@ export default function IndoorMapScreen({
         onNextPathFloor={handleNextPathFloor}
         hasPath={!!fullPath && pathFloors.length > 1}
       />
-
-      {/* ── Rough path selector bar — swap this out when the search bar is ready ── */}
-      <View style={styles.pathBar}>
-        <TouchableOpacity
-          style={[styles.pathBtn, startRoom && styles.pathBtnActive]}
-          onPress={() => setSelectorTarget('start')}
-        >
-          <Text style={styles.pathBtnText} numberOfLines={1}>
-            {startRoom ? `From: ${startRoom.label}` : 'Select start'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.pathBtn, endRoom && styles.pathBtnActive]}
-          onPress={() => setSelectorTarget('end')}
-        >
-          <Text style={styles.pathBtnText} numberOfLines={1}>
-            {endRoom ? `To: ${endRoom.label}` : 'Select destination'}
-          </Text>
-        </TouchableOpacity>
-
-        {(startRoom || endRoom) && (
-          <TouchableOpacity style={styles.clearBtn} onPress={clearPath}>
-            <Text style={styles.clearBtnText}>✕</Text>
-          </TouchableOpacity>
-        )}
-      </View>
 
       {/* PATH NAV */}
       {fullPath && pathFloors.length > 1 && (
@@ -315,9 +311,9 @@ export default function IndoorMapScreen({
       {/* MAP */}
       <ReactNativeZoomableView
         maxZoom={10}
-        minZoom={1}
+        minZoom={0.4}
         zoomStep={0.5}
-        initialZoom={1}
+        initialZoom={0.4}
         bindToBorders={true}
       >
         <View style={{ width: 1000, height: 1000 }}>

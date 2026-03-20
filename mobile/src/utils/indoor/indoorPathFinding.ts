@@ -42,10 +42,10 @@ export const findIndoorPath = (
   accessibleOnly = false,
 ): IndoorNode[] | null => {
   const adj = buildAdjacency(nodes, edges, accessibleOnly);
-  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
-  const dist = new Map<string, number>(nodes.map(n => [n.id, Infinity]));
-  const prev = new Map<string, string | null>(nodes.map(n => [n.id, null]));
+  const dist = new Map<string, number>(nodes.map((n) => [n.id, Infinity]));
+  const prev = new Map<string, string | null>(nodes.map((n) => [n.id, null]));
   const visited = new Set<string>();
 
   dist.set(startId, 0);
@@ -82,6 +82,4 @@ export const findIndoorPath = (
 };
 
 export const getRoomNodes = (nodes: IndoorNode[], floor?: number): IndoorNode[] =>
-  nodes.filter(
-    n => n.type === 'room' && n.label && (floor === undefined || n.floor === floor),
-  );
+  nodes.filter((n) => n.type === 'room' && n.label && (floor === undefined || n.floor === floor));

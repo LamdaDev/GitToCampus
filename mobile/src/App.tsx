@@ -34,6 +34,8 @@ const App = () => {
   const [outdoorRoute, setOutdoorRoute] = useState<OutdoorRouteOverlay | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
   const [sheetMode, setSheetMode] = useState<SheetMode>('detail');
+  const [indoorStartRoomId, setIndoorStartRoomId] = useState<string | null>(null);
+  const [indoorEndRoomId, setIndoorEndRoomId] = useState<string | null>(null);
 
   // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -131,6 +133,8 @@ const App = () => {
           hideAppSearchBar={hideSearchBar}
           revealSearchBar={toggleSearchBarState}
           exitIndoorView={() => setIsIndoor(false)}
+          indoorStartRoomId={indoorStartRoomId}
+          indoorEndRoomId={indoorEndRoomId}
         />
 
         {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -150,6 +154,10 @@ const App = () => {
           onEnterBuilding={handleShowIndoor}
           isIndoor={isIndoor}
           enterIndoorView={toggleIndoorView}
+          onIndoorRouteChange={(startId, endId) => {
+            setIndoorStartRoomId(startId);
+            setIndoorEndRoomId(endId);
+          }}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

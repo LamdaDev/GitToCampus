@@ -251,6 +251,7 @@ type BottomSheetProps = {
   setStartRoom: React.Dispatch<React.SetStateAction<string | null>>;
   setDestinationRoom: React.Dispatch<React.SetStateAction<string | null>>;
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
+  onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -586,9 +587,11 @@ const renderBottomSheetContent = ({
   if (activeView === 'indoor-directions') {
     return (
       <IndoorDirectionDetails
-        startRoom={'Set Starting Point'}
+        startRoom={startRoom}
         destinationRoom={destinationRoom}
         onClose={closeSheet}
+        onPressStart={() => setSearchFor('start')}
+        onPressDestination={() => setSearchFor('destination')}
       />
     );
   }
@@ -635,6 +638,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onEnterBuilding,
       isIndoor,
       enterIndoorView,
+      onIndoorRouteChange,
     },
     ref,
   ) => {
@@ -758,23 +762,32 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [calendarGoErrorMessage, setCalendarGoErrorMessage] = useState<string | null>(null);
     const isInternalSearch = searchFor !== null;
     const isGlobalSearch = mode === 'search';
-    const isSearchActive =
-      (isInternalSearch || isGlobalSearch || calendarSliderMode !== null) &&
-      activeView !== 'indoor-directions';
+    const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
+
+    const [startRoomId, setStartRoomId] = useState<string | null>(null);
+    const [endRoomId, setEndRoomId] = useState<string | null>(null);
 
     const handleSelectRoom = useCallback(
       (room: RoomNode) => {
-        if (!startRoom) {
+        if (searchFor === 'start') {
           setStartRoom(room.label);
+          setStartRoomId(room.id);
         } else {
           setDestinationRoom(room.label);
-          setSearchFor(null);
-          onExitSearch();
-          setCalendarSliderMode(null);
+          setEndRoomId(room.id);
+        }
+        setSearchFor(null);
+        onExitSearch();
+        setCalendarSliderMode(null);
+        if (activeView !== 'indoor-directions') {
           setActiveView('indoor-directions');
         }
+        onIndoorRouteChange?.(
+          searchFor === 'start' ? room.id : startRoomId,
+          searchFor !== 'start' ? room.id : endRoomId,
+        );
       },
-      [startRoom],
+      [searchFor, activeView, startRoomId, endRoomId],
     );
 
     const openCalendarSelectionSlider = useCallback(
@@ -968,7 +981,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         selectedBuildingId !== previousSelectedBuildingIdRef.current;
       previousSelectedBuildingIdRef.current = selectedBuildingId;
 
-      if (activeView !== 'directions') return;
+      if (activeView === 'indoor-directions') return;
       if (!selectedBuilding) return;
       if (selectedBuilding.id === startBuilding?.id) return;
       if (!didSelectedBuildingChange && destinationBuilding) return;

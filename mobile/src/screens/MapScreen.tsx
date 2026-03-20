@@ -45,6 +45,8 @@ type MapScreenProps = {
   bottomSheetAnimatedPosition?: SharedValue<number>;
   mapHandle?: React.RefObject<MapScreenHandle | null>;
   exitIndoorView: () => void;
+  indoorStartRoomId?: string | null;
+  indoorEndRoomId?: string | null;
 };
 
 export type MapScreenHandle = {
@@ -543,6 +545,8 @@ function MapScreen({
   bottomSheetAnimatedPosition,
   mapHandle,
   exitIndoorView,
+  indoorStartRoomId,
+  indoorEndRoomId,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -779,6 +783,8 @@ function MapScreen({
           building={indoorBuilding}
           hideAppSearchBar={hideAppSearchBar}
           revealSearchBar={revealSearchBar}
+          externalStartRoomId={indoorStartRoomId}
+          externalEndRoomId={indoorEndRoomId}
         />
       ) : (
         <MapControls
