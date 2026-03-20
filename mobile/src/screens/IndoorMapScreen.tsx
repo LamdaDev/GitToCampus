@@ -8,7 +8,6 @@ import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/Bu
 import PathOverlay from '../components/indoor/PathOverlay';
 import {
   findIndoorPath,
-  getRoomNodes,
   type IndoorNode,
   type IndoorEdge,
 } from '../utils/indoor/indoorPathFinding';
@@ -32,6 +31,7 @@ type props = {
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
 };
 
+// ── Building graph data keyed by short code ──────────────────────────────────
 const BUILDING_GRAPHS: Record<string, { nodes: IndoorNode[]; edges: IndoorEdge[] }> = {
   H: hallGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
   CC: ccGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
@@ -40,6 +40,7 @@ const BUILDING_GRAPHS: Record<string, { nodes: IndoorNode[]; edges: IndoorEdge[]
   VL: vlGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
 };
 
+// ── SVG coordinates for scaling path overlay ───────────────────────────
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
   H: { width: 2040, height: 2040 },
   CC: { width: 4096, height: 1024 },
@@ -56,6 +57,7 @@ const SVG_VIEWBOXES: Record<string, { width: number; height: number }> = {
   VL: { width: 1000, height: 1000 },
 };
 
+// ── Converts path steps into labelled navigation steps ───────────────────────────
 const getPathSteps = (path: IndoorNode[]) => {
   const steps: { icon: string; label: string }[] = [];
   let prevFloor = path[0]?.floor;
@@ -108,7 +110,6 @@ export default function IndoorMapScreen({
   // ── Path state ──────────────────────────────────────────────────────────────
   const [startRoomId, setStartRoomId] = useState<string | null>(null);
   const [endRoomId, setEndRoomId] = useState<string | null>(null);
-  const [selectorTarget, setSelectorTarget] = useState<'start' | 'end' | null>(null);
 
   // ── Path Logic ──────────────────────────────────────────────────────────────
   const buildingGraph = useMemo(() => {
@@ -116,12 +117,6 @@ export default function IndoorMapScreen({
     const graph = code ? (BUILDING_GRAPHS[code] ?? null) : null;
     return graph;
   }, [selectedBuilding?.shortCode]);
-
-  const allRooms = useMemo(() => {
-    if (!buildingGraph) return [];
-    const connectedIds = new Set(buildingGraph.edges.flatMap((e) => [e.source, e.target]));
-    return getRoomNodes(buildingGraph.nodes).filter((n) => connectedIds.has(n.id));
-  }, [buildingGraph]);
 
   const fullPath = useMemo(() => {
     if (!startRoomId || !endRoomId || !buildingGraph) return null;
@@ -135,15 +130,6 @@ export default function IndoorMapScreen({
     const floorNum = Number(currentFloor);
     return fullPath.filter((n) => n.floor === floorNum);
   }, [fullPath, currentFloor]);
-
-  const handleRoomSelect = useCallback(
-    (room: IndoorNode) => {
-      if (selectorTarget === 'start') setStartRoomId(room.id);
-      else setEndRoomId(room.id);
-      setSelectorTarget(null);
-    },
-    [selectorTarget],
-  );
 
   const pathFloors = useMemo(() => {
     if (!fullPath) return [];
@@ -172,14 +158,14 @@ export default function IndoorMapScreen({
     if (index > 0) setCurrentFloor(pathFloors[index - 1]);
   }, [currentFloor, pathFloors]);
 
-  // OPEN SHEET
+  // OPEN BUILDING LIST SHEET
   const openAvailableBuildings = () => {
     bottomSheetRef.current?.open();
     hideAppSearchBar();
     setIndoorSheetOpen(true);
   };
 
-  // CLOSE SHEET
+  // CLOSE BUILDING LIST SHEET
   const handleRevealSearchBar = () => {
     revealSearchBar();
     setIndoorSheetOpen(false);
@@ -219,12 +205,14 @@ export default function IndoorMapScreen({
     setEndRoomId(null);
   }, [selectedBuilding]);
 
+  // ── Jump to start room's floor when a route is set ───────────────────────────
   useEffect(() => {
     if (!startRoomId || !endRoomId || !buildingGraph) return;
     const node = buildingGraph.nodes.find((n) => n.id === startRoomId);
     if (node) setCurrentFloor(String(node.floor));
   }, [startRoomId, endRoomId, buildingGraph]);
 
+  // ── Sync externalroomId from BottomSlider ─────────────────────────────────
   useEffect(() => {
     if (externalStartRoomId !== undefined) setStartRoomId(externalStartRoomId ?? null);
   }, [externalStartRoomId]);
@@ -241,10 +229,12 @@ export default function IndoorMapScreen({
     }
   }, [fullPath]);
 
+  // ── Pass floor nav handlers up to parent ─────────────────────────────────────
   useEffect(() => {
     onFloorNavReady?.(handlePrevPathFloor, handleNextPathFloor);
   }, [handlePrevPathFloor, handleNextPathFloor]);
 
+   // ── BUILDING FLOOR NAV ────────────────────────────
   const handleFloorUp = useCallback(() => {
     setCurrentFloor((prev) => {
       if (prev === null) return prev;
@@ -271,9 +261,6 @@ export default function IndoorMapScreen({
     indoorFloorPlans && currentFloor !== null
       ? indoorFloorPlans[currentFloor as unknown as keyof typeof indoorFloorPlans]
       : null;
-
-  console.log('fullPath:', fullPath?.length, 'start:', startRoomId, 'end:', endRoomId);
-  console.log('currentFloorPath:', currentFloorPath.length, 'currentFloor:', currentFloor);
 
   return (
     <View style={styles.container}>

@@ -87,7 +87,7 @@ export default function IndoorNavigationDetails({
         </View>
       )}
 
-      {/* STEPS */}
+      {/* PATH STEPS */}
       <View style={directionDetailsStyles.transitContainer}>
         {pathSteps.length === 0 ? (
           <Text style={directionDetailsStyles.transitEmptyText}>
@@ -96,7 +96,7 @@ export default function IndoorNavigationDetails({
         ) : (
           pathSteps.map((step, index) => (
             <View
-              key={index}
+              key={step.label}
               style={[
                 directionDetailsStyles.transitStepRow,
                 index > 0 && directionDetailsStyles.transitStepRowWithDivider,
