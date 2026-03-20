@@ -26,6 +26,19 @@ export default function IndoorNavigationDetails({
   onPrevFloor,
   onNextFloor,
 }: Readonly<Props>) {
+
+  const isSameFloor = () => {
+    const startFloorLevel = startRoom?.split('-')[1]?.[0]
+    const destinationFloorLevel = destinationRoom?.split('-')[1]?.[0]
+    return startFloorLevel != destinationFloorLevel
+  }
+
+  const isSameBuilding = () => {
+    const startBuilding = startRoom?.split('-')[0]
+    const destinationBuilding = startRoom?.split('-')[0]
+    return startBuilding == destinationBuilding
+  }
+
   return (
     <ScrollView
       style={directionDetailsStyles.contentScroll}
@@ -56,9 +69,10 @@ export default function IndoorNavigationDetails({
           </TouchableOpacity>
         </View>
       </View>
+      
 
       {/* FLOOR NAV */}
-      {onPrevFloor && onNextFloor && (
+      {isSameBuilding() && isSameFloor() ? (
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
           <TouchableOpacity
             style={{
@@ -85,7 +99,7 @@ export default function IndoorNavigationDetails({
             <Text style={{ color: '#fff', fontWeight: '700' }}>Next Floor</Text>
           </TouchableOpacity>
         </View>
-      )}
+      ): null}
 
       {/* PATH STEPS */}
       <View style={directionDetailsStyles.transitContainer}>
