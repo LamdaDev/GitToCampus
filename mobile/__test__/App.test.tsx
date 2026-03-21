@@ -341,7 +341,6 @@ describe('App', () => {
     expect(() => fireEvent.press(getByTestId('open-detail-sheet'))).not.toThrow();
   });
 
-  // here
   test('handleIndoorFloorNavReady stores floor nav callbacks without throwing', () => {
     const { getByTestId } = render(<App />);
     expect(() => fireEvent.press(getByTestId('trigger-floor-nav-ready'))).not.toThrow();

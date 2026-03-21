@@ -25,7 +25,6 @@ const IndoorControls = ({
   currentFloor,
   building,
   isIndoorSheetOpen,
-  hasPath,
 }: Props) => {
   const openBuildingList = () => {
     openAvailableBuildings();

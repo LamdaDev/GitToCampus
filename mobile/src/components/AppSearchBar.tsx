@@ -8,7 +8,7 @@ type AppSearchBarProps = {
   isIndoor: boolean;
 };
 
-export default function AppSearchBar({ openSearch, isIndoor }: Readonly<AppSearchBarProps>) {
+export default function AppSearchBar({ openSearch }: Readonly<AppSearchBarProps>) {
   return (
     <View style={searchBar.container}>
       <TouchableOpacity onPress={openSearch}>
