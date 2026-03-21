@@ -5,7 +5,7 @@ import BottomSheet from '../src/components/BottomSheet';
 import App from '../src/App';
 
 const mockUseFonts = jest.fn(() => [true]);
-const mockInitializeClarityAsync = jest.fn(async () => { });
+const mockInitializeClarityAsync = jest.fn(async () => {});
 const mockCloseCalendarSlider = jest.fn();
 const mockBottomSheetOpen = jest.fn();
 const mockOpenCalendarEventsSlider = jest.fn();
@@ -105,7 +105,12 @@ jest.mock('../src/screens/MapScreen', () => {
         </TouchableOpacity>
         <TouchableOpacity
           testID="trigger-floor-nav-ready"
-          onPress={() => onIndoorFloorNavReady?.(() => { }, () => { })}
+          onPress={() =>
+            onIndoorFloorNavReady?.(
+              () => {},
+              () => {},
+            )
+          }
         >
           <Text>Floor Nav Ready</Text>
         </TouchableOpacity>
@@ -282,7 +287,7 @@ describe('App', () => {
 
   test('calendar shortcut logs warning when calendar state loading fails', async () => {
     const error = new Error('calendar auth read failed');
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     mockGetStoredGoogleCalendarSessionState.mockRejectedValueOnce(error);
 
     const { getByTestId } = render(<App />);
@@ -332,7 +337,6 @@ describe('App', () => {
   });
 
   test('enterIndoorView sets isIndoor state without throwing', () => {
-
     const { getByTestId } = render(<App />);
     expect(() => fireEvent.press(getByTestId('open-detail-sheet'))).not.toThrow();
   });

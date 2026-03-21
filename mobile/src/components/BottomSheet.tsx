@@ -486,6 +486,24 @@ const IndoorNavigationView = ({
   />
 );
 
+type SearchContentProps = {
+  calendarSliderMode: 'selection' | 'events' | null;
+  isInternalSearch: boolean;
+  selectedCalendarIds: string[];
+  handleReselectCalendars: () => void;
+  handleCloseUpcomingClassesSlider: () => void;
+  handleCloseCalendarSelectionSlider: () => void;
+  showUpcomingClassesSlider: (calendarIds: string[]) => void;
+  buildings: BuildingShape[];
+  handleInternalSearch: (building: BuildingShape) => void;
+  closeSearchBuilding: (building: BuildingShape) => void;
+  openCalendarSelectionAfterConnect: () => void;
+  handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  calendarGoErrorMessage: string | null;
+  isIndoor: boolean;
+  onSelectRoom: (room: RoomNode) => void;
+};
+
 const SearchContent = ({
   calendarSliderMode,
   isInternalSearch,
@@ -502,23 +520,7 @@ const SearchContent = ({
   calendarGoErrorMessage,
   isIndoor,
   onSelectRoom,
-}: {
-  calendarSliderMode: 'selection' | 'events' | null;
-  isInternalSearch: boolean;
-  selectedCalendarIds: string[];
-  handleReselectCalendars: () => void;
-  handleCloseUpcomingClassesSlider: () => void;
-  handleCloseCalendarSelectionSlider: () => void;
-  showUpcomingClassesSlider: (calendarIds: string[]) => void;
-  buildings: BuildingShape[];
-  handleInternalSearch: (building: BuildingShape) => void;
-  closeSearchBuilding: (building: BuildingShape) => void;
-  openCalendarSelectionAfterConnect: () => void;
-  handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
-  calendarGoErrorMessage: string | null;
-  isIndoor: boolean;
-  onSelectRoom: (room: RoomNode) => void;
-}) => {
+}: SearchContentProps) => {
   if (calendarSliderMode === 'events' && !isInternalSearch) {
     return (
       <UpcomingClassesSlider

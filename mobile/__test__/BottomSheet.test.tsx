@@ -1249,14 +1249,14 @@ describe('BottomSheet', () => {
       bounds: null,
       ...(request.mode === 'transit'
         ? {
-          transitInstructions: [
-            {
-              id: 'transit-0-1',
-              type: 'transit',
-              title: 'Board the 12 bus',
-            },
-          ],
-        }
+            transitInstructions: [
+              {
+                id: 'transit-0-1',
+                type: 'transit',
+                title: 'Board the 12 bus',
+              },
+            ],
+          }
         : {}),
     }));
 
@@ -1362,7 +1362,7 @@ describe('BottomSheet', () => {
 
   test('clears route and warns when directions fetch fails', async () => {
     const passOutdoorRoute = jest.fn();
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(new Error('bad request'));
 
     const { getByTestId } = render(
@@ -1390,7 +1390,7 @@ describe('BottomSheet', () => {
 
   test('shows missing API key error when directions service reports MISSING_API_KEY', async () => {
     const passOutdoorRoute = jest.fn();
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(
       new DirectionsServiceError('MISSING_API_KEY', 'Missing key'),
     );
@@ -1419,7 +1419,7 @@ describe('BottomSheet', () => {
 
   test('shows no-route error when directions service reports NO_ROUTE', async () => {
     const passOutdoorRoute = jest.fn();
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(
       new DirectionsServiceError('NO_ROUTE', 'No route'),
     );
@@ -1447,7 +1447,7 @@ describe('BottomSheet', () => {
   });
 
   test('shows quota error when directions service reports OVER_QUERY_LIMIT', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(
       new DirectionsServiceError('OVER_QUERY_LIMIT', 'Quota exceeded'),
     );
@@ -1473,7 +1473,7 @@ describe('BottomSheet', () => {
   });
 
   test('retries route request after an error when retry is pressed', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     directionsServiceMock.fetchOutdoorDirections
       .mockRejectedValueOnce(new DirectionsServiceError('NETWORK_ERROR', 'Network down'))
       .mockResolvedValueOnce({
