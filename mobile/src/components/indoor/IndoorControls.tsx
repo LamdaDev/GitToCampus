@@ -13,7 +13,6 @@ type Props = {
   currentFloor: number | string | null;
   building: BuildingShape;
   isIndoorSheetOpen: boolean;
-  hasPath?: boolean;
 };
 
 const IndoorControls = ({
