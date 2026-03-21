@@ -234,7 +234,7 @@ export default function IndoorMapScreen({
     onFloorNavReady?.(handlePrevPathFloor, handleNextPathFloor);
   }, [handlePrevPathFloor, handleNextPathFloor]);
 
-   // ── BUILDING FLOOR NAV ────────────────────────────
+  // ── BUILDING FLOOR NAV ────────────────────────────
   const handleFloorUp = useCallback(() => {
     setCurrentFloor((prev) => {
       if (prev === null) return prev;

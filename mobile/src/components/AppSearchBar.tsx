@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 type AppSearchBarProps = {
   openSearch: () => void;
-  isIndoor:boolean;
+  isIndoor: boolean;
 };
 
 export default function AppSearchBar({ openSearch, isIndoor }: Readonly<AppSearchBarProps>) {

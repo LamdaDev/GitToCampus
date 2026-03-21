@@ -426,7 +426,6 @@ const NavigationView = ({
   </>
 );
 
-
 const IndoorDirectionsView = ({
   startRoom,
   destinationRoom,
@@ -442,7 +441,7 @@ const IndoorDirectionsView = ({
   closeSheet: () => void;
   setSearchFor: React.Dispatch<React.SetStateAction<'start' | 'destination' | null>>;
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
-  clearSearchOptions: () => void;
+  clearSearchOptions?: () => void;
 }) => (
   <IndoorDirectionDetails
     startRoom={startRoom}
@@ -608,7 +607,7 @@ const renderBottomSheetContent = (props: {
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   onPrevPathFloor?: () => void;
   onNextPathFloor?: () => void;
-  clearIndoorSearch?:()=>void;
+  clearIndoorSearch?: () => void;
 }) => {
   if (props.isSearchActive) {
     return <SearchContent {...props} />;
@@ -746,14 +745,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       return [...DEFAULT_SNAP_POINTS];
     }, [activeView]);
 
-const clearIndoorSearch = useCallback(() => {
-  setStartRoom(null);
-  setDestinationRoom(null);
-  setStartRoomId(null);
-  setEndRoomId(null);
+    const clearIndoorSearch = useCallback(() => {
+      setStartRoom(null);
+      setDestinationRoom(null);
+      setStartRoomId(null);
+      setEndRoomId(null);
 
-  onIndoorRouteChange?.(null, null);
-}, [onIndoorRouteChange]);
+      onIndoorRouteChange?.(null, null);
+    }, [onIndoorRouteChange]);
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
     const [startLocationSnapshot, setStartLocationSnapshot] = useState<UserCoords | null>(null);

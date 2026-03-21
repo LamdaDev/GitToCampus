@@ -64,10 +64,10 @@ describe('findIndoorPath', () => {
 });
 
 describe('getRoomNodes', () => {
-  const lobbyFloor1    = makeNode({ id: 'lobby',    type: 'room',    floor: 1, label: 'Lobby' });
-  const officeFloor2   = makeNode({ id: 'office',   type: 'room',    floor: 2, label: 'Office' });
-  const hallwayFloor1  = makeNode({ id: 'hallway',  type: 'hallway', floor: 1, label: 'Hallway' });
-  const unlabeledRoom  = makeNode({ id: 'unlabeled', type: 'room',   floor: 1, label: '' });
+  const lobbyFloor1 = makeNode({ id: 'lobby', type: 'room', floor: 1, label: 'Lobby' });
+  const officeFloor2 = makeNode({ id: 'office', type: 'room', floor: 2, label: 'Office' });
+  const hallwayFloor1 = makeNode({ id: 'hallway', type: 'hallway', floor: 1, label: 'Hallway' });
+  const unlabeledRoom = makeNode({ id: 'unlabeled', type: 'room', floor: 1, label: '' });
   const allNodes = [lobbyFloor1, officeFloor2, hallwayFloor1, unlabeledRoom];
 
   it('returns only labeled room nodes', () => {

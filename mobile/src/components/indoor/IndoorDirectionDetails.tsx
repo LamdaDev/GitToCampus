@@ -118,7 +118,7 @@ export default function IndoorDirectionDetails({
             style={directionDetailsStyles.iconButton}
             onPress={onClear}
           >
-     <Ionicons name="close-sharp" size={22} color="#fff" />
+            <Ionicons name="close-sharp" size={22} color="#fff" />
           </TouchableOpacity>
 
           <TouchableOpacity
