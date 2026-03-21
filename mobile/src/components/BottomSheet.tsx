@@ -233,6 +233,8 @@ export type BottomSliderHandle = {
   openIndoorDirections: () => void;
 };
 
+type SearchTarget = 'start' | 'destination' | null;
+
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
@@ -439,7 +441,7 @@ const IndoorDirectionsView = ({
   destinationRoom: string | null;
   indoorPathSteps: { icon: string; label: string }[];
   closeSheet: () => void;
-  setSearchFor: React.Dispatch<React.SetStateAction<'start' | 'destination' | null>>;
+  setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   clearSearchOptions?: () => void;
 }) => (
@@ -596,7 +598,7 @@ const renderBottomSheetContent = (props: {
   routeDurationSeconds: number | null;
   travelMode: RoutePlannerMode;
   canStartNavigationFromCurrentLocation: boolean;
-  setSearchFor: React.Dispatch<React.SetStateAction<'start' | 'destination' | null>>;
+  setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
   setTravelMode: React.Dispatch<React.SetStateAction<RoutePlannerMode>>;
   handleDirectionsGo: (mode: RoutePlannerMode) => void;
   showShuttleSchedule: () => void;
@@ -858,7 +860,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       snapToDirectionsPanel(directionsPanelSnapPoint);
     }, [activeView, directionsPanelSnapPoint, snapToDirectionsPanel]);
 
-    const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
+    const [searchFor, setSearchFor] = useState<SearchTarget>(null);
     const [calendarSliderMode, setCalendarSliderMode] = useState<'selection' | 'events' | null>(
       null,
     );
