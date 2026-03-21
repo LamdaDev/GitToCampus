@@ -60,6 +60,10 @@ const defaultProps = {
   passOutdoorRoute: jest.fn(),
   userLocation: null,
   currentBuilding: null,
+  onEnterBuilding: jest.fn(),
+  isIndoor: false,
+  enterIndoorView: jest.fn(),
+  indoorPathSteps: [],
 };
 
 jest.mock('../src/services/googleDirections', () => ({
@@ -1245,14 +1249,14 @@ describe('BottomSheet', () => {
       bounds: null,
       ...(request.mode === 'transit'
         ? {
-            transitInstructions: [
-              {
-                id: 'transit-0-1',
-                type: 'transit',
-                title: 'Board the 12 bus',
-              },
-            ],
-          }
+          transitInstructions: [
+            {
+              id: 'transit-0-1',
+              type: 'transit',
+              title: 'Board the 12 bus',
+            },
+          ],
+        }
         : {}),
     }));
 
@@ -1358,7 +1362,7 @@ describe('BottomSheet', () => {
 
   test('clears route and warns when directions fetch fails', async () => {
     const passOutdoorRoute = jest.fn();
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
     directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(new Error('bad request'));
 
     const { getByTestId } = render(
@@ -1386,7 +1390,7 @@ describe('BottomSheet', () => {
 
   test('shows missing API key error when directions service reports MISSING_API_KEY', async () => {
     const passOutdoorRoute = jest.fn();
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
     directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(
       new DirectionsServiceError('MISSING_API_KEY', 'Missing key'),
     );
@@ -1415,7 +1419,7 @@ describe('BottomSheet', () => {
 
   test('shows no-route error when directions service reports NO_ROUTE', async () => {
     const passOutdoorRoute = jest.fn();
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
     directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(
       new DirectionsServiceError('NO_ROUTE', 'No route'),
     );
@@ -1443,7 +1447,7 @@ describe('BottomSheet', () => {
   });
 
   test('shows quota error when directions service reports OVER_QUERY_LIMIT', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
     directionsServiceMock.fetchOutdoorDirections.mockRejectedValueOnce(
       new DirectionsServiceError('OVER_QUERY_LIMIT', 'Quota exceeded'),
     );
@@ -1469,7 +1473,7 @@ describe('BottomSheet', () => {
   });
 
   test('retries route request after an error when retry is pressed', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
     directionsServiceMock.fetchOutdoorDirections
       .mockRejectedValueOnce(new DirectionsServiceError('NETWORK_ERROR', 'Network down'))
       .mockResolvedValueOnce({
@@ -1876,5 +1880,61 @@ describe('BottomSheet', () => {
       throw new Error('Expected shuttle plan args and now to be defined');
     }
     expect(shuttlePlanArgs.now.toISOString()).toBe('2026-02-25T12:30:00.000Z');
+  });
+
+  test('openIndoorDirections imperative handle sets indoor-directions view', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+      await Promise.resolve();
+    });
+
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_EXPANDED);
+    expect(queryByTestId('building-details')).toBeNull();
+  });
+
+  test('openIndoorNavigation imperative handle sets indoor-navigation view', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    render(<BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} />);
+
+    await act(async () => {
+      ref.current?.openIndoorNavigation();
+      await Promise.resolve();
+    });
+
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_EXPANDED);
+  });
+
+  test('imperative openCalendarEventsSlider with no ids and no prior selection opens calendar selection', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} mode="search" />,
+    );
+
+    await act(async () => {
+      ref.current?.openCalendarEventsSlider([]);
+      await Promise.resolve();
+    });
+
+    expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+  });
+
+  test('switching from search to detail mode hides calendar slider', () => {
+    const { getByTestId, queryByTestId, rerender } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="search" />,
+    );
+
+    fireEvent.press(getByTestId('trigger-calendar-connected'));
+    expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+
+    rerender(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="detail" />,
+    );
+
+    expect(queryByTestId('calendar-selection-slider')).toBeNull();
   });
 });
