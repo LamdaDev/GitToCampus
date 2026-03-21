@@ -80,7 +80,7 @@ const getPathSteps = (path: IndoorNode[]) => {
   }
 
   const start = path[0];
-  const end = path.at(-1);;
+  const end = path.at(-1);
   steps.unshift({
     icon: '🟢',
     label: `Start: ${start.label || start.type} (Floor ${start.floor})`,
