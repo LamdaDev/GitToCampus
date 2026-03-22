@@ -6,8 +6,7 @@ import type { IndoorNode } from '../src/utils/indoor/indoorPathFinding';
 jest.mock('react-native-svg', () => {
   const React = require('react');
   const mock = (name: string) => {
-    const Component = ({ children, ...props }: any) =>
-      React.createElement(name, props, children);
+    const Component = ({ children, ...props }: any) => React.createElement(name, props, children);
     Component.displayName = name;
     return Component;
   };
@@ -38,9 +37,7 @@ const simplePath: IndoorNode[] = [
 
 describe('PathOverlay', () => {
   it('returns null when fewer than 2 nodes', () => {
-    const { toJSON } = render(
-      <PathOverlay pathNodes={[]} planType="svg" allNodes={[]} />,
-    );
+    const { toJSON } = render(<PathOverlay pathNodes={[]} planType="svg" allNodes={[]} />);
     expect(toJSON()).toBeNull();
   });
 
@@ -76,7 +73,7 @@ describe('PathOverlay', () => {
     );
     const { Line } = require('react-native-svg');
     const line = UNSAFE_getAllByType(Line)[0];
-    expect(line.props.x2).toBe(50);  // 100 * (500/1000)
-    expect(line.props.y2).toBe(50);  // 100 * (250/500)
+    expect(line.props.x2).toBe(50); // 100 * (500/1000)
+    expect(line.props.y2).toBe(50); // 100 * (250/500)
   });
 });

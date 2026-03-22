@@ -9,4 +9,3 @@ appId: host.exp.exponent
 - tapOn: H Building
 - swipe:
     direction: UP
-

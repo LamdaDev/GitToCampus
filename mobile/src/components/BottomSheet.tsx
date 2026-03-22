@@ -233,6 +233,8 @@ export type BottomSliderHandle = {
   openIndoorDirections: () => void;
 };
 
+type SearchTarget = 'start' | 'destination' | null;
+
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
@@ -426,7 +428,6 @@ const NavigationView = ({
   </>
 );
 
-
 const IndoorDirectionsView = ({
   startRoom,
   destinationRoom,
@@ -440,9 +441,9 @@ const IndoorDirectionsView = ({
   destinationRoom: string | null;
   indoorPathSteps: { icon: string; label: string }[];
   closeSheet: () => void;
-  setSearchFor: React.Dispatch<React.SetStateAction<'start' | 'destination' | null>>;
+  setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
-  clearSearchOptions: () => void;
+  clearSearchOptions?: () => void;
 }) => (
   <IndoorDirectionDetails
     startRoom={startRoom}
@@ -487,6 +488,24 @@ const IndoorNavigationView = ({
   />
 );
 
+type SearchContentProps = {
+  calendarSliderMode: 'selection' | 'events' | null;
+  isInternalSearch: boolean;
+  selectedCalendarIds: string[];
+  handleReselectCalendars: () => void;
+  handleCloseUpcomingClassesSlider: () => void;
+  handleCloseCalendarSelectionSlider: () => void;
+  showUpcomingClassesSlider: (calendarIds: string[]) => void;
+  buildings: BuildingShape[];
+  handleInternalSearch: (building: BuildingShape) => void;
+  closeSearchBuilding: (building: BuildingShape) => void;
+  openCalendarSelectionAfterConnect: () => void;
+  handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  calendarGoErrorMessage: string | null;
+  isIndoor: boolean;
+  onSelectRoom: (room: RoomNode) => void;
+};
+
 const SearchContent = ({
   calendarSliderMode,
   isInternalSearch,
@@ -503,23 +522,7 @@ const SearchContent = ({
   calendarGoErrorMessage,
   isIndoor,
   onSelectRoom,
-}: {
-  calendarSliderMode: 'selection' | 'events' | null;
-  isInternalSearch: boolean;
-  selectedCalendarIds: string[];
-  handleReselectCalendars: () => void;
-  handleCloseUpcomingClassesSlider: () => void;
-  handleCloseCalendarSelectionSlider: () => void;
-  showUpcomingClassesSlider: (calendarIds: string[]) => void;
-  buildings: BuildingShape[];
-  handleInternalSearch: (building: BuildingShape) => void;
-  closeSearchBuilding: (building: BuildingShape) => void;
-  openCalendarSelectionAfterConnect: () => void;
-  handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
-  calendarGoErrorMessage: string | null;
-  isIndoor: boolean;
-  onSelectRoom: (room: RoomNode) => void;
-}) => {
+}: SearchContentProps) => {
   if (calendarSliderMode === 'events' && !isInternalSearch) {
     return (
       <UpcomingClassesSlider
@@ -595,7 +598,7 @@ const renderBottomSheetContent = (props: {
   routeDurationSeconds: number | null;
   travelMode: RoutePlannerMode;
   canStartNavigationFromCurrentLocation: boolean;
-  setSearchFor: React.Dispatch<React.SetStateAction<'start' | 'destination' | null>>;
+  setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
   setTravelMode: React.Dispatch<React.SetStateAction<RoutePlannerMode>>;
   handleDirectionsGo: (mode: RoutePlannerMode) => void;
   showShuttleSchedule: () => void;
@@ -608,7 +611,7 @@ const renderBottomSheetContent = (props: {
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   onPrevPathFloor?: () => void;
   onNextPathFloor?: () => void;
-  clearIndoorSearch?:()=>void;
+  clearIndoorSearch?: () => void;
 }) => {
   if (props.isSearchActive) {
     return <SearchContent {...props} />;
@@ -746,14 +749,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       return [...DEFAULT_SNAP_POINTS];
     }, [activeView]);
 
-const clearIndoorSearch = useCallback(() => {
-  setStartRoom(null);
-  setDestinationRoom(null);
-  setStartRoomId(null);
-  setEndRoomId(null);
+    const clearIndoorSearch = useCallback(() => {
+      setStartRoom(null);
+      setDestinationRoom(null);
+      setStartRoomId(null);
+      setEndRoomId(null);
 
-  onIndoorRouteChange?.(null, null);
-}, [onIndoorRouteChange]);
+      onIndoorRouteChange?.(null, null);
+    }, [onIndoorRouteChange]);
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
     const [startLocationSnapshot, setStartLocationSnapshot] = useState<UserCoords | null>(null);
@@ -857,7 +860,7 @@ const clearIndoorSearch = useCallback(() => {
       snapToDirectionsPanel(directionsPanelSnapPoint);
     }, [activeView, directionsPanelSnapPoint, snapToDirectionsPanel]);
 
-    const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
+    const [searchFor, setSearchFor] = useState<SearchTarget>(null);
     const [calendarSliderMode, setCalendarSliderMode] = useState<'selection' | 'events' | null>(
       null,
     );

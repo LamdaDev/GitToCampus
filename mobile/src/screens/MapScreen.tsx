@@ -553,7 +553,6 @@ function MapScreen({
   indoorEndRoomId,
   indoorPathStepsChange,
   onIndoorFloorNavReady,
-  onReopenIndoorNav,
   onIndoorRouteChange,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');

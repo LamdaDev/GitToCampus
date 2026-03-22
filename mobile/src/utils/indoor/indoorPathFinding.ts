@@ -34,18 +34,14 @@ const buildAdjacency = (
   return adj;
 };
 
-export const findIndoorPath = (
-  nodes: IndoorNode[],
-  edges: IndoorEdge[],
+const dijkstra = (
   startId: string,
   endId: string,
-  accessibleOnly = false,
-): IndoorNode[] | null => {
-  const adj = buildAdjacency(nodes, edges, accessibleOnly);
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-
-  const dist = new Map<string, number>(nodes.map((n) => [n.id, Infinity]));
-  const prev = new Map<string, string | null>(nodes.map((n) => [n.id, null]));
+  adj: Map<string, { id: string; weight: number }[]>,
+  nodeIds: string[],
+): Map<string, string | null> => {
+  const dist = new Map<string, number>(nodeIds.map((id) => [id, Infinity]));
+  const prev = new Map<string, string | null>(nodeIds.map((id) => [id, null]));
   const visited = new Set<string>();
 
   dist.set(startId, 0);
@@ -70,6 +66,15 @@ export const findIndoorPath = (
     }
   }
 
+  return prev;
+};
+
+const reconstructPath = (
+  endId: string,
+  startId: string,
+  prev: Map<string, string | null>,
+  nodeMap: Map<string, IndoorNode>,
+): IndoorNode[] | null => {
   const path: IndoorNode[] = [];
   let cur: string | null = endId;
   while (cur) {
@@ -77,8 +82,26 @@ export const findIndoorPath = (
     if (n) path.unshift(n);
     cur = prev.get(cur) ?? null;
   }
-
   return path.length > 0 && path[0].id === startId ? path : null;
+};
+
+export const findIndoorPath = (
+  nodes: IndoorNode[],
+  edges: IndoorEdge[],
+  startId: string,
+  endId: string,
+  accessibleOnly = false,
+): IndoorNode[] | null => {
+  const adj = buildAdjacency(nodes, edges, accessibleOnly);
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+  const prev = dijkstra(
+    startId,
+    endId,
+    adj,
+    nodes.map((n) => n.id),
+  );
+
+  return reconstructPath(endId, startId, prev, nodeMap);
 };
 
 export const getRoomNodes = (nodes: IndoorNode[], floor?: number): IndoorNode[] =>

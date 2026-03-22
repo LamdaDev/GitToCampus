@@ -33,9 +33,7 @@ describe('IndoorNavigationDetails', () => {
   });
 
   it('shows empty state when pathSteps is empty', () => {
-    const { getByText } = render(
-      <IndoorNavigationDetails {...baseProps} pathSteps={[]} />,
-    );
+    const { getByText } = render(<IndoorNavigationDetails {...baseProps} pathSteps={[]} />);
     expect(getByText('No path found between these rooms.')).toBeTruthy();
   });
 
@@ -48,7 +46,9 @@ describe('IndoorNavigationDetails', () => {
   });
 
   it('hides floor nav buttons when handlers are missing', () => {
-    const { queryByText } = render(<IndoorNavigationDetails {...baseProps} />);
+    const { queryByText } = render(
+      <IndoorNavigationDetails {...baseProps} startRoom="H-101" destinationRoom="H-110" />,
+    );
     expect(queryByText('Prev Floor')).toBeNull();
   });
 
@@ -56,7 +56,13 @@ describe('IndoorNavigationDetails', () => {
     const onPrevFloor = jest.fn();
     const onNextFloor = jest.fn();
     const { getByText } = render(
-      <IndoorNavigationDetails {...baseProps} onPrevFloor={onPrevFloor} onNextFloor={onNextFloor} />,
+      <IndoorNavigationDetails
+        {...baseProps}
+        startRoom="H-101"
+        destinationRoom="H-202"
+        onPrevFloor={onPrevFloor}
+        onNextFloor={onNextFloor}
+      />,
     );
     fireEvent.press(getByText('Prev Floor'));
     fireEvent.press(getByText('Next Floor'));

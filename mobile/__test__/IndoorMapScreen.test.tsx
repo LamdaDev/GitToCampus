@@ -318,10 +318,7 @@ describe('IndoorMapScreen', () => {
     );
 
     await waitFor(() => {
-      expect(mockFloorNavReady).toHaveBeenCalledWith(
-        expect.any(Function),
-        expect.any(Function),
-      );
+      expect(mockFloorNavReady).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
     });
   });
 
@@ -360,8 +357,26 @@ describe('IndoorMapScreen', () => {
   test('onPathStepsChange includes start and end labels when path is found', async () => {
     const mockPathStepsChange = jest.fn();
     findIndoorPath.mockReturnValue([
-      { id: 'a', type: 'room', floor: 1, label: 'Room A', buildingId: 'H', x: 0, y: 0, accessible: true },
-      { id: 'b', type: 'room', floor: 1, label: 'Room B', buildingId: 'H', x: 0, y: 0, accessible: true },
+      {
+        id: 'a',
+        type: 'room',
+        floor: 1,
+        label: 'Room A',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'b',
+        type: 'room',
+        floor: 1,
+        label: 'Room B',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
     ]);
 
     render(
@@ -386,9 +401,36 @@ describe('IndoorMapScreen', () => {
   test('onPathStepsChange includes elevator label when path crosses floors via elevator', async () => {
     const mockPathStepsChange = jest.fn();
     findIndoorPath.mockReturnValue([
-      { id: 'a', type: 'room', floor: 1, label: 'Room A', buildingId: 'H', x: 0, y: 0, accessible: true },
-      { id: 'b', type: 'elevator_door', floor: 1, label: '', buildingId: 'H', x: 0, y: 0, accessible: true },
-      { id: 'c', type: 'room', floor: 2, label: 'Room C', buildingId: 'H', x: 0, y: 0, accessible: true },
+      {
+        id: 'a',
+        type: 'room',
+        floor: 1,
+        label: 'Room A',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'b',
+        type: 'elevator_door',
+        floor: 1,
+        label: '',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'c',
+        type: 'room',
+        floor: 2,
+        label: 'Room C',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
     ]);
 
     render(
@@ -412,9 +454,36 @@ describe('IndoorMapScreen', () => {
   test('onPathStepsChange includes stair label when path crosses floors via stair_landing', async () => {
     const mockPathStepsChange = jest.fn();
     findIndoorPath.mockReturnValue([
-      { id: 'a', type: 'room', floor: 1, label: 'Room A', buildingId: 'H', x: 0, y: 0, accessible: true },
-      { id: 'b', type: 'stair_landing', floor: 1, label: '', buildingId: 'H', x: 0, y: 0, accessible: true },
-      { id: 'c', type: 'room', floor: 2, label: 'Room C', buildingId: 'H', x: 0, y: 0, accessible: true },
+      {
+        id: 'a',
+        type: 'room',
+        floor: 1,
+        label: 'Room A',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'b',
+        type: 'stair_landing',
+        floor: 1,
+        label: '',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'c',
+        type: 'room',
+        floor: 2,
+        label: 'Room C',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
     ]);
 
     render(

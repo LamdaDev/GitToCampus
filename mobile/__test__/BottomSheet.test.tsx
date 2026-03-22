@@ -60,6 +60,10 @@ const defaultProps = {
   passOutdoorRoute: jest.fn(),
   userLocation: null,
   currentBuilding: null,
+  onEnterBuilding: jest.fn(),
+  isIndoor: false,
+  enterIndoorView: jest.fn(),
+  indoorPathSteps: [],
 };
 
 jest.mock('../src/services/googleDirections', () => ({
@@ -329,6 +333,7 @@ jest.mock('../src/components/SearchSheet', () => {
     onCalendarConnected,
     onCalendarGoPress,
     calendarGoErrorMessage,
+    onSelectRoom,
   }: any) => (
     <View testID="search-sheet">
       <TouchableOpacity
@@ -349,6 +354,12 @@ jest.mock('../src/components/SearchSheet', () => {
         }
       >
         <Text>Select</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="select-room-in-search"
+        onPress={() => onSelectRoom?.({ id: 'room-101', label: 'Room 101' })}
+      >
+        <Text>Select Room</Text>
       </TouchableOpacity>
       <TouchableOpacity testID="trigger-calendar-connected" onPress={() => onCalendarConnected?.()}>
         <Text>Calendar Connected</Text>
@@ -411,6 +422,29 @@ jest.mock('../src/components/UpcomingClassesSlider', () => {
     <View testID="upcoming-classes-slider">
       <TouchableOpacity testID="reselect-calendars-button" onPress={onReselectCalendars}>
         <Text>Reselect</Text>
+      </TouchableOpacity>
+    </View>
+  );
+});
+
+jest.mock('../src/components/indoor/IndoorDirectionDetails', () => {
+  const { View, TouchableOpacity, Text } = require('react-native');
+  return ({ onPressDestination, onPressStart, onClose, onPressGo, onClear }: any) => (
+    <View testID="indoor-direction-details">
+      <TouchableOpacity testID="indoor-press-start" onPress={onPressStart}>
+        <Text>Start</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="indoor-press-destination" onPress={onPressDestination}>
+        <Text>Destination</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="indoor-press-go" onPress={onPressGo}>
+        <Text>Go</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="indoor-press-close" onPress={onClose}>
+        <Text>Close</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="indoor-press-clear" onPress={onClear}>
+        <Text>Clear</Text>
       </TouchableOpacity>
     </View>
   );
@@ -1876,5 +1910,287 @@ describe('BottomSheet', () => {
       throw new Error('Expected shuttle plan args and now to be defined');
     }
     expect(shuttlePlanArgs.now.toISOString()).toBe('2026-02-25T12:30:00.000Z');
+  });
+
+  test('openIndoorDirections imperative handle sets indoor-directions view', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+      await Promise.resolve();
+    });
+
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_EXPANDED);
+    expect(queryByTestId('building-details')).toBeNull();
+  });
+
+  test('openIndoorNavigation imperative handle sets indoor-navigation view', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    render(<BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} />);
+
+    await act(async () => {
+      ref.current?.openIndoorNavigation();
+      await Promise.resolve();
+    });
+
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_EXPANDED);
+  });
+
+  test('imperative openCalendarEventsSlider with no ids and no prior selection opens calendar selection', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} mode="search" />,
+    );
+
+    await act(async () => {
+      ref.current?.openCalendarEventsSlider([]);
+      await Promise.resolve();
+    });
+
+    expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+  });
+
+  test('switching from search to detail mode hides calendar slider', () => {
+    const { getByTestId, queryByTestId, rerender } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="search" />,
+    );
+
+    fireEvent.press(getByTestId('trigger-calendar-connected'));
+    expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+
+    rerender(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={null} mode="detail" />,
+    );
+
+    expect(queryByTestId('calendar-selection-slider')).toBeNull();
+  });
+
+  // here
+  test('handleUpcomingClassPress sets manual start when startPoint type is manual', async () => {
+    mockResolveCalendarRouteLocation.mockResolvedValueOnce({
+      type: 'success',
+      value: {
+        destinationBuilding: mockBuildings[1],
+        startPoint: { type: 'manual', reason: 'location_permission_denied' },
+        normalizedEventLocation: 'HALL BUILDING 435',
+        rawEventLocation: 'Hall Building 435',
+      },
+    });
+
+    const SearchModeHarness = () => {
+      const [mode, setMode] = React.useState<'search' | 'detail'>('search');
+      const [selectedBuilding, setSelectedBuilding] = React.useState<BuildingShape | null>(
+        mockBuildings[0],
+      );
+      return (
+        <BottomSlider
+          {...defaultProps}
+          ref={createRef()}
+          mode={mode}
+          selectedBuilding={selectedBuilding}
+          passSelectedBuilding={setSelectedBuilding}
+          onExitSearch={() => setMode('detail')}
+        />
+      );
+    };
+
+    const { getByTestId } = render(<SearchModeHarness />);
+
+    fireEvent.press(getByTestId('trigger-calendar-go-with-event'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(getByTestId('can-start-navigation-state').props.children).toBe('false');
+      expect(getByTestId('destination-id').props.children).toBe('loy-1');
+    });
+  });
+
+  test('openIndoorDirections and openIndoorNavigation both snap to expanded', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    render(<BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} />);
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+      await Promise.resolve();
+    });
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_EXPANDED);
+
+    mockSnapToIndex.mockClear();
+
+    await act(async () => {
+      ref.current?.openIndoorNavigation();
+      await Promise.resolve();
+    });
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_EXPANDED);
+  });
+
+  test('handleSelectRoom sets destination room when searchFor is destination', async () => {
+    const onIndoorRouteChange = jest.fn();
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={mockBuildings[0]}
+        onIndoorRouteChange={onIndoorRouteChange}
+      />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+      await Promise.resolve();
+    });
+
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    fireEvent.press(getByTestId('select-room-in-search'));
+
+    await waitFor(() => {
+      expect(getByTestId('indoor-direction-details')).toBeTruthy();
+      expect(onIndoorRouteChange).toHaveBeenCalled();
+    });
+  });
+
+  test('handleSelectRoom sets start room when searchFor is start', async () => {
+    const onIndoorRouteChange = jest.fn();
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={mockBuildings[0]}
+        onIndoorRouteChange={onIndoorRouteChange}
+      />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+      await Promise.resolve();
+    });
+
+    fireEvent.press(getByTestId('indoor-press-start'));
+    fireEvent.press(getByTestId('select-room-in-search'));
+
+    await waitFor(() => {
+      expect(getByTestId('indoor-direction-details')).toBeTruthy();
+      expect(onIndoorRouteChange).toHaveBeenCalled();
+    });
+  });
+
+  test('snapPoints uses navigation snap points when activeView is navigation', async () => {
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: 'mock-polyline',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 840,
+      durationText: '14 mins',
+      bounds: null,
+    });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        userLocation={{ latitude: 45.4585, longitude: -73.6412 }}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await waitFor(() => expect(getByTestId('route-go-button')).toBeTruthy());
+    fireEvent.press(getByTestId('route-go-button'));
+
+    await waitFor(() => {
+      expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_NAVIGATION_MAX);
+    });
+  });
+
+  test('clearIndoorSearch resets indoor route state', async () => {
+    const onIndoorRouteChange = jest.fn();
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={mockBuildings[0]}
+        onIndoorRouteChange={onIndoorRouteChange}
+      />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+      await Promise.resolve();
+    });
+    fireEvent.press(getByTestId('indoor-press-clear'));
+
+    await waitFor(() => expect(onIndoorRouteChange).toHaveBeenCalledWith(null, null));
+  });
+
+  test('handleSelectRoom stays on indoor-directions when already on that view', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+      await Promise.resolve();
+    });
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    fireEvent.press(getByTestId('select-room-in-search'));
+    fireEvent.press(getByTestId('indoor-press-start'));
+    fireEvent.press(getByTestId('select-room-in-search'));
+
+    expect(getByTestId('indoor-direction-details')).toBeTruthy();
+  });
+
+  test('openCalendarSelectionSlider with reset clears prior calendar selection', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} mode="search" />,
+    );
+
+    fireEvent.press(getByTestId('trigger-calendar-connected'));
+    fireEvent.press(getByTestId('calendar-selection-done-button'));
+    await act(async () => {
+      ref.current?.closeCalendarSlider();
+      await Promise.resolve();
+    });
+    fireEvent.press(getByTestId('trigger-calendar-connected'));
+
+    expect(getByTestId('calendar-selection-slider')).toBeTruthy();
+  });
+
+  test('showDirections with asDestination false sets building as manual start', async () => {
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    fireEvent.press(getByTestId('on-show-directions'));
+
+    expect(getByTestId('direction-details')).toBeTruthy();
+    expect(getByTestId('can-start-navigation-state').props.children).toBe('false');
+  });
+
+  test('handleSheetClose resets to building view and calls passSelectedBuilding with null', async () => {
+    const passSelectedBuilding = jest.fn();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[0]}
+        passSelectedBuilding={passSelectedBuilding}
+      />,
+    );
+
+    fireEvent.press(getByTestId('trigger-on-close'));
+
+    await waitFor(() => {
+      expect(getByTestId('building-details')).toBeTruthy();
+      expect(passSelectedBuilding).toHaveBeenCalledWith(null);
+    });
   });
 });

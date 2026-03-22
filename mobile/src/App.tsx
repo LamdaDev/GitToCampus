@@ -63,16 +63,16 @@ const App = () => {
     bottomSheetRef.current?.open(0);
   }, []);
 
-const openSearchBuilding = useCallback(() => {
-  setSheetOpen(true);
+  const openSearchBuilding = useCallback(() => {
+    setSheetOpen(true);
 
-  if (isIndoor) {
-    bottomSheetRef.current?.openIndoorDirections();
-  } else {
-    setSheetMode('search');
-    bottomSheetRef.current?.open(1);
-  }
-}, [isIndoor]);
+    if (isIndoor) {
+      bottomSheetRef.current?.openIndoorDirections();
+    } else {
+      setSheetMode('search');
+      bottomSheetRef.current?.open(1);
+    }
+  }, [isIndoor]);
 
   const handleOpenCalendar = useCallback(async () => {
     openSearchBuilding();
