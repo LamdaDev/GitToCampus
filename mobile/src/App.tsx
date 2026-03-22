@@ -3,7 +3,7 @@ import { LogBox, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSlider, { BottomSliderHandle } from './components/BottomSheet';
-import MapScreen, { UserCoords } from './screens/MapScreen';
+import MapScreen, { MapScreenHandle, UserCoords } from './screens/MapScreen';
 import { BuildingShape } from './types/BuildingShape';
 import { useFonts } from 'expo-font';
 import AppSearchBar from './components/AppSearchBar';
@@ -34,9 +34,16 @@ const App = () => {
   const [outdoorRoute, setOutdoorRoute] = useState<OutdoorRouteOverlay | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
   const [sheetMode, setSheetMode] = useState<SheetMode>('detail');
+  const [indoorStartRoomId, setIndoorStartRoomId] = useState<string | null>(null);
+  const [indoorEndRoomId, setIndoorEndRoomId] = useState<string | null>(null);
+  const [indoorPathSteps, setIndoorPathSteps] = useState<{ icon: string; label: string }[]>([]);
+  const prevFloorRef = useRef<() => void>(() => {});
+  const nextFloorRef = useRef<() => void>(() => {});
 
   // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
   const [sheetOpen, setSheetOpen] = useState(false);
+  const mapRef = useRef<MapScreenHandle>(null);
+  const [isIndoor, setIsIndoor] = useState(false);
 
   useEffect(() => {
     bottomSheetAnimatedPosition.value = windowHeight;
@@ -57,10 +64,15 @@ const App = () => {
   }, []);
 
   const openSearchBuilding = useCallback(() => {
-    setSheetMode('search');
     setSheetOpen(true);
-    bottomSheetRef.current?.open(1);
-  }, []);
+
+    if (isIndoor) {
+      bottomSheetRef.current?.openIndoorDirections();
+    } else {
+      setSheetMode('search');
+      bottomSheetRef.current?.open(1);
+    }
+  }, [isIndoor]);
 
   const handleOpenCalendar = useCallback(async () => {
     openSearchBuilding();
@@ -99,8 +111,42 @@ const App = () => {
     'gabarito-bold': require('./assets/fonts/Gabarito-Bold.ttf'),
   });
 
-  if (!fontsLoaded) return null;
+  const handleShowIndoor = useCallback((building: BuildingShape) => {
+    mapRef.current?.showIndoor(building);
+  }, []);
 
+  const hideSearchBar = useCallback(() => {
+    setSheetOpen(true);
+  }, []);
+
+  const handleIndoorFloorNavReady = useCallback((prev: () => void, next: () => void) => {
+    prevFloorRef.current = prev;
+    nextFloorRef.current = next;
+  }, []);
+
+  const handleIndoorRouteChange = useCallback((startId: string | null, endId: string | null) => {
+    setIndoorStartRoomId(startId);
+    setIndoorEndRoomId(endId);
+  }, []);
+
+  const toggleIndoorView = useCallback(() => {
+    setSheetOpen(false);
+    setIsIndoor(true);
+  }, []);
+
+  const handleExitIndoorView = useCallback(() => {
+    setIsIndoor(false);
+  }, []);
+
+  const handlePrevPathFloor = useCallback(() => {
+    prevFloorRef.current?.();
+  }, []);
+
+  const handleNextPathFloor = useCallback(() => {
+    nextFloorRef.current?.();
+  }, []);
+
+  if (!fontsLoaded) return null;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
@@ -114,9 +160,17 @@ const App = () => {
           externalSelectedBuilding={selectedBuilding}
           outdoorRoute={outdoorRoute}
           bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
+          mapHandle={mapRef}
+          hideAppSearchBar={hideSearchBar}
+          revealSearchBar={toggleSearchBarState}
+          exitIndoorView={handleExitIndoorView}
+          indoorStartRoomId={indoorStartRoomId}
+          indoorEndRoomId={indoorEndRoomId}
+          indoorPathStepsChange={setIndoorPathSteps}
+          onIndoorFloorNavReady={handleIndoorFloorNavReady}
         />
 
-        {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
+        {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} isIndoor={isIndoor} />}
 
         <BottomSlider
           userLocation={userLocation}
@@ -130,6 +184,13 @@ const App = () => {
           passSelectedBuilding={setSelectedBuilding}
           passOutdoorRoute={setOutdoorRoute}
           animatedPosition={bottomSheetAnimatedPosition}
+          onEnterBuilding={handleShowIndoor}
+          isIndoor={isIndoor}
+          enterIndoorView={toggleIndoorView}
+          indoorPathSteps={indoorPathSteps}
+          onPrevPathFloor={handlePrevPathFloor}
+          onNextPathFloor={handleNextPathFloor}
+          onIndoorRouteChange={handleIndoorRouteChange}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

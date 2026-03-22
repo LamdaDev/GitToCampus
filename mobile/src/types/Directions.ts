@@ -36,7 +36,7 @@ export type TransitInstruction = {
 
 export type DirectionsRouteSegment = {
   polyline: string;
-  mode: 'walking' | 'driving' | 'transit';
+  mode: 'walking' | 'driving' | 'transit' | 'shuttle';
 };
 
 export type DirectionsRoute = {

@@ -1,0 +1,16 @@
+appId: host.exp.exponent
+---
+- doubleTapOn:
+    point: 50%,50%
+- doubleTapOn:
+    point: 50%,50%
+- tapOn:
+    point: 44%,55%
+- tapOn: 
+- tapOn: Get to...
+- tapOn: H Building
+- swipe:
+    from:
+      text: Floor 1
+    direction: UP
+- longPressOn: H-120

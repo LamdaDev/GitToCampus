@@ -1,4 +1,12 @@
-import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useWindowDimensions, View, Text, Platform } from 'react-native';
 import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -21,6 +29,7 @@ import { decodePolyline } from '../utils/polyline';
 
 import MapControls from '../components/MapControls';
 import * as turf from '@turf/turf';
+import IndoorMapScreen from './IndoorMapScreen';
 
 type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
@@ -29,9 +38,24 @@ type MapScreenProps = {
   openBottomSheet: () => void;
   onMapPress?: () => void;
   onOpenCalendar?: () => void;
+  hideAppSearchBar: () => void;
+  revealSearchBar: () => void;
   externalSelectedBuilding?: BuildingShape | null;
   outdoorRoute?: OutdoorRouteOverlay | null;
   bottomSheetAnimatedPosition?: SharedValue<number>;
+  mapHandle?: React.RefObject<MapScreenHandle | null>;
+  exitIndoorView: () => void;
+  indoorStartRoomId?: string | null;
+  indoorEndRoomId?: string | null;
+  indoorPathStepsChange?: (steps: { icon: string; label: string }[]) => void;
+  onIndoorFloorNavReady?: (prev: () => void, next: () => void) => void;
+  onReopenIndoorNav?: () => void;
+  onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
+};
+
+export type MapScreenHandle = {
+  showIndoor: (building: BuildingShape) => void;
+  hideIndoor: () => void;
 };
 
 export type UserCoords = { latitude: number; longitude: number };
@@ -348,6 +372,39 @@ const getPolygonRenderColors = (
   };
 };
 
+const PolygonMarker = React.memo(function PolygonMarker({
+  center,
+  label,
+  backgroundColor,
+}: {
+  center: { latitude: number; longitude: number };
+  label: string;
+  backgroundColor: string;
+}) {
+  const [tracksViewChanges, setTracksViewChanges] = React.useState(true);
+
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      setTracksViewChanges(false);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return (
+    <Marker
+      testID="map-label"
+      coordinate={center}
+      tracksViewChanges={tracksViewChanges}
+      tappable={false}
+    >
+      <View style={[styles.labels, { backgroundColor }]}>
+        <Text style={styles.labelText}>{label}</Text>
+      </View>
+    </Marker>
+  );
+});
+
 const renderPolygonItem = (
   item: PolygonRenderItem,
   selectedBuildingId: string | null,
@@ -357,7 +414,9 @@ const renderPolygonItem = (
   const theme = POLYGON_THEME[item.campus];
   const isSelected = item.buildingId === selectedBuildingId;
   const isCurrent = item.buildingId === currentBuildingId;
+
   const center = getPolygonCenter(item.coordinates);
+
   const { strokeColor, fillColor, strokeWidth } = getPolygonRenderColors(
     theme,
     isSelected,
@@ -367,7 +426,6 @@ const renderPolygonItem = (
   return (
     <Fragment key={item.key}>
       <Polygon
-        key={item.key}
         coordinates={item.coordinates}
         tappable
         strokeColor={strokeColor}
@@ -375,11 +433,12 @@ const renderPolygonItem = (
         strokeWidth={strokeWidth}
         onPress={() => onPolygonPress(item)}
       />
-      <Marker coordinate={center} tracksViewChanges={true} testID={'map-label'}>
-        <View style={[styles.labels, { backgroundColor: theme.labelFill }]}>
-          <Text style={styles.labelText}>{item.buildingShortCode}</Text>
-        </View>
-      </Marker>
+
+      <PolygonMarker
+        center={center}
+        label={item.buildingShortCode}
+        backgroundColor={theme.labelFill}
+      />
     </Fragment>
   );
 };
@@ -483,9 +542,18 @@ function MapScreen({
   openBottomSheet,
   onMapPress,
   onOpenCalendar,
+  hideAppSearchBar,
+  revealSearchBar,
   externalSelectedBuilding,
   outdoorRoute,
   bottomSheetAnimatedPosition,
+  mapHandle,
+  exitIndoorView,
+  indoorStartRoomId,
+  indoorEndRoomId,
+  indoorPathStepsChange,
+  onIndoorFloorNavReady,
+  onIndoorRouteChange,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -680,9 +748,20 @@ function MapScreen({
     onPress: handleMapPress,
   } as const;
 
+  const [indoorBuilding, setIndoorBuilding] = useState<BuildingShape | null>(null);
+
+  useImperativeHandle(mapHandle, () => ({
+    showIndoor: (building: BuildingShape) => setIndoorBuilding(building),
+    hideIndoor: () => setIndoorBuilding(null),
+  }));
+
+  const resetIndoorBuilding = () => {
+    setIndoorBuilding(null);
+    exitIndoorView();
+  };
   return (
     <View style={styles.container}>
-      <MapView {...mapProps}>
+      <MapView {...mapProps} toolbarEnabled={false} moveOnMarkerPress={false}>
         {renderedPolygons}
         {selectedMarker}
         {showRoute && (
@@ -703,13 +782,29 @@ function MapScreen({
           </>
         )}
       </MapView>
-      <MapControls
-        selectedCampus={selectedCampus}
-        onToggleCampus={handleToggleCampus}
-        onRecenter={handleRecenter}
-        onOpenCalendar={onOpenCalendar}
-        bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
-      />
+
+      {indoorBuilding ? (
+        <IndoorMapScreen
+          onExitIndoor={() => resetIndoorBuilding()}
+          onOpenCalendar={onOpenCalendar}
+          building={indoorBuilding}
+          hideAppSearchBar={hideAppSearchBar}
+          revealSearchBar={revealSearchBar}
+          externalStartRoomId={indoorStartRoomId}
+          externalEndRoomId={indoorEndRoomId}
+          onPathStepsChange={indoorPathStepsChange}
+          onFloorNavReady={onIndoorFloorNavReady}
+          onIndoorRouteChange={onIndoorRouteChange}
+        />
+      ) : (
+        <MapControls
+          selectedCampus={selectedCampus}
+          onToggleCampus={handleToggleCampus}
+          onRecenter={handleRecenter}
+          onOpenCalendar={onOpenCalendar}
+          bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
+        />
+      )}
     </View>
   );
 }
