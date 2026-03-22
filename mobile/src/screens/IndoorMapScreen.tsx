@@ -274,7 +274,6 @@ export default function IndoorMapScreen({
         openAvailableBuildings={openAvailableBuildings}
         isIndoorSheetOpen={isIndoorSheetOpen}
         building={selectedBuilding}
-        hasPath={!!fullPath && pathFloors.length > 1}
       />
 
       {/* MAP */}
@@ -300,7 +299,6 @@ export default function IndoorMapScreen({
             <PathOverlay
               pathNodes={currentFloorPath}
               planType={plan?.type}
-              allNodes={buildingGraph?.nodes ?? []}
               svgViewBox={SVG_VIEWBOXES[selectedBuilding?.shortCode ?? '']}
               nodeSpace={NODE_SPACES[selectedBuilding?.shortCode ?? '']}
             />

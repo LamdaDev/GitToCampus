@@ -4,7 +4,7 @@ appId: host.exp.exponent
 - tapOn: Set as starting point
 - tapOn: Search buildings...
 - inputText: H-2
-- assertVisible: 
+- assertVisible:
     text: H-209
     delay: 1000
 - doubleTapOn: H-209

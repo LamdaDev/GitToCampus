@@ -34,7 +34,7 @@ export default function IndoorNavigationDetails({
 
   const isSameBuilding = () => {
     const startBuilding = startRoom?.split('-')[0];
-    const destinationBuilding = startRoom?.split('-')[0];
+    const destinationBuilding = destinationRoom?.split('-')[0];
     return startBuilding == destinationBuilding;
   };
 

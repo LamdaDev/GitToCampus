@@ -1087,7 +1087,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         selectedBuildingId !== previousSelectedBuildingIdRef.current;
       previousSelectedBuildingIdRef.current = selectedBuildingId;
 
-      if (activeView === 'indoor-directions') return;
+      if (activeView !== 'directions') return;
       if (!selectedBuilding) return;
       if (selectedBuilding.id === startBuilding?.id) return;
       if (!didSelectedBuildingChange && destinationBuilding) return;

@@ -15,7 +15,6 @@ const getDotColor = (node: IndoorNode, isStart: boolean, isEnd: boolean) => {
 type Props = {
   pathNodes: IndoorNode[];
   planType: 'svg' | 'png' | undefined;
-  allNodes: IndoorNode[];
   svgViewBox?: { width: number; height: number };
   nodeSpace?: { width: number; height: number };
 };
@@ -24,24 +23,10 @@ type Props = {
 export default function PathOverlay({
   pathNodes,
   planType,
-  allNodes,
   svgViewBox,
   nodeSpace,
 }: Readonly<Props>) {
   if (pathNodes.length < 2) return null;
-
-  const xs = allNodes.map((n) => n.x);
-  const ys = allNodes.map((n) => n.y);
-
-  const nodeMinX = xs.length > 0 ? Math.min(...xs) : 0;
-  const nodeMinY = ys.length > 0 ? Math.min(...ys) : 0;
-  const nodeMaxX = xs.length > 0 ? Math.max(...xs) : 2100;
-  const nodeMaxY = ys.length > 0 ? Math.max(...ys) : 2100;
-
-  // Used to fine tune accuracy pathing logic (Will need for problematic floor plans), can comment out if bothersome
-  console.log('The node logs are in PathOverlay');
-  console.log('nodeMinX:', nodeMinX, 'nodeMinY:', nodeMinY);
-  console.log('nodeMaxX:', nodeMaxX, 'nodeMaxY:', nodeMaxY);
 
   const viewWidth = svgViewBox?.width ?? 1024;
   const viewHeight = svgViewBox?.height ?? 1024;
