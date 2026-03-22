@@ -45,6 +45,12 @@ type MapScreenProps = {
   bottomSheetAnimatedPosition?: SharedValue<number>;
   mapHandle?: React.RefObject<MapScreenHandle | null>;
   exitIndoorView: () => void;
+  indoorStartRoomId?: string | null;
+  indoorEndRoomId?: string | null;
+  indoorPathStepsChange?: (steps: { icon: string; label: string }[]) => void;
+  onIndoorFloorNavReady?: (prev: () => void, next: () => void) => void;
+  onReopenIndoorNav?: () => void;
+  onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
 };
 
 export type MapScreenHandle = {
@@ -543,6 +549,11 @@ function MapScreen({
   bottomSheetAnimatedPosition,
   mapHandle,
   exitIndoorView,
+  indoorStartRoomId,
+  indoorEndRoomId,
+  indoorPathStepsChange,
+  onIndoorFloorNavReady,
+  onIndoorRouteChange,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -779,6 +790,11 @@ function MapScreen({
           building={indoorBuilding}
           hideAppSearchBar={hideAppSearchBar}
           revealSearchBar={revealSearchBar}
+          externalStartRoomId={indoorStartRoomId}
+          externalEndRoomId={indoorEndRoomId}
+          onPathStepsChange={indoorPathStepsChange}
+          onFloorNavReady={onIndoorFloorNavReady}
+          onIndoorRouteChange={onIndoorRouteChange}
         />
       ) : (
         <MapControls

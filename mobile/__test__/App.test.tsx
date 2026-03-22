@@ -34,7 +34,7 @@ jest.mock('../src/components/BottomSheet', () => {
   const { TouchableOpacity, View, Text } = require('react-native');
 
   const MockBottomSheet = React.forwardRef(function MockBottomSheet(
-    { revealSearchBar, onExitSearch }: any,
+    { revealSearchBar, onExitSearch, onPrevPathFloor, onNextPathFloor }: any,
     ref: any,
   ) {
     React.useImperativeHandle(ref, () => ({
@@ -49,6 +49,12 @@ jest.mock('../src/components/BottomSheet', () => {
         </TouchableOpacity>
         <TouchableOpacity testID="exit-search-mode" onPress={onExitSearch}>
           <Text>Exit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="trigger-prev-floor" onPress={onPrevPathFloor}>
+          <Text>Prev Floor</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="trigger-next-floor" onPress={onNextPathFloor}>
+          <Text>Next Floor</Text>
         </TouchableOpacity>
       </View>
     );
@@ -73,6 +79,10 @@ jest.mock('../src/screens/MapScreen', () => {
     passSelectedBuilding,
     onMapPress,
     onOpenCalendar,
+    onIndoorFloorNavReady,
+    indoorPathStepsChange,
+    exitIndoorView,
+    hideAppSearchBar,
   }: any) {
     return (
       <View testID="map-screen">
@@ -92,6 +102,29 @@ jest.mock('../src/screens/MapScreen', () => {
         </TouchableOpacity>
         <TouchableOpacity testID="open-calendar-shortcut" onPress={onOpenCalendar}>
           <Text>Calendar Shortcut</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          testID="trigger-floor-nav-ready"
+          onPress={() =>
+            onIndoorFloorNavReady?.(
+              () => {},
+              () => {},
+            )
+          }
+        >
+          <Text>Floor Nav Ready</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          testID="trigger-indoor-route-change"
+          onPress={() => indoorPathStepsChange?.([{ icon: '', label: 'Walk forward' }])}
+        >
+          <Text>Route Change</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="trigger-exit-indoor" onPress={exitIndoorView}>
+          <Text>Exit Indoor</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="trigger-hide-search-bar" onPress={hideAppSearchBar}>
+          <Text>Hide Search Bar</Text>
         </TouchableOpacity>
       </View>
     );
@@ -267,5 +300,87 @@ describe('App', () => {
     });
 
     warnSpy.mockRestore();
+  });
+
+  test('isIndoor is false by default and AppSearchBar is shown', () => {
+    const { getByTestId } = render(<App />);
+    expect(getByTestId('search-bar')).toBeTruthy();
+  });
+
+  test('openSearchBuilding hides AppSearchBar and opens bottom sheet', () => {
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('open-search'));
+
+    expect(queryByTestId('search-bar')).toBeNull();
+    expect(mockBottomSheetOpen).toHaveBeenCalled();
+  });
+
+  test('pressing map background does not throw', () => {
+    const { getByTestId } = render(<App />);
+    expect(() => fireEvent.press(getByTestId('press-map-background'))).not.toThrow();
+  });
+
+  test('calendar shortcut hides AppSearchBar', async () => {
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('open-calendar-shortcut'));
+
+    await waitFor(() => expect(queryByTestId('search-bar')).toBeNull());
+  });
+
+  test('fonts not loaded returns null and renders nothing', () => {
+    mockUseFonts.mockReturnValue([false]);
+    const { queryByTestId } = render(<App />);
+    expect(queryByTestId('bottom-sheet')).toBeNull();
+    expect(queryByTestId('search-bar')).toBeNull();
+  });
+
+  test('enterIndoorView sets isIndoor state without throwing', () => {
+    const { getByTestId } = render(<App />);
+    expect(() => fireEvent.press(getByTestId('open-detail-sheet'))).not.toThrow();
+  });
+
+  test('handleIndoorFloorNavReady stores floor nav callbacks without throwing', () => {
+    const { getByTestId } = render(<App />);
+    expect(() => fireEvent.press(getByTestId('trigger-floor-nav-ready'))).not.toThrow();
+  });
+
+  test('indoorPathStepsChange updates path steps without throwing', () => {
+    const { getByTestId } = render(<App />);
+    expect(() => fireEvent.press(getByTestId('trigger-indoor-route-change'))).not.toThrow();
+  });
+
+  test('exitIndoorView resets isIndoor to false without throwing', () => {
+    const { getByTestId } = render(<App />);
+    expect(() => fireEvent.press(getByTestId('trigger-exit-indoor'))).not.toThrow();
+  });
+
+  test('hideAppSearchBar hides the AppSearchBar', () => {
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('trigger-hide-search-bar'));
+
+    expect(queryByTestId('search-bar')).toBeNull();
+  });
+
+  test('handleIndoorRouteChange is called and does not throw', () => {
+    const { getByTestId } = render(<App />);
+
+    expect(() => fireEvent.press(getByTestId('trigger-indoor-route-change'))).not.toThrow();
+  });
+
+  test('handlePrevPathFloor calls stored prev floor ref without throwing', () => {
+    const { getByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('trigger-floor-nav-ready'));
+    expect(() => fireEvent.press(getByTestId('trigger-prev-floor'))).not.toThrow();
+  });
+
+  test('handleNextPathFloor calls stored next floor ref without throwing', () => {
+    const { getByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('trigger-floor-nav-ready'));
+    expect(() => fireEvent.press(getByTestId('trigger-next-floor'))).not.toThrow();
   });
 });

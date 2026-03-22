@@ -48,6 +48,7 @@ import CalendarSelectionSlider from './CalendarSelectionSlider';
 import UpcomingClassesSlider from './UpcomingClassesSlider';
 import type { RoomNode } from '../components/indoor/RoomList';
 import IndoorDirectionDetails from './indoor/IndoorDirectionDetails';
+import IndoorNavigationDetails from './indoor/IndoorNavigationDetails';
 
 const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
@@ -228,7 +229,11 @@ export type BottomSliderHandle = {
   setSnap: (index: number) => void;
   closeCalendarSlider: () => void;
   openCalendarEventsSlider: (calendarIds?: string[]) => void;
+  openIndoorNavigation: () => void;
+  openIndoorDirections: () => void;
 };
+
+type SearchTarget = 'start' | 'destination' | null;
 
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
@@ -245,12 +250,10 @@ type BottomSheetProps = {
   onEnterBuilding: (building: BuildingShape) => void;
   isIndoor: boolean;
   enterIndoorView: () => void;
-  onSelectRoom: (room: RoomNode) => void;
-  startRoom: string | null;
-  destinationRoom: string | null;
-  setStartRoom: React.Dispatch<React.SetStateAction<string | null>>;
-  setDestinationRoom: React.Dispatch<React.SetStateAction<string | null>>;
-  setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
+  onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
+  indoorPathSteps: { icon: string; label: string }[];
+  onPrevPathFloor?: () => void;
+  onNextPathFloor?: () => void;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -359,8 +362,151 @@ const getRouteErrorMessage = (error: unknown): string => {
   return 'Unable to load route. Please try again.';
 };
 
-const renderBottomSheetContent = ({
-  isSearchActive,
+// ── Extracted view components ─────────────────────────────────────────────
+
+const NavigationView = ({
+  navigationSummary,
+  endNavigation,
+}: {
+  navigationSummary: {
+    arrivalValue: string;
+    durationStat: { value: string; label: string };
+    distanceStat: { value: string; label: string };
+  } | null;
+  endNavigation: () => void;
+}) => (
+  <>
+    <View style={directionDetailsStyles.navigationSummaryCard}>
+      <View style={directionDetailsStyles.navigationSummaryRow}>
+        <View style={directionDetailsStyles.navigationSummaryStat}>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={directionDetailsStyles.navigationSummaryValue}
+          >
+            {navigationSummary?.arrivalValue ?? '--:--'}
+          </Text>
+          <Text style={directionDetailsStyles.navigationSummaryLabel}>arrival</Text>
+        </View>
+        <View style={directionDetailsStyles.navigationSummaryDivider} />
+        <View style={directionDetailsStyles.navigationSummaryStat}>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={directionDetailsStyles.navigationSummaryValue}
+          >
+            {navigationSummary?.durationStat.value ?? '--'}
+          </Text>
+          <Text style={directionDetailsStyles.navigationSummaryLabel}>
+            {navigationSummary?.durationStat.label ?? 'min'}
+          </Text>
+        </View>
+        <View style={directionDetailsStyles.navigationSummaryDivider} />
+        <View style={directionDetailsStyles.navigationSummaryStat}>
+          <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={directionDetailsStyles.navigationSummaryValue}
+          >
+            {navigationSummary?.distanceStat.value ?? '--'}
+          </Text>
+          <Text style={directionDetailsStyles.navigationSummaryLabel}>
+            {navigationSummary?.distanceStat.label ?? 'km'}
+          </Text>
+        </View>
+      </View>
+    </View>
+    <TouchableOpacity
+      testID="end-navigation-button"
+      accessibilityRole="button"
+      activeOpacity={0.88}
+      onPress={endNavigation}
+      style={directionDetailsStyles.navigationEndButton}
+    >
+      <Text style={directionDetailsStyles.navigationEndButtonText}>End Navigation</Text>
+    </TouchableOpacity>
+  </>
+);
+
+const IndoorDirectionsView = ({
+  startRoom,
+  destinationRoom,
+  indoorPathSteps,
+  closeSheet,
+  setSearchFor,
+  setActiveView,
+  clearSearchOptions,
+}: {
+  startRoom: string | null;
+  destinationRoom: string | null;
+  indoorPathSteps: { icon: string; label: string }[];
+  closeSheet: () => void;
+  setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
+  setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
+  clearSearchOptions?: () => void;
+}) => (
+  <IndoorDirectionDetails
+    startRoom={startRoom}
+    destinationRoom={destinationRoom}
+    onClose={closeSheet}
+    onPressStart={() => setSearchFor('start')}
+    onPressDestination={() => setSearchFor('destination')}
+    hasPath={indoorPathSteps.length > 0}
+    onPressGo={() => setActiveView('indoor-navigation')}
+    onClear={clearSearchOptions}
+  />
+);
+
+const IndoorNavigationView = ({
+  startRoom,
+  destinationRoom,
+  selectedBuilding,
+  indoorPathSteps,
+  closeSheet,
+  setActiveView,
+  onPrevPathFloor,
+  onNextPathFloor,
+}: {
+  startRoom: string | null;
+  destinationRoom: string | null;
+  selectedBuilding: BuildingShape | null;
+  indoorPathSteps: { icon: string; label: string }[];
+  closeSheet: () => void;
+  setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
+  onPrevPathFloor?: () => void;
+  onNextPathFloor?: () => void;
+}) => (
+  <IndoorNavigationDetails
+    startRoom={startRoom}
+    destinationRoom={destinationRoom}
+    buildingName={selectedBuilding?.name ?? undefined}
+    pathSteps={indoorPathSteps}
+    onBack={() => setActiveView('indoor-directions')}
+    onClose={closeSheet}
+    onPrevFloor={indoorPathSteps.length > 0 ? onPrevPathFloor : undefined}
+    onNextFloor={indoorPathSteps.length > 0 ? onNextPathFloor : undefined}
+  />
+);
+
+type SearchContentProps = {
+  calendarSliderMode: 'selection' | 'events' | null;
+  isInternalSearch: boolean;
+  selectedCalendarIds: string[];
+  handleReselectCalendars: () => void;
+  handleCloseUpcomingClassesSlider: () => void;
+  handleCloseCalendarSelectionSlider: () => void;
+  showUpcomingClassesSlider: (calendarIds: string[]) => void;
+  buildings: BuildingShape[];
+  handleInternalSearch: (building: BuildingShape) => void;
+  closeSearchBuilding: (building: BuildingShape) => void;
+  openCalendarSelectionAfterConnect: () => void;
+  handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  calendarGoErrorMessage: string | null;
+  isIndoor: boolean;
+  onSelectRoom: (room: RoomNode) => void;
+};
+
+const SearchContent = ({
   calendarSliderMode,
   isInternalSearch,
   selectedCalendarIds,
@@ -374,38 +520,44 @@ const renderBottomSheetContent = ({
   openCalendarSelectionAfterConnect,
   handleCalendarGoFromSearch,
   calendarGoErrorMessage,
-  activeView,
-  selectedBuilding,
-  closeSheet,
-  showDirections,
-  onEnterBuilding,
-  currentBuilding,
-  userLocation,
-  destinationBuilding,
-  routeTransitSteps,
-  showDirectionsPanel,
-  startBuilding,
-  shuttlePlan,
-  navigationSummary,
-  endNavigation,
-  isCrossCampusRoute,
-  isRouteLoading,
-  routeErrorMessage,
-  routeDistanceText,
-  routeDurationText,
-  routeDurationSeconds,
-  travelMode,
-  canStartNavigationFromCurrentLocation,
-  setSearchFor,
-  setTravelMode,
-  handleDirectionsGo,
-  showShuttleSchedule,
-  handleRetryRoute,
   isIndoor,
   onSelectRoom,
-  startRoom,
-  destinationRoom,
-}: {
+}: SearchContentProps) => {
+  if (calendarSliderMode === 'events' && !isInternalSearch) {
+    return (
+      <UpcomingClassesSlider
+        selectedCalendarIds={selectedCalendarIds}
+        onReselectCalendars={handleReselectCalendars}
+        onClose={handleCloseUpcomingClassesSlider}
+      />
+    );
+  }
+
+  if (calendarSliderMode === 'selection' && !isInternalSearch) {
+    return (
+      <CalendarSelectionSlider
+        initialSelectedCalendarIds={selectedCalendarIds}
+        onDone={showUpcomingClassesSlider}
+        onClose={handleCloseCalendarSelectionSlider}
+      />
+    );
+  }
+
+  return (
+    <SearchSheet
+      buildings={buildings}
+      onPressBuilding={isInternalSearch ? handleInternalSearch : closeSearchBuilding}
+      onCalendarConnected={openCalendarSelectionAfterConnect}
+      selectedCalendarIds={selectedCalendarIds}
+      onCalendarGoPress={handleCalendarGoFromSearch}
+      calendarGoErrorMessage={calendarGoErrorMessage}
+      isIndoor={isIndoor}
+      onSelectRoom={onSelectRoom}
+    />
+  );
+};
+
+const renderBottomSheetContent = (props: {
   isSearchActive: boolean;
   calendarSliderMode: 'selection' | 'events' | null;
   isInternalSearch: boolean;
@@ -446,7 +598,7 @@ const renderBottomSheetContent = ({
   routeDurationSeconds: number | null;
   travelMode: RoutePlannerMode;
   canStartNavigationFromCurrentLocation: boolean;
-  setSearchFor: React.Dispatch<React.SetStateAction<'start' | 'destination' | null>>;
+  setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
   setTravelMode: React.Dispatch<React.SetStateAction<RoutePlannerMode>>;
   handleDirectionsGo: (mode: RoutePlannerMode) => void;
   showShuttleSchedule: () => void;
@@ -455,166 +607,112 @@ const renderBottomSheetContent = ({
   onSelectRoom: (room: RoomNode) => void;
   startRoom: string | null;
   destinationRoom: string | null;
+  indoorPathSteps: { icon: string; label: string }[];
+  setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
+  onPrevPathFloor?: () => void;
+  onNextPathFloor?: () => void;
+  clearIndoorSearch?: () => void;
 }) => {
-  if (isSearchActive) {
-    if (calendarSliderMode === 'events' && !isInternalSearch) {
-      return (
-        <UpcomingClassesSlider
-          selectedCalendarIds={selectedCalendarIds}
-          onReselectCalendars={handleReselectCalendars}
-          onClose={handleCloseUpcomingClassesSlider}
-        />
-      );
-    }
-
-    if (calendarSliderMode === 'selection' && !isInternalSearch) {
-      return (
-        <CalendarSelectionSlider
-          initialSelectedCalendarIds={selectedCalendarIds}
-          onDone={showUpcomingClassesSlider}
-          onClose={handleCloseCalendarSelectionSlider}
-        />
-      );
-    }
-
-    return (
-      <SearchSheet
-        buildings={buildings}
-        onPressBuilding={isInternalSearch ? handleInternalSearch : closeSearchBuilding}
-        onCalendarConnected={openCalendarSelectionAfterConnect}
-        selectedCalendarIds={selectedCalendarIds}
-        onCalendarGoPress={handleCalendarGoFromSearch}
-        calendarGoErrorMessage={calendarGoErrorMessage}
-        isIndoor={isIndoor}
-        onSelectRoom={onSelectRoom}
-      />
-    );
+  if (props.isSearchActive) {
+    return <SearchContent {...props} />;
   }
 
-  if (activeView === 'building') {
+  if (props.activeView === 'building') {
     return (
       <BuildingDetails
-        selectedBuilding={selectedBuilding}
-        onClose={closeSheet}
-        onShowDirections={showDirections}
-        currentBuilding={currentBuilding}
-        userLocation={userLocation}
-        onEnterBuilding={onEnterBuilding}
+        selectedBuilding={props.selectedBuilding}
+        onClose={props.closeSheet}
+        onShowDirections={props.showDirections}
+        currentBuilding={props.currentBuilding}
+        userLocation={props.userLocation}
+        onEnterBuilding={props.onEnterBuilding}
       />
     );
   }
 
-  if (activeView === 'transit-plan') {
+  if (props.activeView === 'transit-plan') {
     return (
       <TransitPlanDetails
-        destinationBuilding={destinationBuilding}
-        routeTransitSteps={routeTransitSteps}
-        onBack={showDirectionsPanel}
-        onClose={closeSheet}
+        destinationBuilding={props.destinationBuilding}
+        routeTransitSteps={props.routeTransitSteps}
+        onBack={props.showDirectionsPanel}
+        onClose={props.closeSheet}
       />
     );
   }
 
-  if (activeView === 'shuttle-schedule') {
+  if (props.activeView === 'shuttle-schedule') {
     return (
       <ShuttleScheduleDetails
-        startBuilding={startBuilding}
-        destinationBuilding={destinationBuilding}
-        shuttlePlan={shuttlePlan}
-        onBack={showDirectionsPanel}
-        onClose={closeSheet}
+        startBuilding={props.startBuilding}
+        destinationBuilding={props.destinationBuilding}
+        shuttlePlan={props.shuttlePlan}
+        onBack={props.showDirectionsPanel}
+        onClose={props.closeSheet}
       />
     );
   }
 
-  if (activeView === 'navigation') {
+  if (props.activeView === 'navigation') {
     return (
-      <>
-        <View style={directionDetailsStyles.navigationSummaryCard}>
-          <View style={directionDetailsStyles.navigationSummaryRow}>
-            <View style={directionDetailsStyles.navigationSummaryStat}>
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                style={directionDetailsStyles.navigationSummaryValue}
-              >
-                {navigationSummary?.arrivalValue ?? '--:--'}
-              </Text>
-              <Text style={directionDetailsStyles.navigationSummaryLabel}>arrival</Text>
-            </View>
-            <View style={directionDetailsStyles.navigationSummaryDivider} />
-            <View style={directionDetailsStyles.navigationSummaryStat}>
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                style={directionDetailsStyles.navigationSummaryValue}
-              >
-                {navigationSummary?.durationStat.value ?? '--'}
-              </Text>
-              <Text style={directionDetailsStyles.navigationSummaryLabel}>
-                {navigationSummary?.durationStat.label ?? 'min'}
-              </Text>
-            </View>
-            <View style={directionDetailsStyles.navigationSummaryDivider} />
-            <View style={directionDetailsStyles.navigationSummaryStat}>
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                style={directionDetailsStyles.navigationSummaryValue}
-              >
-                {navigationSummary?.distanceStat.value ?? '--'}
-              </Text>
-              <Text style={directionDetailsStyles.navigationSummaryLabel}>
-                {navigationSummary?.distanceStat.label ?? 'km'}
-              </Text>
-            </View>
-          </View>
-        </View>
-        <TouchableOpacity
-          testID="end-navigation-button"
-          accessibilityRole="button"
-          activeOpacity={0.88}
-          onPress={endNavigation}
-          style={directionDetailsStyles.navigationEndButton}
-        >
-          <Text style={directionDetailsStyles.navigationEndButtonText}>End Navigation</Text>
-        </TouchableOpacity>
-      </>
+      <NavigationView
+        navigationSummary={props.navigationSummary}
+        endNavigation={props.endNavigation}
+      />
     );
   }
 
-  if (activeView === 'indoor-directions') {
+  if (props.activeView === 'indoor-directions') {
     return (
-      <IndoorDirectionDetails
-        startRoom={'Set Starting Point'}
-        destinationRoom={destinationRoom}
-        onClose={closeSheet}
+      <IndoorDirectionsView
+        startRoom={props.startRoom}
+        destinationRoom={props.destinationRoom}
+        indoorPathSteps={props.indoorPathSteps}
+        closeSheet={props.closeSheet}
+        setSearchFor={props.setSearchFor}
+        setActiveView={props.setActiveView}
+        clearSearchOptions={props.clearIndoorSearch}
+      />
+    );
+  }
+
+  if (props.activeView === 'indoor-navigation') {
+    return (
+      <IndoorNavigationView
+        startRoom={props.startRoom}
+        destinationRoom={props.destinationRoom}
+        selectedBuilding={props.selectedBuilding}
+        indoorPathSteps={props.indoorPathSteps}
+        closeSheet={props.closeSheet}
+        setActiveView={props.setActiveView}
+        onPrevPathFloor={props.onPrevPathFloor}
+        onNextPathFloor={props.onNextPathFloor}
       />
     );
   }
 
   return (
     <DirectionDetails
-      onClose={closeSheet}
-      startBuilding={startBuilding}
-      destinationBuilding={destinationBuilding}
-      userLocation={userLocation}
-      currentBuilding={currentBuilding}
-      isCrossCampusRoute={isCrossCampusRoute}
-      isRouteLoading={isRouteLoading}
-      routeErrorMessage={routeErrorMessage}
-      routeDistanceText={routeDistanceText}
-      routeDurationText={routeDurationText}
-      routeDurationSeconds={routeDurationSeconds}
-      selectedTravelMode={travelMode}
-      shuttlePlan={shuttlePlan}
-      canStartNavigation={canStartNavigationFromCurrentLocation}
-      onPressStart={() => setSearchFor('start')}
-      onPressDestination={() => setSearchFor('destination')}
-      onTravelModeChange={setTravelMode}
-      onPressGo={handleDirectionsGo}
-      onPressShuttleSchedule={showShuttleSchedule}
-      onRetryRoute={handleRetryRoute}
+      onClose={props.closeSheet}
+      startBuilding={props.startBuilding}
+      destinationBuilding={props.destinationBuilding}
+      userLocation={props.userLocation}
+      currentBuilding={props.currentBuilding}
+      isCrossCampusRoute={props.isCrossCampusRoute}
+      isRouteLoading={props.isRouteLoading}
+      routeErrorMessage={props.routeErrorMessage}
+      routeDistanceText={props.routeDistanceText}
+      routeDurationText={props.routeDurationText}
+      routeDurationSeconds={props.routeDurationSeconds}
+      selectedTravelMode={props.travelMode}
+      shuttlePlan={props.shuttlePlan}
+      canStartNavigation={props.canStartNavigationFromCurrentLocation}
+      onPressStart={() => props.setSearchFor('start')}
+      onPressDestination={() => props.setSearchFor('destination')}
+      onTravelModeChange={props.setTravelMode}
+      onPressGo={props.handleDirectionsGo}
+      onPressShuttleSchedule={props.showShuttleSchedule}
+      onRetryRoute={props.handleRetryRoute}
     />
   );
 };
@@ -635,6 +733,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onEnterBuilding,
       isIndoor,
       enterIndoorView,
+      onIndoorRouteChange,
+      indoorPathSteps,
+      onPrevPathFloor,
+      onNextPathFloor,
     },
     ref,
   ) => {
@@ -647,6 +749,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       return [...DEFAULT_SNAP_POINTS];
     }, [activeView]);
 
+    const clearIndoorSearch = useCallback(() => {
+      setStartRoom(null);
+      setDestinationRoom(null);
+      setStartRoomId(null);
+      setEndRoomId(null);
+
+      onIndoorRouteChange?.(null, null);
+    }, [onIndoorRouteChange]);
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
     const [startLocationSnapshot, setStartLocationSnapshot] = useState<UserCoords | null>(null);
@@ -750,7 +860,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       snapToDirectionsPanel(directionsPanelSnapPoint);
     }, [activeView, directionsPanelSnapPoint, snapToDirectionsPanel]);
 
-    const [searchFor, setSearchFor] = useState<'start' | 'destination' | null>(null);
+    const [searchFor, setSearchFor] = useState<SearchTarget>(null);
     const [calendarSliderMode, setCalendarSliderMode] = useState<'selection' | 'events' | null>(
       null,
     );
@@ -758,23 +868,32 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [calendarGoErrorMessage, setCalendarGoErrorMessage] = useState<string | null>(null);
     const isInternalSearch = searchFor !== null;
     const isGlobalSearch = mode === 'search';
-    const isSearchActive =
-      (isInternalSearch || isGlobalSearch || calendarSliderMode !== null) &&
-      activeView !== 'indoor-directions';
+    const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
+
+    const [startRoomId, setStartRoomId] = useState<string | null>(null);
+    const [endRoomId, setEndRoomId] = useState<string | null>(null);
 
     const handleSelectRoom = useCallback(
       (room: RoomNode) => {
-        if (!startRoom) {
+        if (searchFor === 'start') {
           setStartRoom(room.label);
+          setStartRoomId(room.id);
         } else {
           setDestinationRoom(room.label);
-          setSearchFor(null);
-          onExitSearch();
-          setCalendarSliderMode(null);
+          setEndRoomId(room.id);
+        }
+        setSearchFor(null);
+        onExitSearch();
+        setCalendarSliderMode(null);
+        if (activeView !== 'indoor-directions') {
           setActiveView('indoor-directions');
         }
+        onIndoorRouteChange?.(
+          searchFor === 'start' ? room.id : startRoomId,
+          searchFor === 'start' ? endRoomId : room.id,
+        );
       },
-      [startRoom],
+      [searchFor, activeView, startRoomId, endRoomId],
     );
 
     const openCalendarSelectionSlider = useCallback(
@@ -1198,6 +1317,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       close: closeSheet,
       setSnap: setSnapPoint,
       closeCalendarSlider: () => setCalendarSliderMode(null),
+
       openCalendarEventsSlider: (calendarIds?: string[]) => {
         const normalizedIds = [...new Set((calendarIds ?? selectedCalendarIds).filter(Boolean))];
         if (normalizedIds.length === 0) {
@@ -1205,6 +1325,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           return;
         }
         showUpcomingClassesSlider(normalizedIds);
+      },
+      openIndoorDirections: () => {
+        setActiveView('indoor-directions');
+        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+      },
+      openIndoorNavigation: () => {
+        setActiveView('indoor-navigation');
+        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
       },
     }));
 
@@ -1270,6 +1398,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             onSelectRoom: handleSelectRoom,
             startRoom,
             destinationRoom,
+            indoorPathSteps,
+            setActiveView,
+            onPrevPathFloor,
+            onNextPathFloor,
+            clearIndoorSearch,
           })}
         </BottomSheetView>
       </BottomSheet>
