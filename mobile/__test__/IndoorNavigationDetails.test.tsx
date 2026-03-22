@@ -39,7 +39,12 @@ describe('IndoorNavigationDetails', () => {
 
   it('renders floor nav buttons when both handlers are provided', () => {
     const { getByText } = render(
-      <IndoorNavigationDetails {...baseProps} onPrevFloor={jest.fn()} onNextFloor={jest.fn()} />,
+      <IndoorNavigationDetails
+        {...baseProps}
+        pathSteps={[{ icon: '', label: 'Stairs to floor 2' }]}
+        onPrevFloor={jest.fn()}
+        onNextFloor={jest.fn()}
+      />,
     );
     expect(getByText('Prev Floor')).toBeTruthy();
     expect(getByText('Next Floor')).toBeTruthy();
@@ -58,8 +63,7 @@ describe('IndoorNavigationDetails', () => {
     const { getByText } = render(
       <IndoorNavigationDetails
         {...baseProps}
-        startRoom="H-101"
-        destinationRoom="H-202"
+        pathSteps={[{ icon: '', label: 'Stairs to floor 2' }]}
         onPrevFloor={onPrevFloor}
         onNextFloor={onNextFloor}
       />,

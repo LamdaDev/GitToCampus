@@ -26,16 +26,13 @@ export default function IndoorNavigationDetails({
   onPrevFloor,
   onNextFloor,
 }: Readonly<Props>) {
-  const isSameFloor = () => {
-    const startFloorLevel = startRoom?.split('-')[1]?.[0];
-    const destinationFloorLevel = destinationRoom?.split('-')[1]?.[0];
-    return startFloorLevel != destinationFloorLevel;
-  };
-
-  const isSameBuilding = () => {
-    const startBuilding = startRoom?.split('-')[0];
-    const destinationBuilding = destinationRoom?.split('-')[0];
-    return startBuilding == destinationBuilding;
+  const isMultiFloor = () => {
+    for (const step of pathSteps) {
+      if (step.label.includes('Stairs') || step.label.includes('Elevator')) {
+        return true;
+      }
+    }
+    return false;
   };
 
   return (
@@ -70,7 +67,7 @@ export default function IndoorNavigationDetails({
       </View>
 
       {/* FLOOR NAV */}
-      {isSameBuilding() && isSameFloor() ? (
+      {isMultiFloor() ? (
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
           <TouchableOpacity
             style={{
