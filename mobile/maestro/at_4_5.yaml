@@ -1,0 +1,22 @@
+appId: host.exp.exponent
+---
+- tapOn: Get to...
+- tapOn: Set as starting point
+- tapOn: Search buildings...
+- inputText: H-2
+- assertVisible: 
+    text: H-209
+    delay: 1000
+- doubleTapOn: H-209
+- tapOn: Set Destination
+- tapOn: Search buildings...
+- inputText: H-8
+- assertVisible:
+    text: H-803
+    delay: 1000
+- doubleTapOn: H-803
+- swipe:
+    start: 50%, 40%
+    end: 50%, 60%
+- tapOn: GO
+- tapOn: Next Floor
