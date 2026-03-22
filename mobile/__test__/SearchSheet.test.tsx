@@ -87,6 +87,15 @@ jest.mock('../src/services/googleCalendarAuth', () => ({
   ),
 }));
 
+const createDeferred = <T,>() => {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((pendingResolve) => {
+    resolve = pendingResolve;
+  });
+
+  return { promise, resolve };
+};
+
 describe('SearchSheet', () => {
   const getStoredSessionStateMock =
     googleCalendarAuth.getStoredGoogleCalendarSessionState as jest.Mock;
@@ -259,6 +268,111 @@ describe('SearchSheet', () => {
       location: 'Hall Building 435',
       startsAt: expect.any(Number),
     });
+  });
+
+  test('ignores stale next class responses when selected calendars change quickly', async () => {
+    getStoredSessionStateMock.mockResolvedValueOnce({
+      status: 'connected',
+      session: {
+        accessToken: 'token-live',
+        tokenType: 'Bearer',
+        scope: 'https://www.googleapis.com/auth/calendar.readonly',
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      },
+    });
+
+    const firstRequest = createDeferred<{
+      type: 'success';
+      events: {
+        id: string;
+        calendarId: string;
+        title: string;
+        location: string;
+        startsAt: number;
+      }[];
+    }>();
+    const secondRequest = createDeferred<{
+      type: 'success';
+      events: {
+        id: string;
+        calendarId: string;
+        title: string;
+        location: string;
+        startsAt: number;
+      }[];
+    }>();
+
+    fetchGoogleCalendarEventsMock
+      .mockImplementationOnce(() => firstRequest.promise)
+      .mockImplementationOnce(() => secondRequest.promise);
+
+    const onCalendarGoPress = jest.fn();
+    const { getByTestId, queryByText, rerender } = render(
+      <SearchSheet
+        buildings={mockBuildings}
+        selectedCalendarIds={['calendar-1']}
+        onCalendarGoPress={onCalendarGoPress}
+      />,
+    );
+
+    await waitFor(() => expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledWith(['calendar-1']));
+
+    rerender(
+      <SearchSheet
+        buildings={mockBuildings}
+        selectedCalendarIds={['calendar-2']}
+        onCalendarGoPress={onCalendarGoPress}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(fetchGoogleCalendarEventsMock).toHaveBeenLastCalledWith(['calendar-2']),
+    );
+
+    await act(async () => {
+      secondRequest.resolve({
+        type: 'success',
+        events: [
+          {
+            id: 'event-latest',
+            calendarId: 'calendar-2',
+            title: 'Second Response Class',
+            location: 'Faubourg Building C080',
+            startsAt: Date.now() + 15 * 60 * 1000,
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(queryByText('Second Response Class')).toBeTruthy());
+
+    await act(async () => {
+      firstRequest.resolve({
+        type: 'success',
+        events: [
+          {
+            id: 'event-stale',
+            calendarId: 'calendar-1',
+            title: 'First Response Class',
+            location: 'Hall Building 435',
+            startsAt: Date.now() + 10 * 60 * 1000,
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(queryByText('First Response Class')).toBeNull());
+
+    fireEvent.press(getByTestId('next-class-go-button'));
+    expect(onCalendarGoPress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'event-latest',
+        calendarId: 'calendar-2',
+        title: 'Second Response Class',
+      }),
+    );
   });
 
   test('filters unsupported locations and chooses the next supported class for GO', async () => {

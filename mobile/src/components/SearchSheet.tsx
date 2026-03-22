@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { SearchBar } from 'react-native-elements';
 import { searchBuilding } from '../styles/SearchBuilding.styles';
@@ -54,6 +54,7 @@ export default function SearchSheet({
   const [nextClassEvent, setNextClassEvent] = useState<GoogleCalendarEventItem | null>(null);
   const [isNextClassLoading, setIsNextClassLoading] = useState(false);
   const [hasOnlyUnsupportedNextClassEvents, setHasOnlyUnsupportedNextClassEvents] = useState(false);
+  const nextClassRequestIdRef = useRef(0);
 
   const nextClassLabel = useMemo(() => {
     if (isNextClassLoading) return 'Loading next class...';
@@ -72,13 +73,18 @@ export default function SearchSheet({
   ]);
 
   const loadNextClass = useCallback(async () => {
+    const requestId = nextClassRequestIdRef.current + 1;
+    nextClassRequestIdRef.current = requestId;
+
     if (calendarStatus !== 'connected') {
+      setIsNextClassLoading(false);
       setNextClassEvent(null);
       setHasOnlyUnsupportedNextClassEvents(false);
       return;
     }
 
     if (selectedCalendarIds.length === 0) {
+      setIsNextClassLoading(false);
       setNextClassEvent(null);
       setHasOnlyUnsupportedNextClassEvents(false);
       return;
@@ -86,6 +92,8 @@ export default function SearchSheet({
 
     setIsNextClassLoading(true);
     const result = await fetchGoogleCalendarEventsAsync(selectedCalendarIds);
+    if (nextClassRequestIdRef.current !== requestId) return;
+
     setIsNextClassLoading(false);
 
     if (result.type === 'error') {
@@ -182,6 +190,13 @@ export default function SearchSheet({
       clearTimeout(timeoutId);
     };
   }, [calendarStatus, markSessionExpired, sessionExpiresAt]);
+
+  useEffect(
+    () => () => {
+      nextClassRequestIdRef.current += 1;
+    },
+    [],
+  );
 
   useEffect(() => {
     void loadNextClass();
