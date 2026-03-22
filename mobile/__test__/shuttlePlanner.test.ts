@@ -112,12 +112,37 @@ describe('shuttlePlanner service', () => {
       startCampus: 'LOYOLA',
       destinationCampus: 'SGW',
       startCoords: { latitude: 45.4585, longitude: -73.6406 },
+      destinationCoords: { latitude: 45.495376, longitude: -73.577997 },
       now: new Date(2026, 1, 23, 9, 10, 0, 0),
     });
 
     expect(plan.direction).toBe('LOYOLA_TO_SGW');
     expect(plan.pickup?.campus).toBe('LOYOLA');
     expect(plan.dropoff?.campus).toBe('SGW');
+    expect(plan.preShuttleWalk).toEqual(
+      expect.objectContaining({
+        kind: 'pre_shuttle_walk',
+        mode: 'walking',
+        origin: { latitude: 45.4585, longitude: -73.6406 },
+        destination: plan.pickup?.coords,
+      }),
+    );
+    expect(plan.shuttleRide).toEqual(
+      expect.objectContaining({
+        kind: 'shuttle_ride',
+        mode: 'shuttle',
+        origin: plan.pickup?.coords,
+        destination: plan.dropoff?.coords,
+      }),
+    );
+    expect(plan.postShuttleWalk).toEqual(
+      expect.objectContaining({
+        kind: 'post_shuttle_walk',
+        mode: 'walking',
+        origin: plan.dropoff?.coords,
+        destination: { latitude: 45.495376, longitude: -73.577997 },
+      }),
+    );
     expect(plan.isServiceAvailable).toBe(true);
     expect(plan.nextDepartureInMinutes).toBe(5);
     expect(plan.nextDepartures.length).toBeGreaterThan(0);
