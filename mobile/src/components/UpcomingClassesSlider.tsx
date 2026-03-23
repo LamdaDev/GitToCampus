@@ -5,10 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ListRenderItemInfo } from 'react-native';
 import {
   fetchGoogleCalendarEventsAsync,
-  isGoogleCalendarEventActiveOrUpcoming,
   type GoogleCalendarEventItem,
 } from '../services/googleCalendarAuth';
 import { upcomingClassesSliderStyles } from '../styles/UpcomingClassesSlider.styles';
+import {
+  getSupportedActiveOrUpcomingEvents,
+  getSupportedCalendarEvents,
+} from '../utils/googleCalendarEventSelection';
 
 type UpcomingClassesSliderProps = {
   selectedCalendarIds: string[];
@@ -18,7 +21,7 @@ type UpcomingClassesSliderProps = {
 
 const MAX_VISIBLE_EVENTS = 8;
 const MAX_EVENTS_TO_RENDER = 12;
-const EVENT_ITEM_HEIGHT = 68;
+const EVENT_ITEM_HEIGHT = 78;
 const EVENT_ITEM_GAP = 8;
 const MAX_VISIBLE_EVENTS_HEIGHT =
   EVENT_ITEM_HEIGHT * MAX_VISIBLE_EVENTS + EVENT_ITEM_GAP * (MAX_VISIBLE_EVENTS - 1);
@@ -43,6 +46,38 @@ const formatDisplayTime = (date: Date) =>
     minute: '2-digit',
   });
 
+const formatEventTime = (date: Date) =>
+  date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+const formatEventDay = (date: Date) =>
+  date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+
+const formatEventDateTimeRange = (event: Pick<GoogleCalendarEventItem, 'startsAt' | 'endsAt'>) => {
+  const startDate = new Date(event.startsAt);
+  const startDateLabel = formatEventDay(startDate);
+  const startTimeLabel = formatEventTime(startDate);
+
+  if (typeof event.endsAt !== 'number' || !Number.isFinite(event.endsAt)) {
+    return `${startDateLabel} ${startTimeLabel}`;
+  }
+
+  const endDate = new Date(event.endsAt);
+  const endDateLabel = formatEventDay(endDate);
+  if (startDateLabel !== endDateLabel) {
+    return `${startDateLabel} ${startTimeLabel} - ${endDateLabel} ${formatEventTime(endDate)}`;
+  }
+
+  return `${startDateLabel} ${startTimeLabel} - ${formatEventTime(endDate)}`;
+};
+
 export default function UpcomingClassesSlider({
   selectedCalendarIds,
   onReselectCalendars,
@@ -51,6 +86,7 @@ export default function UpcomingClassesSlider({
   const { height: windowHeight } = useWindowDimensions();
   const [now, setNow] = useState(() => new Date());
   const [events, setEvents] = useState<GoogleCalendarEventItem[]>([]);
+  const [supportedEvents, setSupportedEvents] = useState<GoogleCalendarEventItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -63,11 +99,13 @@ export default function UpcomingClassesSlider({
 
     if (result.type === 'error') {
       setEvents([]);
+      setSupportedEvents([]);
       setErrorMessage(result.message);
       return;
     }
 
     setEvents(result.events);
+    setSupportedEvents(getSupportedCalendarEvents(result.events));
   }, [selectedCalendarIds]);
 
   useEffect(() => {
@@ -90,48 +128,69 @@ export default function UpcomingClassesSlider({
     () => `${formattedDate} ${formattedTime}`,
     [formattedDate, formattedTime],
   );
-  const activeEvents = useMemo(() => {
-    const nowTimestamp = now.getTime();
-    return events
-      .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, nowTimestamp))
-      .sort((a, b) => a.startsAt - b.startsAt);
-  }, [events, now]);
+  const {
+    hasOnlyUnsupportedActiveOrUpcomingEvents: hasOnlyUnsupportedUpcomingEvents,
+    supportedActiveOrUpcomingEvents: supportedActiveEvents,
+  } = useMemo(
+    () =>
+      getSupportedActiveOrUpcomingEvents({
+        events,
+        nowTimestamp: now.getTime(),
+        supportedEvents,
+      }),
+    [events, now, supportedEvents],
+  );
 
   const displayedEvents = useMemo(
-    () => activeEvents.slice(0, MAX_EVENTS_TO_RENDER),
-    [activeEvents],
+    () => supportedActiveEvents.slice(0, MAX_EVENTS_TO_RENDER),
+    [supportedActiveEvents],
   );
-  const hasMoreEvents = activeEvents.length > MAX_EVENTS_TO_RENDER;
+  const hasMoreEvents = supportedActiveEvents.length > MAX_EVENTS_TO_RENDER;
   const isEventsListScrollable = displayedEvents.length > MAX_VISIBLE_EVENTS;
   const eventsListMaxHeight = isEventsListScrollable ? MAX_VISIBLE_EVENTS_HEIGHT : undefined;
-  const isEmptyUpcomingClasses = !isLoading && !errorMessage && activeEvents.length === 0;
+  const isEmptyUpcomingClasses = !isLoading && !errorMessage && supportedActiveEvents.length === 0;
   const emptyClassesMessage = useMemo(
-    () => `No upcoming or in-progress classes for ${formattedDate}. Have a great day!`,
-    [formattedDate],
+    () =>
+      hasOnlyUnsupportedUpcomingEvents
+        ? `No upcoming classes with supported Concordia locations for ${formattedDate}.`
+        : `No upcoming or in-progress classes for ${formattedDate}. Have a great day!`,
+    [formattedDate, hasOnlyUnsupportedUpcomingEvents],
   );
-  const shouldRenderUpcomingClassesList = !isLoading && !errorMessage && activeEvents.length > 0;
+  const shouldRenderUpcomingClassesList =
+    !isLoading && !errorMessage && supportedActiveEvents.length > 0;
   const fixedCardHeight = useMemo(() => {
     const targetHeight = Math.round(windowHeight * 0.68);
     return Math.max(390, Math.min(targetHeight, 680));
   }, [windowHeight]);
 
   const renderEventItem = useCallback(
-    ({ item: event }: ListRenderItemInfo<GoogleCalendarEventItem>) => (
-      <View
-        testID={`upcoming-class-event-${event.id}`}
-        style={upcomingClassesSliderStyles.eventItem}
-      >
-        <Ionicons name="book" size={18} color="#F5F1F2" />
-        <View style={upcomingClassesSliderStyles.eventTextWrap}>
-          <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventTitleText}>
-            {event.title}
-          </Text>
-          <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventMetaText}>
-            {event.location ?? 'Location not provided'}
-          </Text>
+    ({ item: event }: ListRenderItemInfo<GoogleCalendarEventItem>) => {
+      const eventDateTimeRange = formatEventDateTimeRange(event);
+
+      return (
+        <View
+          testID={`upcoming-class-event-${event.id}`}
+          style={upcomingClassesSliderStyles.eventItem}
+        >
+          <Ionicons name="book" size={18} color="#F5F1F2" />
+          <View style={upcomingClassesSliderStyles.eventTextWrap}>
+            <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventTitleText}>
+              {event.title}
+            </Text>
+            <Text
+              testID={`upcoming-class-event-datetime-${event.id}`}
+              numberOfLines={1}
+              style={upcomingClassesSliderStyles.eventDateTimeText}
+            >
+              {eventDateTimeRange}
+            </Text>
+            <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventMetaText}>
+              {event.location ?? 'Location not provided'}
+            </Text>
+          </View>
         </View>
-      </View>
-    ),
+      );
+    },
     [],
   );
 

@@ -203,6 +203,28 @@ Use this flow for Android Google Calendar sign-in.
 - If sign-in is canceled/denied/fails, the app remains usable and shows a clear message.
 - If a session expires while the app is open, UI switches to `Session expired` and prompts reconnect.
 
+### Google Calendar event location format and filtering (TASK-4.9.1)
+
+Calendar-driven routing assumes physical class locations are entered using a Concordia building reference.
+
+- Preferred format: `<Building Code> <Room>`
+  - Examples:
+    - `H 810`
+    - `H 525`
+    - `MB 2.230`
+    - `MB S1.110`
+- Supported compatibility fallbacks:
+  - compact room format: `H810`
+  - hyphenated room format: `H-810`
+  - campus-prefixed format: `SGW H 810`
+  - long-name fallback: `Hall Building 435`, `Henry F. Hall Building 810`
+
+Filtering behavior:
+
+- The app only shows Google Calendar events in `Upcoming Classes` and `Next Class` if the event is active/upcoming and its `location` resolves to a supported Concordia building.
+- Events with missing, vague, or unsupported locations such as `Zoom`, `TBD`, or off-campus venues are filtered out of these calendar routing surfaces.
+- This filtering is location-based, not title-based. A valid Concordia location is the MVP signal that an event is routable for campus navigation.
+
 ## Testing (Jest + React Native Testing Library)
 
 This project uses Jest with `jest-expo` and `@testing-library/react-native`.
