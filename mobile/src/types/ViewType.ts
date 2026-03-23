@@ -3,4 +3,6 @@ export type ViewType =
   | 'directions'
   | 'transit-plan'
   | 'shuttle-schedule'
-  | 'navigation';
+  | 'navigation'
+  | 'indoor-directions'
+  | 'indoor-navigation';

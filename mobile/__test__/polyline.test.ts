@@ -1,4 +1,4 @@
-import { decodePolyline } from '../src/utils/polyline';
+import { decodePolyline, encodePolyline } from '../src/utils/polyline';
 
 describe('decodePolyline', () => {
   test('decodes a valid Google polyline', () => {
@@ -31,5 +31,25 @@ describe('decodePolyline', () => {
 
   test('returns empty array when longitude chunk is truncated', () => {
     expect(decodePolyline('?')).toEqual([]);
+  });
+});
+
+describe('encodePolyline', () => {
+  test('encodes coordinates into a Google polyline', () => {
+    expect(
+      encodePolyline([
+        { latitude: 38.5, longitude: -120.2 },
+        { latitude: 40.7, longitude: -120.95 },
+        { latitude: 43.252, longitude: -126.453 },
+      ]),
+    ).toBe('_p~iF~ps|U_ulLnnqC_mqNvxq`@');
+  });
+
+  test('returns empty string for empty coordinate input', () => {
+    expect(encodePolyline([])).toBe('');
+  });
+
+  test('returns empty string for invalid coordinate input', () => {
+    expect(encodePolyline([{ latitude: Number.NaN, longitude: -73.57 } as any])).toBe('');
   });
 });

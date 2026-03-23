@@ -55,3 +55,45 @@ export const decodePolyline = (encoded: string): LatLng[] => {
 
   return points;
 };
+
+const encodeSignedValue = (value: number) => {
+  let encodedValue = value < 0 ? ~(value << 1) : value << 1;
+  let output = '';
+
+  while (encodedValue >= 0x20) {
+    output += String.fromCodePoint((0x20 | (encodedValue & 0x1f)) + 63);
+    encodedValue >>= 5;
+  }
+
+  output += String.fromCodePoint(encodedValue + 63);
+  return output;
+};
+
+/**
+ * Encodes a sequence of LatLng coordinates into a Google encoded polyline string.
+ * Returns an empty string for empty or invalid input.
+ */
+export const encodePolyline = (coordinates: LatLng[]): string => {
+  if (!coordinates.length) return '';
+
+  let previousLatitude = 0;
+  let previousLongitude = 0;
+  let encoded = '';
+
+  for (const coordinate of coordinates) {
+    if (!Number.isFinite(coordinate.latitude) || !Number.isFinite(coordinate.longitude)) {
+      return '';
+    }
+
+    const latitude = Math.round(coordinate.latitude * 1e5);
+    const longitude = Math.round(coordinate.longitude * 1e5);
+
+    encoded += encodeSignedValue(latitude - previousLatitude);
+    encoded += encodeSignedValue(longitude - previousLongitude);
+
+    previousLatitude = latitude;
+    previousLongitude = longitude;
+  }
+
+  return encoded;
+};
