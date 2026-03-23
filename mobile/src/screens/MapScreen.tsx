@@ -76,7 +76,8 @@ const ROUTE_LINE_WIDTH = 6;
 const WALKING_DASH_PATTERN = [12, 8];
 const ROUTE_POLYLINE_STROKE_PROPS = { strokeColor: ROUTE_LINE_COLOR } as const;
 const POLYGON_PRESS_GUARD_RESET_DELAY_MS = 0;
-
+//EDIT THIS VALUE TO ADJUST HOW MUCH ZOOM IS REQUIRED TO SHOW BUILDING LABELS
+const SHOW_LABEL_ZOOM_THRESHOLD = 0.0086;
 type PolygonPressGuardTimeoutRef = {
   current: ReturnType<typeof setTimeout> | null;
 };
@@ -411,6 +412,7 @@ const renderPolygonItem = (
   selectedBuildingId: string | null,
   currentBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
+  zoomLevel: number,
 ) => {
   const theme = POLYGON_THEME[item.campus];
   const isSelected = item.buildingId === selectedBuildingId;
@@ -424,6 +426,7 @@ const renderPolygonItem = (
     isCurrent,
   );
 
+  const showBuildingLabel = zoomLevel < SHOW_LABEL_ZOOM_THRESHOLD;
   return (
     <Fragment key={item.key}>
       <Polygon
@@ -435,11 +438,13 @@ const renderPolygonItem = (
         onPress={() => onPolygonPress(item)}
       />
 
-      <PolygonMarker
-        center={center}
-        label={item.buildingShortCode}
-        backgroundColor={theme.labelFill}
-      />
+      {showBuildingLabel && (
+        <PolygonMarker
+          center={center}
+          label={item.buildingShortCode}
+          backgroundColor={theme.labelFill}
+        />
+      )}
     </Fragment>
   );
 };
@@ -449,10 +454,13 @@ const renderPolygonItems = (
   selectedBuildingId: string | null,
   currentBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
+  zoomLevel: number,
 ) => {
   const elements: React.ReactElement[] = [];
   for (const item of polygonItems) {
-    elements.push(renderPolygonItem(item, selectedBuildingId, currentBuildingId, onPolygonPress));
+    elements.push(
+      renderPolygonItem(item, selectedBuildingId, currentBuildingId, onPolygonPress, zoomLevel),
+    );
   }
   return elements;
 };
@@ -732,11 +740,23 @@ function MapScreen({
       tracksViewChanges={false}
     />
   ) : null;
+  const initialRegion = getCampusRegion('SGW');
+
+  const [zoomLevel, setZoomLevel] = useState(initialRegion.latitudeDelta);
+  const handleRegionChange = useCallback((region: any) => {
+    setZoomLevel(region.latitudeDelta);
+  }, []);
 
   const renderedPolygons = useMemo(
     () =>
-      renderPolygonItems(polygonItems, selectedBuildingId, currentBuildingId, handlePolygonPress),
-    [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId],
+      renderPolygonItems(
+        polygonItems,
+        selectedBuildingId,
+        currentBuildingId,
+        handlePolygonPress,
+        zoomLevel,
+      ),
+    [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId, zoomLevel],
   );
 
   const mapProps = {
@@ -763,7 +783,12 @@ function MapScreen({
   };
   return (
     <View style={styles.container}>
-      <MapView {...mapProps} toolbarEnabled={false} moveOnMarkerPress={false}>
+      <MapView
+        {...mapProps}
+        toolbarEnabled={false}
+        moveOnMarkerPress={false}
+        onRegionChangeComplete={handleRegionChange}
+      >
         {renderedPolygons}
         {selectedMarker}
         {showRoute && (

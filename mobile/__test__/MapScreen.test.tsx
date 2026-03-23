@@ -1143,7 +1143,7 @@ describe('MapScreen', () => {
   });
 
   test('renders all polygons with markers and labels', async () => {
-    const { getAllByTestId } = render(
+    const { getAllByTestId, getByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         passUserLocation={mockPassUserLocation}
@@ -1155,6 +1155,17 @@ describe('MapScreen', () => {
       />,
     );
 
+    const map = getByTestId('campus-map');
+
+    act(() => {
+      map.props.onRegionChangeComplete({
+        latitude: 45,
+        longitude: -73,
+        latitudeDelta: 0.001,
+        longitudeDelta: 0.001,
+      });
+    });
+
     await waitFor(() => {
       const markers = getAllByTestId('map-label');
       expect(markers.length).toBe(mockBuildings.reduce((sum, b) => sum + b.polygons.length, 0));
@@ -1162,7 +1173,6 @@ describe('MapScreen', () => {
 
     expect(getAllByTestId('map-label')).toBeTruthy();
   });
-
   test('pressing a polygon selects it and applies styling', async () => {
     const { UNSAFE_getAllByType } = render(
       <MapScreen
