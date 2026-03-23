@@ -425,6 +425,7 @@ const renderPolygonItem = (
     isCurrent,
   );
 
+  const showBuildingLabel = zoomLevel < SHOW_LABEL_ZOOM_THRESHOLD;
   return (
     <Fragment key={item.key}>
       <Polygon
@@ -436,7 +437,7 @@ const renderPolygonItem = (
         onPress={() => onPolygonPress(item)}
       />
 
-      {zoomLevel < SHOW_LABEL_ZOOM_THRESHOLD && (
+      {showBuildingLabel && (
         <PolygonMarker
           center={center}
           label={item.buildingShortCode}
