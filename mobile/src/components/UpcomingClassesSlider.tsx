@@ -5,11 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ListRenderItemInfo } from 'react-native';
 import {
   fetchGoogleCalendarEventsAsync,
-  isGoogleCalendarEventActiveOrUpcoming,
   type GoogleCalendarEventItem,
 } from '../services/googleCalendarAuth';
 import { upcomingClassesSliderStyles } from '../styles/UpcomingClassesSlider.styles';
-import { isSupportedCalendarEventLocation } from '../utils/calendarRouteLocation';
+import {
+  getSupportedActiveOrUpcomingEvents,
+  getSupportedCalendarEvents,
+} from '../utils/googleCalendarEventSelection';
 
 type UpcomingClassesSliderProps = {
   selectedCalendarIds: string[];
@@ -103,9 +105,7 @@ export default function UpcomingClassesSlider({
     }
 
     setEvents(result.events);
-    setSupportedEvents(
-      result.events.filter((event) => isSupportedCalendarEventLocation(event.location)),
-    );
+    setSupportedEvents(getSupportedCalendarEvents(result.events));
   }, [selectedCalendarIds]);
 
   useEffect(() => {
@@ -128,18 +128,17 @@ export default function UpcomingClassesSlider({
     () => `${formattedDate} ${formattedTime}`,
     [formattedDate, formattedTime],
   );
-  const activeEvents = useMemo(() => {
-    const nowTimestamp = now.getTime();
-    return events
-      .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, nowTimestamp))
-      .sort((a, b) => a.startsAt - b.startsAt);
-  }, [events, now]);
-  const supportedActiveEvents = useMemo(
+  const {
+    hasOnlyUnsupportedActiveOrUpcomingEvents: hasOnlyUnsupportedUpcomingEvents,
+    supportedActiveOrUpcomingEvents: supportedActiveEvents,
+  } = useMemo(
     () =>
-      supportedEvents
-        .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, now.getTime()))
-        .sort((a, b) => a.startsAt - b.startsAt),
-    [now, supportedEvents],
+      getSupportedActiveOrUpcomingEvents({
+        events,
+        nowTimestamp: now.getTime(),
+        supportedEvents,
+      }),
+    [events, now, supportedEvents],
   );
 
   const displayedEvents = useMemo(
@@ -149,8 +148,6 @@ export default function UpcomingClassesSlider({
   const hasMoreEvents = supportedActiveEvents.length > MAX_EVENTS_TO_RENDER;
   const isEventsListScrollable = displayedEvents.length > MAX_VISIBLE_EVENTS;
   const eventsListMaxHeight = isEventsListScrollable ? MAX_VISIBLE_EVENTS_HEIGHT : undefined;
-  const hasOnlyUnsupportedUpcomingEvents =
-    activeEvents.length > 0 && supportedActiveEvents.length === 0;
   const isEmptyUpcomingClasses = !isLoading && !errorMessage && supportedActiveEvents.length === 0;
   const emptyClassesMessage = useMemo(
     () =>

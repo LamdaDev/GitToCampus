@@ -12,11 +12,10 @@ import {
   connectGoogleCalendarAsync,
   fetchGoogleCalendarEventsAsync,
   getStoredGoogleCalendarSessionState,
-  isGoogleCalendarEventActiveOrUpcoming,
   type GoogleCalendarEventItem,
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
-import { isSupportedCalendarEventLocation } from '../utils/calendarRouteLocation';
+import { getSupportedActiveOrUpcomingEvents } from '../utils/googleCalendarEventSelection';
 import type { RoomNode } from './indoor/RoomList';
 import RoomList from './indoor/RoomList';
 
@@ -102,25 +101,14 @@ export default function SearchSheet({
       return;
     }
 
-    const now = Date.now();
-    const activeOrUpcomingEvents = result.events
-      .filter((event) => Number.isFinite(event.startsAt))
-      .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, now))
-      .sort((a, b) => {
-        if (a.startsAt !== b.startsAt) return a.startsAt - b.startsAt;
-        const calendarComparison = a.calendarId.localeCompare(b.calendarId);
-        if (calendarComparison !== 0) return calendarComparison;
-        return a.id.localeCompare(b.id);
+    const { hasOnlyUnsupportedActiveOrUpcomingEvents, supportedActiveOrUpcomingEvents } =
+      getSupportedActiveOrUpcomingEvents({
+        events: result.events,
+        nowTimestamp: Date.now(),
       });
-    const supportedActiveOrUpcomingEvents = activeOrUpcomingEvents.filter((event) =>
-      isSupportedCalendarEventLocation(event.location),
-    );
-    const next = supportedActiveOrUpcomingEvents[0];
 
-    setHasOnlyUnsupportedNextClassEvents(
-      activeOrUpcomingEvents.length > 0 && supportedActiveOrUpcomingEvents.length === 0,
-    );
-    setNextClassEvent(next ?? null);
+    setHasOnlyUnsupportedNextClassEvents(hasOnlyUnsupportedActiveOrUpcomingEvents);
+    setNextClassEvent(supportedActiveOrUpcomingEvents[0] ?? null);
   }, [calendarStatus, selectedCalendarIds]);
 
   const searchableBuildings = useMemo(
