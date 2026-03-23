@@ -18,7 +18,7 @@ import veGraph from '../assets/floor_plans_json/ve.json';
 import vlGraph from '../assets/floor_plans_json/vl_floors_combined.json';
 import styles from '../styles/IndoorMapScreen.styles';
 
-type props = {
+type IndoorMapScreenProps = {
   onExitIndoor: () => void;
   onOpenCalendar?: () => void;
   hideAppSearchBar: () => void;
@@ -100,7 +100,7 @@ export default function IndoorMapScreen({
   externalEndRoomId,
   onPathStepsChange,
   onFloorNavReady,
-}: Readonly<props>) {
+}: Readonly<IndoorMapScreenProps>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
 
   const [isIndoorSheetOpen, setIndoorSheetOpen] = useState(false);

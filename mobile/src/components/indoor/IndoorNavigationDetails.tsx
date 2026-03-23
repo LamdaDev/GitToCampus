@@ -2,10 +2,11 @@ import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { directionDetailsStyles } from '../../styles/DirectionDetails.styles';
+import { isMultiFloor } from '../../utils/indoor/isMultifloor';
 
 type PathStep = { icon: string; label: string };
 
-type Props = {
+type IndoorNavigationProps = {
   startRoom: string | null;
   destinationRoom: string | null;
   buildingName?: string;
@@ -25,15 +26,8 @@ export default function IndoorNavigationDetails({
   onClose,
   onPrevFloor,
   onNextFloor,
-}: Readonly<Props>) {
-  const isMultiFloor = () => {
-    for (const step of pathSteps) {
-      if (step.label.includes('Stairs') || step.label.includes('Elevator')) {
-        return true;
-      }
-    }
-    return false;
-  };
+}: Readonly<IndoorNavigationProps>) {
+
 
   return (
     <ScrollView
@@ -67,7 +61,7 @@ export default function IndoorNavigationDetails({
       </View>
 
       {/* FLOOR NAV */}
-      {isMultiFloor() ? (
+      {isMultiFloor(pathSteps) ? (
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
           <TouchableOpacity
             style={{
