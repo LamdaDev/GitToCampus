@@ -411,7 +411,7 @@ const renderPolygonItem = (
   selectedBuildingId: string | null,
   currentBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
-  zoomLevel:number,
+  zoomLevel: number,
 ) => {
   const theme = POLYGON_THEME[item.campus];
   const isSelected = item.buildingId === selectedBuildingId;
@@ -436,13 +436,13 @@ const renderPolygonItem = (
         onPress={() => onPolygonPress(item)}
       />
 
- {zoomLevel < SHOW_LABEL_ZOOM_THRESHOLD && (
-  <PolygonMarker
-    center={center}
-    label={item.buildingShortCode}
-    backgroundColor={theme.labelFill}
-  />
-)}
+      {zoomLevel < SHOW_LABEL_ZOOM_THRESHOLD && (
+        <PolygonMarker
+          center={center}
+          label={item.buildingShortCode}
+          backgroundColor={theme.labelFill}
+        />
+      )}
     </Fragment>
   );
 };
@@ -452,11 +452,13 @@ const renderPolygonItems = (
   selectedBuildingId: string | null,
   currentBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
-  zoomLevel:number,
+  zoomLevel: number,
 ) => {
   const elements: React.ReactElement[] = [];
   for (const item of polygonItems) {
-    elements.push(renderPolygonItem(item, selectedBuildingId, currentBuildingId, onPolygonPress, zoomLevel));
+    elements.push(
+      renderPolygonItem(item, selectedBuildingId, currentBuildingId, onPolygonPress, zoomLevel),
+    );
   }
   return elements;
 };
@@ -735,17 +737,23 @@ function MapScreen({
       tracksViewChanges={false}
     />
   ) : null;
-const initialRegion = getCampusRegion('SGW');
+  const initialRegion = getCampusRegion('SGW');
 
-const [zoomLevel, setZoomLevel] = useState(initialRegion.latitudeDelta);
-const handleRegionChange = useCallback((region: any) => {
-  setZoomLevel(region.latitudeDelta);
-}, []);
+  const [zoomLevel, setZoomLevel] = useState(initialRegion.latitudeDelta);
+  const handleRegionChange = useCallback((region: any) => {
+    setZoomLevel(region.latitudeDelta);
+  }, []);
 
   const renderedPolygons = useMemo(
     () =>
-      renderPolygonItems(polygonItems, selectedBuildingId, currentBuildingId, handlePolygonPress, zoomLevel),
-    [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId,zoomLevel],
+      renderPolygonItems(
+        polygonItems,
+        selectedBuildingId,
+        currentBuildingId,
+        handlePolygonPress,
+        zoomLevel,
+      ),
+    [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId, zoomLevel],
   );
 
   const mapProps = {
@@ -772,7 +780,12 @@ const handleRegionChange = useCallback((region: any) => {
   };
   return (
     <View style={styles.container}>
-      <MapView {...mapProps} toolbarEnabled={false} moveOnMarkerPress={false} onRegionChangeComplete={handleRegionChange}>
+      <MapView
+        {...mapProps}
+        toolbarEnabled={false}
+        moveOnMarkerPress={false}
+        onRegionChangeComplete={handleRegionChange}
+      >
         {renderedPolygons}
         {selectedMarker}
         {showRoute && (
