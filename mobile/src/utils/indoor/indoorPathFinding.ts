@@ -55,7 +55,7 @@ const dijkstra = (
   const unvisitedQueue: { id: string; distance: number }[] = [{ id: startId, distance: 0 }];
 
   while (unvisitedQueue.length > 0) {
-    unvisitedQueue.sort((a, b) => a.distance - b.distance);
+    unvisitedQueue.sort((NodeA, NodeB) => NodeA.distance - NodeB.distance);
     const { id: currentNodeId } = unvisitedQueue.shift()!;
 
     if (visitedNodes.has(currentNodeId)) continue;
@@ -100,15 +100,15 @@ export const findIndoorPath = (
   { accessibleOnly = false, preferElevators = false }: PathOptions = {},
 ): IndoorNode[] | null => {
   const adj = buildAdjacency(nodes, edges, accessibleOnly, preferElevators);
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-  const prev = dijkstra(
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const prevNode = dijkstra(
     startId,
     endId,
     adj,
     nodes.map((node) => node.id),
   );
 
-  return reconstructPath(endId, startId, prev, nodeMap);
+  return reconstructPath(endId, startId, prevNode, nodeMap);
 };
 
 export const getRoomNodes = (nodes: IndoorNode[], floor?: number): IndoorNode[] =>
