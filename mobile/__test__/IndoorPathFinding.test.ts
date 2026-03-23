@@ -1,7 +1,5 @@
 import { findIndoorPath, getRoomNodes } from '../src/utils/indoor/indoorPathFinding';
-import type { IndoorNode, IndoorEdge } from '../src/utils/indoor/indoorPathFinding';
-
-/* ---------- HELPERS ---------- */
+import type { IndoorNode, IndoorEdge, PathOptions } from '../src/utils/indoor/indoorPathFinding';
 
 const makeNode = (overrides: Partial<IndoorNode> & { id: string }): IndoorNode => ({
   type: 'room',
@@ -23,7 +21,10 @@ const makeEdge = (source: string, target: string, overrides?: Partial<IndoorEdge
   ...overrides,
 });
 
-/* ---------- TESTS ---------- */
+const makePathOption = (accessibleOnly: boolean, preferElevators: boolean): PathOptions => ({
+  accessibleOnly,
+  preferElevators,
+});
 
 describe('findIndoorPath', () => {
   const roomA = makeNode({ id: 'room-a' });
@@ -31,15 +32,16 @@ describe('findIndoorPath', () => {
   const roomC = makeNode({ id: 'room-c' });
   const allRooms = [roomA, roomB, roomC];
   const straightLineEdges = [makeEdge('room-a', 'room-b'), makeEdge('room-b', 'room-c')];
+  const pathOptions = makePathOption(true, true);
 
   it('finds a path between two connected rooms', () => {
     const path = findIndoorPath(allRooms, straightLineEdges, 'room-a', 'room-c');
-    expect(path?.map((n) => n.id)).toEqual(['room-a', 'room-b', 'room-c']);
+    expect(path?.map((node) => node.id)).toEqual(['room-a', 'room-b', 'room-c']);
   });
 
   it('works in reverse since edges are bidirectional', () => {
     const path = findIndoorPath(allRooms, straightLineEdges, 'room-c', 'room-a');
-    expect(path?.map((n) => n.id)).toEqual(['room-c', 'room-b', 'room-a']);
+    expect(path?.map((node) => node.id)).toEqual(['room-c', 'room-b', 'room-a']);
   });
 
   it('returns null when rooms are not connected', () => {
@@ -54,12 +56,14 @@ describe('findIndoorPath', () => {
       makeEdge('room-a', 'room-c', { weight: 10 }),
     ];
     const path = findIndoorPath(allRooms, shortcutEdges, 'room-a', 'room-c');
-    expect(path?.map((n) => n.id)).toEqual(['room-a', 'room-b', 'room-c']);
+    expect(path?.map((node) => node.id)).toEqual(['room-a', 'room-b', 'room-c']);
   });
 
   it('skips inaccessible edges when accessibleOnly is true', () => {
     const inaccessibleEdge = makeEdge('room-a', 'room-b', { accessible: false });
-    expect(findIndoorPath([roomA, roomB], [inaccessibleEdge], 'room-a', 'room-b', true)).toBeNull();
+    expect(
+      findIndoorPath([roomA, roomB], [inaccessibleEdge], 'room-a', 'room-b', pathOptions),
+    ).toBeNull();
   });
 });
 
@@ -72,12 +76,12 @@ describe('getRoomNodes', () => {
 
   it('returns only labeled room nodes', () => {
     const result = getRoomNodes(allNodes);
-    expect(result.map((n) => n.id)).toEqual(['lobby', 'office']);
+    expect(result.map((node) => node.id)).toEqual(['lobby', 'office']);
   });
 
   it('filters to the specified floor', () => {
     const result = getRoomNodes(allNodes, 1);
-    expect(result.map((n) => n.id)).toEqual(['lobby']);
+    expect(result.map((node) => node.id)).toEqual(['lobby']);
   });
 
   it('returns empty array when no rooms exist on the floor', () => {

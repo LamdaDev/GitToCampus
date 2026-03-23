@@ -29,6 +29,7 @@ type props = {
   onPathStepsChange?: (steps: { icon: string; label: string }[]) => void;
   onFloorNavReady?: (prev: () => void, next: () => void) => void;
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
+  indoorTravelMode?: 'walking' | 'disability';
 };
 
 const SVG_VIEW_MANAGER_NAMES = ['RNSVGSvgViewAndroid', 'RNSVGSvgView', 'RNSVGPath'];
@@ -121,6 +122,7 @@ export default function IndoorMapScreen({
   externalEndRoomId,
   onPathStepsChange,
   onFloorNavReady,
+  indoorTravelMode = 'walking',
 }: Readonly<props>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
 
@@ -142,9 +144,11 @@ export default function IndoorMapScreen({
   const fullPath = useMemo(() => {
     if (!startRoomId || !endRoomId || !buildingGraph) return null;
 
-    const result = findIndoorPath(buildingGraph.nodes, buildingGraph.edges, startRoomId, endRoomId);
-    return result;
-  }, [startRoomId, endRoomId, buildingGraph]);
+    return findIndoorPath(buildingGraph.nodes, buildingGraph.edges, startRoomId, endRoomId, {
+      accessibleOnly: indoorTravelMode === 'disability',
+      preferElevators: indoorTravelMode === 'disability',
+    });
+  }, [startRoomId, endRoomId, buildingGraph, indoorTravelMode]);
 
   const currentFloorPath = useMemo(() => {
     if (!fullPath || currentFloor === null) return [];

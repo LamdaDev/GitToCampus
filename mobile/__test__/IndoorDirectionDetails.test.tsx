@@ -96,7 +96,7 @@ describe('IndoorDirectionDetails FULL COVERAGE', () => {
       />,
     );
 
-    fireEvent.press(getByTestId('transport-car'));
+    fireEvent.press(getByTestId('disability'));
 
     expect(mockChange).toHaveBeenCalledWith('disability');
   });
@@ -106,9 +106,9 @@ describe('IndoorDirectionDetails FULL COVERAGE', () => {
       <IndoorDirectionDetails onClose={jest.fn()} startRoom={null} destinationRoom={null} />,
     );
 
-    fireEvent.press(getByTestId('transport-car'));
+    fireEvent.press(getByTestId('disability'));
 
-    expect(getByTestId('transport-car').props.accessibilityState.selected).toBe(true);
+    expect(getByTestId('disability').props.accessibilityState.selected).toBe(true);
   });
 
   it('respects selectedTravelMode prop', () => {
@@ -121,7 +121,7 @@ describe('IndoorDirectionDetails FULL COVERAGE', () => {
       />,
     );
 
-    expect(getByTestId('transport-car').props.accessibilityState.selected).toBe(true);
+    expect(getByTestId('disability').props.accessibilityState.selected).toBe(true);
   });
 
   it('updates when selectedTravelMode prop changes', () => {
@@ -143,6 +143,6 @@ describe('IndoorDirectionDetails FULL COVERAGE', () => {
       />,
     );
 
-    expect(getByTestId('transport-car').props.accessibilityState.selected).toBe(true);
+    expect(getByTestId('disability').props.accessibilityState.selected).toBe(true);
   });
 });

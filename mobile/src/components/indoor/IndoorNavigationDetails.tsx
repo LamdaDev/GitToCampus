@@ -2,10 +2,11 @@ import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { directionDetailsStyles } from '../../styles/DirectionDetails.styles';
+import { isMultiFloor } from '../../utils/indoor/isMultifloor';
 
 type PathStep = { icon: string; label: string };
 
-type Props = {
+type IndoorNavigationProps = {
   startRoom: string | null;
   destinationRoom: string | null;
   buildingName?: string;
@@ -25,19 +26,7 @@ export default function IndoorNavigationDetails({
   onClose,
   onPrevFloor,
   onNextFloor,
-}: Readonly<Props>) {
-  const isSameFloor = () => {
-    const startFloorLevel = startRoom?.split('-')[1]?.[0];
-    const destinationFloorLevel = destinationRoom?.split('-')[1]?.[0];
-    return startFloorLevel != destinationFloorLevel;
-  };
-
-  const isSameBuilding = () => {
-    const startBuilding = startRoom?.split('-')[0];
-    const destinationBuilding = destinationRoom?.split('-')[0];
-    return startBuilding == destinationBuilding;
-  };
-
+}: Readonly<IndoorNavigationProps>) {
   return (
     <ScrollView
       style={directionDetailsStyles.contentScroll}
@@ -70,7 +59,7 @@ export default function IndoorNavigationDetails({
       </View>
 
       {/* FLOOR NAV */}
-      {isSameBuilding() && isSameFloor() ? (
+      {isMultiFloor(pathSteps) ? (
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
           <TouchableOpacity
             style={{
