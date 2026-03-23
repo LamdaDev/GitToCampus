@@ -195,4 +195,22 @@ describe('calendarRouteLocation', () => {
     expect(isSupportedCalendarEventLocation('Zoom')).toBe(false);
     expect(isSupportedCalendarEventLocation(null)).toBe(false);
   });
+
+  test('refreshes cached destination indexes when the building dataset changes', () => {
+    buildingsRepositoryMock.getAllBuildingShapes
+      .mockReturnValueOnce([hallBuilding])
+      .mockReturnValueOnce([
+        {
+          id: 'library',
+          campus: 'SGW' as const,
+          name: 'Library Building',
+          shortCode: 'LB',
+          address: '1400 De Maisonneuve Blvd W',
+          polygons: [],
+        },
+      ]);
+
+    expect(isSupportedCalendarEventLocation('H 110')).toBe(true);
+    expect(isSupportedCalendarEventLocation('H 110')).toBe(false);
+  });
 });

@@ -3,6 +3,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { act } from 'react-test-renderer';
 import UpcomingClassesSlider from '../src/components/UpcomingClassesSlider';
 import * as googleCalendarAuth from '../src/services/googleCalendarAuth';
+import * as calendarRouteLocation from '../src/utils/calendarRouteLocation';
 
 const mockEvents = [
   {
@@ -128,6 +129,36 @@ describe('UpcomingClassesSlider', () => {
 
     expect(await findByTestId('upcoming-class-event-valid-event')).toBeTruthy();
     expect(queryByTestId('upcoming-class-event-invalid-event')).toBeNull();
+  });
+
+  test('reuses supported-location parsing across clock refresh ticks', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2030, 1, 19, 9, 0, 0));
+    const parserSpy = jest.spyOn(calendarRouteLocation, 'isSupportedCalendarEventLocation');
+
+    try {
+      fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+        type: 'success',
+        events: mockEvents,
+      });
+
+      const { findByTestId } = render(
+        <UpcomingClassesSlider selectedCalendarIds={['calendar-1', 'calendar-2']} />,
+      );
+
+      expect(await findByTestId('upcoming-class-event-event-1')).toBeTruthy();
+      await waitFor(() => expect(parserSpy).toHaveBeenCalledTimes(mockEvents.length));
+
+      act(() => {
+        jest.setSystemTime(new Date(2030, 1, 19, 9, 0, 30));
+        jest.advanceTimersByTime(30_000);
+      });
+
+      await waitFor(() => expect(parserSpy).toHaveBeenCalledTimes(mockEvents.length));
+    } finally {
+      parserSpy.mockRestore();
+      jest.useRealTimers();
+    }
   });
 
   test('does not render next class summary card', async () => {

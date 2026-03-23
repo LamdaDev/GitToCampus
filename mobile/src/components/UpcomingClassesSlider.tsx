@@ -76,6 +76,7 @@ export default function UpcomingClassesSlider({
   const { height: windowHeight } = useWindowDimensions();
   const [now, setNow] = useState(() => new Date());
   const [events, setEvents] = useState<GoogleCalendarEventItem[]>([]);
+  const [supportedEvents, setSupportedEvents] = useState<GoogleCalendarEventItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -88,11 +89,15 @@ export default function UpcomingClassesSlider({
 
     if (result.type === 'error') {
       setEvents([]);
+      setSupportedEvents([]);
       setErrorMessage(result.message);
       return;
     }
 
     setEvents(result.events);
+    setSupportedEvents(
+      result.events.filter((event) => isSupportedCalendarEventLocation(event.location)),
+    );
   }, [selectedCalendarIds]);
 
   useEffect(() => {
@@ -122,8 +127,11 @@ export default function UpcomingClassesSlider({
       .sort((a, b) => a.startsAt - b.startsAt);
   }, [events, now]);
   const supportedActiveEvents = useMemo(
-    () => activeEvents.filter((event) => isSupportedCalendarEventLocation(event.location)),
-    [activeEvents],
+    () =>
+      supportedEvents
+        .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, now.getTime()))
+        .sort((a, b) => a.startsAt - b.startsAt),
+    [now, supportedEvents],
   );
 
   const displayedEvents = useMemo(

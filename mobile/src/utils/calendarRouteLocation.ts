@@ -182,6 +182,19 @@ const buildDestinationIndexes = (buildings: BuildingShape[]) => {
   return { byShortCode, byName, byAddress };
 };
 
+let cachedDestinationIndexSource: BuildingShape[] | null = null;
+let cachedDestinationIndexes: ReturnType<typeof buildDestinationIndexes> | null = null;
+
+const getDestinationIndexes = () => {
+  const buildings = getAllBuildingShapes();
+  if (!cachedDestinationIndexes || cachedDestinationIndexSource !== buildings) {
+    cachedDestinationIndexSource = buildings;
+    cachedDestinationIndexes = buildDestinationIndexes(buildings);
+  }
+
+  return cachedDestinationIndexes;
+};
+
 const scoreLongNameMatch = ({
   locationTokens,
   firstToken,
@@ -289,7 +302,7 @@ const matchByCanonicalAddress = (
 const matchDestinationBuilding = (
   normalizedLocation: string,
 ): { building: BuildingShape; method: DestinationMatchMethod } | null => {
-  const indexes = buildDestinationIndexes(getAllBuildingShapes());
+  const indexes = getDestinationIndexes();
   const tokens = getBuildingSearchTokens(normalizedLocation);
   const firstTokenCode = normalizeCode(tokens[0] ?? '');
   const shouldPreferShortCode = firstTokenCode.length > 0 && firstTokenCode.length <= 2;
