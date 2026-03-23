@@ -100,6 +100,28 @@ describe('UpcomingClassesSlider', () => {
     );
   });
 
+  test('includes the end date when an event crosses into the next day', async () => {
+    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      type: 'success',
+      events: [
+        {
+          id: 'overnight-event',
+          calendarId: 'calendar-1',
+          title: 'Late Lab',
+          location: 'Hall Building 455',
+          startsAt: new Date(2030, 1, 19, 23, 0, 0).getTime(),
+          endsAt: new Date(2030, 1, 20, 1, 0, 0).getTime(),
+        },
+      ],
+    });
+
+    const { findByTestId } = render(<UpcomingClassesSlider selectedCalendarIds={['calendar-1']} />);
+
+    expect(await findByTestId('upcoming-class-event-datetime-overnight-event')).toHaveTextContent(
+      'Tue, Feb 19 23:00 - Wed, Feb 20 01:00',
+    );
+  });
+
   test('filters out upcoming events without supported Concordia locations', async () => {
     fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',

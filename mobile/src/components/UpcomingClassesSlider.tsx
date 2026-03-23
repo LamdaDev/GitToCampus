@@ -51,13 +51,16 @@ const formatEventTime = (date: Date) =>
     hour12: false,
   });
 
-const formatEventDateTimeRange = (event: Pick<GoogleCalendarEventItem, 'startsAt' | 'endsAt'>) => {
-  const startDate = new Date(event.startsAt);
-  const startDateLabel = startDate.toLocaleDateString('en-US', {
+const formatEventDay = (date: Date) =>
+  date.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
   });
+
+const formatEventDateTimeRange = (event: Pick<GoogleCalendarEventItem, 'startsAt' | 'endsAt'>) => {
+  const startDate = new Date(event.startsAt);
+  const startDateLabel = formatEventDay(startDate);
   const startTimeLabel = formatEventTime(startDate);
 
   if (typeof event.endsAt !== 'number' || !Number.isFinite(event.endsAt)) {
@@ -65,6 +68,11 @@ const formatEventDateTimeRange = (event: Pick<GoogleCalendarEventItem, 'startsAt
   }
 
   const endDate = new Date(event.endsAt);
+  const endDateLabel = formatEventDay(endDate);
+  if (startDateLabel !== endDateLabel) {
+    return `${startDateLabel} ${startTimeLabel} - ${endDateLabel} ${formatEventTime(endDate)}`;
+  }
+
   return `${startDateLabel} ${startTimeLabel} - ${formatEventTime(endDate)}`;
 };
 
