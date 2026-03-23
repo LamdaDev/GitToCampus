@@ -17,16 +17,23 @@ export type IndoorEdge = {
   accessible: boolean;
 };
 
+export type PathOptions = {
+  accessibleOnly?: boolean;
+  preferElevators?: boolean;
+};
+
 const buildAdjacency = (
   nodes: IndoorNode[],
   edges: IndoorEdge[],
   accessibleOnly: boolean,
+  preferElevators: boolean,
 ): Map<string, { id: string; weight: number }[]> => {
   const adj = new Map<string, { id: string; weight: number }[]>();
   for (const { id } of nodes) adj.set(id, []);
 
-  for (const { source, target, weight, accessible } of edges) {
+  for (const { source, target, weight, accessible, type } of edges) {
     if (accessibleOnly && !accessible) continue;
+    if (preferElevators && type === 'stair') continue;
     adj.get(source)?.push({ id: target, weight });
     adj.get(target)?.push({ id: source, weight }); // bidirectional — hallways work both ways
   }
@@ -90,10 +97,10 @@ export const findIndoorPath = (
   edges: IndoorEdge[],
   startId: string,
   endId: string,
-  accessibleOnly = false,
+  { accessibleOnly = false, preferElevators = false }: PathOptions = {},
 ): IndoorNode[] | null => {
-  const adj = buildAdjacency(nodes, edges, accessibleOnly);
-  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const adj = buildAdjacency(nodes, edges, accessibleOnly, preferElevators);
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
   const prev = dijkstra(
     startId,
     endId,

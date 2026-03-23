@@ -50,6 +50,7 @@ import UpcomingClassesSlider from './UpcomingClassesSlider';
 import type { RoomNode } from '../components/indoor/RoomList';
 import IndoorDirectionDetails from './indoor/IndoorDirectionDetails';
 import IndoorNavigationDetails from './indoor/IndoorNavigationDetails';
+import { IndoorRoutePlannerMode } from '../types/SheetMode';
 
 const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
@@ -261,6 +262,7 @@ type BottomSheetProps = {
   indoorPathSteps: { icon: string; label: string }[];
   onPrevPathFloor?: () => void;
   onNextPathFloor?: () => void;
+  onIndoorTravelModeChange?: (mode: 'walking' | 'disability') => void;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -443,6 +445,8 @@ const IndoorDirectionsView = ({
   setSearchFor,
   setActiveView,
   clearSearchOptions,
+  onTravelModeChange,
+  selectedTravelMode,
 }: {
   startRoom: string | null;
   destinationRoom: string | null;
@@ -451,6 +455,8 @@ const IndoorDirectionsView = ({
   setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   clearSearchOptions?: () => void;
+  onTravelModeChange?: (mode: 'walking' | 'disability') => void;
+  selectedTravelMode?: IndoorRoutePlannerMode;
 }) => (
   <IndoorDirectionDetails
     startRoom={startRoom}
@@ -461,6 +467,8 @@ const IndoorDirectionsView = ({
     hasPath={indoorPathSteps.length > 0}
     onPressGo={() => setActiveView('indoor-navigation')}
     onClear={clearSearchOptions}
+    onTravelModeChange={onTravelModeChange}
+    selectedTravelMode={selectedTravelMode}
   />
 );
 
@@ -619,6 +627,8 @@ const renderBottomSheetContent = (props: {
   onPrevPathFloor?: () => void;
   onNextPathFloor?: () => void;
   clearIndoorSearch?: () => void;
+  indoorTravelMode: 'walking' | 'disability';
+  setIndoorTravelMode: React.Dispatch<React.SetStateAction<'walking' | 'disability'>>;
 }) => {
   if (props.isSearchActive) {
     return <SearchContent {...props} />;
@@ -679,6 +689,8 @@ const renderBottomSheetContent = (props: {
         setSearchFor={props.setSearchFor}
         setActiveView={props.setActiveView}
         clearSearchOptions={props.clearIndoorSearch}
+        onTravelModeChange={props.setIndoorTravelMode}
+        selectedTravelMode={props.indoorTravelMode}
       />
     );
   }
@@ -744,6 +756,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       indoorPathSteps,
       onPrevPathFloor,
       onNextPathFloor,
+      onIndoorTravelModeChange,
     },
     ref,
   ) => {
@@ -789,6 +802,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const [startRoom, setStartRoom] = useState<string | null>(null);
     const [destinationRoom, setDestinationRoom] = useState<string | null>(null);
+    const [indoorTravelMode, setIndoorTravelMode] = useState<'walking' | 'disability'>('walking');
+
+    useEffect(() => {
+      onIndoorTravelModeChange?.(indoorTravelMode);
+    }, [indoorTravelMode]);
 
     const resetRouteState = useCallback(
       (errorMessage: string | null = null) => {
@@ -1418,6 +1436,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             onPrevPathFloor,
             onNextPathFloor,
             clearIndoorSearch,
+            indoorTravelMode,
+            setIndoorTravelMode,
           })}
         </BottomSheetView>
       </BottomSheet>

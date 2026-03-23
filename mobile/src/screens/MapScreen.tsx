@@ -51,6 +51,7 @@ type MapScreenProps = {
   onIndoorFloorNavReady?: (prev: () => void, next: () => void) => void;
   onReopenIndoorNav?: () => void;
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
+  indoorTravelMode?: 'walking' | 'disability';
 };
 
 export type MapScreenHandle = {
@@ -554,6 +555,7 @@ function MapScreen({
   indoorPathStepsChange,
   onIndoorFloorNavReady,
   onIndoorRouteChange,
+  indoorTravelMode,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -795,6 +797,7 @@ function MapScreen({
           onPathStepsChange={indoorPathStepsChange}
           onFloorNavReady={onIndoorFloorNavReady}
           onIndoorRouteChange={onIndoorRouteChange}
+          indoorTravelMode={indoorTravelMode}
         />
       ) : (
         <MapControls

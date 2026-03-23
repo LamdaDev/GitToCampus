@@ -18,7 +18,7 @@ import veGraph from '../assets/floor_plans_json/ve.json';
 import vlGraph from '../assets/floor_plans_json/vl_floors_combined.json';
 import styles from '../styles/IndoorMapScreen.styles';
 
-type IndoorMapScreenProps = {
+type props = {
   onExitIndoor: () => void;
   onOpenCalendar?: () => void;
   hideAppSearchBar: () => void;
@@ -29,6 +29,7 @@ type IndoorMapScreenProps = {
   onPathStepsChange?: (steps: { icon: string; label: string }[]) => void;
   onFloorNavReady?: (prev: () => void, next: () => void) => void;
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
+  indoorTravelMode?: 'walking' | 'disability';
 };
 
 // ── Building graph data keyed by short code ──────────────────────────────────
@@ -100,7 +101,8 @@ export default function IndoorMapScreen({
   externalEndRoomId,
   onPathStepsChange,
   onFloorNavReady,
-}: Readonly<IndoorMapScreenProps>) {
+  indoorTravelMode = 'walking',
+}: Readonly<props>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
 
   const [isIndoorSheetOpen, setIndoorSheetOpen] = useState(false);
@@ -121,9 +123,11 @@ export default function IndoorMapScreen({
   const fullPath = useMemo(() => {
     if (!startRoomId || !endRoomId || !buildingGraph) return null;
 
-    const result = findIndoorPath(buildingGraph.nodes, buildingGraph.edges, startRoomId, endRoomId);
-    return result;
-  }, [startRoomId, endRoomId, buildingGraph]);
+    return findIndoorPath(buildingGraph.nodes, buildingGraph.edges, startRoomId, endRoomId, {
+      accessibleOnly: indoorTravelMode === 'disability',
+      preferElevators: indoorTravelMode === 'disability',
+    });
+  }, [startRoomId, endRoomId, buildingGraph, indoorTravelMode]);
 
   const currentFloorPath = useMemo(() => {
     if (!fullPath || currentFloor === null) return [];

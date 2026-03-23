@@ -174,7 +174,7 @@ export default function IndoorDirectionDetails({
           <TransportButton
             mode="disability"
             activeMode={activeMode}
-            testID="transport-car"
+            testID="disability"
             onPress={() => handleSelectMode('disability')}
             icon={
               <FontAwesome

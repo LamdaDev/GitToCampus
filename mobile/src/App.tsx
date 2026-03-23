@@ -39,6 +39,7 @@ const App = () => {
   const [indoorPathSteps, setIndoorPathSteps] = useState<{ icon: string; label: string }[]>([]);
   const prevFloorRef = useRef<() => void>(() => {});
   const nextFloorRef = useRef<() => void>(() => {});
+  const [indoorTravelMode, setIndoorTravelMode] = useState<'walking' | 'disability'>('walking');
 
   // used to check if the bottomsheet is open, if it is then hide the 'AppSearchBar'
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -168,9 +169,10 @@ const App = () => {
           indoorEndRoomId={indoorEndRoomId}
           indoorPathStepsChange={setIndoorPathSteps}
           onIndoorFloorNavReady={handleIndoorFloorNavReady}
+          indoorTravelMode={indoorTravelMode}
         />
 
-        {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} isIndoor={isIndoor} />}
+        {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
 
         <BottomSlider
           userLocation={userLocation}
@@ -191,6 +193,7 @@ const App = () => {
           onPrevPathFloor={handlePrevPathFloor}
           onNextPathFloor={handleNextPathFloor}
           onIndoorRouteChange={handleIndoorRouteChange}
+          onIndoorTravelModeChange={setIndoorTravelMode}
         />
       </SafeAreaView>
     </GestureHandlerRootView>
