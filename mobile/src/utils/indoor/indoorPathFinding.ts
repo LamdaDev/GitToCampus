@@ -40,47 +40,47 @@ const dijkstra = (
   adj: Map<string, { id: string; weight: number }[]>,
   nodeIds: string[],
 ): Map<string, string | null> => {
-  const dist = new Map<string, number>(nodeIds.map((id) => [id, Infinity]));
-  const prev = new Map<string, string | null>(nodeIds.map((id) => [id, null]));
-  const visited = new Set<string>();
+  const distFromStart = new Map<string, number>(nodeIds.map((id) => [id, Infinity]));
+  const prevNodes = new Map<string, string | null>(nodeIds.map((id) => [id, null]));
+  const visitedNodes = new Set<string>();
 
-  dist.set(startId, 0);
-  const queue: { id: string; d: number }[] = [{ id: startId, d: 0 }];
+  distFromStart.set(startId, 0);
+  const unvisitedQueue: { id: string; distance: number }[] = [{ id: startId, distance: 0 }];
 
-  while (queue.length > 0) {
-    queue.sort((a, b) => a.d - b.d);
-    const { id } = queue.shift()!;
+  while (unvisitedQueue.length > 0) {
+    unvisitedQueue.sort((a, b) => a.distance - b.distance);
+    const { id: currentNodeId } = unvisitedQueue.shift()!;
 
-    if (visited.has(id)) continue;
-    visited.add(id);
-    if (id === endId) break;
+    if (visitedNodes.has(currentNodeId)) continue;
+    visitedNodes.add(currentNodeId);
+    if (currentNodeId === endId) break;
 
-    for (const { id: nbId, weight } of adj.get(id) ?? []) {
-      if (visited.has(nbId)) continue;
-      const nd = (dist.get(id) ?? Infinity) + weight;
-      if (nd < (dist.get(nbId) ?? Infinity)) {
-        dist.set(nbId, nd);
-        prev.set(nbId, id);
-        queue.push({ id: nbId, d: nd });
+    for (const { id: neighbourId, weight } of adj.get(currentNodeId) ?? []) {
+      if (visitedNodes.has(neighbourId)) continue;
+      const newDistance = (distFromStart.get(currentNodeId) ?? Infinity) + weight;
+      if (newDistance < (distFromStart.get(neighbourId) ?? Infinity)) {
+        distFromStart.set(neighbourId, newDistance);
+        prevNodes.set(neighbourId, currentNodeId);
+        unvisitedQueue.push({ id: neighbourId, distance: newDistance });
       }
     }
   }
 
-  return prev;
+  return prevNodes;
 };
 
 const reconstructPath = (
   endId: string,
   startId: string,
-  prev: Map<string, string | null>,
+  prevNode: Map<string, string | null>,
   nodeMap: Map<string, IndoorNode>,
 ): IndoorNode[] | null => {
   const path: IndoorNode[] = [];
-  let cur: string | null = endId;
-  while (cur) {
-    const n = nodeMap.get(cur);
-    if (n) path.unshift(n);
-    cur = prev.get(cur) ?? null;
+  let currentNodeId: string | null = endId;
+  while (currentNodeId) {
+    const node = nodeMap.get(currentNodeId);
+    if (node) path.unshift(node);
+    currentNodeId = prevNode.get(currentNodeId) ?? null;
   }
   return path.length > 0 && path[0].id === startId ? path : null;
 };
@@ -93,16 +93,18 @@ export const findIndoorPath = (
   accessibleOnly = false,
 ): IndoorNode[] | null => {
   const adj = buildAdjacency(nodes, edges, accessibleOnly);
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   const prev = dijkstra(
     startId,
     endId,
     adj,
-    nodes.map((n) => n.id),
+    nodes.map((node) => node.id),
   );
 
   return reconstructPath(endId, startId, prev, nodeMap);
 };
 
 export const getRoomNodes = (nodes: IndoorNode[], floor?: number): IndoorNode[] =>
-  nodes.filter((n) => n.type === 'room' && n.label && (floor === undefined || n.floor === floor));
+  nodes.filter(
+    (node) => node.type === 'room' && node.label && (floor === undefined || node.floor === floor),
+  );

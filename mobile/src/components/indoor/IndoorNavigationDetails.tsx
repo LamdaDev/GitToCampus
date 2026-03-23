@@ -27,8 +27,6 @@ export default function IndoorNavigationDetails({
   onPrevFloor,
   onNextFloor,
 }: Readonly<IndoorNavigationProps>) {
-
-
   return (
     <ScrollView
       style={directionDetailsStyles.contentScroll}

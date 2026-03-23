@@ -1,4 +1,3 @@
-
 import type { IndoorNode } from '../utils/indoor/indoorPathFinding';
 
 export const getDotColor = (node: IndoorNode, isStart: boolean, isEnd: boolean) => {
