@@ -27,6 +27,8 @@ export type CalendarRouteLocation = {
   rawEventLocation: string;
 };
 
+export type CalendarEventDestination = Omit<CalendarRouteLocation, 'startPoint'>;
+
 export type CalendarRouteLocationResolveErrorCode =
   | 'MISSING_EVENT_LOCATION'
   | 'UNRECOGNIZED_EVENT_LOCATION';
@@ -35,8 +37,20 @@ export type CalendarRouteLocationResult =
   | { type: 'success'; value: CalendarRouteLocation }
   | { type: 'error'; code: CalendarRouteLocationResolveErrorCode; message: string };
 
+export type CalendarEventDestinationResult =
+  | { type: 'success'; value: CalendarEventDestination }
+  | { type: 'error'; code: CalendarRouteLocationResolveErrorCode; message: string };
+
 export const CALENDAR_LOCATION_NOT_FOUND_MESSAGE =
   'Unable to find route: Location Not Provided/Not Found';
+
+const toCalendarLocationError = (
+  code: CalendarRouteLocationResolveErrorCode,
+): Extract<CalendarEventDestinationResult, { type: 'error' }> => ({
+  type: 'error',
+  code,
+  message: CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
+});
 
 const PUNCTUATION_PATTERN = /[.,;:()[\]{}]/g;
 const WHITESPACE_PATTERN = /\s+/g;
@@ -168,6 +182,19 @@ const buildDestinationIndexes = (buildings: BuildingShape[]) => {
   return { byShortCode, byName, byAddress };
 };
 
+let cachedDestinationIndexSource: BuildingShape[] | null = null;
+let cachedDestinationIndexes: ReturnType<typeof buildDestinationIndexes> | null = null;
+
+const getDestinationIndexes = () => {
+  const buildings = getAllBuildingShapes();
+  if (!cachedDestinationIndexes || cachedDestinationIndexSource !== buildings) {
+    cachedDestinationIndexSource = buildings;
+    cachedDestinationIndexes = buildDestinationIndexes(buildings);
+  }
+
+  return cachedDestinationIndexes;
+};
+
 const scoreLongNameMatch = ({
   locationTokens,
   firstToken,
@@ -275,7 +302,7 @@ const matchByCanonicalAddress = (
 const matchDestinationBuilding = (
   normalizedLocation: string,
 ): { building: BuildingShape; method: DestinationMatchMethod } | null => {
-  const indexes = buildDestinationIndexes(getAllBuildingShapes());
+  const indexes = getDestinationIndexes();
   const tokens = getBuildingSearchTokens(normalizedLocation);
   const firstTokenCode = normalizeCode(tokens[0] ?? '');
   const shouldPreferShortCode = firstTokenCode.length > 0 && firstTokenCode.length <= 2;
@@ -337,15 +364,11 @@ export const getManualStartReasonMessage = (reason: ManualStartReason): string =
   return 'Location permission required—please select your starting building manually';
 };
 
-export const resolveCalendarRouteLocation = async (
+export const resolveCalendarEventDestination = (
   eventLocation: string | null,
-): Promise<CalendarRouteLocationResult> => {
+): CalendarEventDestinationResult => {
   if (!eventLocation?.trim()) {
-    return {
-      type: 'error',
-      code: 'MISSING_EVENT_LOCATION',
-      message: CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
-    };
+    return toCalendarLocationError('MISSING_EVENT_LOCATION');
   }
 
   const rawEventLocation = eventLocation.trim();
@@ -353,11 +376,28 @@ export const resolveCalendarRouteLocation = async (
   const destinationMatch = matchDestinationBuilding(normalizedEventLocation);
 
   if (!destinationMatch) {
-    return {
-      type: 'error',
-      code: 'UNRECOGNIZED_EVENT_LOCATION',
-      message: CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
-    };
+    return toCalendarLocationError('UNRECOGNIZED_EVENT_LOCATION');
+  }
+
+  return {
+    type: 'success',
+    value: {
+      destinationBuilding: destinationMatch.building,
+      normalizedEventLocation,
+      rawEventLocation,
+    },
+  };
+};
+
+export const isSupportedCalendarEventLocation = (eventLocation: string | null): boolean =>
+  resolveCalendarEventDestination(eventLocation).type === 'success';
+
+export const resolveCalendarRouteLocation = async (
+  eventLocation: string | null,
+): Promise<CalendarRouteLocationResult> => {
+  const destinationResult = resolveCalendarEventDestination(eventLocation);
+  if (destinationResult.type === 'error') {
+    return destinationResult;
   }
 
   const startPoint = await resolveStartPoint();
@@ -365,10 +405,8 @@ export const resolveCalendarRouteLocation = async (
   return {
     type: 'success',
     value: {
-      destinationBuilding: destinationMatch.building,
+      ...destinationResult.value,
       startPoint,
-      normalizedEventLocation,
-      rawEventLocation,
     },
   };
 };

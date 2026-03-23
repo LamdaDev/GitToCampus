@@ -419,6 +419,7 @@ describe('googleDirections service', () => {
     ).rejects.toMatchObject<Partial<DirectionsServiceError>>({
       code: 'API_ERROR',
       providerMessage: 'Server Error',
+      requestUrl: expect.stringContaining('https://maps.googleapis.com/maps/api/directions/json?'),
     });
   });
 
@@ -436,6 +437,7 @@ describe('googleDirections service', () => {
     ).rejects.toMatchObject<Partial<DirectionsServiceError>>({
       code: 'NETWORK_ERROR',
       providerMessage: 'timeout',
+      requestUrl: expect.stringContaining('https://maps.googleapis.com/maps/api/directions/json?'),
     });
   });
 

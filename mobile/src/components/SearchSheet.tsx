@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { SearchBar } from 'react-native-elements';
 import { searchBuilding } from '../styles/SearchBuilding.styles';
@@ -12,10 +12,10 @@ import {
   connectGoogleCalendarAsync,
   fetchGoogleCalendarEventsAsync,
   getStoredGoogleCalendarSessionState,
-  isGoogleCalendarEventActiveOrUpcoming,
   type GoogleCalendarEventItem,
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
+import { getSupportedActiveOrUpcomingEvents } from '../utils/googleCalendarEventSelection';
 import type { RoomNode } from './indoor/RoomList';
 import RoomList from './indoor/RoomList';
 
@@ -52,46 +52,63 @@ export default function SearchSheet({
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
   const [nextClassEvent, setNextClassEvent] = useState<GoogleCalendarEventItem | null>(null);
   const [isNextClassLoading, setIsNextClassLoading] = useState(false);
+  const [hasOnlyUnsupportedNextClassEvents, setHasOnlyUnsupportedNextClassEvents] = useState(false);
+  const nextClassRequestIdRef = useRef(0);
 
   const nextClassLabel = useMemo(() => {
     if (isNextClassLoading) return 'Loading next class...';
     if (selectedCalendarIds.length === 0) return 'Select calendars to see your next class.';
-    if (!nextClassEvent) return 'No upcoming or in-progress classes';
+    if (!nextClassEvent) {
+      return hasOnlyUnsupportedNextClassEvents
+        ? 'No upcoming classes with supported Concordia locations'
+        : 'No upcoming or in-progress classes';
+    }
     return nextClassEvent.location ?? 'Location not provided';
-  }, [isNextClassLoading, nextClassEvent, selectedCalendarIds.length]);
+  }, [
+    hasOnlyUnsupportedNextClassEvents,
+    isNextClassLoading,
+    nextClassEvent,
+    selectedCalendarIds.length,
+  ]);
 
   const loadNextClass = useCallback(async () => {
+    const requestId = nextClassRequestIdRef.current + 1;
+    nextClassRequestIdRef.current = requestId;
+
     if (calendarStatus !== 'connected') {
+      setIsNextClassLoading(false);
       setNextClassEvent(null);
+      setHasOnlyUnsupportedNextClassEvents(false);
       return;
     }
 
     if (selectedCalendarIds.length === 0) {
+      setIsNextClassLoading(false);
       setNextClassEvent(null);
+      setHasOnlyUnsupportedNextClassEvents(false);
       return;
     }
 
     setIsNextClassLoading(true);
     const result = await fetchGoogleCalendarEventsAsync(selectedCalendarIds);
+    if (nextClassRequestIdRef.current !== requestId) return;
+
     setIsNextClassLoading(false);
 
     if (result.type === 'error') {
       setNextClassEvent(null);
+      setHasOnlyUnsupportedNextClassEvents(false);
       return;
     }
 
-    const now = Date.now();
-    const next = result.events
-      .filter((event) => Number.isFinite(event.startsAt))
-      .filter((event) => isGoogleCalendarEventActiveOrUpcoming(event, now))
-      .sort((a, b) => {
-        if (a.startsAt !== b.startsAt) return a.startsAt - b.startsAt;
-        const calendarComparison = a.calendarId.localeCompare(b.calendarId);
-        if (calendarComparison !== 0) return calendarComparison;
-        return a.id.localeCompare(b.id);
-      })[0];
+    const { hasOnlyUnsupportedActiveOrUpcomingEvents, supportedActiveOrUpcomingEvents } =
+      getSupportedActiveOrUpcomingEvents({
+        events: result.events,
+        nowTimestamp: Date.now(),
+      });
 
-    setNextClassEvent(next ?? null);
+    setHasOnlyUnsupportedNextClassEvents(hasOnlyUnsupportedActiveOrUpcomingEvents);
+    setNextClassEvent(supportedActiveOrUpcomingEvents[0] ?? null);
   }, [calendarStatus, selectedCalendarIds]);
 
   const searchableBuildings = useMemo(
@@ -162,6 +179,13 @@ export default function SearchSheet({
     };
   }, [calendarStatus, markSessionExpired, sessionExpiresAt]);
 
+  useEffect(
+    () => () => {
+      nextClassRequestIdRef.current += 1;
+    },
+    [],
+  );
+
   useEffect(() => {
     void loadNextClass();
   }, [loadNextClass]);
@@ -221,6 +245,7 @@ export default function SearchSheet({
     setCalendarStatus('not_connected');
     setSessionExpiresAt(null);
     setNextClassEvent(null);
+    setHasOnlyUnsupportedNextClassEvents(false);
     setCalendarMessage('Signed out of Google Calendar.');
   }, []);
 

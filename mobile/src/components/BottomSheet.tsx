@@ -371,6 +371,31 @@ const getRouteErrorMessage = (error: unknown): string => {
   return 'Unable to load route. Please try again.';
 };
 
+const getRouteErrorLogDetails = (error: unknown) => {
+  if (error instanceof DirectionsServiceError) {
+    return {
+      name: error.name,
+      code: error.code,
+      message: error.message,
+      providerStatus: error.providerStatus ?? null,
+      providerMessage: error.providerMessage ?? null,
+      requestUrl: error.requestUrl ?? null,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+    };
+  }
+
+  return {
+    message: 'Unknown route error',
+    rawError: error,
+  };
+};
+
 // ── Extracted view components ─────────────────────────────────────────────
 
 const NavigationView = ({
@@ -1301,7 +1326,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           );
         } catch (error) {
           if (cancelled) return;
-          console.warn('Failed to fetch outdoor directions', error);
+          console.warn('Failed to fetch outdoor directions', getRouteErrorLogDetails(error));
           resetRouteState(getRouteErrorMessage(error));
         }
       };
@@ -1369,24 +1394,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       },
     }));
 
-    return (
-      <BottomSheet
-        ref={sheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        backgroundStyle={buildingDetailsStyles.sheetBackground}
-        handleIndicatorStyle={buildingDetailsStyles.handle}
-        enablePanDownToClose={true}
-        enableHandlePanningGesture={true}
-        enableContentPanningGesture={true}
-        enableDynamicSizing={false}
-        animatedPosition={animatedPosition}
-        onAnimate={handleSheetAnimate}
-        onClose={handleSheetClose}
-      >
-        <BottomSheetView style={buildingDetailsStyles.container}>
-          {renderBottomSheetContent({
-            isSearchActive,
+    const renderedContent = renderBottomSheetContent({
+      isSearchActive,
             calendarSliderMode,
             isInternalSearch,
             selectedCalendarIds,
@@ -1438,8 +1447,31 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             clearIndoorSearch,
             indoorTravelMode,
             setIndoorTravelMode,
-          })}
-        </BottomSheetView>
+    });
+    const usesDirectScrollableContent = activeView === 'transit-plan';
+
+    return (
+      <BottomSheet
+        ref={sheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        backgroundStyle={buildingDetailsStyles.sheetBackground}
+        handleIndicatorStyle={buildingDetailsStyles.handle}
+        enablePanDownToClose={true}
+        enableHandlePanningGesture={true}
+        enableContentPanningGesture={true}
+        enableDynamicSizing={false}
+        animatedPosition={animatedPosition}
+        onAnimate={handleSheetAnimate}
+        onClose={handleSheetClose}
+      >
+        {usesDirectScrollableContent ? (
+          renderedContent
+        ) : (
+          <BottomSheetView style={buildingDetailsStyles.container}>
+            {renderedContent}
+          </BottomSheetView>
+        )}
       </BottomSheet>
     );
   },
