@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import TransitPlanDetails from '../src/components/TransitPlanDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import type { TransitInstruction } from '../src/types/Directions';
@@ -9,6 +10,18 @@ jest.mock('@expo/vector-icons', () => {
   return {
     Ionicons: ({ name, color, size }: { name: string; color?: string; size?: number }) => (
       <Text testID={`icon-${name}`}>{`${name}-${color ?? ''}-${size ?? ''}`}</Text>
+    ),
+  };
+});
+
+jest.mock('@gorhom/bottom-sheet', () => {
+  const React = require('react');
+  const { ScrollView } = require('react-native');
+
+  return {
+    __esModule: true,
+    BottomSheetScrollView: (props: React.ComponentProps<typeof ScrollView>) => (
+      <ScrollView {...props} />
     ),
   };
 });
@@ -43,6 +56,19 @@ describe('TransitPlanDetails', () => {
     expect(getByText('Public Transit')).toBeTruthy();
     expect(getByText('EV Building')).toBeTruthy();
     expect(getByTestId('transit-empty-text')).toBeTruthy();
+    expect(getByTestId('transit-plan-scroll').props.nestedScrollEnabled).toBe(true);
+    expect(getByTestId('transit-plan-scroll').props.keyboardShouldPersistTaps).toBe('handled');
+    expect(StyleSheet.flatten(getByTestId('transit-plan-scroll').props.style)).toMatchObject({
+      flex: 1,
+      width: '100%',
+    });
+    expect(
+      StyleSheet.flatten(getByTestId('transit-plan-scroll').props.contentContainerStyle),
+    ).toMatchObject({
+      flexGrow: 1,
+      paddingHorizontal: 16,
+      paddingBottom: 96,
+    });
     expect(getByTestId('icon-arrow-back')).toBeTruthy();
     expect(getByTestId('icon-close-sharp')).toBeTruthy();
 
@@ -50,6 +76,24 @@ describe('TransitPlanDetails', () => {
     fireEvent.press(getByTestId('transit-close-button'));
     expect(onBack).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test('uses a scrollable bottom-sheet-aware container for long transit itineraries', () => {
+    const { UNSAFE_getByType } = render(
+      <TransitPlanDetails
+        destinationBuilding={destinationBuilding}
+        routeTransitSteps={Array.from({ length: 12 }, (_, index) =>
+          createStep({
+            id: `long-step-${index}`,
+            title: `Transit step ${index + 1}`,
+          }),
+        )}
+        onBack={jest.fn()}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(UNSAFE_getByType(ScrollView).props.nestedScrollEnabled).toBe(true);
   });
 
   test('renders transit badges with safe color fallback and route metadata text', () => {

@@ -2,6 +2,7 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import IndoorControls from '../src/components/indoor/IndoorControls';
 import type { BuildingShape } from '../src/types/BuildingShape';
+import { UIManager } from 'react-native';
 
 const IndoorMapScreen = require('../src/screens/IndoorMapScreen').default;
 const { findIndoorPath } = require('../src/utils/indoor/indoorPathFinding');
@@ -14,6 +15,7 @@ const mockOnExitIndoor = jest.fn();
 const mockOnOpenCalendar = jest.fn();
 const mockHideAppSearchBar = jest.fn();
 const mockRevealSearchBar = jest.fn();
+const mockGetViewManagerConfig = jest.fn();
 
 let capturedSheetProps: {
   reOpenSearchBar: () => void;
@@ -119,6 +121,15 @@ describe('IndoorMapScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedSheetProps = null;
+    mockGetViewManagerConfig.mockImplementation((name: string) =>
+      name.startsWith('RNSVG') ? {} : null,
+    );
+    (
+      UIManager as typeof UIManager & {
+        getViewManagerConfig?: (name: string) => unknown;
+      }
+    ).getViewManagerConfig = mockGetViewManagerConfig;
+    findIndoorPath.mockReturnValue(null);
   });
 
   test('renders correctly and passes initial props to IndoorControls', () => {
@@ -333,6 +344,22 @@ describe('IndoorMapScreen', () => {
     );
     const { Image } = require('react-native');
     expect(UNSAFE_getByType(Image)).toBeTruthy();
+  });
+
+  test('shows a fallback message instead of rendering the SVG plan when native SVG support is missing', () => {
+    mockGetViewManagerConfig.mockReturnValue(null);
+
+    const { getByTestId, getByText } = render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+      />,
+    );
+
+    expect(getByTestId('indoor-map-svg-fallback')).toBeTruthy();
+    expect(getByText('Indoor map unavailable in this build')).toBeTruthy();
   });
 
   test('handleNextPathFloor and handlePrevPathFloor are passed as functions via onFloorNavReady', async () => {

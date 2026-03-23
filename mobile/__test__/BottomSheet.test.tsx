@@ -1479,7 +1479,10 @@ describe('BottomSheet', () => {
     await pressAndFlush(getByTestId('on-show-directions-as-destination'));
 
     await waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith('Failed to fetch outdoor directions', expect.any(Error));
+      expect(warnSpy).toHaveBeenCalledWith('Failed to fetch outdoor directions', {
+        name: 'Error',
+        message: 'bad request',
+      });
       expect(passOutdoorRoute).toHaveBeenCalledWith(null);
       expect(getByTestId('route-error-state').props.children).toBe(
         'Unable to load route. Please try again.',

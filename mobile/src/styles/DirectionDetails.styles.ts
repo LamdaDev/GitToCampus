@@ -9,10 +9,13 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export const directionDetailsStyles = StyleSheet.create({
   contentScroll: {
-    maxHeight: '100%',
+    flex: 1,
+    width: '100%',
   },
   contentScrollContent: {
-    paddingBottom: 48,
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 96,
   },
   directionTitle: {
     maxWidth: SCREEN_WIDTH * 0.55,
@@ -225,8 +228,8 @@ export const directionDetailsStyles = StyleSheet.create({
     flex: 1,
     marginTop: 0,
     color: '#FFFFFF',
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 20,
+    lineHeight: 28,
     fontFamily: 'gabarito',
     fontWeight: '700',
   },
@@ -413,10 +416,12 @@ export const directionDetailsStyles = StyleSheet.create({
   },
   routePrimaryText: {
     color: '#FFFFFF',
-    fontSize: 37,
-    lineHeight: 58,
+    fontSize: 31,
+    lineHeight: 38,
     fontFamily: 'gabarito',
     fontWeight: '700',
+    flexShrink: 1,
+    minWidth: 0,
   },
   routeSecondaryText: {
     marginTop: 0,
@@ -518,7 +523,7 @@ export const directionDetailsStyles = StyleSheet.create({
   },
   transitContainer: {
     marginTop: 2,
-    marginBottom: 10,
+    marginBottom: 24,
     paddingTop: 10,
     paddingBottom: 4,
     borderRadius: 24,

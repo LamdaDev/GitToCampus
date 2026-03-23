@@ -312,6 +312,7 @@ const requestDirectionsJson = async (
       'Unable to reach Google Directions API. Check internet connectivity.',
       {
         providerMessage: error instanceof Error ? error.message : 'Unknown network error',
+        requestUrl: url,
       },
     );
   }
@@ -320,7 +321,10 @@ const requestDirectionsJson = async (
     throw new DirectionsServiceError(
       'API_ERROR',
       `Google Directions API request failed with HTTP ${response.status}.`,
-      { providerMessage: response.statusText },
+      {
+        providerMessage: response.statusText,
+        requestUrl: url,
+      },
     );
   }
 

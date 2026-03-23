@@ -369,6 +369,31 @@ const getRouteErrorMessage = (error: unknown): string => {
   return 'Unable to load route. Please try again.';
 };
 
+const getRouteErrorLogDetails = (error: unknown) => {
+  if (error instanceof DirectionsServiceError) {
+    return {
+      name: error.name,
+      code: error.code,
+      message: error.message,
+      providerStatus: error.providerStatus ?? null,
+      providerMessage: error.providerMessage ?? null,
+      requestUrl: error.requestUrl ?? null,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+    };
+  }
+
+  return {
+    message: 'Unknown route error',
+    rawError: error,
+  };
+};
+
 // ── Extracted view components ─────────────────────────────────────────────
 
 const NavigationView = ({
@@ -1283,7 +1308,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           );
         } catch (error) {
           if (cancelled) return;
-          console.warn('Failed to fetch outdoor directions', error);
+          console.warn('Failed to fetch outdoor directions', getRouteErrorLogDetails(error));
           resetRouteState(getRouteErrorMessage(error));
         }
       };
@@ -1351,6 +1376,60 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       },
     }));
 
+    const renderedContent = renderBottomSheetContent({
+      isSearchActive,
+      calendarSliderMode,
+      isInternalSearch,
+      selectedCalendarIds,
+      handleReselectCalendars,
+      handleCloseUpcomingClassesSlider,
+      handleCloseCalendarSelectionSlider,
+      showUpcomingClassesSlider,
+      buildings,
+      handleInternalSearch,
+      closeSearchBuilding,
+      openCalendarSelectionAfterConnect,
+      handleCalendarGoFromSearch,
+      calendarGoErrorMessage,
+      activeView,
+      selectedBuilding,
+      closeSheet,
+      showDirections,
+      onEnterBuilding: handleEnterBuilding,
+      currentBuilding,
+      userLocation,
+      destinationBuilding,
+      routeTransitSteps,
+      showDirectionsPanel,
+      startBuilding,
+      shuttlePlan,
+      navigationSummary,
+      endNavigation,
+      isCrossCampusRoute,
+      isRouteLoading,
+      routeErrorMessage,
+      routeDistanceText,
+      routeDurationText,
+      routeDurationSeconds,
+      travelMode,
+      canStartNavigationFromCurrentLocation,
+      setSearchFor,
+      setTravelMode,
+      handleDirectionsGo,
+      showShuttleSchedule,
+      handleRetryRoute,
+      isIndoor,
+      onSelectRoom: handleSelectRoom,
+      startRoom,
+      destinationRoom,
+      indoorPathSteps,
+      setActiveView,
+      onPrevPathFloor,
+      onNextPathFloor,
+      clearIndoorSearch,
+    });
+    const usesDirectScrollableContent = activeView === 'transit-plan';
+
     return (
       <BottomSheet
         ref={sheetRef}
@@ -1366,60 +1445,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         onAnimate={handleSheetAnimate}
         onClose={handleSheetClose}
       >
-        <BottomSheetView style={buildingDetailsStyles.container}>
-          {renderBottomSheetContent({
-            isSearchActive,
-            calendarSliderMode,
-            isInternalSearch,
-            selectedCalendarIds,
-            handleReselectCalendars,
-            handleCloseUpcomingClassesSlider,
-            handleCloseCalendarSelectionSlider,
-            showUpcomingClassesSlider,
-            buildings,
-            handleInternalSearch,
-            closeSearchBuilding,
-            openCalendarSelectionAfterConnect,
-            handleCalendarGoFromSearch,
-            calendarGoErrorMessage,
-            activeView,
-            selectedBuilding,
-            closeSheet,
-            showDirections,
-            onEnterBuilding: handleEnterBuilding,
-            currentBuilding,
-            userLocation,
-            destinationBuilding,
-            routeTransitSteps,
-            showDirectionsPanel,
-            startBuilding,
-            shuttlePlan,
-            navigationSummary,
-            endNavigation,
-            isCrossCampusRoute,
-            isRouteLoading,
-            routeErrorMessage,
-            routeDistanceText,
-            routeDurationText,
-            routeDurationSeconds,
-            travelMode,
-            canStartNavigationFromCurrentLocation,
-            setSearchFor,
-            setTravelMode,
-            handleDirectionsGo,
-            showShuttleSchedule,
-            handleRetryRoute,
-            isIndoor,
-            onSelectRoom: handleSelectRoom,
-            startRoom,
-            destinationRoom,
-            indoorPathSteps,
-            setActiveView,
-            onPrevPathFloor,
-            onNextPathFloor,
-            clearIndoorSearch,
-          })}
-        </BottomSheetView>
+        {usesDirectScrollableContent ? (
+          renderedContent
+        ) : (
+          <BottomSheetView style={buildingDetailsStyles.container}>
+            {renderedContent}
+          </BottomSheetView>
+        )}
       </BottomSheet>
     );
   },

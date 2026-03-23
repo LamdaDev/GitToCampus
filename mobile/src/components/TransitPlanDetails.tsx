@@ -1,6 +1,7 @@
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import type { TransitInstruction } from '../types/Directions';
@@ -45,10 +46,13 @@ export default function TransitPlanDetails({
   onClose,
 }: Readonly<TransitPlanDetailsProps>) {
   return (
-    <ScrollView
+    <BottomSheetScrollView
+      testID="transit-plan-scroll"
       style={directionDetailsStyles.contentScroll}
       contentContainerStyle={directionDetailsStyles.contentScrollContent}
       showsVerticalScrollIndicator={false}
+      nestedScrollEnabled={true}
+      keyboardShouldPersistTaps="handled"
     >
       <View style={directionDetailsStyles.header}>
         <View style={directionDetailsStyles.transitHeaderTextWrap}>
@@ -160,6 +164,6 @@ export default function TransitPlanDetails({
           })
         )}
       </View>
-    </ScrollView>
+    </BottomSheetScrollView>
   );
 }

@@ -255,6 +255,8 @@ const renderRouteMetaBody = ({
         <Text
           testID="route-summary-text"
           numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.72}
           style={directionDetailsStyles.routePrimaryText}
         >
           {routeDurationText}
