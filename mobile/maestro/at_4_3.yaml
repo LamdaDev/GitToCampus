@@ -3,14 +3,14 @@ appId: host.exp.exponent
 - tapOn: Get to...
 - tapOn: Set as starting point
 - tapOn: Search buildings...
-- inputText: "H-851"
+- inputText: 'H-851'
 - assertVisible:
     text: H-851-1
     delay: 1000
 - doubleTapOn: H-851-1
 - tapOn: Set destination
 - tapOn: Search buildings...
-- inputText: "H-205"
+- inputText: 'H-205'
 - assertVisible:
     text: H-205
     delay: 1000
