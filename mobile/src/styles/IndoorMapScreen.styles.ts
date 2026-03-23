@@ -140,4 +140,24 @@ export default StyleSheet.create({
     fontSize: 14,
     fontFamily: 'gabarito',
   },
+  mapUnavailableNotice: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+  },
+  mapUnavailableTitle: {
+    color: '#1f1f1f',
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  mapUnavailableText: {
+    color: '#4a4a4a',
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
 });

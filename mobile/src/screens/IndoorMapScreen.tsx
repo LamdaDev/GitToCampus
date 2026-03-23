@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react';
-import { View, Image } from 'react-native';
+import { View, Image, Text, UIManager } from 'react-native';
 import IndoorControls from '../components/indoor/IndoorControls';
 import { BuildingShape } from '../types/BuildingShape';
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
@@ -29,6 +29,27 @@ type props = {
   onPathStepsChange?: (steps: { icon: string; label: string }[]) => void;
   onFloorNavReady?: (prev: () => void, next: () => void) => void;
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
+};
+
+const SVG_VIEW_MANAGER_NAMES = ['RNSVGSvgViewAndroid', 'RNSVGSvgView', 'RNSVGPath'];
+
+const hasNativeSvgSupport = () => {
+  const nativeUIManager = UIManager as typeof UIManager & {
+    hasViewManagerConfig?: (name: string) => boolean;
+    getViewManagerConfig?: (name: string) => unknown;
+  };
+
+  if (typeof nativeUIManager.hasViewManagerConfig === 'function') {
+    return SVG_VIEW_MANAGER_NAMES.some((name) => nativeUIManager.hasViewManagerConfig?.(name));
+  }
+
+  if (typeof nativeUIManager.getViewManagerConfig === 'function') {
+    return SVG_VIEW_MANAGER_NAMES.some(
+      (name) => nativeUIManager.getViewManagerConfig?.(name) != null,
+    );
+  }
+
+  return true;
 };
 
 // ── Building graph data keyed by short code ──────────────────────────────────
@@ -262,6 +283,10 @@ export default function IndoorMapScreen({
       ? indoorFloorPlans[currentFloor as unknown as keyof typeof indoorFloorPlans]
       : null;
 
+  const nativeSvgSupported = useMemo(() => hasNativeSvgSupport(), []);
+  const shouldShowSvgFallback =
+    !nativeSvgSupported && (plan?.type === 'svg' || currentFloorPath.length >= 2);
+
   return (
     <View style={styles.container}>
       {/* CONTROLS */}
@@ -288,7 +313,9 @@ export default function IndoorMapScreen({
       >
         <View style={{ width: 2000, height: 3000, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ width: 1000, height: 1000 }}>
-            {plan?.type === 'svg' && <plan.data width={'100%'} height={'100%'} />}
+            {plan?.type === 'svg' && nativeSvgSupported && (
+              <plan.data width={'100%'} height={'100%'} />
+            )}
             {plan?.type === 'png' && (
               <Image
                 source={plan.data}
@@ -296,12 +323,22 @@ export default function IndoorMapScreen({
                 resizeMode="contain"
               />
             )}
-            <PathOverlay
-              pathNodes={currentFloorPath}
-              planType={plan?.type}
-              svgViewBox={SVG_VIEWBOXES[selectedBuilding?.shortCode ?? '']}
-              nodeSpace={NODE_SPACES[selectedBuilding?.shortCode ?? '']}
-            />
+            {nativeSvgSupported && (
+              <PathOverlay
+                pathNodes={currentFloorPath}
+                planType={plan?.type}
+                svgViewBox={SVG_VIEWBOXES[selectedBuilding?.shortCode ?? '']}
+                nodeSpace={NODE_SPACES[selectedBuilding?.shortCode ?? '']}
+              />
+            )}
+            {shouldShowSvgFallback && (
+              <View style={styles.mapUnavailableNotice} testID="indoor-map-svg-fallback">
+                <Text style={styles.mapUnavailableTitle}>Indoor map unavailable in this build</Text>
+                <Text style={styles.mapUnavailableText}>
+                  Rebuild the app so the native SVG module is included, then reload this screen.
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </ReactNativeZoomableView>
