@@ -284,16 +284,20 @@ const shouldShowHybridDirectionsPanel = (
     return startBuildingKey !== destinationBuildingKey;
   }
 
-  const roomEndpoint =
-    start.kind === 'room' ? start : destination.kind === 'room' ? destination : null;
+  let roomEndpoint: Extract<MixedEndpoint, { kind: 'room' }> | null = null;
+  if (start.kind === 'room') {
+    roomEndpoint = start;
+  } else if (destination.kind === 'room') {
+    roomEndpoint = destination;
+  }
   if (!roomEndpoint) return false;
 
-  const otherBuildingKey =
-    start.kind === 'building'
-      ? startBuildingKey
-      : destination.kind === 'building'
-        ? destinationBuildingKey
-        : null;
+  let otherBuildingKey: string | null = null;
+  if (start.kind === 'building') {
+    otherBuildingKey = startBuildingKey;
+  } else if (destination.kind === 'building') {
+    otherBuildingKey = destinationBuildingKey;
+  }
 
   return roomEndpoint.room.buildingKey !== otherBuildingKey;
 };
@@ -915,8 +919,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const clearIndoorSearch = useCallback(() => {
       setStartRoom(null);
       setDestinationRoom(null);
-      setStartRoomId(null);
-      setEndRoomId(null);
       setStartEndpoint(null);
       setDestinationEndpoint(null);
       setHybridOutdoorTravelMode('walking');
@@ -1043,9 +1045,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const isGlobalSearch = mode === 'search';
     const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
 
-    const [startRoomId, setStartRoomId] = useState<string | null>(null);
-    const [endRoomId, setEndRoomId] = useState<string | null>(null);
-
     const resolveViewForSelections = useCallback(
       (nextStart: MixedEndpoint | null, nextDestination: MixedEndpoint | null): ViewType => {
         if (shouldShowHybridDirectionsPanel(nextStart, nextDestination)) {
@@ -1103,12 +1102,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       }
 
       if (activeView === 'indoor-directions') {
-        const oppositeEndpoint =
-          searchFor === 'start'
-            ? destinationEndpoint
-            : searchFor === 'destination'
-              ? startEndpoint
-              : null;
+        let oppositeEndpoint: MixedEndpoint | null = null;
+        if (searchFor === 'start') {
+          oppositeEndpoint = destinationEndpoint;
+        } else if (searchFor === 'destination') {
+          oppositeEndpoint = startEndpoint;
+        }
 
         return isRoomEndpoint(oppositeEndpoint) ? 'mixed' : 'rooms';
       }
@@ -1137,12 +1136,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
         if (searchFor === 'start') {
           setStartRoom(room.label);
-          setStartRoomId(room.id);
           setStartBuilding(null);
           setStartEndpoint(nextEndpoint);
         } else {
           setDestinationRoom(room.label);
-          setEndRoomId(room.id);
           setDestinationBuilding(null);
           setDestinationEndpoint(nextEndpoint);
         }
@@ -1222,8 +1219,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setRouteStartSource('current');
       setStartRoom(null);
       setDestinationRoom(null);
-      setStartRoomId(null);
-      setEndRoomId(null);
       onIndoorRouteChange?.(null, null);
       if (asDestination) {
         // Walking figure: building is destination, start is current location
@@ -1299,8 +1294,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setDestinationEndpoint({ kind: 'building', building: chosenBuilding });
       setStartRoom(null);
       setDestinationRoom(null);
-      setStartRoomId(null);
-      setEndRoomId(null);
       setTravelMode('walking');
       setRouteStartSource('current');
       setActiveView('directions');
@@ -1324,8 +1317,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           setStartEndpoint(null);
           setStartRoom(null);
           setDestinationRoom(null);
-          setStartRoomId(null);
-          setEndRoomId(null);
           onIndoorRouteChange?.(null, null);
           setTravelMode('walking');
           setCalendarSliderMode(null);
@@ -1367,12 +1358,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartBuilding(building);
         setStartLocationSnapshot(null);
         setStartRoom(building.name);
-        setStartRoomId(null);
         setStartEndpoint(nextEndpoint);
       } else {
         setDestinationBuilding(building);
         setDestinationRoom(building.name);
-        setEndRoomId(null);
         setDestinationEndpoint(nextEndpoint);
       }
 
