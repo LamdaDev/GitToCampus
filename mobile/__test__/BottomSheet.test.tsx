@@ -51,6 +51,63 @@ const mockBuildings: BuildingShape[] = [
   },
 ];
 
+const mockSameBuildingRoom = {
+  id: 'room-h-811',
+  label: 'H-811',
+  floor: 8,
+  buildingId: 'Hall',
+  buildingKey: 'H',
+  campus: 'SGW',
+};
+
+const mockOtherBuildingRoom = {
+  id: 'room-ve-1615',
+  label: 'VE-1.615',
+  floor: 1,
+  buildingId: 'VE',
+  buildingKey: 'VE',
+  campus: 'SGW',
+};
+
+const mockSameBuildingDestinationRoom = {
+  id: 'room-h-822',
+  label: 'H-822',
+  floor: 8,
+  buildingId: 'Hall',
+  buildingKey: 'H',
+  campus: 'SGW',
+};
+
+const mockSameBuildingSearchResult: BuildingShape = {
+  id: 'found-building-h',
+  name: 'Hall Building',
+  shortCode: 'H',
+  polygons: [
+    [
+      { latitude: 45.4971, longitude: -73.5791 },
+      { latitude: 45.4972, longitude: -73.5791 },
+      { latitude: 45.4972, longitude: -73.5792 },
+    ],
+  ],
+  campus: 'SGW',
+  address: '1455 De Maisonneuve W',
+};
+
+const mockOtherBuildingSearchResult: BuildingShape = {
+  id: 'found-building-ve',
+  name: 'EV Building',
+  shortCode: 'VE',
+  polygons: [
+    [
+      { latitude: 45.497, longitude: -73.579 },
+      { latitude: 45.498, longitude: -73.579 },
+      { latitude: 45.498, longitude: -73.58 },
+    ],
+  ],
+  campus: 'SGW',
+  address: '1515 Ste-Catherine W',
+};
+
 const defaultProps = {
   mode: 'detail' as const,
   revealSearchBar: jest.fn(),
@@ -334,32 +391,39 @@ jest.mock('../src/components/SearchSheet', () => {
     onCalendarGoPress,
     calendarGoErrorMessage,
     onSelectRoom,
+    searchMode,
   }: any) => (
     <View testID="search-sheet">
+      <Text testID="search-mode-state">{searchMode ?? 'buildings'}</Text>
       <TouchableOpacity
         testID="press-building-in-search"
-        onPress={() =>
-          onPressBuilding({
-            id: 'found-building',
-            name: 'Found Hall',
-            polygons: [
-              [
-                { latitude: 45.49, longitude: -73.58 },
-                { latitude: 45.491, longitude: -73.58 },
-                { latitude: 45.491, longitude: -73.581 },
-              ],
-            ],
-            campus: 'SGW',
-          })
-        }
+        onPress={() => onPressBuilding(mockSameBuildingSearchResult)}
       >
         <Text>Select</Text>
       </TouchableOpacity>
       <TouchableOpacity
+        testID="press-building-in-search-other"
+        onPress={() => onPressBuilding(mockOtherBuildingSearchResult)}
+      >
+        <Text>Select Other Building</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
         testID="select-room-in-search"
-        onPress={() => onSelectRoom?.({ id: 'room-101', label: 'Room 101' })}
+        onPress={() => onSelectRoom?.(mockSameBuildingRoom)}
       >
         <Text>Select Room</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="select-room-in-search-other-building"
+        onPress={() => onSelectRoom?.(mockOtherBuildingRoom)}
+      >
+        <Text>Select Other Room</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="select-room-in-search-same-building-other"
+        onPress={() => onSelectRoom?.(mockSameBuildingDestinationRoom)}
+      >
+        <Text>Select Same Building Other Room</Text>
       </TouchableOpacity>
       <TouchableOpacity testID="trigger-calendar-connected" onPress={() => onCalendarConnected?.()}>
         <Text>Calendar Connected</Text>
@@ -398,6 +462,82 @@ jest.mock('../src/components/SearchSheet', () => {
       {calendarGoErrorMessage ? (
         <Text testID="calendar-go-error-message">{calendarGoErrorMessage}</Text>
       ) : null}
+    </View>
+  );
+});
+
+jest.mock('../src/components/HybridDirectionsDetails', () => {
+  const { View, TouchableOpacity, Text } = require('react-native');
+
+  return ({
+    startLabel,
+    destinationLabel,
+    selectedIndoorMode,
+    selectedOutdoorMode,
+    onPressStart,
+    onPressDestination,
+    onIndoorModeChange,
+    onOutdoorModeChange,
+    onPressGo,
+    onClose,
+    onClear,
+  }: any) => (
+    <View testID="hybrid-directions-details">
+      <Text testID="hybrid-start-label">{startLabel ?? 'none'}</Text>
+      <Text testID="hybrid-destination-label">{destinationLabel ?? 'none'}</Text>
+      <Text testID="hybrid-indoor-mode-state">{selectedIndoorMode}</Text>
+      <Text testID="hybrid-outdoor-mode-state">{selectedOutdoorMode}</Text>
+      <TouchableOpacity testID="hybrid-press-start" onPress={onPressStart}>
+        <Text>Start</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="hybrid-press-destination" onPress={onPressDestination}>
+        <Text>Destination</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="hybrid-indoor-walking"
+        onPress={() => onIndoorModeChange('walking')}
+      >
+        <Text>Indoor Walk</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="hybrid-indoor-disability"
+        onPress={() => onIndoorModeChange('disability')}
+      >
+        <Text>Indoor Disability</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="hybrid-outdoor-walking"
+        onPress={() => onOutdoorModeChange('walking')}
+      >
+        <Text>Outdoor Walk</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="hybrid-outdoor-driving"
+        onPress={() => onOutdoorModeChange('driving')}
+      >
+        <Text>Outdoor Drive</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="hybrid-outdoor-transit"
+        onPress={() => onOutdoorModeChange('transit')}
+      >
+        <Text>Outdoor Transit</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        testID="hybrid-outdoor-shuttle"
+        onPress={() => onOutdoorModeChange('shuttle')}
+      >
+        <Text>Outdoor Shuttle</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="hybrid-go-button" onPress={onPressGo}>
+        <Text>Go</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="hybrid-close-button" onPress={onClose}>
+        <Text>Close</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="hybrid-clear-button" onPress={onClear}>
+        <Text>Clear</Text>
+      </TouchableOpacity>
     </View>
   );
 });
@@ -851,6 +991,90 @@ describe('BottomSheet', () => {
     await waitFor(() => {
       expect(mockSnapToPosition).toHaveBeenCalledWith('52%');
     });
+  });
+
+  test('room to room across different buildings shows hybrid directions panel', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} isIndoor={true} />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+    });
+
+    expect(getByTestId('indoor-direction-details')).toBeTruthy();
+
+    fireEvent.press(getByTestId('indoor-press-start'));
+    expect(getByTestId('search-mode-state').props.children).toBe('rooms');
+    await pressAndFlush(getByTestId('select-room-in-search'));
+
+    expect(getByTestId('indoor-direction-details')).toBeTruthy();
+
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    expect(getByTestId('search-mode-state').props.children).toBe('mixed');
+    await pressAndFlush(getByTestId('select-room-in-search-other-building'));
+
+    expect(getByTestId('hybrid-directions-details')).toBeTruthy();
+    expect(getByTestId('hybrid-start-label').props.children).toBe('H-811');
+    expect(getByTestId('hybrid-destination-label').props.children).toBe('VE-1.615');
+    expect(queryByTestId('indoor-direction-details')).toBeNull();
+  });
+
+  test('room to building across different buildings shows hybrid directions panel', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} isIndoor={true} />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+    });
+
+    fireEvent.press(getByTestId('indoor-press-start'));
+    await pressAndFlush(getByTestId('select-room-in-search'));
+
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    expect(getByTestId('search-mode-state').props.children).toBe('mixed');
+    await pressAndFlush(getByTestId('press-building-in-search-other'));
+
+    expect(getByTestId('hybrid-directions-details')).toBeTruthy();
+    expect(getByTestId('hybrid-start-label').props.children).toBe('H-811');
+    expect(getByTestId('hybrid-destination-label').props.children).toBe('EV Building');
+    expect(queryByTestId('indoor-direction-details')).toBeNull();
+  });
+
+  test('room to room in the same building keeps the existing indoor directions panel', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} isIndoor={true} />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+    });
+
+    fireEvent.press(getByTestId('indoor-press-start'));
+    await pressAndFlush(getByTestId('select-room-in-search'));
+
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    await pressAndFlush(getByTestId('select-room-in-search-same-building-other'));
+
+    expect(getByTestId('indoor-direction-details')).toBeTruthy();
+    expect(queryByTestId('hybrid-directions-details')).toBeNull();
+  });
+
+  test('building to building keeps the existing outdoor directions panel', async () => {
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    fireEvent.press(getByTestId('press-start'));
+    await pressAndFlush(getByTestId('press-building-in-search-other'));
+
+    expect(getByTestId('direction-details')).toBeTruthy();
+    expect(queryByTestId('hybrid-directions-details')).toBeNull();
   });
 
   test('snaps to expanded position when mode switches to search', () => {

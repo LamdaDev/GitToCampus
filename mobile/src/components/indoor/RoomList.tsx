@@ -10,13 +10,18 @@ import cc from '../../assets/floor_plans_json/cc1.json';
 import mb from '../../assets/floor_plans_json/mb_floors_combined.json';
 
 import { roomListStyles as styles } from '../../styles/RoomList.Styles';
-type BuildingKey = 'CC' | 'H' | 'MB' | 'VE' | 'VL';
-const buildingMeta: Record<BuildingKey, { name: string; address: string }> = {
+import {
+  getIndoorBuildingCampus,
+  normalizeIndoorBuildingKey,
+  type IndoorBuildingKey,
+} from '../../utils/indoor/buildingKeys';
+
+const buildingMeta: Record<IndoorBuildingKey, { name: string; address: string }> = {
   CC: {
     name: 'CC Building',
     address: '7141 Sherbrooke West',
   },
-  Hall: {
+  H: {
     name: 'H Building',
     address: '1450 De Maisonneuve Blvd W.',
   },
@@ -38,6 +43,8 @@ export type RoomNode = {
   id: string;
   label: string;
   buildingId: string;
+  buildingKey: IndoorBuildingKey;
+  campus: ReturnType<typeof getIndoorBuildingCampus>;
   floor: number;
 };
 
@@ -46,18 +53,18 @@ type Props = {
   onSelectRoom?: (room: RoomNode) => void;
 };
 
-const buildingGraphs: Record<string, any> = {
+const buildingGraphs: Record<IndoorBuildingKey, any> = {
   VE: ve,
   VL: vl,
   CC: cc,
   MB: mb,
-  Hall: hall,
+  H: hall,
 };
 
-const buildingIds = Object.keys(buildingGraphs);
+const buildingIds = Object.keys(buildingGraphs) as IndoorBuildingKey[];
 
-const getBuildingData = (buildingId: string, search: string) => {
-  const graph = buildingGraphs[buildingId];
+const getBuildingData = (buildingKey: IndoorBuildingKey, search: string) => {
+  const graph = buildingGraphs[buildingKey];
   if (!graph) return {};
 
   const searchLower = search.trim().toLowerCase();
@@ -73,10 +80,13 @@ const getBuildingData = (buildingId: string, search: string) => {
       if (!searchLower || roomNumber.startsWith(searchLower) || label.startsWith(searchLower)) {
         if (!grouped[node.floor]) grouped[node.floor] = [];
 
+        const normalizedBuildingKey = normalizeIndoorBuildingKey(node.buildingId) ?? buildingKey;
         grouped[node.floor].push({
           id: node.id,
           label: node.label,
           buildingId: node.buildingId,
+          buildingKey: normalizedBuildingKey,
+          campus: getIndoorBuildingCampus(normalizedBuildingKey),
           floor: node.floor,
         });
       }
@@ -89,11 +99,11 @@ const getBuildingData = (buildingId: string, search: string) => {
 };
 
 const RoomList = ({ onSelectRoom, search = '' }: Props) => {
-  const [openBuilding, setOpenBuilding] = useState<string | null>(null);
-  const [buildingCache, setBuildingCache] = useState<Record<string, Record<number, RoomNode[]>>>(
-    {},
-  );
-  const [collapsedBuildings, setCollapsedBuildings] = useState<Set<string>>(new Set());
+  const [openBuilding, setOpenBuilding] = useState<IndoorBuildingKey | null>(null);
+  const [buildingCache, setBuildingCache] = useState<
+    Partial<Record<IndoorBuildingKey, Record<number, RoomNode[]>>>
+  >({});
+  const [collapsedBuildings, setCollapsedBuildings] = useState<Set<IndoorBuildingKey>>(new Set());
 
   const isSearching = search.trim().length > 0;
 
@@ -104,9 +114,9 @@ const RoomList = ({ onSelectRoom, search = '' }: Props) => {
       return;
     }
 
-    const newCache: Record<string, Record<number, RoomNode[]>> = {};
+    const newCache: Partial<Record<IndoorBuildingKey, Record<number, RoomNode[]>>> = {};
 
-    Object.keys(buildingGraphs).forEach((buildingId) => {
+    buildingIds.forEach((buildingId) => {
       const data = getBuildingData(buildingId, search);
 
       if (Object.keys(data).length > 0) {
@@ -123,7 +133,7 @@ const RoomList = ({ onSelectRoom, search = '' }: Props) => {
   }, [search]);
 
   const handleToggleBuilding = useCallback(
-    (buildingId: string) => {
+    (buildingId: IndoorBuildingKey) => {
       if (isSearching) {
         setCollapsedBuildings((prev) => {
           const newSet = new Set(prev);
@@ -158,7 +168,7 @@ const RoomList = ({ onSelectRoom, search = '' }: Props) => {
   );
 
   const renderBuilding = useCallback(
-    ({ item: buildingId }: { item: string }) => {
+    ({ item: buildingId }: { item: IndoorBuildingKey }) => {
       const floors = buildingCache[buildingId];
 
       if (isSearching && !floors) return null;
@@ -181,13 +191,9 @@ const RoomList = ({ onSelectRoom, search = '' }: Props) => {
             />
             <Ionicons name="location-outline" size={34} color="#F5F1F2" />
             <View>
-              <Text style={styles.buildingTitle}>
-                {buildingMeta[buildingId as BuildingKey]?.name ?? `${buildingId} Building`}
-              </Text>
+              <Text style={styles.buildingTitle}>{buildingMeta[buildingId]?.name}</Text>
 
-              <Text style={styles.buildingAddress}>
-                {buildingMeta[buildingId as BuildingKey]?.address ?? ''}
-              </Text>
+              <Text style={styles.buildingAddress}>{buildingMeta[buildingId]?.address ?? ''}</Text>
             </View>
           </TouchableOpacity>
 
@@ -228,7 +234,7 @@ const RoomList = ({ onSelectRoom, search = '' }: Props) => {
   return (
     <BottomSheetFlatList
       data={buildingIds}
-      keyExtractor={(id) => id}
+      keyExtractor={(id: IndoorBuildingKey) => id}
       renderItem={renderBuilding}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={true}

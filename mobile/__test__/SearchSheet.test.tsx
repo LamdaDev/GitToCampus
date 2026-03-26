@@ -65,6 +65,31 @@ jest.mock('@gorhom/bottom-sheet', () => {
   };
 });
 
+jest.mock('../src/components/indoor/RoomList', () => {
+  const { View, Text, TouchableOpacity } = require('react-native');
+
+  return ({ search, onSelectRoom }: { search?: string; onSelectRoom?: (room: any) => void }) => (
+    <View testID="mock-room-list">
+      <Text testID="mock-room-search-value">{search ?? ''}</Text>
+      <TouchableOpacity
+        testID="mock-room-select-button"
+        onPress={() =>
+          onSelectRoom?.({
+            id: 'room-h-811',
+            label: 'H-811',
+            floor: 8,
+            buildingId: 'Hall',
+            buildingKey: 'H',
+            campus: 'SGW',
+          })
+        }
+      >
+        <Text>H-811</Text>
+      </TouchableOpacity>
+    </View>
+  );
+});
+
 jest.mock('../src/services/googleCalendarAuth', () => ({
   connectGoogleCalendarAsync: jest.fn(async () => ({ type: 'cancel' })),
   fetchGoogleCalendarEventsAsync: jest.fn(async () => ({ type: 'success', events: [] })),
@@ -151,6 +176,43 @@ describe('SearchSheet', () => {
     const { getByTestId, getByText } = render(<SearchSheet buildings={mockBuildings} />);
     fireEvent.changeText(getByTestId('search-bar'), 'zzznomatch');
     expect(getByText('No buildings found')).toBeTruthy();
+  });
+
+  test('renders room results when search mode is rooms', () => {
+    const { getByTestId, queryByText } = render(
+      <SearchSheet buildings={mockBuildings} searchMode="rooms" />,
+    );
+
+    expect(getByTestId('mock-room-list')).toBeTruthy();
+    expect(queryByText('Hall Building')).toBeNull();
+  });
+
+  test('renders both room and building sections when search mode is mixed', () => {
+    const { getByTestId, getByText } = render(
+      <SearchSheet buildings={mockBuildings} searchMode="mixed" />,
+    );
+
+    expect(getByTestId('mixed-search-results')).toBeTruthy();
+    expect(getByTestId('search-section-rooms')).toBeTruthy();
+    expect(getByTestId('search-section-buildings')).toBeTruthy();
+    expect(getByText('Hall Building')).toBeTruthy();
+    expect(getByTestId('mock-room-list')).toBeTruthy();
+  });
+
+  test('forwards room selection in mixed search mode', () => {
+    const onSelectRoom = jest.fn();
+    const { getByTestId } = render(
+      <SearchSheet buildings={mockBuildings} searchMode="mixed" onSelectRoom={onSelectRoom} />,
+    );
+
+    fireEvent.press(getByTestId('mock-room-select-button'));
+
+    expect(onSelectRoom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'room-h-811',
+        buildingKey: 'H',
+      }),
+    );
   });
 
   test('calls onPressBuilding with correct building when pressed', () => {

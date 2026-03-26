@@ -75,6 +75,8 @@ describe('RoomList FULL COVERAGE', () => {
     const called: RoomNode = mockFn.mock.calls[0][0];
     expect(called.label).toBe('H-101');
     expect(called.floor).toBe(2);
+    expect(called.buildingKey).toBe('H');
+    expect(called.campus).toBe('SGW');
   });
 
   it('preloads data in search mode', () => {

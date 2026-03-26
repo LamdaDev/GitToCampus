@@ -119,6 +119,17 @@ export const searchBuilding = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 14,
   },
+  sectionTitle: {
+    marginTop: 4,
+    marginBottom: 10,
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  mixedSectionContainer: {
+    marginBottom: 18,
+  },
 
   listContent: {
     gap: 14, // spacing between pills
