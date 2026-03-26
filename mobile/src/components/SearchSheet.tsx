@@ -306,6 +306,68 @@ export default function SearchSheet({
     [filtered, renderBuildingItem],
   );
 
+  const renderedSearchResults = useMemo(() => {
+    if (showsRooms && showsBuildings) {
+      return (
+        <BottomSheetScrollView
+          testID="mixed-search-results"
+          style={searchBuilding.scrollArea}
+          contentContainerStyle={searchBuilding.scrollContent}
+          showsVerticalScrollIndicator={true}
+        >
+          <Text testID="search-section-rooms" style={searchBuilding.sectionTitle}>
+            Rooms
+          </Text>
+          <View style={searchBuilding.mixedSectionContainer}>
+            <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
+          </View>
+
+          <Text testID="search-section-buildings" style={searchBuilding.sectionTitle}>
+            Buildings
+          </Text>
+          <View style={searchBuilding.mixedSectionContainer}>{renderedBuildingResults}</View>
+        </BottomSheetScrollView>
+      );
+    }
+
+    if (showsRooms) {
+      return (
+        <BottomSheetScrollView
+          testID="rooms-search-results"
+          style={searchBuilding.scrollArea}
+          contentContainerStyle={searchBuilding.scrollContent}
+          showsVerticalScrollIndicator={true}
+        >
+          <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
+        </BottomSheetScrollView>
+      );
+    }
+
+    return (
+      <BottomSheetFlatList<BuildingShape>
+        data={filtered}
+        keyExtractor={(item: BuildingShape) => item.id}
+        contentContainerStyle={searchBuilding.listContent}
+        showsVerticalScrollIndicator={true}
+        initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
+        maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
+        windowSize={SEARCH_LIST_WINDOW_SIZE}
+        removeClippedSubviews={true}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
+        renderItem={renderBuildingItem}
+      />
+    );
+  }, [
+    filtered,
+    onSelectRoom,
+    renderedBuildingResults,
+    renderBuildingItem,
+    search,
+    showsBuildings,
+    showsRooms,
+  ]);
+
   return (
     <View style={searchBuilding.screen}>
       <SearchBarCompat
@@ -370,49 +432,7 @@ export default function SearchSheet({
             : searchBuilding.buildingsContainer,
         ]}
       >
-        {showsRooms && showsBuildings ? (
-          <BottomSheetScrollView
-            testID="mixed-search-results"
-            style={searchBuilding.scrollArea}
-            contentContainerStyle={searchBuilding.scrollContent}
-            showsVerticalScrollIndicator={true}
-          >
-            <Text testID="search-section-rooms" style={searchBuilding.sectionTitle}>
-              Rooms
-            </Text>
-            <View style={searchBuilding.mixedSectionContainer}>
-              <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
-            </View>
-
-            <Text testID="search-section-buildings" style={searchBuilding.sectionTitle}>
-              Buildings
-            </Text>
-            <View style={searchBuilding.mixedSectionContainer}>{renderedBuildingResults}</View>
-          </BottomSheetScrollView>
-        ) : showsRooms ? (
-          <BottomSheetScrollView
-            testID="rooms-search-results"
-            style={searchBuilding.scrollArea}
-            contentContainerStyle={searchBuilding.scrollContent}
-            showsVerticalScrollIndicator={true}
-          >
-            <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
-          </BottomSheetScrollView>
-        ) : (
-          <BottomSheetFlatList<BuildingShape>
-            data={filtered}
-            keyExtractor={(item: BuildingShape) => item.id}
-            contentContainerStyle={searchBuilding.listContent}
-            showsVerticalScrollIndicator={true}
-            initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
-            maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
-            windowSize={SEARCH_LIST_WINDOW_SIZE}
-            removeClippedSubviews={true}
-            keyboardShouldPersistTaps="handled"
-            ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
-            renderItem={renderBuildingItem}
-          />
-        )}
+        {renderedSearchResults}
       </View>
     </View>
   );

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
+import type { ListRenderItemInfo } from 'react-native';
 
 import hall from '../../assets/floor_plans_json/hall.json';
 import ve from '../../assets/floor_plans_json/ve.json';
@@ -169,7 +170,7 @@ const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props)
   );
 
   const renderBuilding = useCallback(
-    ({ item: buildingId }: { item: IndoorBuildingKey }) => {
+    (buildingId: IndoorBuildingKey) => {
       const floors = buildingCache[buildingId];
 
       if (isSearching && !floors) return null;
@@ -236,7 +237,7 @@ const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props)
     return (
       <View style={styles.container}>
         {buildingIds.map((buildingId) => (
-          <View key={buildingId}>{renderBuilding({ item: buildingId })}</View>
+          <View key={buildingId}>{renderBuilding(buildingId)}</View>
         ))}
       </View>
     );
@@ -246,7 +247,7 @@ const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props)
     <BottomSheetFlatList
       data={buildingIds}
       keyExtractor={(id: IndoorBuildingKey) => id}
-      renderItem={renderBuilding}
+      renderItem={({ item }: ListRenderItemInfo<IndoorBuildingKey>) => renderBuilding(item)}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={true}
       initialNumToRender={5}
