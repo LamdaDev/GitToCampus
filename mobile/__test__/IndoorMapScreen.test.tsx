@@ -242,6 +242,33 @@ describe('IndoorMapScreen', () => {
     });
   });
 
+  test('syncs the selected building when the incoming building prop changes', async () => {
+    const { rerender } = render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+      />,
+    );
+
+    expect(getControlsProps().building).toEqual(buildingH);
+
+    rerender(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingMB}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getControlsProps().building).toEqual(buildingMB);
+      expect(getControlsProps().currentFloor).toBe('1');
+    });
+  });
+
   test('floor navigation increments, decrements, and clamps correctly', async () => {
     render(
       <IndoorMapScreen

@@ -594,8 +594,18 @@ export const fetchGoogleCalendarEventsAsync = async (
   }
 };
 
-type SuccessfulPromptResult = Extract<AuthSession.AuthSessionResult, { type: 'success' }>;
-type PromptErrorResult = Extract<AuthSession.AuthSessionResult, { type: 'error' }>;
+type PromptPayloadResult = Extract<
+  AuthSession.AuthSessionResult,
+  {
+    params: Record<string, string>;
+    authentication: AuthSession.TokenResponse | null;
+    errorCode: string | null;
+    url: string;
+  }
+>;
+
+type SuccessfulPromptResult = PromptPayloadResult & { type: 'success' };
+type PromptErrorResult = PromptPayloadResult & { type: 'error' };
 
 type PromptResolution =
   | { shouldContinue: true; promptResult: SuccessfulPromptResult }
@@ -631,7 +641,7 @@ const resolvePromptResult = (promptResult: AuthSession.AuthSessionResult): Promp
   if (promptResult.type === 'success') {
     return {
       shouldContinue: true,
-      promptResult,
+      promptResult: promptResult as SuccessfulPromptResult,
     };
   }
 
@@ -655,7 +665,7 @@ const resolvePromptResult = (promptResult: AuthSession.AuthSessionResult): Promp
   if (promptResult.type === 'error') {
     return {
       shouldContinue: false,
-      result: resolvePromptError(promptResult),
+      result: resolvePromptError(promptResult as PromptErrorResult),
     };
   }
 

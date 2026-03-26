@@ -5,6 +5,7 @@ import { BuildingShape } from '../src/types/BuildingShape';
 import * as directionsService from '../src/services/googleDirections';
 import { DirectionsServiceError } from '../src/types/Directions';
 import * as shuttlePlannerService from '../src/services/shuttlePlanner';
+import * as crossBuildingRouteFlowService from '../src/utils/indoor/crossBuildingRouteFlow';
 
 const mockSnapToIndex = jest.fn();
 const mockSnapToPosition = jest.fn();
@@ -56,8 +57,8 @@ const mockSameBuildingRoom = {
   label: 'H-811',
   floor: 8,
   buildingId: 'Hall',
-  buildingKey: 'H',
-  campus: 'SGW',
+  buildingKey: 'H' as const,
+  campus: 'SGW' as const,
 };
 
 const mockOtherBuildingRoom = {
@@ -65,8 +66,8 @@ const mockOtherBuildingRoom = {
   label: 'VE-1.615',
   floor: 1,
   buildingId: 'VE',
-  buildingKey: 'VE',
-  campus: 'SGW',
+  buildingKey: 'VE' as const,
+  campus: 'LOYOLA' as const,
 };
 
 const mockSameBuildingDestinationRoom = {
@@ -74,8 +75,8 @@ const mockSameBuildingDestinationRoom = {
   label: 'H-822',
   floor: 8,
   buildingId: 'Hall',
-  buildingKey: 'H',
-  campus: 'SGW',
+  buildingKey: 'H' as const,
+  campus: 'SGW' as const,
 };
 
 const mockSameBuildingSearchResult: BuildingShape = {
@@ -104,7 +105,7 @@ const mockOtherBuildingSearchResult: BuildingShape = {
       { latitude: 45.498, longitude: -73.58 },
     ],
   ],
-  campus: 'SGW',
+  campus: 'LOYOLA',
   address: '1515 Ste-Catherine W',
 };
 
@@ -121,6 +122,7 @@ const defaultProps = {
   isIndoor: false,
   enterIndoorView: jest.fn(),
   indoorPathSteps: [],
+  onShowOutdoorMap: jest.fn(),
 };
 
 jest.mock('../src/services/googleDirections', () => ({
@@ -129,6 +131,10 @@ jest.mock('../src/services/googleDirections', () => ({
 
 jest.mock('../src/services/shuttlePlanner', () => ({
   buildShuttlePlan: jest.fn(),
+}));
+
+jest.mock('../src/utils/indoor/crossBuildingRouteFlow', () => ({
+  buildCrossBuildingRouteFlow: jest.fn(),
 }));
 
 jest.mock('../src/utils/calendarRouteLocation', () => ({
@@ -247,6 +253,8 @@ jest.mock('../src/components/DirectionDetails', () => {
     selectedTravelMode,
     shuttlePlan,
     onRetryRoute,
+    stageActionLabel,
+    onStageAction,
   }: any) =>
     (() => {
       const [selectedMode, setSelectedMode] = React.useState(
@@ -294,6 +302,7 @@ jest.mock('../src/components/DirectionDetails', () => {
               ? `${routeDurationText} - ${routeDistanceText}`
               : 'none'}
           </Text>
+          <Text testID="selected-travel-mode-state">{selectedMode}</Text>
           <Text testID="can-start-navigation-state">
             {canStartNavigation === false ? 'false' : 'true'}
           </Text>
@@ -338,6 +347,11 @@ jest.mock('../src/components/DirectionDetails', () => {
           {showGoButton ? (
             <TouchableOpacity testID="route-go-button" onPress={handleGo}>
               <Text>Go</Text>
+            </TouchableOpacity>
+          ) : null}
+          {stageActionLabel ? (
+            <TouchableOpacity testID="route-stage-action-button" onPress={onStageAction}>
+              <Text>{stageActionLabel}</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -481,12 +495,14 @@ jest.mock('../src/components/HybridDirectionsDetails', () => {
     onPressGo,
     onClose,
     onClear,
+    errorMessage,
   }: any) => (
     <View testID="hybrid-directions-details">
       <Text testID="hybrid-start-label">{startLabel ?? 'none'}</Text>
       <Text testID="hybrid-destination-label">{destinationLabel ?? 'none'}</Text>
       <Text testID="hybrid-indoor-mode-state">{selectedIndoorMode}</Text>
       <Text testID="hybrid-outdoor-mode-state">{selectedOutdoorMode}</Text>
+      {errorMessage ? <Text testID="hybrid-error-message">{errorMessage}</Text> : null}
       <TouchableOpacity testID="hybrid-press-start" onPress={onPressStart}>
         <Text>Start</Text>
       </TouchableOpacity>
@@ -542,6 +558,37 @@ jest.mock('../src/components/HybridDirectionsDetails', () => {
   );
 });
 
+jest.mock('../src/components/indoor/IndoorNavigationDetails', () => {
+  const { View, TouchableOpacity, Text } = require('react-native');
+
+  return ({
+    startRoom,
+    destinationRoom,
+    buildingName,
+    onBack,
+    onClose,
+    stageActionLabel,
+    onStageAction,
+  }: any) => (
+    <View testID="indoor-navigation-details">
+      <Text testID="indoor-navigation-start-room">{startRoom ?? 'none'}</Text>
+      <Text testID="indoor-navigation-destination-room">{destinationRoom ?? 'none'}</Text>
+      <Text testID="indoor-navigation-building">{buildingName ?? 'none'}</Text>
+      <TouchableOpacity testID="indoor-navigation-back-button" onPress={onBack}>
+        <Text>Back</Text>
+      </TouchableOpacity>
+      <TouchableOpacity testID="indoor-navigation-close-button" onPress={onClose}>
+        <Text>Close</Text>
+      </TouchableOpacity>
+      {stageActionLabel ? (
+        <TouchableOpacity testID="indoor-stage-action-button" onPress={onStageAction}>
+          <Text>{stageActionLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  );
+});
+
 jest.mock('../src/components/CalendarSelectionSlider', () => {
   const { View, TouchableOpacity, Text } = require('react-native');
   return ({ onDone }: any) => (
@@ -593,6 +640,8 @@ jest.mock('../src/components/indoor/IndoorDirectionDetails', () => {
 describe('BottomSheet', () => {
   const directionsServiceMock = directionsService as jest.Mocked<typeof directionsService>;
   const shuttlePlannerMock = shuttlePlannerService as jest.Mocked<typeof shuttlePlannerService>;
+  const crossBuildingRouteFlowMock =
+    crossBuildingRouteFlowService as jest.Mocked<typeof crossBuildingRouteFlowService>;
   const originalShuttleWeekdayDebug = process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
   const originalShuttleForcedPlanningTime =
     process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;
@@ -636,6 +685,31 @@ describe('BottomSheet', () => {
       nextDepartureInMinutes: null,
       isServiceAvailable: false,
       message: 'Shuttle bus unavailable today. Try Public Transit.',
+    });
+    crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow.mockReturnValue({
+      ok: true,
+      flow: {
+        startRoomEndpoint: mockSameBuildingRoom,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        originBuilding: mockSameBuildingSearchResult,
+        destinationBuilding: mockOtherBuildingSearchResult,
+        originTransferPoint: {
+          buildingKey: 'H',
+          campus: 'SGW',
+          accessNodeId: 'Hall_F1_building_entry_exit_3',
+          outdoorCoords: { latitude: 45.497092, longitude: -73.5788 },
+          accessible: true,
+        },
+        destinationTransferPoint: {
+          buildingKey: 'VE',
+          campus: 'LOYOLA',
+          accessNodeId: 'VE_F1_building_entry_exit_6',
+          outdoorCoords: { latitude: 45.459026, longitude: -73.638606 },
+          accessible: true,
+        },
+        outdoorMode: 'walking',
+        currentStage: 'origin_indoor',
+      },
     });
   });
 
@@ -1019,6 +1093,200 @@ describe('BottomSheet', () => {
     expect(getByTestId('hybrid-start-label').props.children).toBe('H-811');
     expect(getByTestId('hybrid-destination-label').props.children).toBe('VE-1.615');
     expect(queryByTestId('indoor-direction-details')).toBeNull();
+  });
+
+  test('cross-building room to room GO starts the staged flow in origin indoor mode', async () => {
+    const onIndoorRouteChange = jest.fn();
+    const onEnterBuilding = jest.fn();
+    const enterIndoorView = jest.fn();
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        isIndoor={true}
+        onIndoorRouteChange={onIndoorRouteChange}
+        onEnterBuilding={onEnterBuilding}
+        enterIndoorView={enterIndoorView}
+      />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+    });
+    fireEvent.press(getByTestId('indoor-press-start'));
+    await pressAndFlush(getByTestId('select-room-in-search'));
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    await pressAndFlush(getByTestId('select-room-in-search-other-building'));
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startRoom: mockSameBuildingRoom,
+        destinationRoom: mockOtherBuildingRoom,
+        indoorTravelMode: 'walking',
+        outdoorMode: 'walking',
+      }),
+    );
+    expect(enterIndoorView).toHaveBeenCalledTimes(1);
+    expect(onEnterBuilding).toHaveBeenCalledWith(mockSameBuildingSearchResult);
+    expect(onIndoorRouteChange).toHaveBeenLastCalledWith(
+      'room-h-811',
+      'Hall_F1_building_entry_exit_3',
+    );
+    expect(getByTestId('indoor-navigation-details')).toBeTruthy();
+    expect(getByTestId('indoor-stage-action-button')).toBeTruthy();
+    expect(getByTestId('indoor-navigation-start-room').props.children).toBe('H-811');
+    expect(getByTestId('indoor-navigation-destination-room').props.children).toBe('H Exit');
+  });
+
+  test('pressing the indoor stage CTA switches the staged flow to outdoor directions', async () => {
+    const onIndoorRouteChange = jest.fn();
+    const onShowOutdoorMap = jest.fn();
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        isIndoor={true}
+        onIndoorRouteChange={onIndoorRouteChange}
+        onShowOutdoorMap={onShowOutdoorMap}
+      />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+    });
+    fireEvent.press(getByTestId('indoor-press-start'));
+    await pressAndFlush(getByTestId('select-room-in-search'));
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    await pressAndFlush(getByTestId('select-room-in-search-other-building'));
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+    await pressAndFlush(getByTestId('indoor-stage-action-button'));
+
+    expect(onShowOutdoorMap).toHaveBeenCalledTimes(1);
+    expect(onIndoorRouteChange).toHaveBeenLastCalledWith(null, null);
+    expect(getByTestId('direction-details')).toBeTruthy();
+    expect(getByTestId('selected-travel-mode-state').props.children).toBe('walking');
+    expect(getByTestId('route-stage-action-button')).toBeTruthy();
+  });
+
+  test('pressing the outdoor stage CTA switches the staged flow to destination indoor mode', async () => {
+    const onIndoorRouteChange = jest.fn();
+    const onEnterBuilding = jest.fn();
+    const enterIndoorView = jest.fn();
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        isIndoor={true}
+        onIndoorRouteChange={onIndoorRouteChange}
+        onEnterBuilding={onEnterBuilding}
+        enterIndoorView={enterIndoorView}
+      />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+    });
+    fireEvent.press(getByTestId('indoor-press-start'));
+    await pressAndFlush(getByTestId('select-room-in-search'));
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    await pressAndFlush(getByTestId('select-room-in-search-other-building'));
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+    await pressAndFlush(getByTestId('indoor-stage-action-button'));
+    await pressAndFlush(getByTestId('route-stage-action-button'));
+
+    expect(onEnterBuilding).toHaveBeenLastCalledWith(mockOtherBuildingSearchResult);
+    expect(onIndoorRouteChange).toHaveBeenLastCalledWith(
+      'VE_F1_building_entry_exit_6',
+      'room-ve-1615',
+    );
+    expect(enterIndoorView).toHaveBeenCalledTimes(2);
+    expect(getByTestId('indoor-navigation-details')).toBeTruthy();
+    expect(getByTestId('indoor-navigation-start-room').props.children).toBe('VE Entrance');
+    expect(getByTestId('indoor-navigation-destination-room').props.children).toBe('VE-1.615');
+  });
+
+  test('selected hybrid outdoor mode is used for the staged outdoor leg', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} isIndoor={true} />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+    });
+    fireEvent.press(getByTestId('indoor-press-start'));
+    await pressAndFlush(getByTestId('select-room-in-search'));
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    await pressAndFlush(getByTestId('select-room-in-search-other-building'));
+    fireEvent.press(getByTestId('hybrid-outdoor-shuttle'));
+    crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow.mockReturnValueOnce({
+      ok: true,
+      flow: {
+        startRoomEndpoint: mockSameBuildingRoom,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        originBuilding: mockSameBuildingSearchResult,
+        destinationBuilding: mockOtherBuildingSearchResult,
+        originTransferPoint: {
+          buildingKey: 'H',
+          campus: 'SGW',
+          accessNodeId: 'Hall_F1_building_entry_exit_3',
+          outdoorCoords: { latitude: 45.497092, longitude: -73.5788 },
+          accessible: true,
+        },
+        destinationTransferPoint: {
+          buildingKey: 'VE',
+          campus: 'LOYOLA',
+          accessNodeId: 'VE_F1_building_entry_exit_6',
+          outdoorCoords: { latitude: 45.459026, longitude: -73.638606 },
+          accessible: true,
+        },
+        outdoorMode: 'shuttle',
+        currentStage: 'origin_indoor',
+      },
+    });
+
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+    await pressAndFlush(getByTestId('indoor-stage-action-button'));
+
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        outdoorMode: 'shuttle',
+      }),
+    );
+    expect(getByTestId('selected-travel-mode-state').props.children).toBe('shuttle');
+  });
+
+  test('missing transfer metadata keeps the hybrid panel visible and shows an error', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow.mockReturnValueOnce({
+      ok: false,
+      message: 'No building exit is configured yet for EV Building.',
+    });
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} isIndoor={true} />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+    });
+    fireEvent.press(getByTestId('indoor-press-start'));
+    await pressAndFlush(getByTestId('select-room-in-search'));
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    await pressAndFlush(getByTestId('select-room-in-search-other-building'));
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+
+    expect(getByTestId('hybrid-directions-details')).toBeTruthy();
+    expect(getByTestId('hybrid-error-message').props.children).toBe(
+      'No building exit is configured yet for EV Building.',
+    );
+    expect(queryByTestId('indoor-navigation-details')).toBeNull();
   });
 
   test('room to building across different buildings shows hybrid directions panel', async () => {

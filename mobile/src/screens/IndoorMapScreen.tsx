@@ -9,13 +9,8 @@ import PathOverlay from '../components/indoor/PathOverlay';
 import {
   findIndoorPath,
   type IndoorNode,
-  type IndoorEdge,
 } from '../utils/indoor/indoorPathFinding';
-import hallGraph from '../assets/floor_plans_json/hall.json';
-import ccGraph from '../assets/floor_plans_json/cc1.json';
-import mbGraph from '../assets/floor_plans_json/mb_floors_combined.json';
-import veGraph from '../assets/floor_plans_json/ve.json';
-import vlGraph from '../assets/floor_plans_json/vl_floors_combined.json';
+import { getIndoorGraph } from '../utils/indoor/indoorGraphs';
 import styles from '../styles/IndoorMapScreen.styles';
 
 type props = {
@@ -54,14 +49,6 @@ const hasNativeSvgSupport = () => {
 };
 
 // ── Building graph data keyed by short code ──────────────────────────────────
-const BUILDING_GRAPHS: Record<string, { nodes: IndoorNode[]; edges: IndoorEdge[] }> = {
-  H: hallGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-  CC: ccGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-  MB: mbGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-  VE: veGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-  VL: vlGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-};
-
 // ── SVG coordinates for scaling path overlay ───────────────────────────
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
   H: { width: 2040, height: 2040 },
@@ -136,9 +123,7 @@ export default function IndoorMapScreen({
 
   // ── Path Logic ──────────────────────────────────────────────────────────────
   const buildingGraph = useMemo(() => {
-    const code = selectedBuilding?.shortCode;
-    const graph = code ? (BUILDING_GRAPHS[code] ?? null) : null;
-    return graph;
+    return getIndoorGraph(selectedBuilding?.shortCode);
   }, [selectedBuilding?.shortCode]);
 
   const fullPath = useMemo(() => {
@@ -213,6 +198,10 @@ export default function IndoorMapScreen({
   const floorLevels = useMemo(() => {
     return indoorFloorPlans ? Object.keys(indoorFloorPlans) : [];
   }, [indoorFloorPlans]);
+
+  useEffect(() => {
+    setSelectedBuilding(building);
+  }, [building]);
 
   // RESET FLOOR WHEN BUILDING CHANGES
   useEffect(() => {

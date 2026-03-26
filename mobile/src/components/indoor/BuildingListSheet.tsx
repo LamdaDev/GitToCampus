@@ -15,6 +15,7 @@ import { floorPlans } from '../../utils/floorPlans';
 import type { BuildingShape } from '../../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
 import { indoorBuildingSheetStyles } from '../../styles/IndoorBottomSheet.styles';
+import type { Campus } from '../../types/Campus';
 
 export type IndoorBottomSheetRef = {
   open: () => void;
@@ -43,30 +44,37 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
         CC: {
           name: 'CC Building',
           address: '7141 Sherbrooke West',
+          campus: 'LOYOLA' as Campus,
         },
         H: {
           name: 'H Building',
           address: '1450 De Maisonneuve Blvd W.',
+          campus: 'SGW' as Campus,
         },
         MB: {
           name: 'MB Building',
           address: '1450 Guy Street',
+          campus: 'SGW' as Campus,
         },
         VE: {
           name: 'VE Building',
           address: '7141 Sherbrooke West',
+          campus: 'LOYOLA' as Campus,
         },
         VL: {
           name: 'Vanier Library',
           address: '7141 Sherbrooke St W.',
+          campus: 'LOYOLA' as Campus,
         },
       };
 
-      return Object.keys(floorPlans).map((code) => ({
+      return (Object.keys(floorPlans) as Array<keyof typeof buildingMeta>).map((code) => ({
         id: code,
         shortCode: code,
-        name: buildingMeta[code as keyof typeof buildingMeta]?.name ?? code,
-        address: buildingMeta[code as keyof typeof buildingMeta]?.address ?? '',
+        name: buildingMeta[code].name,
+        address: buildingMeta[code].address,
+        campus: buildingMeta[code].campus,
+        polygons: [],
       }));
     }, []);
 
@@ -140,7 +148,7 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
           />
           <BottomSheetFlatList<BuildingShape>
             data={filtered}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item: BuildingShape) => item.id}
             contentContainerStyle={[indoorBuildingSheetStyles.listContent, { paddingBottom: 250 }]}
             renderItem={renderBuildingItem}
             keyboardShouldPersistTaps="handled"

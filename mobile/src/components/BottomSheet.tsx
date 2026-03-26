@@ -54,6 +54,8 @@ import { IndoorRoutePlannerMode } from '../types/SheetMode';
 import type { SearchMode } from '../types/SearchMode';
 import HybridDirectionsDetails from './HybridDirectionsDetails';
 import { getIndoorBuildingKeyFromShape } from '../utils/indoor/buildingKeys';
+import type { CrossBuildingRouteFlow } from '../types/CrossBuildingRoute';
+import { buildCrossBuildingRouteFlow } from '../utils/indoor/crossBuildingRouteFlow';
 
 const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
@@ -322,6 +324,7 @@ type BottomSheetProps = {
   onPrevPathFloor?: () => void;
   onNextPathFloor?: () => void;
   onIndoorTravelModeChange?: (mode: 'walking' | 'disability') => void;
+  onShowOutdoorMap?: () => void;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -526,7 +529,7 @@ const IndoorDirectionsView = ({
   destinationRoom,
   indoorPathSteps,
   closeSheet,
-  setSearchFor,
+  openSearchFor,
   setActiveView,
   clearSearchOptions,
   onTravelModeChange,
@@ -536,7 +539,7 @@ const IndoorDirectionsView = ({
   destinationRoom: string | null;
   indoorPathSteps: { icon: string; label: string }[];
   closeSheet: () => void;
-  setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
+  openSearchFor: (target: SearchTarget) => void;
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   clearSearchOptions?: () => void;
   onTravelModeChange?: (mode: 'walking' | 'disability') => void;
@@ -546,8 +549,8 @@ const IndoorDirectionsView = ({
     startRoom={startRoom}
     destinationRoom={destinationRoom}
     onClose={closeSheet}
-    onPressStart={() => setSearchFor('start')}
-    onPressDestination={() => setSearchFor('destination')}
+    onPressStart={() => openSearchFor('start')}
+    onPressDestination={() => openSearchFor('destination')}
     hasPath={indoorPathSteps.length > 0}
     onPressGo={() => setActiveView('indoor-navigation')}
     onClear={clearSearchOptions}
@@ -565,6 +568,9 @@ const IndoorNavigationView = ({
   setActiveView,
   onPrevPathFloor,
   onNextPathFloor,
+  onBack,
+  stageActionLabel,
+  onStageAction,
 }: {
   startRoom: string | null;
   destinationRoom: string | null;
@@ -574,16 +580,21 @@ const IndoorNavigationView = ({
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   onPrevPathFloor?: () => void;
   onNextPathFloor?: () => void;
+  onBack?: () => void;
+  stageActionLabel?: string;
+  onStageAction?: () => void;
 }) => (
   <IndoorNavigationDetails
     startRoom={startRoom}
     destinationRoom={destinationRoom}
     buildingName={selectedBuilding?.name ?? undefined}
     pathSteps={indoorPathSteps}
-    onBack={() => setActiveView('indoor-directions')}
+    onBack={onBack ?? (() => setActiveView('indoor-directions'))}
     onClose={closeSheet}
     onPrevFloor={indoorPathSteps.length > 0 ? onPrevPathFloor : undefined}
     onNextFloor={indoorPathSteps.length > 0 ? onNextPathFloor : undefined}
+    stageActionLabel={stageActionLabel}
+    onStageAction={onStageAction}
   />
 );
 
@@ -592,36 +603,39 @@ const HybridDirectionsView = ({
   destinationLabel,
   closeSheet,
   clearSearchOptions,
-  setSearchFor,
+  openSearchFor,
   indoorTravelMode,
   onIndoorTravelModeChange,
   outdoorTravelMode,
   onOutdoorTravelModeChange,
   onGo,
+  errorMessage,
 }: {
   startLabel: string | null;
   destinationLabel: string | null;
   closeSheet: () => void;
   clearSearchOptions?: () => void;
-  setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
+  openSearchFor: (target: SearchTarget) => void;
   indoorTravelMode: IndoorRoutePlannerMode;
   onIndoorTravelModeChange: (mode: IndoorRoutePlannerMode) => void;
   outdoorTravelMode: RoutePlannerMode;
   onOutdoorTravelModeChange: (mode: RoutePlannerMode) => void;
   onGo?: () => void;
+  errorMessage?: string | null;
 }) => (
   <HybridDirectionsDetails
     startLabel={startLabel}
     destinationLabel={destinationLabel}
     onClose={closeSheet}
     onClear={clearSearchOptions}
-    onPressStart={() => setSearchFor('start')}
-    onPressDestination={() => setSearchFor('destination')}
+    onPressStart={() => openSearchFor('start')}
+    onPressDestination={() => openSearchFor('destination')}
     selectedIndoorMode={indoorTravelMode}
     selectedOutdoorMode={outdoorTravelMode}
     onIndoorModeChange={onIndoorTravelModeChange}
     onOutdoorModeChange={onOutdoorTravelModeChange}
     onPressGo={onGo}
+    errorMessage={errorMessage}
   />
 );
 
@@ -712,6 +726,7 @@ const renderBottomSheetContent = (props: {
   searchMode: SearchMode;
   activeView: ViewType;
   selectedBuilding: BuildingShape | null;
+  indoorNavigationBuilding: BuildingShape | null;
   closeSheet: () => void;
   showDirections: (building: BuildingShape, asDestination?: boolean) => void;
   onEnterBuilding: (building: BuildingShape) => void;
@@ -736,6 +751,7 @@ const renderBottomSheetContent = (props: {
   routeDurationSeconds: number | null;
   travelMode: RoutePlannerMode;
   canStartNavigationFromCurrentLocation: boolean;
+  openSearchFor: (target: SearchTarget) => void;
   setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
   setTravelMode: React.Dispatch<React.SetStateAction<RoutePlannerMode>>;
   handleDirectionsGo: (mode: RoutePlannerMode) => void;
@@ -746,6 +762,9 @@ const renderBottomSheetContent = (props: {
   destinationRoom: string | null;
   hybridStartLabel: string | null;
   hybridDestinationLabel: string | null;
+  hybridErrorMessage: string | null;
+  indoorNavigationStartLabel: string | null;
+  indoorNavigationDestinationLabel: string | null;
   indoorPathSteps: { icon: string; label: string }[];
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   onPrevPathFloor?: () => void;
@@ -756,6 +775,11 @@ const renderBottomSheetContent = (props: {
   hybridOutdoorTravelMode: RoutePlannerMode;
   setHybridOutdoorTravelMode: React.Dispatch<React.SetStateAction<RoutePlannerMode>>;
   handleHybridGo?: () => void;
+  indoorStageActionLabel?: string;
+  onIndoorStageAction?: () => void;
+  onIndoorNavigationBack?: () => void;
+  directionStageActionLabel?: string;
+  onDirectionStageAction?: () => void;
 }) => {
   if (props.isSearchActive) {
     return <SearchContent {...props} />;
@@ -813,7 +837,7 @@ const renderBottomSheetContent = (props: {
         destinationRoom={props.destinationRoom}
         indoorPathSteps={props.indoorPathSteps}
         closeSheet={props.closeSheet}
-        setSearchFor={props.setSearchFor}
+        openSearchFor={props.openSearchFor}
         setActiveView={props.setActiveView}
         clearSearchOptions={props.clearIndoorSearch}
         onTravelModeChange={props.setIndoorTravelMode}
@@ -829,12 +853,13 @@ const renderBottomSheetContent = (props: {
         destinationLabel={props.hybridDestinationLabel}
         closeSheet={props.closeSheet}
         clearSearchOptions={props.clearIndoorSearch}
-        setSearchFor={props.setSearchFor}
+        openSearchFor={props.openSearchFor}
         indoorTravelMode={props.indoorTravelMode}
         onIndoorTravelModeChange={props.setIndoorTravelMode}
         outdoorTravelMode={props.hybridOutdoorTravelMode}
         onOutdoorTravelModeChange={props.setHybridOutdoorTravelMode}
         onGo={props.handleHybridGo}
+        errorMessage={props.hybridErrorMessage}
       />
     );
   }
@@ -842,14 +867,17 @@ const renderBottomSheetContent = (props: {
   if (props.activeView === 'indoor-navigation') {
     return (
       <IndoorNavigationView
-        startRoom={props.startRoom}
-        destinationRoom={props.destinationRoom}
-        selectedBuilding={props.selectedBuilding}
+        startRoom={props.indoorNavigationStartLabel}
+        destinationRoom={props.indoorNavigationDestinationLabel}
+        selectedBuilding={props.indoorNavigationBuilding}
         indoorPathSteps={props.indoorPathSteps}
         closeSheet={props.closeSheet}
         setActiveView={props.setActiveView}
         onPrevPathFloor={props.onPrevPathFloor}
         onNextPathFloor={props.onNextPathFloor}
+        onBack={props.onIndoorNavigationBack}
+        stageActionLabel={props.indoorStageActionLabel}
+        onStageAction={props.onIndoorStageAction}
       />
     );
   }
@@ -870,12 +898,14 @@ const renderBottomSheetContent = (props: {
       selectedTravelMode={props.travelMode}
       shuttlePlan={props.shuttlePlan}
       canStartNavigation={props.canStartNavigationFromCurrentLocation}
-      onPressStart={() => props.setSearchFor('start')}
-      onPressDestination={() => props.setSearchFor('destination')}
+      onPressStart={() => props.openSearchFor('start')}
+      onPressDestination={() => props.openSearchFor('destination')}
       onTravelModeChange={props.setTravelMode}
       onPressGo={props.handleDirectionsGo}
       onPressShuttleSchedule={props.showShuttleSchedule}
       onRetryRoute={props.handleRetryRoute}
+      stageActionLabel={props.directionStageActionLabel}
+      onStageAction={props.onDirectionStageAction}
     />
   );
 };
@@ -901,6 +931,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onPrevPathFloor,
       onNextPathFloor,
       onIndoorTravelModeChange,
+      onShowOutdoorMap,
     },
     ref,
   ) => {
@@ -915,16 +946,28 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const [startEndpoint, setStartEndpoint] = useState<MixedEndpoint | null>(null);
     const [destinationEndpoint, setDestinationEndpoint] = useState<MixedEndpoint | null>(null);
+    const [crossBuildingRouteFlow, setCrossBuildingRouteFlow] =
+      useState<CrossBuildingRouteFlow | null>(null);
+    const [hybridRouteErrorMessage, setHybridRouteErrorMessage] = useState<string | null>(null);
+    const [routeOriginOverride, setRouteOriginOverride] = useState<LatLng | null>(null);
+    const [routeDestinationOverride, setRouteDestinationOverride] = useState<LatLng | null>(null);
 
+<<<<<<< Updated upstream
     const clearIndoorSearch = useCallback(() => {
       setStartRoom(null);
       setDestinationRoom(null);
       setStartEndpoint(null);
       setDestinationEndpoint(null);
       setHybridOutdoorTravelMode('walking');
+=======
+    const clearCrossBuildingRouteFlowState = useCallback(() => {
+      setCrossBuildingRouteFlow(null);
+      setHybridRouteErrorMessage(null);
+      setRouteOriginOverride(null);
+      setRouteDestinationOverride(null);
+    }, []);
+>>>>>>> Stashed changes
 
-      onIndoorRouteChange?.(null, null);
-    }, [onIndoorRouteChange]);
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
     const [startLocationSnapshot, setStartLocationSnapshot] = useState<UserCoords | null>(null);
@@ -973,6 +1016,23 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       },
       [passOutdoorRoute],
     );
+    const clearIndoorSearch = useCallback(() => {
+      clearCrossBuildingRouteFlowState();
+      setStartRoom(null);
+      setDestinationRoom(null);
+      setStartRoomId(null);
+      setEndRoomId(null);
+      setStartEndpoint(null);
+      setDestinationEndpoint(null);
+      setStartBuilding(null);
+      setDestinationBuilding(null);
+      setStartLocationSnapshot(null);
+      setRouteStartSource('current');
+      setHybridOutdoorTravelMode('walking');
+      resetRouteState();
+
+      onIndoorRouteChange?.(null, null);
+    }, [clearCrossBuildingRouteFlowState, onIndoorRouteChange, resetRouteState]);
     const handleEnterBuilding = useCallback(
       (building: BuildingShape) => {
         closeSheet();
@@ -1044,6 +1104,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const isInternalSearch = searchFor !== null;
     const isGlobalSearch = mode === 'search';
     const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
+    const openSearchFor = useCallback(
+      (target: SearchTarget) => {
+        clearCrossBuildingRouteFlowState();
+        setSearchFor(target);
+      },
+      [clearCrossBuildingRouteFlowState],
+    );
 
     const resolveViewForSelections = useCallback(
       (nextStart: MixedEndpoint | null, nextDestination: MixedEndpoint | null): ViewType => {
@@ -1130,6 +1197,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const handleSelectRoom = useCallback(
       (room: RoomNode) => {
+        setHybridRouteErrorMessage(null);
         const nextEndpoint: MixedEndpoint = { kind: 'room', room };
         const nextStart = searchFor === 'start' ? nextEndpoint : startEndpoint;
         const nextDestination = searchFor === 'destination' ? nextEndpoint : destinationEndpoint;
@@ -1215,6 +1283,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, []);
 
     const showDirections = (building: BuildingShape, asDestination?: boolean) => {
+      clearCrossBuildingRouteFlowState();
+      setHybridOutdoorTravelMode('walking');
       setTravelMode('walking');
       setRouteStartSource('current');
       setStartRoom(null);
@@ -1258,6 +1328,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [snapToKnownPosition]);
 
     const handleSheetClose = () => {
+      clearCrossBuildingRouteFlowState();
       setActiveView('building');
       setSearchFor(null);
       setCalendarSliderMode(null);
@@ -1266,8 +1337,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setShuttlePlan(null);
       setRouteStartSource('current');
       setStartLocationSnapshot(null);
+      setStartBuilding(null);
+      setDestinationBuilding(null);
       setStartEndpoint(null);
       setDestinationEndpoint(null);
+      setStartRoom(null);
+      setDestinationRoom(null);
+      setStartRoomId(null);
+      setEndRoomId(null);
       setHybridOutdoorTravelMode('walking');
       resetRouteState();
       onIndoorRouteChange?.(null, null);
@@ -1284,6 +1361,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     );
 
     const closeSearchBuilding = (chosenBuilding: BuildingShape) => {
+      clearCrossBuildingRouteFlowState();
+      setHybridOutdoorTravelMode('walking');
       passSelectedBuilding(chosenBuilding);
 
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
@@ -1305,6 +1384,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleUpcomingClassPress = useCallback(
       async (event: GoogleCalendarEventItem): Promise<string | null> => {
         try {
+          clearCrossBuildingRouteFlowState();
           const resolved = await resolveCalendarRouteLocation(event.location);
           if (resolved.type === 'error') {
             return resolved.message;
@@ -1343,10 +1423,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           return CALENDAR_LOCATION_NOT_FOUND_MESSAGE;
         }
       },
-      [onExitSearch, passSelectedBuilding, snapToDirectionsPanel],
+      [clearCrossBuildingRouteFlowState, onExitSearch, passSelectedBuilding, snapToDirectionsPanel],
     );
 
     const handleInternalSearch = (building: BuildingShape) => {
+      setHybridRouteErrorMessage(null);
       const nextEndpoint: MixedEndpoint = { kind: 'building', building };
       const nextStart = searchFor === 'start' ? nextEndpoint : startEndpoint;
       const nextDestination = searchFor === 'destination' ? nextEndpoint : destinationEndpoint;
@@ -1371,6 +1452,130 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       applySelectionView(nextStart, nextDestination);
     };
 
+    const handleHybridGo = useCallback(() => {
+      setHybridRouteErrorMessage(null);
+
+      if (
+        !isRoomEndpoint(startEndpoint) ||
+        !isRoomEndpoint(destinationEndpoint) ||
+        startEndpoint.room.buildingKey === destinationEndpoint.room.buildingKey
+      ) {
+        setHybridRouteErrorMessage(
+          'Choose two rooms in different buildings to start a staged cross-building route.',
+        );
+        return;
+      }
+
+      const result = buildCrossBuildingRouteFlow({
+        startRoom: startEndpoint.room,
+        destinationRoom: destinationEndpoint.room,
+        buildings,
+        indoorTravelMode,
+        outdoorMode: hybridOutdoorTravelMode,
+      });
+
+      if (!result.ok) {
+        setHybridRouteErrorMessage(result.message);
+        return;
+      }
+
+      const { flow } = result;
+      clearCrossBuildingRouteFlowState();
+      resetRouteState();
+      setCrossBuildingRouteFlow(flow);
+      setTravelMode(flow.outdoorMode);
+      setRouteStartSource('manual');
+      setStartLocationSnapshot(null);
+      setStartBuilding(flow.originBuilding);
+      setDestinationBuilding(flow.destinationBuilding);
+      passSelectedBuilding(flow.originBuilding);
+      enterIndoorView();
+      onEnterBuilding(flow.originBuilding);
+      onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
+      setActiveView('indoor-navigation');
+      requestAnimationFrame(() => {
+        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+      });
+    }, [
+      buildings,
+      clearCrossBuildingRouteFlowState,
+      destinationEndpoint,
+      enterIndoorView,
+      hybridOutdoorTravelMode,
+      indoorTravelMode,
+      onEnterBuilding,
+      onIndoorRouteChange,
+      passSelectedBuilding,
+      resetRouteState,
+      startEndpoint,
+    ]);
+
+    const handleContinueToOutdoorDirections = useCallback(() => {
+      if (!crossBuildingRouteFlow || crossBuildingRouteFlow.currentStage !== 'origin_indoor') {
+        return;
+      }
+
+      setCrossBuildingRouteFlow({
+        ...crossBuildingRouteFlow,
+        currentStage: 'outdoor',
+      });
+      setTravelMode(crossBuildingRouteFlow.outdoorMode);
+      setRouteStartSource('manual');
+      setStartLocationSnapshot(null);
+      setStartBuilding(crossBuildingRouteFlow.originBuilding);
+      setDestinationBuilding(crossBuildingRouteFlow.destinationBuilding);
+      setRouteOriginOverride(crossBuildingRouteFlow.originTransferPoint.outdoorCoords);
+      setRouteDestinationOverride(crossBuildingRouteFlow.destinationTransferPoint.outdoorCoords);
+      onIndoorRouteChange?.(null, null);
+      resetRouteState();
+      onShowOutdoorMap?.();
+      setActiveView('directions');
+    }, [crossBuildingRouteFlow, onIndoorRouteChange, onShowOutdoorMap, resetRouteState]);
+
+    const handleEnterDestinationBuilding = useCallback(() => {
+      if (!crossBuildingRouteFlow || crossBuildingRouteFlow.currentStage !== 'outdoor') {
+        return;
+      }
+
+      setCrossBuildingRouteFlow({
+        ...crossBuildingRouteFlow,
+        currentStage: 'destination_indoor',
+      });
+      setRouteOriginOverride(null);
+      setRouteDestinationOverride(null);
+      resetRouteState();
+      passSelectedBuilding(crossBuildingRouteFlow.destinationBuilding);
+      enterIndoorView();
+      onEnterBuilding(crossBuildingRouteFlow.destinationBuilding);
+      onIndoorRouteChange?.(
+        crossBuildingRouteFlow.destinationTransferPoint.accessNodeId,
+        crossBuildingRouteFlow.destinationRoomEndpoint.id,
+      );
+      setActiveView('indoor-navigation');
+      requestAnimationFrame(() => {
+        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+      });
+    }, [
+      crossBuildingRouteFlow,
+      enterIndoorView,
+      onEnterBuilding,
+      onIndoorRouteChange,
+      passSelectedBuilding,
+      resetRouteState,
+    ]);
+
+    const handleCrossBuildingIndoorBack = useCallback(() => {
+      if (!crossBuildingRouteFlow) {
+        setActiveView('indoor-directions');
+        return;
+      }
+
+      clearCrossBuildingRouteFlowState();
+      onIndoorRouteChange?.(null, null);
+      resetRouteState();
+      setActiveView('hybrid-directions');
+    }, [clearCrossBuildingRouteFlowState, crossBuildingRouteFlow, onIndoorRouteChange, resetRouteState]);
+
     useEffect(() => {
       const selectedBuildingId = selectedBuilding?.id ?? null;
       const didSelectedBuildingChange =
@@ -1386,16 +1591,18 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, [selectedBuilding, activeView, startBuilding?.id, destinationBuilding]);
 
     const startCoords = useMemo(() => {
+      if (routeOriginOverride) return routeOriginOverride;
       if (startBuilding) return centroidOfPolygons(startBuilding.polygons);
       if (startLocationSnapshot) return startLocationSnapshot;
       if (currentBuilding) return centroidOfPolygons(currentBuilding.polygons);
       return userLocation;
-    }, [currentBuilding, startBuilding, startLocationSnapshot, userLocation]);
+    }, [currentBuilding, routeOriginOverride, startBuilding, startLocationSnapshot, userLocation]);
 
     const destinationCoords = useMemo(() => {
+      if (routeDestinationOverride) return routeDestinationOverride;
       if (!destinationBuilding) return null;
       return centroidOfPolygons(destinationBuilding.polygons);
-    }, [destinationBuilding]);
+    }, [destinationBuilding, routeDestinationOverride]);
 
     const routeCoordinates = useMemo(
       () => decodePolyline(routeEncodedPolyline),
@@ -1640,6 +1847,30 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const hybridStartLabel = getEndpointLabel(startEndpoint) ?? startRoom;
     const hybridDestinationLabel = getEndpointLabel(destinationEndpoint) ?? destinationRoom;
+    const indoorNavigationBuilding =
+      crossBuildingRouteFlow?.currentStage === 'destination_indoor'
+        ? crossBuildingRouteFlow.destinationBuilding
+        : crossBuildingRouteFlow?.currentStage === 'origin_indoor'
+          ? crossBuildingRouteFlow.originBuilding
+          : selectedBuilding;
+    const indoorNavigationStartLabel =
+      crossBuildingRouteFlow?.currentStage === 'destination_indoor'
+        ? `${crossBuildingRouteFlow.destinationBuilding.shortCode ?? crossBuildingRouteFlow.destinationBuilding.name} Entrance`
+        : crossBuildingRouteFlow?.currentStage === 'origin_indoor'
+          ? crossBuildingRouteFlow.startRoomEndpoint.label
+          : startRoom;
+    const indoorNavigationDestinationLabel =
+      crossBuildingRouteFlow?.currentStage === 'destination_indoor'
+        ? crossBuildingRouteFlow.destinationRoomEndpoint.label
+        : crossBuildingRouteFlow?.currentStage === 'origin_indoor'
+          ? `${crossBuildingRouteFlow.originBuilding.shortCode ?? crossBuildingRouteFlow.originBuilding.name} Exit`
+          : destinationRoom;
+    const indoorStageActionLabel =
+      crossBuildingRouteFlow?.currentStage === 'origin_indoor'
+        ? 'Continue to Outdoor Directions'
+        : undefined;
+    const directionStageActionLabel =
+      crossBuildingRouteFlow?.currentStage === 'outdoor' ? 'Enter Building' : undefined;
 
     const renderedContent = renderBottomSheetContent({
       isSearchActive,
@@ -1659,6 +1890,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       searchMode: internalSearchMode,
       activeView,
       selectedBuilding,
+      indoorNavigationBuilding,
       closeSheet,
       showDirections,
       onEnterBuilding: handleEnterBuilding,
@@ -1679,6 +1911,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       routeDurationSeconds,
       travelMode,
       canStartNavigationFromCurrentLocation,
+      openSearchFor,
       setSearchFor,
       setTravelMode,
       handleDirectionsGo,
@@ -1689,6 +1922,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       destinationRoom,
       hybridStartLabel,
       hybridDestinationLabel,
+      hybridErrorMessage: hybridRouteErrorMessage,
+      indoorNavigationStartLabel,
+      indoorNavigationDestinationLabel,
       indoorPathSteps,
       setActiveView,
       onPrevPathFloor,
@@ -1698,7 +1934,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setIndoorTravelMode,
       hybridOutdoorTravelMode,
       setHybridOutdoorTravelMode,
-      handleHybridGo: () => {},
+      handleHybridGo,
+      indoorStageActionLabel,
+      onIndoorStageAction: handleContinueToOutdoorDirections,
+      onIndoorNavigationBack: handleCrossBuildingIndoorBack,
+      directionStageActionLabel,
+      onDirectionStageAction: handleEnterDestinationBuilding,
     });
     const usesDirectScrollableContent = activeView === 'transit-plan' || isSearchActive;
 

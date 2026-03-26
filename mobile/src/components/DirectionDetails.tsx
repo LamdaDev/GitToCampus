@@ -34,6 +34,8 @@ type DirectionDetailProps = {
   onPressGo?: (mode: RoutePlannerMode) => void;
   onPressShuttleSchedule?: () => void;
   onRetryRoute?: () => void;
+  stageActionLabel?: string;
+  onStageAction?: () => void;
 };
 
 /**
@@ -321,6 +323,8 @@ export default function DirectionDetails({
   onPressGo,
   onPressShuttleSchedule,
   onRetryRoute,
+  stageActionLabel,
+  onStageAction,
 }: Readonly<DirectionDetailProps>) {
   const [activeMode, setActiveMode] = useState<RoutePlannerMode>(selectedTravelMode ?? 'walking');
   const isSelected = (mode: RoutePlannerMode) => activeMode === mode;
@@ -518,6 +522,16 @@ export default function DirectionDetails({
           })}
         </View>
       )}
+      {stageActionLabel && onStageAction ? (
+        <TouchableOpacity
+          testID="route-stage-action-button"
+          activeOpacity={0.88}
+          onPress={onStageAction}
+          style={directionDetailsStyles.stageActionButton}
+        >
+          <Text style={directionDetailsStyles.stageActionButtonText}>{stageActionLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
     </>
   );
 }

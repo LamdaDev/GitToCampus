@@ -18,6 +18,7 @@ type HybridDirectionsDetailsProps = {
   onPressStart?: () => void;
   onPressDestination?: () => void;
   onPressGo?: () => void;
+  errorMessage?: string | null;
 };
 
 const getDisplayText = (value: string | null, fallback: string) => value ?? fallback;
@@ -124,6 +125,7 @@ export default function HybridDirectionsDetails({
   onPressStart,
   onPressDestination,
   onPressGo,
+  errorMessage,
 }: Readonly<HybridDirectionsDetailsProps>) {
   const indoorOptions: HybridModeOption[] = [
     {
@@ -244,10 +246,16 @@ export default function HybridDirectionsDetails({
       <View style={directionDetailsStyles.hybridSummaryCard}>
         <View style={directionDetailsStyles.hybridSummaryTextWrap}>
           <Text style={directionDetailsStyles.hybridSummaryTitle}>Indoor + Outdoor Route</Text>
-          <Text style={directionDetailsStyles.hybridSummarySubtitle}>
-            This trip needs both navigation modes. Route execution will be enabled in the next
-            US-4.6 task.
-          </Text>
+          {errorMessage ? (
+            <Text testID="hybrid-error-message" style={directionDetailsStyles.routeErrorText}>
+              {errorMessage}
+            </Text>
+          ) : (
+            <Text style={directionDetailsStyles.hybridSummarySubtitle}>
+              This trip uses both indoor and outdoor navigation. Press GO to start the staged
+              route.
+            </Text>
+          )}
         </View>
         <TouchableOpacity
           testID="hybrid-go-button"

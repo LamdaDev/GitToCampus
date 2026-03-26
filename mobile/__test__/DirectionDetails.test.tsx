@@ -179,6 +179,27 @@ describe('Direction Details', () => {
     expect(getByTestId('transport-shuttle')).toBeTruthy();
   });
 
+  test('renders the staged route action button and triggers it when provided', () => {
+    const onStageAction = jest.fn();
+    const { getByTestId, getByText } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        routeDurationText="14 mins"
+        routeDistanceText="1.2 km"
+        stageActionLabel="Enter Building"
+        onStageAction={onStageAction}
+      />,
+    );
+
+    expect(getByText('Enter Building')).toBeTruthy();
+    fireEvent.press(getByTestId('route-stage-action-button'));
+    expect(onStageAction).toHaveBeenCalledTimes(1);
+  });
+
   test('renders route retry button and calls callback on route error', () => {
     const onRetryRoute = jest.fn();
     const { getByTestId, getByText } = render(
