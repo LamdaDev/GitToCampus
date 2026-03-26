@@ -51,6 +51,9 @@ import type { RoomNode } from '../components/indoor/RoomList';
 import IndoorDirectionDetails from './indoor/IndoorDirectionDetails';
 import IndoorNavigationDetails from './indoor/IndoorNavigationDetails';
 import { IndoorRoutePlannerMode } from '../types/SheetMode';
+import type { SearchMode } from '../types/SearchMode';
+import HybridDirectionsDetails from './HybridDirectionsDetails';
+import { getIndoorBuildingKeyFromShape } from '../utils/indoor/buildingKeys';
 
 const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
@@ -242,6 +245,62 @@ export type BottomSliderHandle = {
 };
 
 type SearchTarget = 'start' | 'destination' | null;
+
+type MixedEndpoint =
+  | { kind: 'room'; room: RoomNode }
+  | { kind: 'building'; building: BuildingShape };
+
+const isRoomEndpoint = (
+  endpoint: MixedEndpoint | null,
+): endpoint is Extract<MixedEndpoint, { kind: 'room' }> => endpoint?.kind === 'room';
+
+const getEndpointLabel = (endpoint: MixedEndpoint | null): string | null => {
+  if (!endpoint) return null;
+  return endpoint.kind === 'room' ? endpoint.room.label : endpoint.building.name;
+};
+
+const getEndpointBuildingKey = (endpoint: MixedEndpoint | null): string | null => {
+  if (!endpoint) return null;
+  if (endpoint.kind === 'room') return endpoint.room.buildingKey;
+  return getIndoorBuildingKeyFromShape(endpoint.building);
+};
+
+const isSameBuildingRoomPair = (start: MixedEndpoint | null, destination: MixedEndpoint | null) =>
+  isRoomEndpoint(start) &&
+  isRoomEndpoint(destination) &&
+  start.room.buildingKey === destination.room.buildingKey;
+
+const shouldShowHybridDirectionsPanel = (
+  start: MixedEndpoint | null,
+  destination: MixedEndpoint | null,
+) => {
+  if (!start || !destination) return false;
+  if (start.kind === 'building' && destination.kind === 'building') return false;
+
+  const startBuildingKey = getEndpointBuildingKey(start);
+  const destinationBuildingKey = getEndpointBuildingKey(destination);
+
+  if (start.kind === 'room' && destination.kind === 'room') {
+    return startBuildingKey !== destinationBuildingKey;
+  }
+
+  let roomEndpoint: Extract<MixedEndpoint, { kind: 'room' }> | null = null;
+  if (start.kind === 'room') {
+    roomEndpoint = start;
+  } else if (destination.kind === 'room') {
+    roomEndpoint = destination;
+  }
+  if (!roomEndpoint) return false;
+
+  let otherBuildingKey: string | null = null;
+  if (start.kind === 'building') {
+    otherBuildingKey = startBuildingKey;
+  } else if (destination.kind === 'building') {
+    otherBuildingKey = destinationBuildingKey;
+  }
+
+  return roomEndpoint.room.buildingKey !== otherBuildingKey;
+};
 
 type BottomSheetProps = {
   selectedBuilding: BuildingShape | null;
@@ -528,6 +587,44 @@ const IndoorNavigationView = ({
   />
 );
 
+const HybridDirectionsView = ({
+  startLabel,
+  destinationLabel,
+  closeSheet,
+  clearSearchOptions,
+  setSearchFor,
+  indoorTravelMode,
+  onIndoorTravelModeChange,
+  outdoorTravelMode,
+  onOutdoorTravelModeChange,
+  onGo,
+}: {
+  startLabel: string | null;
+  destinationLabel: string | null;
+  closeSheet: () => void;
+  clearSearchOptions?: () => void;
+  setSearchFor: React.Dispatch<React.SetStateAction<SearchTarget>>;
+  indoorTravelMode: IndoorRoutePlannerMode;
+  onIndoorTravelModeChange: (mode: IndoorRoutePlannerMode) => void;
+  outdoorTravelMode: RoutePlannerMode;
+  onOutdoorTravelModeChange: (mode: RoutePlannerMode) => void;
+  onGo?: () => void;
+}) => (
+  <HybridDirectionsDetails
+    startLabel={startLabel}
+    destinationLabel={destinationLabel}
+    onClose={closeSheet}
+    onClear={clearSearchOptions}
+    onPressStart={() => setSearchFor('start')}
+    onPressDestination={() => setSearchFor('destination')}
+    selectedIndoorMode={indoorTravelMode}
+    selectedOutdoorMode={outdoorTravelMode}
+    onIndoorModeChange={onIndoorTravelModeChange}
+    onOutdoorModeChange={onOutdoorTravelModeChange}
+    onPressGo={onGo}
+  />
+);
+
 type SearchContentProps = {
   calendarSliderMode: 'selection' | 'events' | null;
   isInternalSearch: boolean;
@@ -542,7 +639,7 @@ type SearchContentProps = {
   openCalendarSelectionAfterConnect: () => void;
   handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
   calendarGoErrorMessage: string | null;
-  isIndoor: boolean;
+  searchMode: SearchMode;
   onSelectRoom: (room: RoomNode) => void;
 };
 
@@ -560,7 +657,7 @@ const SearchContent = ({
   openCalendarSelectionAfterConnect,
   handleCalendarGoFromSearch,
   calendarGoErrorMessage,
-  isIndoor,
+  searchMode,
   onSelectRoom,
 }: SearchContentProps) => {
   if (calendarSliderMode === 'events' && !isInternalSearch) {
@@ -591,7 +688,7 @@ const SearchContent = ({
       selectedCalendarIds={selectedCalendarIds}
       onCalendarGoPress={handleCalendarGoFromSearch}
       calendarGoErrorMessage={calendarGoErrorMessage}
-      isIndoor={isIndoor}
+      searchMode={searchMode}
       onSelectRoom={onSelectRoom}
     />
   );
@@ -612,6 +709,7 @@ const renderBottomSheetContent = (props: {
   openCalendarSelectionAfterConnect: () => void;
   handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
   calendarGoErrorMessage: string | null;
+  searchMode: SearchMode;
   activeView: ViewType;
   selectedBuilding: BuildingShape | null;
   closeSheet: () => void;
@@ -643,10 +741,11 @@ const renderBottomSheetContent = (props: {
   handleDirectionsGo: (mode: RoutePlannerMode) => void;
   showShuttleSchedule: () => void;
   handleRetryRoute: () => void;
-  isIndoor: boolean;
   onSelectRoom: (room: RoomNode) => void;
   startRoom: string | null;
   destinationRoom: string | null;
+  hybridStartLabel: string | null;
+  hybridDestinationLabel: string | null;
   indoorPathSteps: { icon: string; label: string }[];
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   onPrevPathFloor?: () => void;
@@ -654,6 +753,9 @@ const renderBottomSheetContent = (props: {
   clearIndoorSearch?: () => void;
   indoorTravelMode: 'walking' | 'disability';
   setIndoorTravelMode: React.Dispatch<React.SetStateAction<'walking' | 'disability'>>;
+  hybridOutdoorTravelMode: RoutePlannerMode;
+  setHybridOutdoorTravelMode: React.Dispatch<React.SetStateAction<RoutePlannerMode>>;
+  handleHybridGo?: () => void;
 }) => {
   if (props.isSearchActive) {
     return <SearchContent {...props} />;
@@ -716,6 +818,23 @@ const renderBottomSheetContent = (props: {
         clearSearchOptions={props.clearIndoorSearch}
         onTravelModeChange={props.setIndoorTravelMode}
         selectedTravelMode={props.indoorTravelMode}
+      />
+    );
+  }
+
+  if (props.activeView === 'hybrid-directions') {
+    return (
+      <HybridDirectionsView
+        startLabel={props.hybridStartLabel}
+        destinationLabel={props.hybridDestinationLabel}
+        closeSheet={props.closeSheet}
+        clearSearchOptions={props.clearIndoorSearch}
+        setSearchFor={props.setSearchFor}
+        indoorTravelMode={props.indoorTravelMode}
+        onIndoorTravelModeChange={props.setIndoorTravelMode}
+        outdoorTravelMode={props.hybridOutdoorTravelMode}
+        onOutdoorTravelModeChange={props.setHybridOutdoorTravelMode}
+        onGo={props.handleHybridGo}
       />
     );
   }
@@ -794,11 +913,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       return [...DEFAULT_SNAP_POINTS];
     }, [activeView]);
 
+    const [startEndpoint, setStartEndpoint] = useState<MixedEndpoint | null>(null);
+    const [destinationEndpoint, setDestinationEndpoint] = useState<MixedEndpoint | null>(null);
+
     const clearIndoorSearch = useCallback(() => {
       setStartRoom(null);
       setDestinationRoom(null);
-      setStartRoomId(null);
-      setEndRoomId(null);
+      setStartEndpoint(null);
+      setDestinationEndpoint(null);
+      setHybridOutdoorTravelMode('walking');
 
       onIndoorRouteChange?.(null, null);
     }, [onIndoorRouteChange]);
@@ -828,10 +951,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [startRoom, setStartRoom] = useState<string | null>(null);
     const [destinationRoom, setDestinationRoom] = useState<string | null>(null);
     const [indoorTravelMode, setIndoorTravelMode] = useState<'walking' | 'disability'>('walking');
+    const [hybridOutdoorTravelMode, setHybridOutdoorTravelMode] =
+      useState<RoutePlannerMode>('walking');
 
     useEffect(() => {
       onIndoorTravelModeChange?.(indoorTravelMode);
-    }, [indoorTravelMode]);
+    }, [indoorTravelMode, onIndoorTravelModeChange]);
 
     const resetRouteState = useCallback(
       (errorMessage: string | null = null) => {
@@ -920,30 +1045,110 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const isGlobalSearch = mode === 'search';
     const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
 
-    const [startRoomId, setStartRoomId] = useState<string | null>(null);
-    const [endRoomId, setEndRoomId] = useState<string | null>(null);
+    const resolveViewForSelections = useCallback(
+      (nextStart: MixedEndpoint | null, nextDestination: MixedEndpoint | null): ViewType => {
+        if (shouldShowHybridDirectionsPanel(nextStart, nextDestination)) {
+          return 'hybrid-directions';
+        }
+
+        if (isSameBuildingRoomPair(nextStart, nextDestination)) {
+          return 'indoor-directions';
+        }
+
+        if (
+          (nextStart?.kind === 'room' || nextDestination?.kind === 'room') &&
+          (nextStart?.kind === 'building' || nextDestination?.kind === 'building')
+        ) {
+          return 'indoor-directions';
+        }
+
+        if (nextStart?.kind === 'building' || nextDestination?.kind === 'building') {
+          return 'directions';
+        }
+
+        if (nextStart?.kind === 'room' || nextDestination?.kind === 'room') {
+          return 'indoor-directions';
+        }
+
+        return activeView;
+      },
+      [activeView],
+    );
+
+    const syncIndoorRouteChange = useCallback(
+      (nextStart: MixedEndpoint | null, nextDestination: MixedEndpoint | null) => {
+        if (isRoomEndpoint(nextStart) && isRoomEndpoint(nextDestination)) {
+          if (nextStart.room.buildingKey !== nextDestination.room.buildingKey) {
+            onIndoorRouteChange?.(null, null);
+            return;
+          }
+
+          onIndoorRouteChange?.(nextStart.room.id, nextDestination.room.id);
+          return;
+        }
+
+        onIndoorRouteChange?.(null, null);
+      },
+      [onIndoorRouteChange],
+    );
+
+    const internalSearchMode = useMemo<SearchMode>(() => {
+      if (!isInternalSearch) {
+        return isIndoor ? 'rooms' : 'buildings';
+      }
+
+      if (activeView === 'hybrid-directions') {
+        return 'mixed';
+      }
+
+      if (activeView === 'indoor-directions') {
+        let oppositeEndpoint: MixedEndpoint | null = null;
+        if (searchFor === 'start') {
+          oppositeEndpoint = destinationEndpoint;
+        } else if (searchFor === 'destination') {
+          oppositeEndpoint = startEndpoint;
+        }
+
+        return isRoomEndpoint(oppositeEndpoint) ? 'mixed' : 'rooms';
+      }
+
+      return 'buildings';
+    }, [activeView, destinationEndpoint, isIndoor, isInternalSearch, searchFor, startEndpoint]);
+
+    const applySelectionView = useCallback(
+      (nextStart: MixedEndpoint | null, nextDestination: MixedEndpoint | null) => {
+        const nextView = resolveViewForSelections(nextStart, nextDestination);
+        setActiveView(nextView);
+        syncIndoorRouteChange(nextStart, nextDestination);
+
+        if (nextView === 'directions') {
+          snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+        }
+      },
+      [resolveViewForSelections, snapToDirectionsPanel, syncIndoorRouteChange],
+    );
 
     const handleSelectRoom = useCallback(
       (room: RoomNode) => {
+        const nextEndpoint: MixedEndpoint = { kind: 'room', room };
+        const nextStart = searchFor === 'start' ? nextEndpoint : startEndpoint;
+        const nextDestination = searchFor === 'destination' ? nextEndpoint : destinationEndpoint;
+
         if (searchFor === 'start') {
           setStartRoom(room.label);
-          setStartRoomId(room.id);
+          setStartBuilding(null);
+          setStartEndpoint(nextEndpoint);
         } else {
           setDestinationRoom(room.label);
-          setEndRoomId(room.id);
+          setDestinationBuilding(null);
+          setDestinationEndpoint(nextEndpoint);
         }
         setSearchFor(null);
         onExitSearch();
         setCalendarSliderMode(null);
-        if (activeView !== 'indoor-directions') {
-          setActiveView('indoor-directions');
-        }
-        onIndoorRouteChange?.(
-          searchFor === 'start' ? room.id : startRoomId,
-          searchFor === 'start' ? endRoomId : room.id,
-        );
+        applySelectionView(nextStart, nextDestination);
       },
-      [searchFor, activeView, startRoomId, endRoomId],
+      [applySelectionView, destinationEndpoint, onExitSearch, searchFor, startEndpoint],
     );
 
     const openCalendarSelectionSlider = useCallback(
@@ -1012,17 +1217,24 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const showDirections = (building: BuildingShape, asDestination?: boolean) => {
       setTravelMode('walking');
       setRouteStartSource('current');
+      setStartRoom(null);
+      setDestinationRoom(null);
+      onIndoorRouteChange?.(null, null);
       if (asDestination) {
         // Walking figure: building is destination, start is current location
         setStartBuilding(currentBuilding ?? null);
         setStartLocationSnapshot(currentBuilding ? null : userLocation);
         setDestinationBuilding(building);
+        setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
+        setDestinationEndpoint({ kind: 'building', building });
       } else {
         // "Set as starting point" button: building is start
         setRouteStartSource('manual');
         setStartBuilding(building);
         setStartLocationSnapshot(null);
         setDestinationBuilding(null);
+        setStartEndpoint({ kind: 'building', building });
+        setDestinationEndpoint(null);
       }
       setActiveView('directions');
       snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
@@ -1054,7 +1266,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setShuttlePlan(null);
       setRouteStartSource('current');
       setStartLocationSnapshot(null);
+      setStartEndpoint(null);
+      setDestinationEndpoint(null);
+      setHybridOutdoorTravelMode('walking');
       resetRouteState();
+      onIndoorRouteChange?.(null, null);
       passSelectedBuilding(null);
     };
 
@@ -1074,9 +1290,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartBuilding(currentBuilding ?? null);
       setStartLocationSnapshot(currentBuilding ? null : userLocation);
       setDestinationBuilding(chosenBuilding);
+      setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
+      setDestinationEndpoint({ kind: 'building', building: chosenBuilding });
+      setStartRoom(null);
+      setDestinationRoom(null);
       setTravelMode('walking');
       setRouteStartSource('current');
       setActiveView('directions');
+      onIndoorRouteChange?.(null, null);
       onExitSearch();
       snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
     };
@@ -1092,6 +1313,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           const { destinationBuilding: resolvedDestinationBuilding, startPoint } = resolved.value;
           passSelectedBuilding(resolvedDestinationBuilding);
           setDestinationBuilding(resolvedDestinationBuilding);
+          setDestinationEndpoint({ kind: 'building', building: resolvedDestinationBuilding });
+          setStartEndpoint(null);
+          setStartRoom(null);
+          setDestinationRoom(null);
+          onIndoorRouteChange?.(null, null);
           setTravelMode('walking');
           setCalendarSliderMode(null);
           setSearchFor(null);
@@ -1121,14 +1347,28 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     );
 
     const handleInternalSearch = (building: BuildingShape) => {
+      const nextEndpoint: MixedEndpoint = { kind: 'building', building };
+      const nextStart = searchFor === 'start' ? nextEndpoint : startEndpoint;
+      const nextDestination = searchFor === 'destination' ? nextEndpoint : destinationEndpoint;
+
       passSelectedBuilding(building);
+
       if (searchFor === 'start') {
         setRouteStartSource('manual');
         setStartBuilding(building);
         setStartLocationSnapshot(null);
-      } else setDestinationBuilding(building);
+        setStartRoom(building.name);
+        setStartEndpoint(nextEndpoint);
+      } else {
+        setDestinationBuilding(building);
+        setDestinationRoom(building.name);
+        setDestinationEndpoint(nextEndpoint);
+      }
+
       setSearchFor(null);
-      snapToDirectionsPanel(directionsPanelSnapPoint);
+      onExitSearch();
+      setCalendarSliderMode(null);
+      applySelectionView(nextStart, nextDestination);
     };
 
     useEffect(() => {
@@ -1385,7 +1625,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         showUpcomingClassesSlider(normalizedIds);
       },
       openIndoorDirections: () => {
-        setActiveView('indoor-directions');
+        setActiveView(
+          shouldShowHybridDirectionsPanel(startEndpoint, destinationEndpoint)
+            ? 'hybrid-directions'
+            : 'indoor-directions',
+        );
         sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
       },
       openIndoorNavigation: () => {
@@ -1393,6 +1637,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
       },
     }));
+
+    const hybridStartLabel = getEndpointLabel(startEndpoint) ?? startRoom;
+    const hybridDestinationLabel = getEndpointLabel(destinationEndpoint) ?? destinationRoom;
 
     const renderedContent = renderBottomSheetContent({
       isSearchActive,
@@ -1409,6 +1656,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       openCalendarSelectionAfterConnect,
       handleCalendarGoFromSearch,
       calendarGoErrorMessage,
+      searchMode: internalSearchMode,
       activeView,
       selectedBuilding,
       closeSheet,
@@ -1436,10 +1684,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       handleDirectionsGo,
       showShuttleSchedule,
       handleRetryRoute,
-      isIndoor,
       onSelectRoom: handleSelectRoom,
       startRoom,
       destinationRoom,
+      hybridStartLabel,
+      hybridDestinationLabel,
       indoorPathSteps,
       setActiveView,
       onPrevPathFloor,
@@ -1447,8 +1696,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       clearIndoorSearch,
       indoorTravelMode,
       setIndoorTravelMode,
+      hybridOutdoorTravelMode,
+      setHybridOutdoorTravelMode,
+      handleHybridGo: () => {},
     });
-    const usesDirectScrollableContent = activeView === 'transit-plan';
+    const usesDirectScrollableContent = activeView === 'transit-plan' || isSearchActive;
 
     return (
       <BottomSheet

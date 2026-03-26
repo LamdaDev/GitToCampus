@@ -113,16 +113,37 @@ export const searchBuilding = StyleSheet.create({
   },
 
   buildingsContainer: {
+    flex: 1,
+    minHeight: 0,
     marginTop: 26,
     backgroundColor: 'rgb(115, 35, 52)',
     borderRadius: 28,
     paddingVertical: 18,
     paddingHorizontal: 14,
   },
+  scrollArea: {
+    flex: 1,
+    minHeight: 0,
+  },
+  scrollContent: {
+    paddingBottom: 28,
+  },
+  sectionTitle: {
+    marginTop: 4,
+    marginBottom: 10,
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  mixedSectionContainer: {
+    marginBottom: 18,
+  },
 
   listContent: {
     gap: 14, // spacing between pills
     marginHorizontal: 8,
+    paddingBottom: 28,
   },
 
   buildingPill: {

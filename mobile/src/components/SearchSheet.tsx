@@ -3,10 +3,11 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { SearchBar } from 'react-native-elements';
 import { searchBuilding } from '../styles/SearchBuilding.styles';
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BuildingShape } from '../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
 import { roomListStyles as inDoorList } from '../styles/RoomList.Styles';
+import type { SearchMode } from '../types/SearchMode';
 import {
   clearGoogleCalendarSession,
   connectGoogleCalendarAsync,
@@ -26,7 +27,7 @@ type SearchBarProps = {
   selectedCalendarIds?: string[];
   onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
   calendarGoErrorMessage?: string | null;
-  isIndoor?: boolean;
+  searchMode?: SearchMode;
   onSelectRoom?: (room: RoomNode) => void;
 };
 
@@ -42,7 +43,7 @@ export default function SearchSheet({
   selectedCalendarIds = [],
   onCalendarGoPress,
   calendarGoErrorMessage = null,
-  isIndoor,
+  searchMode = 'buildings',
   onSelectRoom,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
@@ -263,6 +264,9 @@ export default function SearchSheet({
   const handleSearchChange = useCallback((text?: string) => {
     setSearch(text ?? '');
   }, []);
+  const showsRooms = searchMode === 'rooms' || searchMode === 'mixed';
+  const showsBuildings = searchMode === 'buildings' || searchMode === 'mixed';
+
   const renderBuildingItem = useCallback(
     ({ item }: ListRenderItemInfo<BuildingShape>) => (
       <TouchableOpacity
@@ -279,7 +283,7 @@ export default function SearchSheet({
             {item.name}
           </Text>
           <Text style={searchBuilding.buildingAddress} numberOfLines={1}>
-            {'(' + item.shortCode + ') '}
+            {item.shortCode ? `(${item.shortCode}) ` : ''}
             {item.address}
           </Text>
         </View>
@@ -287,6 +291,82 @@ export default function SearchSheet({
     ),
     [onPressBuilding],
   );
+
+  const renderedBuildingResults = useMemo(
+    () =>
+      filtered.length > 0 ? (
+        filtered.map((building) => (
+          <View key={building.id}>
+            {renderBuildingItem({ item: building } as ListRenderItemInfo<BuildingShape>)}
+          </View>
+        ))
+      ) : (
+        <Text style={searchBuilding.emptyText}>No buildings found</Text>
+      ),
+    [filtered, renderBuildingItem],
+  );
+
+  const renderedSearchResults = useMemo(() => {
+    if (showsRooms && showsBuildings) {
+      return (
+        <BottomSheetScrollView
+          testID="mixed-search-results"
+          style={searchBuilding.scrollArea}
+          contentContainerStyle={searchBuilding.scrollContent}
+          showsVerticalScrollIndicator={true}
+        >
+          <Text testID="search-section-rooms" style={searchBuilding.sectionTitle}>
+            Rooms
+          </Text>
+          <View style={searchBuilding.mixedSectionContainer}>
+            <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
+          </View>
+
+          <Text testID="search-section-buildings" style={searchBuilding.sectionTitle}>
+            Buildings
+          </Text>
+          <View style={searchBuilding.mixedSectionContainer}>{renderedBuildingResults}</View>
+        </BottomSheetScrollView>
+      );
+    }
+
+    if (showsRooms) {
+      return (
+        <BottomSheetScrollView
+          testID="rooms-search-results"
+          style={searchBuilding.scrollArea}
+          contentContainerStyle={searchBuilding.scrollContent}
+          showsVerticalScrollIndicator={true}
+        >
+          <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
+        </BottomSheetScrollView>
+      );
+    }
+
+    return (
+      <BottomSheetFlatList<BuildingShape>
+        data={filtered}
+        keyExtractor={(item: BuildingShape) => item.id}
+        contentContainerStyle={searchBuilding.listContent}
+        showsVerticalScrollIndicator={true}
+        initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
+        maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
+        windowSize={SEARCH_LIST_WINDOW_SIZE}
+        removeClippedSubviews={true}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
+        renderItem={renderBuildingItem}
+      />
+    );
+  }, [
+    filtered,
+    onSelectRoom,
+    renderedBuildingResults,
+    renderBuildingItem,
+    search,
+    showsBuildings,
+    showsRooms,
+  ]);
 
   return (
     <View style={searchBuilding.screen}>
@@ -347,27 +427,12 @@ export default function SearchSheet({
 
       <View
         style={[
-          isIndoor ? inDoorList.indoorContainer : searchBuilding.buildingsContainer,
-          { maxHeight: 400 },
+          showsRooms && !showsBuildings
+            ? inDoorList.indoorContainer
+            : searchBuilding.buildingsContainer,
         ]}
       >
-        {isIndoor ? (
-          <RoomList search={search} onSelectRoom={onSelectRoom} />
-        ) : (
-          <BottomSheetFlatList<BuildingShape>
-            data={filtered}
-            keyExtractor={(item: BuildingShape) => item.id}
-            contentContainerStyle={searchBuilding.listContent}
-            showsVerticalScrollIndicator={true}
-            initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
-            maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
-            windowSize={SEARCH_LIST_WINDOW_SIZE}
-            removeClippedSubviews={true}
-            keyboardShouldPersistTaps="handled"
-            ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
-            renderItem={renderBuildingItem}
-          />
-        )}
+        {renderedSearchResults}
       </View>
     </View>
   );
