@@ -1,13 +1,18 @@
 import { StyleSheet } from 'react-native';
 export const roomListStyles = StyleSheet.create({
   container: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 28,
   },
 
   buildingContainer: {
     marginBottom: 14,
   },
-  indoorContainer: {},
+  indoorContainer: {
+    flex: 1,
+    minHeight: 0,
+  },
   buildingHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -30,10 +35,12 @@ export const roomListStyles = StyleSheet.create({
     marginTop: 2,
   },
   contentContainer: {
-    width: '65%',
-    marginTop: 8,
+    alignSelf: 'stretch',
+    marginTop: 10,
     marginLeft: 42,
-    padding: 12,
+    marginRight: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 24,
     backgroundColor: '#812236',
   },
@@ -54,6 +61,6 @@ export const roomListStyles = StyleSheet.create({
   roomText: {
     color: 'white',
     fontSize: 18,
-    fontFamily: 'ga',
+    fontFamily: 'gabarito',
   },
 });

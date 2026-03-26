@@ -51,6 +51,7 @@ export type RoomNode = {
 type Props = {
   search?: string;
   onSelectRoom?: (room: RoomNode) => void;
+  variant?: 'virtualized' | 'static';
 };
 
 const buildingGraphs: Record<IndoorBuildingKey, any> = {
@@ -98,7 +99,7 @@ const getBuildingData = (buildingKey: IndoorBuildingKey, search: string) => {
   return grouped;
 };
 
-const RoomList = ({ onSelectRoom, search = '' }: Props) => {
+const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props) => {
   const [openBuilding, setOpenBuilding] = useState<IndoorBuildingKey | null>(null);
   const [buildingCache, setBuildingCache] = useState<
     Partial<Record<IndoorBuildingKey, Record<number, RoomNode[]>>>
@@ -230,6 +231,16 @@ const RoomList = ({ onSelectRoom, search = '' }: Props) => {
       onSelectRoom,
     ],
   );
+
+  if (variant === 'static') {
+    return (
+      <View style={styles.container}>
+        {buildingIds.map((buildingId) => (
+          <View key={buildingId}>{renderBuilding({ item: buildingId })}</View>
+        ))}
+      </View>
+    );
+  }
 
   return (
     <BottomSheetFlatList

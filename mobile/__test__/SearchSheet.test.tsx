@@ -59,9 +59,12 @@ jest.mock('react-native-elements', () => {
 });
 
 jest.mock('@gorhom/bottom-sheet', () => {
-  const { FlatList } = require('react-native');
+  const { FlatList, ScrollView } = require('react-native');
   return {
     BottomSheetFlatList: (props: React.ComponentProps<typeof FlatList>) => <FlatList {...props} />,
+    BottomSheetScrollView: (props: React.ComponentProps<typeof ScrollView>) => (
+      <ScrollView {...props} />
+    ),
   };
 });
 

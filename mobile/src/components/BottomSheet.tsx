@@ -1711,7 +1711,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setHybridOutdoorTravelMode,
       handleHybridGo: () => {},
     });
-    const usesDirectScrollableContent = activeView === 'transit-plan';
+    const usesDirectScrollableContent = activeView === 'transit-plan' || isSearchActive;
 
     return (
       <BottomSheet

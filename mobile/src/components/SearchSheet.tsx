@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { SearchBar } from 'react-native-elements';
 import { searchBuilding } from '../styles/SearchBuilding.styles';
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { BottomSheetFlatList, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { BuildingShape } from '../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
 import { roomListStyles as inDoorList } from '../styles/RoomList.Styles';
@@ -292,13 +292,17 @@ export default function SearchSheet({
     [onPressBuilding],
   );
 
-  const mixedModeBuildingResults = useMemo(
+  const renderedBuildingResults = useMemo(
     () =>
-      filtered.map((building) => (
-        <View key={building.id}>
-          {renderBuildingItem({ item: building } as ListRenderItemInfo<BuildingShape>)}
-        </View>
-      )),
+      filtered.length > 0 ? (
+        filtered.map((building) => (
+          <View key={building.id}>
+            {renderBuildingItem({ item: building } as ListRenderItemInfo<BuildingShape>)}
+          </View>
+        ))
+      ) : (
+        <Text style={searchBuilding.emptyText}>No buildings found</Text>
+      ),
     [filtered, renderBuildingItem],
   );
 
@@ -364,35 +368,36 @@ export default function SearchSheet({
           showsRooms && !showsBuildings
             ? inDoorList.indoorContainer
             : searchBuilding.buildingsContainer,
-          { maxHeight: 400 },
         ]}
       >
         {showsRooms && showsBuildings ? (
-          <ScrollView
+          <BottomSheetScrollView
             testID="mixed-search-results"
-            nestedScrollEnabled={true}
+            style={searchBuilding.scrollArea}
+            contentContainerStyle={searchBuilding.scrollContent}
             showsVerticalScrollIndicator={true}
           >
             <Text testID="search-section-rooms" style={searchBuilding.sectionTitle}>
               Rooms
             </Text>
             <View style={searchBuilding.mixedSectionContainer}>
-              <RoomList search={search} onSelectRoom={onSelectRoom} />
+              <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
             </View>
 
             <Text testID="search-section-buildings" style={searchBuilding.sectionTitle}>
               Buildings
             </Text>
-            <View style={searchBuilding.mixedSectionContainer}>
-              {mixedModeBuildingResults.length > 0 ? (
-                mixedModeBuildingResults
-              ) : (
-                <Text style={searchBuilding.emptyText}>No buildings found</Text>
-              )}
-            </View>
-          </ScrollView>
+            <View style={searchBuilding.mixedSectionContainer}>{renderedBuildingResults}</View>
+          </BottomSheetScrollView>
         ) : showsRooms ? (
-          <RoomList search={search} onSelectRoom={onSelectRoom} />
+          <BottomSheetScrollView
+            testID="rooms-search-results"
+            style={searchBuilding.scrollArea}
+            contentContainerStyle={searchBuilding.scrollContent}
+            showsVerticalScrollIndicator={true}
+          >
+            <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
+          </BottomSheetScrollView>
         ) : (
           <BottomSheetFlatList<BuildingShape>
             data={filtered}
