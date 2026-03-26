@@ -951,22 +951,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [hybridRouteErrorMessage, setHybridRouteErrorMessage] = useState<string | null>(null);
     const [routeOriginOverride, setRouteOriginOverride] = useState<LatLng | null>(null);
     const [routeDestinationOverride, setRouteDestinationOverride] = useState<LatLng | null>(null);
-
-<<<<<<< Updated upstream
-    const clearIndoorSearch = useCallback(() => {
-      setStartRoom(null);
-      setDestinationRoom(null);
-      setStartEndpoint(null);
-      setDestinationEndpoint(null);
-      setHybridOutdoorTravelMode('walking');
-=======
     const clearCrossBuildingRouteFlowState = useCallback(() => {
       setCrossBuildingRouteFlow(null);
       setHybridRouteErrorMessage(null);
       setRouteOriginOverride(null);
       setRouteDestinationOverride(null);
     }, []);
->>>>>>> Stashed changes
 
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
@@ -1020,8 +1010,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       clearCrossBuildingRouteFlowState();
       setStartRoom(null);
       setDestinationRoom(null);
-      setStartRoomId(null);
-      setEndRoomId(null);
       setStartEndpoint(null);
       setDestinationEndpoint(null);
       setStartBuilding(null);
@@ -1343,8 +1331,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setDestinationEndpoint(null);
       setStartRoom(null);
       setDestinationRoom(null);
-      setStartRoomId(null);
-      setEndRoomId(null);
       setHybridOutdoorTravelMode('walking');
       resetRouteState();
       onIndoorRouteChange?.(null, null);
