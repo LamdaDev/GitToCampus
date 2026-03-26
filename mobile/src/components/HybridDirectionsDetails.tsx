@@ -71,8 +71,8 @@ const ModeButton = ({
     testID={testID}
     accessibilityState={{ selected: active }}
     style={[
-      directionDetailsStyles.hybridModeButton,
-      active && directionDetailsStyles.hybridModeButtonActive,
+      directionDetailsStyles.transportationButton,
+      active && directionDetailsStyles.activeTransportationButton,
     ]}
     onPress={onPress}
   >
@@ -150,85 +150,81 @@ export default function HybridDirectionsDetails({
 
       <View style={directionDetailsStyles.hybridSectionCard}>
         <Text style={directionDetailsStyles.hybridSectionTitle}>Indoor Navigation</Text>
-        <View style={directionDetailsStyles.hybridModeRow}>
-          <ModeButton
-            testID="hybrid-indoor-walking"
-            active={selectedIndoorMode === 'walking'}
-            onPress={() => onIndoorModeChange('walking')}
-            icon={
-              <Ionicons
-                name="walk"
-                size={30}
-                style={directionDetailsStyles.hybridTransportationIcon}
-              />
-            }
-          />
-          <ModeButton
-            testID="hybrid-indoor-disability"
-            active={selectedIndoorMode === 'disability'}
-            onPress={() => onIndoorModeChange('disability')}
-            icon={
-              <FontAwesome
-                name="wheelchair"
-                size={30}
-                style={directionDetailsStyles.hybridTransportationIcon}
-              />
-            }
-          />
+        <View style={directionDetailsStyles.transportationHeader}>
+          <View style={directionDetailsStyles.transportationSubHeader}>
+            <ModeButton
+              testID="hybrid-indoor-walking"
+              active={selectedIndoorMode === 'walking'}
+              onPress={() => onIndoorModeChange('walking')}
+              icon={
+                <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
+              }
+            />
+            <ModeButton
+              testID="hybrid-indoor-disability"
+              active={selectedIndoorMode === 'disability'}
+              onPress={() => onIndoorModeChange('disability')}
+              icon={
+                <FontAwesome
+                  name="wheelchair"
+                  size={30}
+                  style={directionDetailsStyles.transportationIcon}
+                />
+              }
+            />
+          </View>
         </View>
       </View>
 
       <View style={directionDetailsStyles.hybridSectionCard}>
         <Text style={directionDetailsStyles.hybridSectionTitle}>Outdoor Navigation</Text>
-        <View style={directionDetailsStyles.hybridModeRow}>
-          <ModeButton
-            testID="hybrid-outdoor-walking"
-            active={selectedOutdoorMode === 'walking'}
-            onPress={() => onOutdoorModeChange('walking')}
-            icon={
-              <Ionicons
-                name="walk"
-                size={30}
-                style={directionDetailsStyles.hybridTransportationIcon}
-              />
-            }
-          />
-          <ModeButton
-            testID="hybrid-outdoor-driving"
-            active={selectedOutdoorMode === 'driving'}
-            onPress={() => onOutdoorModeChange('driving')}
-            icon={
-              <Ionicons
-                name="car-outline"
-                size={30}
-                style={directionDetailsStyles.hybridTransportationIcon}
-              />
-            }
-          />
-          <ModeButton
-            testID="hybrid-outdoor-transit"
-            active={selectedOutdoorMode === 'transit'}
-            onPress={() => onOutdoorModeChange('transit')}
-            icon={
-              <Ionicons
-                name="train-outline"
-                size={30}
-                style={directionDetailsStyles.hybridTransportationIcon}
-              />
-            }
-          />
-          <ModeButton
-            testID="hybrid-outdoor-shuttle"
-            active={selectedOutdoorMode === 'shuttle'}
-            onPress={() => onOutdoorModeChange('shuttle')}
-            icon={
-              <Ionicons
-                name="bus-outline"
-                size={30}
-                style={directionDetailsStyles.hybridTransportationIcon}
-              />
-            }
-          />
+        <View style={directionDetailsStyles.transportationHeader}>
+          <View style={directionDetailsStyles.transportationSubHeader}>
+            <ModeButton
+              testID="hybrid-outdoor-walking"
+              active={selectedOutdoorMode === 'walking'}
+              onPress={() => onOutdoorModeChange('walking')}
+              icon={
+                <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
+              }
+            />
+            <ModeButton
+              testID="hybrid-outdoor-driving"
+              active={selectedOutdoorMode === 'driving'}
+              onPress={() => onOutdoorModeChange('driving')}
+              icon={
+                <Ionicons
+                  name="car-outline"
+                  size={30}
+                  style={directionDetailsStyles.transportationIcon}
+                />
+              }
+            />
+            <ModeButton
+              testID="hybrid-outdoor-transit"
+              active={selectedOutdoorMode === 'transit'}
+              onPress={() => onOutdoorModeChange('transit')}
+              icon={
+                <Ionicons
+                  name="train-outline"
+                  size={30}
+                  style={directionDetailsStyles.transportationIcon}
+                />
+              }
+            />
+            <ModeButton
+              testID="hybrid-outdoor-shuttle"
+              active={selectedOutdoorMode === 'shuttle'}
+              onPress={() => onOutdoorModeChange('shuttle')}
+              icon={
+                <Ionicons
+                  name="bus-outline"
+                  size={30}
+                  style={directionDetailsStyles.transportationIcon}
+                />
+              }
+            />
+          </View>
         </View>
       </View>
 
