@@ -53,14 +53,10 @@ const getNameCandidates = (name: string): string[] => {
   if (!trimmed) return [];
 
   const parts = trimmed.split(/\s+/).filter(Boolean);
-  const candidates = [trimmed];
-
-  if (parts.length > 0) {
-    candidates.push(parts[0]);
-    candidates.push(parts.slice(0, 2).join(' '));
-  }
-
-  return candidates;
+  return [
+    trimmed,
+    ...(parts.length > 0 ? [parts[0], parts.slice(0, 2).join(' ')] : []),
+  ];
 };
 
 export const getIndoorBuildingKeyFromShape = (

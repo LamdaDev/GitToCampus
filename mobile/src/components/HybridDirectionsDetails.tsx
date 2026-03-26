@@ -80,6 +80,38 @@ const ModeButton = ({
   </TouchableOpacity>
 );
 
+type HybridModeOption = {
+  testID: string;
+  active: boolean;
+  onPress: () => void;
+  icon: React.ReactNode;
+};
+
+const HybridNavigationOptions = ({
+  title,
+  options,
+}: {
+  title: string;
+  options: HybridModeOption[];
+}) => (
+  <View style={directionDetailsStyles.hybridSectionCard}>
+    <Text style={directionDetailsStyles.hybridSectionTitle}>{title}</Text>
+    <View style={directionDetailsStyles.transportationHeader}>
+      <View style={directionDetailsStyles.transportationSubHeader}>
+        {options.map((option) => (
+          <ModeButton
+            key={option.testID}
+            testID={option.testID}
+            active={option.active}
+            onPress={option.onPress}
+            icon={option.icon}
+          />
+        ))}
+      </View>
+    </View>
+  </View>
+);
+
 export default function HybridDirectionsDetails({
   onClose,
   onClear,
@@ -93,6 +125,64 @@ export default function HybridDirectionsDetails({
   onPressDestination,
   onPressGo,
 }: Readonly<HybridDirectionsDetailsProps>) {
+  const indoorOptions: HybridModeOption[] = [
+    {
+      testID: 'hybrid-indoor-walking',
+      active: selectedIndoorMode === 'walking',
+      onPress: () => onIndoorModeChange('walking'),
+      icon: <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />,
+    },
+    {
+      testID: 'hybrid-indoor-disability',
+      active: selectedIndoorMode === 'disability',
+      onPress: () => onIndoorModeChange('disability'),
+      icon: (
+        <FontAwesome
+          name="wheelchair"
+          size={30}
+          style={directionDetailsStyles.transportationIcon}
+        />
+      ),
+    },
+  ];
+
+  const outdoorOptions: HybridModeOption[] = [
+    {
+      testID: 'hybrid-outdoor-walking',
+      active: selectedOutdoorMode === 'walking',
+      onPress: () => onOutdoorModeChange('walking'),
+      icon: <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />,
+    },
+    {
+      testID: 'hybrid-outdoor-driving',
+      active: selectedOutdoorMode === 'driving',
+      onPress: () => onOutdoorModeChange('driving'),
+      icon: (
+        <Ionicons name="car-outline" size={30} style={directionDetailsStyles.transportationIcon} />
+      ),
+    },
+    {
+      testID: 'hybrid-outdoor-transit',
+      active: selectedOutdoorMode === 'transit',
+      onPress: () => onOutdoorModeChange('transit'),
+      icon: (
+        <Ionicons
+          name="train-outline"
+          size={30}
+          style={directionDetailsStyles.transportationIcon}
+        />
+      ),
+    },
+    {
+      testID: 'hybrid-outdoor-shuttle',
+      active: selectedOutdoorMode === 'shuttle',
+      onPress: () => onOutdoorModeChange('shuttle'),
+      icon: (
+        <Ionicons name="bus-outline" size={30} style={directionDetailsStyles.transportationIcon} />
+      ),
+    },
+  ];
+
   return (
     <View testID="hybrid-directions-details">
       <View style={directionDetailsStyles.header}>
@@ -148,85 +238,8 @@ export default function HybridDirectionsDetails({
         />
       </View>
 
-      <View style={directionDetailsStyles.hybridSectionCard}>
-        <Text style={directionDetailsStyles.hybridSectionTitle}>Indoor Navigation</Text>
-        <View style={directionDetailsStyles.transportationHeader}>
-          <View style={directionDetailsStyles.transportationSubHeader}>
-            <ModeButton
-              testID="hybrid-indoor-walking"
-              active={selectedIndoorMode === 'walking'}
-              onPress={() => onIndoorModeChange('walking')}
-              icon={
-                <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
-              }
-            />
-            <ModeButton
-              testID="hybrid-indoor-disability"
-              active={selectedIndoorMode === 'disability'}
-              onPress={() => onIndoorModeChange('disability')}
-              icon={
-                <FontAwesome
-                  name="wheelchair"
-                  size={30}
-                  style={directionDetailsStyles.transportationIcon}
-                />
-              }
-            />
-          </View>
-        </View>
-      </View>
-
-      <View style={directionDetailsStyles.hybridSectionCard}>
-        <Text style={directionDetailsStyles.hybridSectionTitle}>Outdoor Navigation</Text>
-        <View style={directionDetailsStyles.transportationHeader}>
-          <View style={directionDetailsStyles.transportationSubHeader}>
-            <ModeButton
-              testID="hybrid-outdoor-walking"
-              active={selectedOutdoorMode === 'walking'}
-              onPress={() => onOutdoorModeChange('walking')}
-              icon={
-                <Ionicons name="walk" size={30} style={directionDetailsStyles.transportationIcon} />
-              }
-            />
-            <ModeButton
-              testID="hybrid-outdoor-driving"
-              active={selectedOutdoorMode === 'driving'}
-              onPress={() => onOutdoorModeChange('driving')}
-              icon={
-                <Ionicons
-                  name="car-outline"
-                  size={30}
-                  style={directionDetailsStyles.transportationIcon}
-                />
-              }
-            />
-            <ModeButton
-              testID="hybrid-outdoor-transit"
-              active={selectedOutdoorMode === 'transit'}
-              onPress={() => onOutdoorModeChange('transit')}
-              icon={
-                <Ionicons
-                  name="train-outline"
-                  size={30}
-                  style={directionDetailsStyles.transportationIcon}
-                />
-              }
-            />
-            <ModeButton
-              testID="hybrid-outdoor-shuttle"
-              active={selectedOutdoorMode === 'shuttle'}
-              onPress={() => onOutdoorModeChange('shuttle')}
-              icon={
-                <Ionicons
-                  name="bus-outline"
-                  size={30}
-                  style={directionDetailsStyles.transportationIcon}
-                />
-              }
-            />
-          </View>
-        </View>
-      </View>
+      <HybridNavigationOptions title="Indoor Navigation" options={indoorOptions} />
+      <HybridNavigationOptions title="Outdoor Navigation" options={outdoorOptions} />
 
       <View style={directionDetailsStyles.hybridSummaryCard}>
         <View style={directionDetailsStyles.hybridSummaryTextWrap}>
