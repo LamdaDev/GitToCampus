@@ -16,29 +16,10 @@ import {
   normalizeIndoorBuildingKey,
   type IndoorBuildingKey,
 } from '../../utils/indoor/buildingKeys';
-
-const buildingMeta: Record<IndoorBuildingKey, { name: string; address: string }> = {
-  CC: {
-    name: 'CC Building',
-    address: '7141 Sherbrooke West',
-  },
-  H: {
-    name: 'H Building',
-    address: '1450 De Maisonneuve Blvd W.',
-  },
-  MB: {
-    name: 'MB Building',
-    address: '1450 Guy Street',
-  },
-  VE: {
-    name: 'VE Building',
-    address: '7141 Sherbrooke West',
-  },
-  VL: {
-    name: 'Vanier Library',
-    address: '7141 Sherbrooke St W.',
-  },
-};
+import {
+  getIndoorBuildingKeysWithMetadata,
+  indoorBuildingMetadata,
+} from '../../utils/indoor/buildingMetadata';
 
 export type RoomNode = {
   id: string;
@@ -63,7 +44,7 @@ const buildingGraphs: Record<IndoorBuildingKey, any> = {
   H: hall,
 };
 
-const buildingIds = Object.keys(buildingGraphs) as IndoorBuildingKey[];
+const buildingIds = getIndoorBuildingKeysWithMetadata(buildingGraphs);
 
 const getBuildingData = (buildingKey: IndoorBuildingKey, search: string) => {
   const graph = buildingGraphs[buildingKey];
@@ -193,9 +174,11 @@ const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props)
             />
             <Ionicons name="location-outline" size={34} color="#F5F1F2" />
             <View>
-              <Text style={styles.buildingTitle}>{buildingMeta[buildingId]?.name}</Text>
+              <Text style={styles.buildingTitle}>{indoorBuildingMetadata[buildingId].name}</Text>
 
-              <Text style={styles.buildingAddress}>{buildingMeta[buildingId]?.address ?? ''}</Text>
+              <Text style={styles.buildingAddress}>
+                {indoorBuildingMetadata[buildingId].address}
+              </Text>
             </View>
           </TouchableOpacity>
 

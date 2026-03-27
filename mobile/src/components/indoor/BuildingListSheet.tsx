@@ -15,7 +15,10 @@ import { floorPlans } from '../../utils/floorPlans';
 import type { BuildingShape } from '../../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
 import { indoorBuildingSheetStyles } from '../../styles/IndoorBottomSheet.styles';
-import type { Campus } from '../../types/Campus';
+import {
+  getIndoorBuildingKeysWithMetadata,
+  indoorBuildingMetadata,
+} from '../../utils/indoor/buildingMetadata';
 
 export type IndoorBottomSheetRef = {
   open: () => void;
@@ -40,40 +43,12 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
     }));
 
     const buildings = useMemo(() => {
-      const buildingMeta = {
-        CC: {
-          name: 'CC Building',
-          address: '7141 Sherbrooke West',
-          campus: 'LOYOLA' as Campus,
-        },
-        H: {
-          name: 'H Building',
-          address: '1450 De Maisonneuve Blvd W.',
-          campus: 'SGW' as Campus,
-        },
-        MB: {
-          name: 'MB Building',
-          address: '1450 Guy Street',
-          campus: 'SGW' as Campus,
-        },
-        VE: {
-          name: 'VE Building',
-          address: '7141 Sherbrooke West',
-          campus: 'LOYOLA' as Campus,
-        },
-        VL: {
-          name: 'Vanier Library',
-          address: '7141 Sherbrooke St W.',
-          campus: 'LOYOLA' as Campus,
-        },
-      };
-
-      return (Object.keys(floorPlans) as Array<keyof typeof buildingMeta>).map((code) => ({
+      return getIndoorBuildingKeysWithMetadata(floorPlans).map((code) => ({
         id: code,
         shortCode: code,
-        name: buildingMeta[code].name,
-        address: buildingMeta[code].address,
-        campus: buildingMeta[code].campus,
+        name: indoorBuildingMetadata[code].name,
+        address: indoorBuildingMetadata[code].address,
+        campus: indoorBuildingMetadata[code].campus,
         polygons: [],
       }));
     }, []);

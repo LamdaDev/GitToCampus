@@ -76,6 +76,7 @@ jest.mock('../src/utils/floorPlans', () => ({
     H: { 1: {}, 2: {} },
     MB: { 1: {} },
     CC: { 1: {} },
+    EV: { 1: {} },
   },
 }));
 
@@ -94,15 +95,18 @@ describe('IndoorBottomSheet', () => {
     capturedOnClose = null;
   });
 
-  test('renders bottom sheet and building list derived from floorPlans', () => {
-    const { getByTestId, getByText } = render(<IndoorBottomSheet {...defaultProps} />);
+  test('renders only buildings that have both floor plans and shared metadata', () => {
+    const { getAllByText, getByTestId, getByText, queryByText } = render(
+      <IndoorBottomSheet {...defaultProps} />,
+    );
 
     expect(getByTestId('bottom-sheet')).toBeTruthy();
     expect(getByTestId('flat-list')).toBeTruthy();
-    // One item per floorPlans key: H, MB, CC
+    expect(getAllByText(/Building$/i)).toHaveLength(3);
     expect(getByText('H Building')).toBeTruthy();
     expect(getByText('MB Building')).toBeTruthy();
     expect(getByText('CC Building')).toBeTruthy();
+    expect(queryByText('VE Building')).toBeNull();
   });
 
   test('ref.open() calls sheetRef.expand() and ref.close() calls sheetRef.close()', () => {
