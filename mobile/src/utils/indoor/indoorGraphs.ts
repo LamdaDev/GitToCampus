@@ -20,7 +20,9 @@ const BUILDING_GRAPHS: Record<IndoorBuildingKey, IndoorGraph> = {
   VL: vlGraph as unknown as IndoorGraph,
 };
 
-export const getIndoorGraph = (buildingKeyOrAlias: string | null | undefined): IndoorGraph | null => {
+export const getIndoorGraph = (
+  buildingKeyOrAlias: string | null | undefined,
+): IndoorGraph | null => {
   const buildingKey = normalizeIndoorBuildingKey(buildingKeyOrAlias);
   if (!buildingKey) return null;
 
