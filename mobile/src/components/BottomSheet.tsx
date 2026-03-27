@@ -54,8 +54,11 @@ import { IndoorRoutePlannerMode } from '../types/SheetMode';
 import type { SearchMode } from '../types/SearchMode';
 import HybridDirectionsDetails from './HybridDirectionsDetails';
 import { getIndoorBuildingKeyFromShape } from '../utils/indoor/buildingKeys';
-import type { CrossBuildingRouteFlow } from '../types/CrossBuildingRoute';
 import { buildCrossBuildingRouteFlow } from '../utils/indoor/crossBuildingRouteFlow';
+import {
+  getCrossBuildingRouteFlowPresentation,
+  useCrossBuildingRouteFlow,
+} from '../hooks/useCrossBuildingRouteFlow';
 
 const SHEET_INDEX_NAVIGATION_MAX = 1;
 const SHEET_INDEX_PANEL = 2;
@@ -986,17 +989,17 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const [startEndpoint, setStartEndpoint] = useState<MixedEndpoint | null>(null);
     const [destinationEndpoint, setDestinationEndpoint] = useState<MixedEndpoint | null>(null);
-    const [crossBuildingRouteFlow, setCrossBuildingRouteFlow] =
-      useState<CrossBuildingRouteFlow | null>(null);
-    const [hybridRouteErrorMessage, setHybridRouteErrorMessage] = useState<string | null>(null);
-    const [routeOriginOverride, setRouteOriginOverride] = useState<LatLng | null>(null);
-    const [routeDestinationOverride, setRouteDestinationOverride] = useState<LatLng | null>(null);
-    const clearCrossBuildingRouteFlowState = useCallback(() => {
-      setCrossBuildingRouteFlow(null);
-      setHybridRouteErrorMessage(null);
-      setRouteOriginOverride(null);
-      setRouteDestinationOverride(null);
-    }, []);
+    const {
+      crossBuildingRouteFlow,
+      hybridRouteErrorMessage,
+      routeOriginOverride,
+      routeDestinationOverride,
+      clearCrossBuildingRouteFlowState,
+      setHybridRouteErrorMessage,
+      startCrossBuildingRouteFlow,
+      continueCrossBuildingRouteFlowToOutdoor,
+      continueCrossBuildingRouteFlowToDestinationIndoor,
+    } = useCrossBuildingRouteFlow();
 
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
@@ -1020,13 +1023,25 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const isCrossCampusRoute = Boolean(
       startCampus && destinationCampus && startCampus !== destinationCampus,
     );
-    const hasDirectionsStageAction = crossBuildingRouteFlow?.currentStage === 'outdoor';
 
     const [startRoom, setStartRoom] = useState<string | null>(null);
     const [destinationRoom, setDestinationRoom] = useState<string | null>(null);
     const [indoorTravelMode, setIndoorTravelMode] = useState<'walking' | 'disability'>('walking');
     const [hybridOutdoorTravelMode, setHybridOutdoorTravelMode] =
       useState<RoutePlannerMode>('walking');
+    const {
+      hasDirectionsStageAction,
+      indoorNavigationBuilding,
+      indoorNavigationStartLabel,
+      indoorNavigationDestinationLabel,
+      indoorStageActionLabel,
+      directionStageActionLabel,
+    } = getCrossBuildingRouteFlowPresentation({
+      flow: crossBuildingRouteFlow,
+      fallbackBuilding: selectedBuilding,
+      fallbackStartLabel: startRoom,
+      fallbackDestinationLabel: destinationRoom,
+    });
 
     useEffect(() => {
       onIndoorTravelModeChange?.(indoorTravelMode);
@@ -1509,7 +1524,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       const { flow } = result;
       clearCrossBuildingRouteFlowState();
       resetRouteState();
-      setCrossBuildingRouteFlow(flow);
+      startCrossBuildingRouteFlow(flow);
       setTravelMode(flow.outdoorMode);
       setRouteStartSource('manual');
       setStartLocationSnapshot(null);
@@ -1534,6 +1549,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onIndoorRouteChange,
       passSelectedBuilding,
       resetRouteState,
+      startCrossBuildingRouteFlow,
       startEndpoint,
     ]);
 
@@ -1542,34 +1558,30 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         return;
       }
 
-      setCrossBuildingRouteFlow({
-        ...crossBuildingRouteFlow,
-        currentStage: 'outdoor',
-      });
+      continueCrossBuildingRouteFlowToOutdoor();
       setTravelMode(crossBuildingRouteFlow.outdoorMode);
       setRouteStartSource('manual');
       setStartLocationSnapshot(null);
       setStartBuilding(crossBuildingRouteFlow.originBuilding);
       setDestinationBuilding(crossBuildingRouteFlow.destinationBuilding);
-      setRouteOriginOverride(crossBuildingRouteFlow.originTransferPoint.outdoorCoords);
-      setRouteDestinationOverride(crossBuildingRouteFlow.destinationTransferPoint.outdoorCoords);
       onIndoorRouteChange?.(null, null);
       resetRouteState();
       onShowOutdoorMap?.();
       setActiveView('directions');
-    }, [crossBuildingRouteFlow, onIndoorRouteChange, onShowOutdoorMap, resetRouteState]);
+    }, [
+      continueCrossBuildingRouteFlowToOutdoor,
+      crossBuildingRouteFlow,
+      onIndoorRouteChange,
+      onShowOutdoorMap,
+      resetRouteState,
+    ]);
 
     const handleEnterDestinationBuilding = useCallback(() => {
       if (!crossBuildingRouteFlow || crossBuildingRouteFlow.currentStage !== 'outdoor') {
         return;
       }
 
-      setCrossBuildingRouteFlow({
-        ...crossBuildingRouteFlow,
-        currentStage: 'destination_indoor',
-      });
-      setRouteOriginOverride(null);
-      setRouteDestinationOverride(null);
+      continueCrossBuildingRouteFlowToDestinationIndoor();
       resetRouteState();
       passSelectedBuilding(crossBuildingRouteFlow.destinationBuilding);
       enterIndoorView();
@@ -1583,6 +1595,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
       });
     }, [
+      continueCrossBuildingRouteFlowToDestinationIndoor,
       crossBuildingRouteFlow,
       enterIndoorView,
       onEnterBuilding,
@@ -1881,30 +1894,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const hybridDestinationLabel = getEndpointLabel(destinationEndpoint) ?? destinationRoom;
     const hybridSummaryMessage = getHybridRouteGuidanceMessage(startEndpoint, destinationEndpoint);
     const hybridGoDisabled = !canStartCrossBuildingRoomRoute(startEndpoint, destinationEndpoint);
-    const indoorNavigationBuilding =
-      crossBuildingRouteFlow?.currentStage === 'destination_indoor'
-        ? crossBuildingRouteFlow.destinationBuilding
-        : crossBuildingRouteFlow?.currentStage === 'origin_indoor'
-          ? crossBuildingRouteFlow.originBuilding
-          : selectedBuilding;
-    const indoorNavigationStartLabel =
-      crossBuildingRouteFlow?.currentStage === 'destination_indoor'
-        ? `${crossBuildingRouteFlow.destinationBuilding.shortCode ?? crossBuildingRouteFlow.destinationBuilding.name} Entrance`
-        : crossBuildingRouteFlow?.currentStage === 'origin_indoor'
-          ? crossBuildingRouteFlow.startRoomEndpoint.label
-          : startRoom;
-    const indoorNavigationDestinationLabel =
-      crossBuildingRouteFlow?.currentStage === 'destination_indoor'
-        ? crossBuildingRouteFlow.destinationRoomEndpoint.label
-        : crossBuildingRouteFlow?.currentStage === 'origin_indoor'
-          ? `${crossBuildingRouteFlow.originBuilding.shortCode ?? crossBuildingRouteFlow.originBuilding.name} Exit`
-          : destinationRoom;
-    const indoorStageActionLabel =
-      crossBuildingRouteFlow?.currentStage === 'origin_indoor'
-        ? 'Continue to Outdoor Directions'
-        : undefined;
-    const directionStageActionLabel =
-      crossBuildingRouteFlow?.currentStage === 'outdoor' ? 'Enter Building' : undefined;
 
     const renderedContent = renderBottomSheetContent({
       isSearchActive,
