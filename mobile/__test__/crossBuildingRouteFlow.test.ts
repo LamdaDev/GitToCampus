@@ -1,6 +1,9 @@
 import { buildCrossBuildingRouteFlow } from '../src/utils/indoor/crossBuildingRouteFlow';
 import type { BuildingShape } from '../src/types/BuildingShape';
-import type { CrossBuildingRoomEndpoint, IndoorTransferPoint } from '../src/types/CrossBuildingRoute';
+import type {
+  CrossBuildingRoomEndpoint,
+  IndoorTransferPoint,
+} from '../src/types/CrossBuildingRoute';
 
 jest.mock('../src/utils/indoor/indoorPathFinding', () => ({
   findIndoorPath: jest.fn(),
@@ -110,10 +113,17 @@ describe('buildCrossBuildingRouteFlow', () => {
         currentStage: 'origin_indoor',
       },
     });
-    expect(findIndoorPath).toHaveBeenNthCalledWith(1, [], [], startRoom.id, originTransferPoint.accessNodeId, {
-      accessibleOnly: false,
-      preferElevators: false,
-    });
+    expect(findIndoorPath).toHaveBeenNthCalledWith(
+      1,
+      [],
+      [],
+      startRoom.id,
+      originTransferPoint.accessNodeId,
+      {
+        accessibleOnly: false,
+        preferElevators: false,
+      },
+    );
     expect(findIndoorPath).toHaveBeenNthCalledWith(
       2,
       [],
@@ -300,10 +310,17 @@ describe('buildCrossBuildingRouteFlow', () => {
       outdoorMode: 'shuttle',
     });
 
-    expect(findIndoorPath).toHaveBeenNthCalledWith(1, [], [], startRoom.id, originTransferPoint.accessNodeId, {
-      accessibleOnly: true,
-      preferElevators: true,
-    });
+    expect(findIndoorPath).toHaveBeenNthCalledWith(
+      1,
+      [],
+      [],
+      startRoom.id,
+      originTransferPoint.accessNodeId,
+      {
+        accessibleOnly: true,
+        preferElevators: true,
+      },
+    );
     expect(findIndoorPath).toHaveBeenNthCalledWith(
       2,
       [],
@@ -318,7 +335,9 @@ describe('buildCrossBuildingRouteFlow', () => {
   });
 
   test('fails when no graph is available for the origin building', () => {
-    getIndoorGraph.mockImplementation((buildingKey: string) => (buildingKey === 'H' ? null : { nodes: [], edges: [] }));
+    getIndoorGraph.mockImplementation((buildingKey: string) =>
+      buildingKey === 'H' ? null : { nodes: [], edges: [] },
+    );
 
     const result = buildCrossBuildingRouteFlow({
       startRoom,
