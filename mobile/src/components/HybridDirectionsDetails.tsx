@@ -245,15 +245,13 @@ export default function HybridDirectionsDetails({
 
       <View style={directionDetailsStyles.hybridSummaryCard}>
         <View style={directionDetailsStyles.hybridSummaryTextWrap}>
-          <Text style={directionDetailsStyles.hybridSummaryTitle}>Indoor + Outdoor Route</Text>
+          <Text style={directionDetailsStyles.hybridSummaryTitle}>Full Route</Text>
           {errorMessage ? (
             <Text testID="hybrid-error-message" style={directionDetailsStyles.routeErrorText}>
               {errorMessage}
             </Text>
           ) : (
-            <Text style={directionDetailsStyles.hybridSummarySubtitle}>
-              This trip uses both indoor and outdoor navigation. Press GO to start the staged route.
-            </Text>
+            <Text style={directionDetailsStyles.hybridSummarySubtitle}>{'Indoor & Outdoor'}</Text>
           )}
         </View>
         <TouchableOpacity

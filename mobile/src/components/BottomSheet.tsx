@@ -69,6 +69,7 @@ const SHUTTLE_SCHEDULE_SNAP_POINTS = Array.from(
 );
 const DIRECTIONS_PANEL_SNAP_POINT = '52%';
 const DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT = '52%';
+const DIRECTIONS_STAGE_ACTION_SNAP_POINT = '60%';
 const SEARCH_EXPANDED_SNAP_POINT = '75%';
 const SHUTTLE_SCHEDULE_EXPANDED_SNAP_POINT = '92%';
 
@@ -222,10 +223,17 @@ const getShuttlePlanningDate = (now: Date) => {
   return now;
 };
 
-const getDirectionsPanelSnapPoint = (travelMode: RoutePlannerMode, isCrossCampusRoute: boolean) =>
-  travelMode === 'shuttle' && isCrossCampusRoute
+const getDirectionsPanelSnapPoint = (
+  travelMode: RoutePlannerMode,
+  isCrossCampusRoute: boolean,
+  hasStageAction: boolean,
+) => {
+  if (hasStageAction) return DIRECTIONS_STAGE_ACTION_SNAP_POINT;
+
+  return travelMode === 'shuttle' && isCrossCampusRoute
     ? DIRECTIONS_TRANSIT_CROSS_CAMPUS_SNAP_POINT
     : DIRECTIONS_PANEL_SNAP_POINT;
+};
 
 const toDirectionsTravelMode = (travelMode: RoutePlannerMode): DirectionsTravelMode =>
   travelMode === 'shuttle' ? 'transit' : travelMode;
@@ -980,6 +988,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const isCrossCampusRoute = Boolean(
       startCampus && destinationCampus && startCampus !== destinationCampus,
     );
+    const hasDirectionsStageAction = crossBuildingRouteFlow?.currentStage === 'outdoor';
 
     const [startRoom, setStartRoom] = useState<string | null>(null);
     const [destinationRoom, setDestinationRoom] = useState<string | null>(null);
@@ -1038,7 +1047,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = (index: number = 0) => {
       if (activeView === 'directions') {
-        snapToDirectionsPanel(getDirectionsPanelSnapPoint(travelMode, isCrossCampusRoute));
+        snapToDirectionsPanel(
+          getDirectionsPanelSnapPoint(travelMode, isCrossCampusRoute, hasDirectionsStageAction),
+        );
         return;
       }
       sheetRef.current?.snapToIndex(toInternalSnapIndex(index));
@@ -1073,8 +1084,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     );
 
     const directionsPanelSnapPoint = useMemo(
-      () => getDirectionsPanelSnapPoint(travelMode, isCrossCampusRoute),
-      [travelMode, isCrossCampusRoute],
+      () => getDirectionsPanelSnapPoint(travelMode, isCrossCampusRoute, hasDirectionsStageAction),
+      [hasDirectionsStageAction, travelMode, isCrossCampusRoute],
     );
 
     useEffect(() => {

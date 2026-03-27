@@ -39,6 +39,8 @@ describe('HybridDirectionsDetails', () => {
     expect(getByText('Outdoor Navigation')).toBeTruthy();
     expect(getByText('H-811')).toBeTruthy();
     expect(getByText('EV Building')).toBeTruthy();
+    expect(getByText('Full Route')).toBeTruthy();
+    expect(getByText('Indoor & Outdoor')).toBeTruthy();
     expect(getByTestId('hybrid-go-button')).toBeTruthy();
   });
 

@@ -1174,6 +1174,30 @@ describe('BottomSheet', () => {
     expect(getByTestId('route-stage-action-button')).toBeTruthy();
   });
 
+  test('staged outdoor directions snap higher when the Enter Building action is available', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} isIndoor={true} />,
+    );
+
+    await act(async () => {
+      ref.current?.openIndoorDirections();
+    });
+    fireEvent.press(getByTestId('indoor-press-start'));
+    await pressAndFlush(getByTestId('select-room-in-search'));
+    fireEvent.press(getByTestId('indoor-press-destination'));
+    await pressAndFlush(getByTestId('select-room-in-search-other-building'));
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+
+    mockSnapToPosition.mockClear();
+
+    await pressAndFlush(getByTestId('indoor-stage-action-button'));
+
+    await waitFor(() => {
+      expect(mockSnapToPosition).toHaveBeenLastCalledWith('60%');
+    });
+  });
+
   test('pressing the outdoor stage CTA switches the staged flow to destination indoor mode', async () => {
     const onIndoorRouteChange = jest.fn();
     const onEnterBuilding = jest.fn();
