@@ -14,11 +14,11 @@ const styles = StyleSheet.create({
   // ─── Root overlay container ───────────────────────────────────────────────
   overlayRow: {
     position: 'absolute',
-    top: 20,
+    top: 0,
     left: 0,
     right: 0,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     zIndex: 10,
@@ -31,7 +31,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 4,
     paddingHorizontal: 6,
-    marginTop: -20,
     gap: 2,
     ...SHADOW,
   },
@@ -56,7 +55,6 @@ const styles = StyleSheet.create({
   // ─── Building name pill (centre) ─────────────────────────────────────────
   buildingNamePill: {
     flex: 1,
-    marginTop: -70,
     marginHorizontal: 10,
     backgroundColor: '#5a3037',
     borderRadius: 8,
