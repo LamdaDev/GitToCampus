@@ -640,8 +640,9 @@ jest.mock('../src/components/indoor/IndoorDirectionDetails', () => {
 describe('BottomSheet', () => {
   const directionsServiceMock = directionsService as jest.Mocked<typeof directionsService>;
   const shuttlePlannerMock = shuttlePlannerService as jest.Mocked<typeof shuttlePlannerService>;
-  const crossBuildingRouteFlowMock =
-    crossBuildingRouteFlowService as jest.Mocked<typeof crossBuildingRouteFlowService>;
+  const crossBuildingRouteFlowMock = crossBuildingRouteFlowService as jest.Mocked<
+    typeof crossBuildingRouteFlowService
+  >;
   const originalShuttleWeekdayDebug = process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
   const originalShuttleForcedPlanningTime =
     process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;

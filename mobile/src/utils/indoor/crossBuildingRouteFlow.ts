@@ -14,7 +14,9 @@ const resolveBuildingShape = (
   buildings: BuildCrossBuildingRouteFlowInput['buildings'],
   buildingKey: IndoorBuildingKey,
 ) => {
-  return buildings.find((building) => getIndoorBuildingKeyFromShape(building) === buildingKey) ?? null;
+  return (
+    buildings.find((building) => getIndoorBuildingKeyFromShape(building) === buildingKey) ?? null
+  );
 };
 
 const canReachTransferPoint = ({

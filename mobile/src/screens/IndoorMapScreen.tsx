@@ -6,10 +6,7 @@ import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-vi
 import { floorPlans } from '../utils/floorPlans';
 import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/BuildingListSheet';
 import PathOverlay from '../components/indoor/PathOverlay';
-import {
-  findIndoorPath,
-  type IndoorNode,
-} from '../utils/indoor/indoorPathFinding';
+import { findIndoorPath, type IndoorNode } from '../utils/indoor/indoorPathFinding';
 import { getIndoorGraph } from '../utils/indoor/indoorGraphs';
 import styles from '../styles/IndoorMapScreen.styles';
 

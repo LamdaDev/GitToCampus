@@ -1560,7 +1560,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onIndoorRouteChange?.(null, null);
       resetRouteState();
       setActiveView('hybrid-directions');
-    }, [clearCrossBuildingRouteFlowState, crossBuildingRouteFlow, onIndoorRouteChange, resetRouteState]);
+    }, [
+      clearCrossBuildingRouteFlowState,
+      crossBuildingRouteFlow,
+      onIndoorRouteChange,
+      resetRouteState,
+    ]);
 
     useEffect(() => {
       const selectedBuildingId = selectedBuilding?.id ?? null;

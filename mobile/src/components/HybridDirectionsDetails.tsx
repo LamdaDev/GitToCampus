@@ -252,8 +252,7 @@ export default function HybridDirectionsDetails({
             </Text>
           ) : (
             <Text style={directionDetailsStyles.hybridSummarySubtitle}>
-              This trip uses both indoor and outdoor navigation. Press GO to start the staged
-              route.
+              This trip uses both indoor and outdoor navigation. Press GO to start the staged route.
             </Text>
           )}
         </View>
