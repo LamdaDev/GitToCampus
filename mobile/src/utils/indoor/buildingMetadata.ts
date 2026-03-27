@@ -43,4 +43,3 @@ export const getIndoorBuildingKeysWithMetadata = (
   Object.keys(floorPlanLookup).filter((buildingKey): buildingKey is IndoorBuildingKey =>
     Object.prototype.hasOwnProperty.call(indoorBuildingMetadata, buildingKey),
   );
-
