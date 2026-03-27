@@ -280,6 +280,14 @@ const isSameBuildingRoomPair = (start: MixedEndpoint | null, destination: MixedE
   isRoomEndpoint(destination) &&
   start.room.buildingKey === destination.room.buildingKey;
 
+const canStartCrossBuildingRoomRoute = (
+  start: MixedEndpoint | null,
+  destination: MixedEndpoint | null,
+) =>
+  isRoomEndpoint(start) &&
+  isRoomEndpoint(destination) &&
+  start.room.buildingKey !== destination.room.buildingKey;
+
 const shouldShowHybridDirectionsPanel = (
   start: MixedEndpoint | null,
   destination: MixedEndpoint | null,
@@ -310,6 +318,20 @@ const shouldShowHybridDirectionsPanel = (
   }
 
   return roomEndpoint.room.buildingKey !== otherBuildingKey;
+};
+
+const getHybridRouteGuidanceMessage = (
+  start: MixedEndpoint | null,
+  destination: MixedEndpoint | null,
+) => {
+  if (!start || !destination) return null;
+  if (canStartCrossBuildingRoomRoute(start, destination)) return null;
+
+  if (start.kind !== destination.kind) {
+    return 'Staged cross-building guidance currently supports room-to-room routes. Choose a room for both endpoints to continue.';
+  }
+
+  return null;
 };
 
 type BottomSheetProps = {
@@ -618,6 +640,8 @@ const HybridDirectionsView = ({
   onOutdoorTravelModeChange,
   onGo,
   errorMessage,
+  summaryMessage,
+  goDisabled,
 }: {
   startLabel: string | null;
   destinationLabel: string | null;
@@ -630,6 +654,8 @@ const HybridDirectionsView = ({
   onOutdoorTravelModeChange: (mode: RoutePlannerMode) => void;
   onGo?: () => void;
   errorMessage?: string | null;
+  summaryMessage?: string | null;
+  goDisabled?: boolean;
 }) => (
   <HybridDirectionsDetails
     startLabel={startLabel}
@@ -644,6 +670,8 @@ const HybridDirectionsView = ({
     onOutdoorModeChange={onOutdoorTravelModeChange}
     onPressGo={onGo}
     errorMessage={errorMessage}
+    summaryMessage={summaryMessage}
+    goDisabled={goDisabled}
   />
 );
 
@@ -771,6 +799,8 @@ const renderBottomSheetContent = (props: {
   hybridStartLabel: string | null;
   hybridDestinationLabel: string | null;
   hybridErrorMessage: string | null;
+  hybridSummaryMessage: string | null;
+  hybridGoDisabled: boolean;
   indoorNavigationStartLabel: string | null;
   indoorNavigationDestinationLabel: string | null;
   indoorPathSteps: { icon: string; label: string }[];
@@ -868,6 +898,8 @@ const renderBottomSheetContent = (props: {
         onOutdoorTravelModeChange={props.setHybridOutdoorTravelMode}
         onGo={props.handleHybridGo}
         errorMessage={props.hybridErrorMessage}
+        summaryMessage={props.hybridSummaryMessage}
+        goDisabled={props.hybridGoDisabled}
       />
     );
   }
@@ -1452,16 +1484,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleHybridGo = useCallback(() => {
       setHybridRouteErrorMessage(null);
 
-      if (
-        !isRoomEndpoint(startEndpoint) ||
-        !isRoomEndpoint(destinationEndpoint) ||
-        startEndpoint.room.buildingKey === destinationEndpoint.room.buildingKey
-      ) {
+      if (!canStartCrossBuildingRoomRoute(startEndpoint, destinationEndpoint)) {
         setHybridRouteErrorMessage(
-          'Choose two rooms in different buildings to start a staged cross-building route.',
+          getHybridRouteGuidanceMessage(startEndpoint, destinationEndpoint) ??
+            'Choose two rooms in different buildings to start a staged cross-building route.',
         );
         return;
       }
+      if (!isRoomEndpoint(startEndpoint) || !isRoomEndpoint(destinationEndpoint)) return;
 
       const result = buildCrossBuildingRouteFlow({
         startRoom: startEndpoint.room,
@@ -1849,6 +1879,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const hybridStartLabel = getEndpointLabel(startEndpoint) ?? startRoom;
     const hybridDestinationLabel = getEndpointLabel(destinationEndpoint) ?? destinationRoom;
+    const hybridSummaryMessage = getHybridRouteGuidanceMessage(startEndpoint, destinationEndpoint);
+    const hybridGoDisabled = !canStartCrossBuildingRoomRoute(startEndpoint, destinationEndpoint);
     const indoorNavigationBuilding =
       crossBuildingRouteFlow?.currentStage === 'destination_indoor'
         ? crossBuildingRouteFlow.destinationBuilding
@@ -1925,6 +1957,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       hybridStartLabel,
       hybridDestinationLabel,
       hybridErrorMessage: hybridRouteErrorMessage,
+      hybridSummaryMessage,
+      hybridGoDisabled,
       indoorNavigationStartLabel,
       indoorNavigationDestinationLabel,
       indoorPathSteps,

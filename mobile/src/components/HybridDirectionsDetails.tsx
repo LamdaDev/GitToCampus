@@ -19,6 +19,8 @@ type HybridDirectionsDetailsProps = {
   onPressDestination?: () => void;
   onPressGo?: () => void;
   errorMessage?: string | null;
+  summaryMessage?: string | null;
+  goDisabled?: boolean;
 };
 
 const getDisplayText = (value: string | null, fallback: string) => value ?? fallback;
@@ -126,7 +128,10 @@ export default function HybridDirectionsDetails({
   onPressDestination,
   onPressGo,
   errorMessage,
+  summaryMessage,
+  goDisabled = false,
 }: Readonly<HybridDirectionsDetailsProps>) {
+  const canPressGo = !goDisabled && !!onPressGo;
   const indoorOptions: HybridModeOption[] = [
     {
       testID: 'hybrid-indoor-walking',
@@ -250,14 +255,27 @@ export default function HybridDirectionsDetails({
             <Text testID="hybrid-error-message" style={directionDetailsStyles.routeErrorText}>
               {errorMessage}
             </Text>
+          ) : summaryMessage ? (
+            <Text
+              testID="hybrid-summary-message"
+              style={directionDetailsStyles.hybridSummarySubtitle}
+            >
+              {summaryMessage}
+            </Text>
           ) : (
             <Text style={directionDetailsStyles.hybridSummarySubtitle}>{'Indoor & Outdoor'}</Text>
           )}
         </View>
         <TouchableOpacity
           testID="hybrid-go-button"
-          style={directionDetailsStyles.routeGoButton}
-          onPress={onPressGo}
+          disabled={!canPressGo}
+          activeOpacity={canPressGo ? 0.85 : 1}
+          accessibilityState={{ disabled: !canPressGo }}
+          style={[
+            directionDetailsStyles.routeGoButton,
+            !canPressGo && directionDetailsStyles.routeGoButtonDisabled,
+          ]}
+          onPress={canPressGo ? onPressGo : undefined}
         >
           <Text style={directionDetailsStyles.routeGoText}>GO</Text>
         </TouchableOpacity>

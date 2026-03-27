@@ -496,6 +496,8 @@ jest.mock('../src/components/HybridDirectionsDetails', () => {
     onClose,
     onClear,
     errorMessage,
+    summaryMessage,
+    goDisabled,
   }: any) => (
     <View testID="hybrid-directions-details">
       <Text testID="hybrid-start-label">{startLabel ?? 'none'}</Text>
@@ -503,6 +505,7 @@ jest.mock('../src/components/HybridDirectionsDetails', () => {
       <Text testID="hybrid-indoor-mode-state">{selectedIndoorMode}</Text>
       <Text testID="hybrid-outdoor-mode-state">{selectedOutdoorMode}</Text>
       {errorMessage ? <Text testID="hybrid-error-message">{errorMessage}</Text> : null}
+      {summaryMessage ? <Text testID="hybrid-summary-message">{summaryMessage}</Text> : null}
       <TouchableOpacity testID="hybrid-press-start" onPress={onPressStart}>
         <Text>Start</Text>
       </TouchableOpacity>
@@ -545,7 +548,11 @@ jest.mock('../src/components/HybridDirectionsDetails', () => {
       >
         <Text>Outdoor Shuttle</Text>
       </TouchableOpacity>
-      <TouchableOpacity testID="hybrid-go-button" onPress={onPressGo}>
+      <TouchableOpacity
+        testID="hybrid-go-button"
+        disabled={goDisabled}
+        onPress={goDisabled ? undefined : onPressGo}
+      >
         <Text>Go</Text>
       </TouchableOpacity>
       <TouchableOpacity testID="hybrid-close-button" onPress={onClose}>
@@ -1314,7 +1321,7 @@ describe('BottomSheet', () => {
     expect(queryByTestId('indoor-navigation-details')).toBeNull();
   });
 
-  test('room to building across different buildings shows hybrid directions panel', async () => {
+  test('room to building across different buildings shows hybrid guidance and disables GO', async () => {
     const ref = createRef<BottomSliderHandle>();
     const { getByTestId, queryByTestId } = render(
       <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} isIndoor={true} />,
@@ -1334,7 +1341,15 @@ describe('BottomSheet', () => {
     expect(getByTestId('hybrid-directions-details')).toBeTruthy();
     expect(getByTestId('hybrid-start-label').props.children).toBe('H-811');
     expect(getByTestId('hybrid-destination-label').props.children).toBe('EV Building');
+    expect(getByTestId('hybrid-summary-message').props.children).toBe(
+      'Staged cross-building guidance currently supports room-to-room routes. Choose a room for both endpoints to continue.',
+    );
+    expect(getByTestId('hybrid-go-button').props.onPress).toBeUndefined();
     expect(queryByTestId('indoor-direction-details')).toBeNull();
+
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).not.toHaveBeenCalled();
   });
 
   test('room to room in the same building keeps the existing indoor directions panel', async () => {
