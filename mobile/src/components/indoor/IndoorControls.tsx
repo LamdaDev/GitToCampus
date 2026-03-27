@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { TouchableOpacity, View, Text, Platform, StatusBar } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import styles from '../../styles/IndoorControls.styles';
 import type { BuildingShape } from '../../types/BuildingShape';
@@ -28,8 +28,15 @@ const IndoorControls = ({
   const openBuildingList = () => {
     openAvailableBuildings();
   };
+
+  const controlsTopOffset = Platform.select({
+    ios: 56,
+    android: (StatusBar.currentHeight ?? 24) + 16,
+    default: 24,
+  });
+
   return (
-    <View testID="indoor-controls" style={styles.overlayRow}>
+    <View testID="indoor-controls" style={[styles.overlayRow, { top: controlsTopOffset ?? 24 }]}>
       {/* Floor selector */}
       <View style={styles.floorSelector}>
         <TouchableOpacity testID="floor-up" style={styles.floorArrowButton} onPress={onFloorUp}>
