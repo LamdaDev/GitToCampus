@@ -218,9 +218,10 @@ const joinBoundariesToMeta = (
 };
 
 const buildAllBuildingsCache = (): BuildingShape[] => {
-  const buildingList = GEOJSON_ASSETS.buildingList as GeoJsonFeatureCollection<BuildingListProps>;
+  const buildingList =
+    GEOJSON_ASSETS.buildingList as unknown as GeoJsonFeatureCollection<BuildingListProps>;
   const boundaries =
-    GEOJSON_ASSETS.buildingBoundaries as GeoJsonFeatureCollection<BuildingBoundaryProps>;
+    GEOJSON_ASSETS.buildingBoundaries as unknown as GeoJsonFeatureCollection<BuildingBoundaryProps>;
   return joinBoundariesToMeta(boundaries, buildMetadataMap(buildingList));
 };
 

@@ -6,6 +6,7 @@ import { Linking, ScrollView } from 'react-native';
 
 const mockOnClose = jest.fn();
 const mockOnShowDirections = jest.fn();
+const mockOnEnterBuilding = jest.fn();
 
 const mockBuildings: BuildingShape[] = [
   {
@@ -82,6 +83,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 
@@ -99,6 +101,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 
@@ -117,6 +120,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 
@@ -137,6 +141,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 
@@ -154,6 +159,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 
@@ -187,7 +193,7 @@ describe('Building Details', () => {
 
   test('renders services and opens URL when pressed', () => {
     const selectedBuilding = mockBuildings[0];
-    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValueOnce();
+    const openUrlSpy = jest.spyOn(Linking, 'openURL').mockResolvedValueOnce(undefined);
 
     const { getByText } = render(
       <BuildingDetails
@@ -196,6 +202,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 
@@ -226,6 +233,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 
@@ -243,6 +251,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 
@@ -259,6 +268,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 
@@ -302,6 +312,7 @@ describe('Building Details', () => {
           onShowDirections={mockOnShowDirections}
           currentBuilding={null}
           userLocation={null}
+          onEnterBuilding={mockOnEnterBuilding}
         />,
       );
 
@@ -327,6 +338,7 @@ describe('Building Details', () => {
         onShowDirections={mockOnShowDirections}
         currentBuilding={null}
         userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
       />,
     );
 

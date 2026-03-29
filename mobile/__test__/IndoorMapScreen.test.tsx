@@ -242,6 +242,33 @@ describe('IndoorMapScreen', () => {
     });
   });
 
+  test('syncs the selected building when the incoming building prop changes', async () => {
+    const { rerender } = render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+      />,
+    );
+
+    expect(getControlsProps().building).toEqual(buildingH);
+
+    rerender(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingMB}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getControlsProps().building).toEqual(buildingMB);
+      expect(getControlsProps().currentFloor).toBe('1');
+    });
+  });
+
   test('floor navigation increments, decrements, and clamps correctly', async () => {
     render(
       <IndoorMapScreen
@@ -422,6 +449,92 @@ describe('IndoorMapScreen', () => {
       const steps = mockPathStepsChange.mock.calls.flat(2);
       expect(steps.some((s: any) => s.label?.includes('Start'))).toBe(true);
       expect(steps.some((s: any) => s.label?.includes('End'))).toBe(true);
+    });
+  });
+
+  test('onPathStepsChange humanizes a transfer-point destination into a building exit label', async () => {
+    const mockPathStepsChange = jest.fn();
+    findIndoorPath.mockReturnValue([
+      {
+        id: 'a',
+        type: 'room',
+        floor: 1,
+        label: 'CC-101',
+        buildingId: 'CC',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'b',
+        type: 'building_entry_exit',
+        floor: 1,
+        label: '',
+        buildingId: 'CC',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+    ]);
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={{ ...buildingH, shortCode: 'CC', name: 'CC Building' }}
+        externalStartRoomId="a"
+        externalEndRoomId="b"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => {
+      const steps = mockPathStepsChange.mock.calls.flat(2);
+      expect(steps.some((s: any) => s.label === 'End: CC Exit (Floor 1)')).toBe(true);
+    });
+  });
+
+  test('onPathStepsChange humanizes a transfer-point start into a building entrance label', async () => {
+    const mockPathStepsChange = jest.fn();
+    findIndoorPath.mockReturnValue([
+      {
+        id: 'a',
+        type: 'building_entry_exit',
+        floor: 1,
+        label: '',
+        buildingId: 'VE',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'b',
+        type: 'room',
+        floor: 1,
+        label: 'VE-101',
+        buildingId: 'VE',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+    ]);
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={{ ...buildingH, shortCode: 'VE', name: 'VE Building', campus: 'LOYOLA' }}
+        externalStartRoomId="a"
+        externalEndRoomId="b"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => {
+      const steps = mockPathStepsChange.mock.calls.flat(2);
+      expect(steps.some((s: any) => s.label === 'Start: VE Entrance (Floor 1)')).toBe(true);
     });
   });
 
