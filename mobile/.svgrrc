@@ -1,0 +1,22 @@
+{
+  "native": true,
+  "plugins": ["@svgr/plugin-svgo", "@svgr/plugin-jsx"],
+  "svgoConfig": {
+    "plugins": [
+      {
+        "name": "preset-default",
+        "params": {
+          "overrides": {
+            "inlineStyles": {
+              "onlyMatchedOnce": false
+            },
+            "removeViewBox": false,
+            "removeUnknownsAndDefaults": false,
+            "convertColors": false
+          }
+        }
+      },
+      "convertStyleToAttrs"
+    ]
+  }
+}

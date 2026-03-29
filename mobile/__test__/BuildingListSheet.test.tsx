@@ -71,13 +71,15 @@ jest.mock('../src/styles/IndoorBottomSheet.styles', () => ({
   indoorBuildingSheetStyles: {},
 }));
 
+const mockedFloorPlans = {
+  H: { 1: {}, 2: {} },
+  MB: { 1: {} },
+  CC: { 1: {} },
+  EV: { 1: {} },
+};
+
 jest.mock('../src/utils/floorPlans', () => ({
-  floorPlans: {
-    H: { 1: {}, 2: {} },
-    MB: { 1: {} },
-    CC: { 1: {} },
-    EV: { 1: {} },
-  },
+  getFloorPlans: () => mockedFloorPlans,
 }));
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────

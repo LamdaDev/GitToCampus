@@ -54,19 +54,23 @@ jest.mock('../src/components/indoor/BuildingListSheet', () => {
   return MockSheet;
 });
 
-jest.mock('../src/utils/floorPlans', () => ({
-  floorPlans: {
-    H: {
-      1: { type: 'svg', data: jest.fn(() => null) },
-      2: { type: 'svg', data: jest.fn(() => null) },
-      8: { type: 'svg', data: jest.fn(() => null) },
-      9: { type: 'svg', data: jest.fn(() => null) },
-    },
-    MB: {
-      S2: { type: 'png', data: { uri: 'MB_S2.png' } },
-      1: { type: 'png', data: { uri: 'MB_1.png' } },
-    },
+const mockedFloorPlans: Record<string, Record<string, { type: string; data: any }>> = {
+  H: {
+    1: { type: 'svg', data: jest.fn(() => null) },
+    2: { type: 'svg', data: jest.fn(() => null) },
+    8: { type: 'svg', data: jest.fn(() => null) },
+    9: { type: 'svg', data: jest.fn(() => null) },
   },
+  MB: {
+    S2: { type: 'png', data: { uri: 'MB_S2.png' } },
+    1: { type: 'png', data: { uri: 'MB_1.png' } },
+  },
+};
+
+jest.mock('../src/utils/floorPlans', () => ({
+  getFloorPlansForBuilding: (buildingCode: string) => mockedFloorPlans[buildingCode] ?? null,
+  getFloorPlan: (buildingCode: string, floorLevel: string) =>
+    mockedFloorPlans[buildingCode]?.[floorLevel] ?? null,
 }));
 
 jest.mock('../src/utils/indoor/indoorPathFinding', () => ({
