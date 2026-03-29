@@ -39,6 +39,8 @@ describe('HybridDirectionsDetails', () => {
     expect(getByText('Outdoor Navigation')).toBeTruthy();
     expect(getByText('H-811')).toBeTruthy();
     expect(getByText('EV Building')).toBeTruthy();
+    expect(getByText('Full Route')).toBeTruthy();
+    expect(getByText('Indoor & Outdoor')).toBeTruthy();
     expect(getByTestId('hybrid-go-button')).toBeTruthy();
   });
 
@@ -101,5 +103,23 @@ describe('HybridDirectionsDetails', () => {
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onPressGo).toHaveBeenCalledTimes(1);
+  });
+
+  test('renders the hybrid error message instead of the default subtitle when provided', () => {
+    const { getByTestId, queryByText } = render(
+      <HybridDirectionsDetails
+        onClose={jest.fn()}
+        startLabel="H-811"
+        destinationLabel="VE-1.615"
+        selectedIndoorMode="walking"
+        selectedOutdoorMode="walking"
+        onIndoorModeChange={jest.fn()}
+        onOutdoorModeChange={jest.fn()}
+        errorMessage="No route available"
+      />,
+    );
+
+    expect(getByTestId('hybrid-error-message').props.children).toBe('No route available');
+    expect(queryByText('Indoor & Outdoor')).toBeNull();
   });
 });

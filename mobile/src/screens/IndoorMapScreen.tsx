@@ -6,16 +6,9 @@ import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-vi
 import { floorPlans } from '../utils/floorPlans';
 import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/BuildingListSheet';
 import PathOverlay from '../components/indoor/PathOverlay';
-import {
-  findIndoorPath,
-  type IndoorNode,
-  type IndoorEdge,
-} from '../utils/indoor/indoorPathFinding';
-import hallGraph from '../assets/floor_plans_json/hall.json';
-import ccGraph from '../assets/floor_plans_json/cc1.json';
-import mbGraph from '../assets/floor_plans_json/mb_floors_combined.json';
-import veGraph from '../assets/floor_plans_json/ve.json';
-import vlGraph from '../assets/floor_plans_json/vl_floors_combined.json';
+import { findIndoorPath, type IndoorNode } from '../utils/indoor/indoorPathFinding';
+import { getIndoorGraph } from '../utils/indoor/indoorGraphs';
+import { normalizeIndoorBuildingKey } from '../utils/indoor/buildingKeys';
 import styles from '../styles/IndoorMapScreen.styles';
 
 type props = {
@@ -54,14 +47,6 @@ const hasNativeSvgSupport = () => {
 };
 
 // ── Building graph data keyed by short code ──────────────────────────────────
-const BUILDING_GRAPHS: Record<string, { nodes: IndoorNode[]; edges: IndoorEdge[] }> = {
-  H: hallGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-  CC: ccGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-  MB: mbGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-  VE: veGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-  VL: vlGraph as unknown as { nodes: IndoorNode[]; edges: IndoorEdge[] },
-};
-
 // ── SVG coordinates for scaling path overlay ───────────────────────────
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
   H: { width: 2040, height: 2040 },
@@ -80,7 +65,45 @@ const SVG_VIEWBOXES: Record<string, { width: number; height: number }> = {
 };
 
 // ── Converts path steps into labelled navigation steps ───────────────────────────
-const getPathSteps = (path: IndoorNode[]) => {
+const humanizeIndoorNodeType = (type: string) => type.replaceAll('_', ' ');
+
+const getIndoorNodeBuildingLabel = (
+  node: IndoorNode | undefined,
+  building: BuildingShape | null,
+) => {
+  const normalizedNodeBuildingKey = normalizeIndoorBuildingKey(node?.buildingId);
+  if (normalizedNodeBuildingKey) return normalizedNodeBuildingKey;
+
+  const normalizedSelectedBuildingKey =
+    normalizeIndoorBuildingKey(building?.shortCode) ?? normalizeIndoorBuildingKey(building?.name);
+  if (normalizedSelectedBuildingKey) return normalizedSelectedBuildingKey;
+
+  return building?.shortCode ?? building?.name ?? 'Building';
+};
+
+const getPathEndpointLabel = ({
+  node,
+  role,
+  building,
+}: {
+  node: IndoorNode | undefined;
+  role: 'start' | 'end';
+  building: BuildingShape | null;
+}) => {
+  if (!node) return role === 'start' ? 'Start' : 'End';
+
+  const trimmedLabel = node.label?.trim();
+  if (trimmedLabel) return trimmedLabel;
+
+  if (node.type === 'building_entry_exit') {
+    const buildingLabel = getIndoorNodeBuildingLabel(node, building);
+    return `${buildingLabel} ${role === 'start' ? 'Entrance' : 'Exit'}`;
+  }
+
+  return humanizeIndoorNodeType(node.type);
+};
+
+const getPathSteps = (path: IndoorNode[], building: BuildingShape | null) => {
   const steps: { icon: string; label: string }[] = [];
   let prevFloor = path[0]?.floor;
 
@@ -105,9 +128,12 @@ const getPathSteps = (path: IndoorNode[]) => {
   const end = path.at(-1);
   steps.unshift({
     icon: '🟢',
-    label: `Start: ${start.label || start.type} (Floor ${start.floor})`,
+    label: `Start: ${getPathEndpointLabel({ node: start, role: 'start', building })} (Floor ${start.floor})`,
   });
-  steps.push({ icon: '🔴', label: `End: ${end?.label || end?.type} (Floor ${end?.floor})` });
+  steps.push({
+    icon: '🔴',
+    label: `End: ${getPathEndpointLabel({ node: end, role: 'end', building })} (Floor ${end?.floor})`,
+  });
 
   return steps;
 };
@@ -136,9 +162,7 @@ export default function IndoorMapScreen({
 
   // ── Path Logic ──────────────────────────────────────────────────────────────
   const buildingGraph = useMemo(() => {
-    const code = selectedBuilding?.shortCode;
-    const graph = code ? (BUILDING_GRAPHS[code] ?? null) : null;
-    return graph;
+    return getIndoorGraph(selectedBuilding?.shortCode);
   }, [selectedBuilding?.shortCode]);
 
   const fullPath = useMemo(() => {
@@ -214,6 +238,10 @@ export default function IndoorMapScreen({
     return indoorFloorPlans ? Object.keys(indoorFloorPlans) : [];
   }, [indoorFloorPlans]);
 
+  useEffect(() => {
+    setSelectedBuilding(building);
+  }, [building]);
+
   // RESET FLOOR WHEN BUILDING CHANGES
   useEffect(() => {
     if (floorLevels.length > 0) {
@@ -248,7 +276,7 @@ export default function IndoorMapScreen({
 
   useEffect(() => {
     if (fullPath && fullPath.length > 0) {
-      onPathStepsChange?.(getPathSteps(fullPath));
+      onPathStepsChange?.(getPathSteps(fullPath, selectedBuilding));
     } else {
       onPathStepsChange?.([]);
     }

@@ -16,7 +16,7 @@ type BuildingDetailProps = {
   onShowDirections: (building: BuildingShape, asDestination?: boolean) => void;
   currentBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
-  onEnterBuilding: (building: BuildingShape) => void;
+  onEnterBuilding?: (building: BuildingShape) => void;
 };
 
 type BuildingService = {
@@ -80,7 +80,7 @@ export default function BuildingDetails({
     [selectedBuilding?.images],
   );
   const handleEnterBuildingPress = () => {
-    if (selectedBuilding) {
+    if (selectedBuilding && onEnterBuilding) {
       onEnterBuilding(selectedBuilding);
     }
   };
@@ -194,7 +194,7 @@ export default function BuildingDetails({
         </View>
         <View style={buildingDetailsStyles.headerIcons}>
           {/**Hides the 'enter building' button if no floor plan exists  */}
-          {hasIndoor ? (
+          {hasIndoor && onEnterBuilding ? (
             <TouchableOpacity
               style={buildingDetailsStyles.iconButton}
               onPress={handleEnterBuildingPress}

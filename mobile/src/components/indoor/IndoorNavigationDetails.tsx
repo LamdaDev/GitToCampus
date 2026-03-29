@@ -15,6 +15,8 @@ type IndoorNavigationProps = {
   onClose: () => void;
   onPrevFloor?: () => void;
   onNextFloor?: () => void;
+  stageActionLabel?: string;
+  onStageAction?: () => void;
 };
 
 export default function IndoorNavigationDetails({
@@ -26,6 +28,8 @@ export default function IndoorNavigationDetails({
   onClose,
   onPrevFloor,
   onNextFloor,
+  stageActionLabel,
+  onStageAction,
 }: Readonly<IndoorNavigationProps>) {
   return (
     <ScrollView
@@ -113,6 +117,17 @@ export default function IndoorNavigationDetails({
           ))
         )}
       </View>
+
+      {stageActionLabel && onStageAction ? (
+        <TouchableOpacity
+          testID="indoor-stage-action-button"
+          activeOpacity={0.88}
+          onPress={onStageAction}
+          style={directionDetailsStyles.stageActionButton}
+        >
+          <Text style={directionDetailsStyles.stageActionButtonText}>{stageActionLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
     </ScrollView>
   );
 }

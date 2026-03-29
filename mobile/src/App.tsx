@@ -139,6 +139,11 @@ const App = () => {
     setIsIndoor(false);
   }, []);
 
+  const handleShowOutdoorMap = useCallback(() => {
+    mapRef.current?.hideIndoor();
+    setIsIndoor(false);
+  }, []);
+
   const handlePrevPathFloor = useCallback(() => {
     prevFloorRef.current?.();
   }, []);
@@ -194,6 +199,7 @@ const App = () => {
           onNextPathFloor={handleNextPathFloor}
           onIndoorRouteChange={handleIndoorRouteChange}
           onIndoorTravelModeChange={setIndoorTravelMode}
+          onShowOutdoorMap={handleShowOutdoorMap}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

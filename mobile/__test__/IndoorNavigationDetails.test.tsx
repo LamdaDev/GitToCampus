@@ -73,4 +73,19 @@ describe('IndoorNavigationDetails', () => {
     expect(onPrevFloor).toHaveBeenCalledTimes(1);
     expect(onNextFloor).toHaveBeenCalledTimes(1);
   });
+
+  it('renders the staged route action button and triggers it when provided', () => {
+    const onStageAction = jest.fn();
+    const { getByTestId, getByText } = render(
+      <IndoorNavigationDetails
+        {...baseProps}
+        stageActionLabel="Continue to Outdoor Directions"
+        onStageAction={onStageAction}
+      />,
+    );
+
+    expect(getByText('Continue to Outdoor Directions')).toBeTruthy();
+    fireEvent.press(getByTestId('indoor-stage-action-button'));
+    expect(onStageAction).toHaveBeenCalledTimes(1);
+  });
 });

@@ -15,6 +15,10 @@ import { floorPlans } from '../../utils/floorPlans';
 import type { BuildingShape } from '../../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
 import { indoorBuildingSheetStyles } from '../../styles/IndoorBottomSheet.styles';
+import {
+  getIndoorBuildingKeysWithMetadata,
+  indoorBuildingMetadata,
+} from '../../utils/indoor/buildingMetadata';
 
 export type IndoorBottomSheetRef = {
   open: () => void;
@@ -39,34 +43,13 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
     }));
 
     const buildings = useMemo(() => {
-      const buildingMeta = {
-        CC: {
-          name: 'CC Building',
-          address: '7141 Sherbrooke West',
-        },
-        H: {
-          name: 'H Building',
-          address: '1450 De Maisonneuve Blvd W.',
-        },
-        MB: {
-          name: 'MB Building',
-          address: '1450 Guy Street',
-        },
-        VE: {
-          name: 'VE Building',
-          address: '7141 Sherbrooke West',
-        },
-        VL: {
-          name: 'Vanier Library',
-          address: '7141 Sherbrooke St W.',
-        },
-      };
-
-      return Object.keys(floorPlans).map((code) => ({
+      return getIndoorBuildingKeysWithMetadata(floorPlans).map((code) => ({
         id: code,
         shortCode: code,
-        name: buildingMeta[code as keyof typeof buildingMeta]?.name ?? code,
-        address: buildingMeta[code as keyof typeof buildingMeta]?.address ?? '',
+        name: indoorBuildingMetadata[code].name,
+        address: indoorBuildingMetadata[code].address,
+        campus: indoorBuildingMetadata[code].campus,
+        polygons: [],
       }));
     }, []);
 
@@ -140,7 +123,7 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
           />
           <BottomSheetFlatList<BuildingShape>
             data={filtered}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item: BuildingShape) => item.id}
             contentContainerStyle={[indoorBuildingSheetStyles.listContent, { paddingBottom: 250 }]}
             renderItem={renderBuildingItem}
             keyboardShouldPersistTaps="handled"
