@@ -20,6 +20,24 @@ jest.mock('expo-location', () => ({
   })),
 }));
 
+jest.mock('expo-calendar', () => ({
+  EntityTypes: {
+    EVENT: 'event',
+  },
+  getCalendarPermissionsAsync: jest.fn(async () => ({
+    status: 'granted',
+    granted: true,
+    canAskAgain: true,
+  })),
+  requestCalendarPermissionsAsync: jest.fn(async () => ({
+    status: 'granted',
+    granted: true,
+    canAskAgain: true,
+  })),
+  getCalendarsAsync: jest.fn(async () => []),
+  getEventsAsync: jest.fn(async () => []),
+}));
+
 // Silence known RN deprecation warning in tests (SafeAreaView).
 const originalWarn = console.warn;
 console.warn = (...args: unknown[]) => {

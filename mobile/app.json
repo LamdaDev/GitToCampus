@@ -32,6 +32,15 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-secure-store", "expo-web-browser"]
+    "plugins": [
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "GitToCampus uses your device calendar to show your upcoming classes when Google Calendar sign-in is unavailable."
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
+    ]
   }
 }

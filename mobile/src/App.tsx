@@ -12,7 +12,7 @@ import { SheetMode } from './types/SheetMode';
 import type { OutdoorRouteOverlay } from './types/Map';
 import { useSharedValue } from 'react-native-reanimated';
 import { initializeClarityAsync } from './services/clarity';
-import { getStoredGoogleCalendarSessionState } from './services/googleCalendarAuth';
+import { getCalendarConnectionStateAsync } from './services/calendarAccess';
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -78,8 +78,8 @@ const App = () => {
   const handleOpenCalendar = useCallback(async () => {
     openSearchBuilding();
 
-    const sessionState = await getStoredGoogleCalendarSessionState();
-    if (sessionState.status !== 'connected' || !sessionState.session) {
+    const connectionState = await getCalendarConnectionStateAsync();
+    if (connectionState.status !== 'connected' || !connectionState.source) {
       return;
     }
 
