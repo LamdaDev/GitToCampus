@@ -67,7 +67,10 @@ const SVG_VIEWBOXES: Record<string, { width: number; height: number }> = {
 // ── Converts path steps into labelled navigation steps ───────────────────────────
 const humanizeIndoorNodeType = (type: string) => type.replaceAll('_', ' ');
 
-const getIndoorNodeBuildingLabel = (node: IndoorNode | undefined, building: BuildingShape | null) => {
+const getIndoorNodeBuildingLabel = (
+  node: IndoorNode | undefined,
+  building: BuildingShape | null,
+) => {
   const normalizedNodeBuildingKey = normalizeIndoorBuildingKey(node?.buildingId);
   if (normalizedNodeBuildingKey) return normalizedNodeBuildingKey;
 
