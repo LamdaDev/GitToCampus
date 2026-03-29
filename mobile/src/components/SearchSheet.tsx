@@ -9,13 +9,15 @@ import type { ListRenderItemInfo } from 'react-native';
 import { roomListStyles as inDoorList } from '../styles/RoomList.Styles';
 import type { SearchMode } from '../types/SearchMode';
 import {
-  clearGoogleCalendarSession,
-  connectGoogleCalendarAsync,
-  fetchGoogleCalendarEventsAsync,
-  getStoredGoogleCalendarSessionState,
-  type GoogleCalendarEventItem,
-  type GoogleCalendarConnectionStatus,
-} from '../services/googleCalendarAuth';
+  DEVICE_CALENDAR_CONNECTED_HELPER_MESSAGE,
+  clearCalendarConnectionAsync,
+  connectCalendarAsync,
+  fetchCalendarEventsAsync,
+  getCalendarConnectionStateAsync,
+  type CalendarConnectionSource,
+  type CalendarConnectionStatus,
+  type CalendarEventItem,
+} from '../services/calendarAccess';
 import { getSupportedActiveOrUpcomingEvents } from '../utils/googleCalendarEventSelection';
 import type { RoomNode } from './indoor/RoomList';
 import RoomList from './indoor/RoomList';
@@ -25,7 +27,7 @@ type SearchBarProps = {
   onPressBuilding?: (b: BuildingShape) => void;
   onCalendarConnected?: () => void;
   selectedCalendarIds?: string[];
-  onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  onCalendarGoPress?: (nextClassEvent: CalendarEventItem | null) => void;
   calendarGoErrorMessage?: string | null;
   searchMode?: SearchMode;
   onSelectRoom?: (room: RoomNode) => void;
@@ -47,11 +49,12 @@ export default function SearchSheet({
   onSelectRoom,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
-  const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
+  const [calendarStatus, setCalendarStatus] = useState<CalendarConnectionStatus>('loading');
+  const [calendarSource, setCalendarSource] = useState<CalendarConnectionSource | null>(null);
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [isCalendarConnecting, setIsCalendarConnecting] = useState(false);
   const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
-  const [nextClassEvent, setNextClassEvent] = useState<GoogleCalendarEventItem | null>(null);
+  const [nextClassEvent, setNextClassEvent] = useState<CalendarEventItem | null>(null);
   const [isNextClassLoading, setIsNextClassLoading] = useState(false);
   const [hasOnlyUnsupportedNextClassEvents, setHasOnlyUnsupportedNextClassEvents] = useState(false);
   const nextClassRequestIdRef = useRef(0);
@@ -91,7 +94,7 @@ export default function SearchSheet({
     }
 
     setIsNextClassLoading(true);
-    const result = await fetchGoogleCalendarEventsAsync(selectedCalendarIds);
+    const result = await fetchCalendarEventsAsync(selectedCalendarIds);
     if (nextClassRequestIdRef.current !== requestId) return;
 
     setIsNextClassLoading(false);
@@ -131,11 +134,12 @@ export default function SearchSheet({
 
   const markSessionExpired = useCallback(async () => {
     try {
-      await clearGoogleCalendarSession();
+      await clearCalendarConnectionAsync('google');
     } catch {
       // Even if secure storage cleanup fails, force reconnect state in UI.
     }
     setCalendarStatus('expired');
+    setCalendarSource(null);
     setSessionExpiresAt(null);
     setCalendarMessage('Session expired. Reconnect Google Calendar to continue syncing.');
   }, []);
@@ -144,14 +148,18 @@ export default function SearchSheet({
     let isMounted = true;
 
     const hydrateSession = async () => {
-      const state = await getStoredGoogleCalendarSessionState();
+      const state = await getCalendarConnectionStateAsync();
       if (!isMounted) return;
 
       setCalendarStatus(state.status);
+      setCalendarSource(state.source);
       setSessionExpiresAt(state.session?.expiresAt ?? null);
       if (state.status === 'expired') {
         setCalendarMessage('Session expired. Reconnect Google Calendar to continue syncing.');
+        return;
       }
+
+      setCalendarMessage(null);
     };
 
     void hydrateSession();
@@ -162,7 +170,7 @@ export default function SearchSheet({
   }, []);
 
   useEffect(() => {
-    if (calendarStatus !== 'connected') return;
+    if (calendarStatus !== 'connected' || calendarSource !== 'google') return;
     if (!sessionExpiresAt) return;
 
     const millisRemaining = sessionExpiresAt - Date.now();
@@ -178,7 +186,7 @@ export default function SearchSheet({
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [calendarStatus, markSessionExpired, sessionExpiresAt]);
+  }, [calendarSource, calendarStatus, markSessionExpired, sessionExpiresAt]);
 
   useEffect(
     () => () => {
@@ -195,13 +203,14 @@ export default function SearchSheet({
     setIsCalendarConnecting(true);
     setCalendarMessage(null);
 
-    const result = await connectGoogleCalendarAsync();
+    const result = await connectCalendarAsync();
     setIsCalendarConnecting(false);
 
     if (result.type === 'success') {
       setCalendarStatus('connected');
-      setSessionExpiresAt(result.session.expiresAt);
-      setCalendarMessage(null);
+      setCalendarSource(result.source);
+      setSessionExpiresAt(result.session?.expiresAt ?? null);
+      setCalendarMessage(result.message ?? null);
       onCalendarConnected?.();
       return;
     }
@@ -218,7 +227,8 @@ export default function SearchSheet({
 
     if (result.type === 'denied') {
       setCalendarMessage(
-        'Calendar permission was denied. You can continue using the app and connect later.',
+        result.message ??
+          'Calendar permission was denied. You can continue using the app and connect later.',
       );
       setCalendarStatus((previousStatus) =>
         previousStatus === 'connected' || previousStatus === 'expired'
@@ -237,28 +247,51 @@ export default function SearchSheet({
   }, [onCalendarConnected]);
 
   const handleDisconnectCalendar = useCallback(async () => {
+    const previousSource = calendarSource;
     try {
-      await clearGoogleCalendarSession();
+      await clearCalendarConnectionAsync(calendarSource);
     } catch {
-      // Force local sign-out UI state even if secure-store cleanup fails.
+      // Force local sign-out UI state even if cleanup fails.
     }
 
     setCalendarStatus('not_connected');
+    setCalendarSource(null);
     setSessionExpiresAt(null);
     setNextClassEvent(null);
     setHasOnlyUnsupportedNextClassEvents(false);
-    setCalendarMessage('Signed out of Google Calendar.');
-  }, []);
+    setCalendarMessage(
+      previousSource === 'device'
+        ? 'Stopped using device calendars.'
+        : 'Signed out of Google Calendar.',
+    );
+  }, [calendarSource]);
 
   const buttonText = useMemo(() => {
     if (isCalendarConnecting) return 'Connecting...';
-    if (calendarStatus === 'connected') return 'Sign Out Google Calendar';
+    if (calendarStatus === 'connected') {
+      return calendarSource === 'device'
+        ? 'Stop Using Device Calendars'
+        : 'Sign Out Google Calendar';
+    }
     if (calendarStatus === 'loading') return 'Preparing Google Sign-In';
     if (calendarStatus === 'expired') {
       return 'Reconnect Google Calendar';
     }
     return 'Connect Google Calendar';
-  }, [calendarStatus, isCalendarConnecting]);
+  }, [calendarSource, calendarStatus, isCalendarConnecting]);
+
+  const calendarActionIconName = useMemo(() => {
+    if (calendarStatus === 'connected' && calendarSource === 'device') {
+      return 'calendar-outline';
+    }
+
+    return 'logo-google';
+  }, [calendarSource, calendarStatus]);
+
+  const helperMessage =
+    calendarStatus === 'connected' && calendarSource === 'device'
+      ? DEVICE_CALENDAR_CONNECTED_HELPER_MESSAGE
+      : null;
 
   const buttonDisabled = isCalendarConnecting || calendarStatus === 'loading';
   const handleSearchChange = useCallback((text?: string) => {
@@ -420,10 +453,12 @@ export default function SearchSheet({
         }
         testID="connect-google-calendar-button"
       >
-        <Ionicons name="logo-google" size={18} color="#111" />
+        <Ionicons name={calendarActionIconName} size={18} color="#111" />
         <Text style={searchBuilding.signInText}>{buttonText}</Text>
       </TouchableOpacity>
-      {calendarMessage ? <Text style={searchBuilding.authMessage}>{calendarMessage}</Text> : null}
+      {calendarMessage || helperMessage ? (
+        <Text style={searchBuilding.authMessage}>{calendarMessage ?? helperMessage}</Text>
+      ) : null}
 
       <View
         style={[

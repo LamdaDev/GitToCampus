@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import { FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { calendarSelectionCardStyles } from '../styles/CalendarSelectionCard.styles';
-import { type GoogleCalendarListItem } from '../services/googleCalendarAuth';
+import { type CalendarListItem } from '../services/calendarAccess';
 
 type CalendarSelectionCardProps = {
-  calendars: GoogleCalendarListItem[];
+  calendars: CalendarListItem[];
   selectedCalendarIds: string[];
   isLoading: boolean;
   errorMessage: string | null;
@@ -53,10 +53,10 @@ export default function CalendarSelectionCard({
         <View style={calendarSelectionCardStyles.options}>
           {calendars.length === 0 ? (
             <Text testID="calendar-list-empty" style={calendarSelectionCardStyles.infoText}>
-              No calendars were found on this account.
+              No calendars were found.
             </Text>
           ) : (
-            <FlatList<GoogleCalendarListItem>
+            <FlatList<CalendarListItem>
               testID="calendar-options-list"
               data={calendars}
               keyExtractor={(calendar) => calendar.id}

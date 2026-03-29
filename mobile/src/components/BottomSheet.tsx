@@ -37,7 +37,7 @@ import { formatEta } from '../utils/directionsFormatting';
 import { buildShuttlePlan } from '../services/shuttlePlanner';
 import type { ShuttlePlan } from '../types/Shuttle';
 import { fetchShuttleCompositeDirections } from '../services/directions/shuttleCompositeDirections';
-import type { GoogleCalendarEventItem } from '../services/googleCalendarAuth';
+import type { CalendarEventItem } from '../services/calendarAccess';
 import {
   CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
   getManualStartReasonMessage,
@@ -690,7 +690,7 @@ type SearchContentProps = {
   handleInternalSearch: (building: BuildingShape) => void;
   closeSearchBuilding: (building: BuildingShape) => void;
   openCalendarSelectionAfterConnect: () => void;
-  handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  handleCalendarGoFromSearch: (nextClassEvent: CalendarEventItem | null) => void;
   calendarGoErrorMessage: string | null;
   searchMode: SearchMode;
   onSelectRoom: (room: RoomNode) => void;
@@ -760,7 +760,7 @@ const renderBottomSheetContent = (props: {
   handleInternalSearch: (building: BuildingShape) => void;
   closeSearchBuilding: (building: BuildingShape) => void;
   openCalendarSelectionAfterConnect: () => void;
-  handleCalendarGoFromSearch: (nextClassEvent: GoogleCalendarEventItem | null) => void;
+  handleCalendarGoFromSearch: (nextClassEvent: CalendarEventItem | null) => void;
   calendarGoErrorMessage: string | null;
   searchMode: SearchMode;
   activeView: ViewType;
@@ -1295,7 +1295,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       openCalendarSelectionSlider(true);
     }, [openCalendarSelectionSlider]);
 
-    const handleCalendarGoFromSearch = (nextClassEvent: GoogleCalendarEventItem | null) => {
+    const handleCalendarGoFromSearch = (nextClassEvent: CalendarEventItem | null) => {
       setCalendarGoErrorMessage(null);
 
       if (nextClassEvent) {
@@ -1426,7 +1426,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     };
 
     const handleUpcomingClassPress = useCallback(
-      async (event: GoogleCalendarEventItem): Promise<string | null> => {
+      async (event: CalendarEventItem): Promise<string | null> => {
         try {
           clearCrossBuildingRouteFlowState();
           const resolved = await resolveCalendarRouteLocation(event.location);

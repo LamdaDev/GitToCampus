@@ -3,10 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import CalendarSelectionCard from './CalendarSelectionCard';
 import { calendarSelectionSliderStyles } from '../styles/CalendarSelectionSlider.styles';
-import {
-  fetchGoogleCalendarListAsync,
-  type GoogleCalendarListItem,
-} from '../services/googleCalendarAuth';
+import { fetchCalendarListAsync, type CalendarListItem } from '../services/calendarAccess';
 
 type CalendarSelectionSliderProps = {
   initialSelectedCalendarIds?: string[];
@@ -19,7 +16,7 @@ export default function CalendarSelectionSlider({
   onDone,
   onClose,
 }: Readonly<CalendarSelectionSliderProps>) {
-  const [availableCalendars, setAvailableCalendars] = useState<GoogleCalendarListItem[]>([]);
+  const [availableCalendars, setAvailableCalendars] = useState<CalendarListItem[]>([]);
   const [isCalendarListLoading, setIsCalendarListLoading] = useState(false);
   const [calendarListError, setCalendarListError] = useState<string | null>(null);
   const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>(
@@ -45,7 +42,7 @@ export default function CalendarSelectionSlider({
     setIsCalendarListLoading(true);
     setCalendarListError(null);
 
-    const result = await fetchGoogleCalendarListAsync();
+    const result = await fetchCalendarListAsync();
     setIsCalendarListLoading(false);
 
     if (result.type === 'error') {

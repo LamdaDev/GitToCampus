@@ -3,10 +3,7 @@ import { useWindowDimensions, Text, TouchableOpacity, View } from 'react-native'
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import type { ListRenderItemInfo } from 'react-native';
-import {
-  fetchGoogleCalendarEventsAsync,
-  type GoogleCalendarEventItem,
-} from '../services/googleCalendarAuth';
+import { fetchCalendarEventsAsync, type CalendarEventItem } from '../services/calendarAccess';
 import { upcomingClassesSliderStyles } from '../styles/UpcomingClassesSlider.styles';
 import {
   getSupportedActiveOrUpcomingEvents,
@@ -60,7 +57,7 @@ const formatEventDay = (date: Date) =>
     day: 'numeric',
   });
 
-const formatEventDateTimeRange = (event: Pick<GoogleCalendarEventItem, 'startsAt' | 'endsAt'>) => {
+const formatEventDateTimeRange = (event: Pick<CalendarEventItem, 'startsAt' | 'endsAt'>) => {
   const startDate = new Date(event.startsAt);
   const startDateLabel = formatEventDay(startDate);
   const startTimeLabel = formatEventTime(startDate);
@@ -85,8 +82,8 @@ export default function UpcomingClassesSlider({
 }: Readonly<UpcomingClassesSliderProps>) {
   const { height: windowHeight } = useWindowDimensions();
   const [now, setNow] = useState(() => new Date());
-  const [events, setEvents] = useState<GoogleCalendarEventItem[]>([]);
-  const [supportedEvents, setSupportedEvents] = useState<GoogleCalendarEventItem[]>([]);
+  const [events, setEvents] = useState<CalendarEventItem[]>([]);
+  const [supportedEvents, setSupportedEvents] = useState<CalendarEventItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -94,7 +91,7 @@ export default function UpcomingClassesSlider({
     setIsLoading(true);
     setErrorMessage(null);
 
-    const result = await fetchGoogleCalendarEventsAsync(selectedCalendarIds);
+    const result = await fetchCalendarEventsAsync(selectedCalendarIds);
     setIsLoading(false);
 
     if (result.type === 'error') {
@@ -163,36 +160,33 @@ export default function UpcomingClassesSlider({
     return Math.max(390, Math.min(targetHeight, 680));
   }, [windowHeight]);
 
-  const renderEventItem = useCallback(
-    ({ item: event }: ListRenderItemInfo<GoogleCalendarEventItem>) => {
-      const eventDateTimeRange = formatEventDateTimeRange(event);
+  const renderEventItem = useCallback(({ item: event }: ListRenderItemInfo<CalendarEventItem>) => {
+    const eventDateTimeRange = formatEventDateTimeRange(event);
 
-      return (
-        <View
-          testID={`upcoming-class-event-${event.id}`}
-          style={upcomingClassesSliderStyles.eventItem}
-        >
-          <Ionicons name="book" size={18} color="#F5F1F2" />
-          <View style={upcomingClassesSliderStyles.eventTextWrap}>
-            <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventTitleText}>
-              {event.title}
-            </Text>
-            <Text
-              testID={`upcoming-class-event-datetime-${event.id}`}
-              numberOfLines={1}
-              style={upcomingClassesSliderStyles.eventDateTimeText}
-            >
-              {eventDateTimeRange}
-            </Text>
-            <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventMetaText}>
-              {event.location ?? 'Location not provided'}
-            </Text>
-          </View>
+    return (
+      <View
+        testID={`upcoming-class-event-${event.id}`}
+        style={upcomingClassesSliderStyles.eventItem}
+      >
+        <Ionicons name="book" size={18} color="#F5F1F2" />
+        <View style={upcomingClassesSliderStyles.eventTextWrap}>
+          <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventTitleText}>
+            {event.title}
+          </Text>
+          <Text
+            testID={`upcoming-class-event-datetime-${event.id}`}
+            numberOfLines={1}
+            style={upcomingClassesSliderStyles.eventDateTimeText}
+          >
+            {eventDateTimeRange}
+          </Text>
+          <Text numberOfLines={1} style={upcomingClassesSliderStyles.eventMetaText}>
+            {event.location ?? 'Location not provided'}
+          </Text>
         </View>
-      );
-    },
-    [],
-  );
+      </View>
+    );
+  }, []);
 
   return (
     <View style={upcomingClassesSliderStyles.container} testID="upcoming-classes-slider">
@@ -253,9 +247,9 @@ export default function UpcomingClassesSlider({
                 eventsListMaxHeight ? { maxHeight: eventsListMaxHeight } : null,
               ]}
             >
-              <BottomSheetFlatList<GoogleCalendarEventItem>
+              <BottomSheetFlatList<CalendarEventItem>
                 data={displayedEvents}
-                keyExtractor={(event: GoogleCalendarEventItem) =>
+                keyExtractor={(event: CalendarEventItem) =>
                   `${event.calendarId}-${event.id}-${event.startsAt}`
                 }
                 style={upcomingClassesSliderStyles.eventsList}
