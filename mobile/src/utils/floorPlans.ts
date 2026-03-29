@@ -54,7 +54,8 @@ export type FloorPlanCatalog = ReturnType<typeof buildFloorPlans>;
 export type FloorPlanBuildingKey = keyof FloorPlanCatalog;
 export type FloorPlanLevels<T extends FloorPlanBuildingKey> = FloorPlanCatalog[T];
 export type FloorPlanLevel<T extends FloorPlanBuildingKey> = keyof FloorPlanLevels<T>;
-export type AnyFloorPlanLevel = FloorPlanCatalog[FloorPlanBuildingKey][keyof FloorPlanCatalog[FloorPlanBuildingKey]];
+export type AnyFloorPlanLevel =
+  FloorPlanCatalog[FloorPlanBuildingKey][keyof FloorPlanCatalog[FloorPlanBuildingKey]];
 
 export const getFloorPlans = (): FloorPlanCatalog => buildFloorPlans();
 
@@ -81,9 +82,8 @@ export const getFloorPlan = (
   const buildingFloorPlans = getFloorPlansForBuilding(buildingCode);
   if (!buildingFloorPlans) return null;
 
-  return (
-    buildingFloorPlans[floorLevel as unknown as keyof typeof buildingFloorPlans] ?? null
-  ) as AnyFloorPlanLevel | null;
+  return (buildingFloorPlans[floorLevel as unknown as keyof typeof buildingFloorPlans] ??
+    null) as AnyFloorPlanLevel | null;
 };
 
 export const getFloorPlanBuildingKeys = (): FloorPlanBuildingKey[] =>

@@ -16,6 +16,11 @@ const mockOnOpenCalendar = jest.fn();
 const mockHideAppSearchBar = jest.fn();
 const mockRevealSearchBar = jest.fn();
 const mockGetViewManagerConfig = jest.fn();
+const originalHasViewManagerConfig = (
+  UIManager as typeof UIManager & {
+    hasViewManagerConfig?: (name: string) => boolean;
+  }
+).hasViewManagerConfig;
 
 let capturedSheetProps: {
   reOpenSearchBar: () => void;
@@ -54,6 +59,8 @@ jest.mock('../src/components/indoor/BuildingListSheet', () => {
   return MockSheet;
 });
 
+jest.mock('../src/components/indoor/PathOverlay', () => jest.fn(() => null));
+
 const mockedFloorPlans: Record<string, Record<string, { type: string; data: any }>> = {
   H: {
     1: { type: 'svg', data: jest.fn(() => null) },
@@ -71,6 +78,39 @@ jest.mock('../src/utils/floorPlans', () => ({
   getFloorPlansForBuilding: (buildingCode: string) => mockedFloorPlans[buildingCode] ?? null,
   getFloorPlan: (buildingCode: string, floorLevel: string) =>
     mockedFloorPlans[buildingCode]?.[floorLevel] ?? null,
+}));
+
+const mockedIndoorGraphs: Record<
+  string,
+  { nodes: Array<{ id: string; floor: number }>; edges: any[] }
+> = {
+  CC: {
+    nodes: [{ id: 'cc-101', floor: 1 }],
+    edges: [],
+  },
+  H: {
+    nodes: [
+      { id: 'a', floor: 1 },
+      { id: 'b', floor: 1 },
+      { id: 'c', floor: 2 },
+      { id: 'd', floor: 3 },
+      { id: 'h-101', floor: 1 },
+      { id: 'h-202', floor: 2 },
+    ],
+    edges: [],
+  },
+  MB: {
+    nodes: [{ id: 'mb-101', floor: 1 }],
+    edges: [],
+  },
+  VE: {
+    nodes: [{ id: 've-101', floor: 1 }],
+    edges: [],
+  },
+};
+
+jest.mock('../src/utils/indoor/indoorGraphs', () => ({
+  getIndoorGraph: (buildingCode: string) => mockedIndoorGraphs[buildingCode] ?? null,
 }));
 
 jest.mock('../src/utils/indoor/indoorPathFinding', () => ({
@@ -125,9 +165,16 @@ describe('IndoorMapScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedSheetProps = null;
+    delete mockedFloorPlans.XYZ;
+    delete mockedIndoorGraphs.XYZ;
     mockGetViewManagerConfig.mockImplementation((name: string) =>
       name.startsWith('RNSVG') ? {} : null,
     );
+    (
+      UIManager as typeof UIManager & {
+        hasViewManagerConfig?: (name: string) => boolean;
+      }
+    ).hasViewManagerConfig = originalHasViewManagerConfig;
     (
       UIManager as typeof UIManager & {
         getViewManagerConfig?: (name: string) => unknown;
@@ -393,6 +440,27 @@ describe('IndoorMapScreen', () => {
     expect(getByText('Indoor map unavailable in this build')).toBeTruthy();
   });
 
+  test('uses UIManager.hasViewManagerConfig when available to detect native SVG support', () => {
+    const mockHasViewManagerConfig = jest.fn((name: string) => name === 'RNSVGPath');
+    (
+      UIManager as typeof UIManager & {
+        hasViewManagerConfig?: (name: string) => boolean;
+      }
+    ).hasViewManagerConfig = mockHasViewManagerConfig;
+
+    const { queryByTestId } = render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+      />,
+    );
+
+    expect(mockHasViewManagerConfig).toHaveBeenCalled();
+    expect(queryByTestId('indoor-map-svg-fallback')).toBeNull();
+  });
+
   test('handleNextPathFloor and handlePrevPathFloor are passed as functions via onFloorNavReady', async () => {
     const mockFloorNavReady = jest.fn();
     render(
@@ -646,5 +714,205 @@ describe('IndoorMapScreen', () => {
       const steps = mockPathStepsChange.mock.calls.flat(2);
       expect(steps.some((s: any) => s.label?.toLowerCase().includes('stair'))).toBe(true);
     });
+  });
+
+  test('onPathStepsChange humanizes unlabeled non-transfer nodes', async () => {
+    const mockPathStepsChange = jest.fn();
+    findIndoorPath.mockReturnValue([
+      {
+        id: 'a',
+        type: 'room',
+        floor: 1,
+        label: 'Room A',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'b',
+        type: 'elevator_door',
+        floor: 1,
+        label: '',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+    ]);
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        externalStartRoomId="a"
+        externalEndRoomId="b"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => {
+      const steps = mockPathStepsChange.mock.calls.flat(2);
+      expect(steps.some((s: any) => s.label === 'End: elevator door (Floor 1)')).toBe(true);
+    });
+  });
+
+  test('onPathStepsChange falls back to the raw selected building short code for transfer labels', async () => {
+    const mockPathStepsChange = jest.fn();
+    mockedFloorPlans.XYZ = {
+      1: { type: 'svg', data: jest.fn(() => null) },
+    };
+    mockedIndoorGraphs.XYZ = {
+      nodes: [{ id: 'start', floor: 1 }],
+      edges: [],
+    };
+
+    findIndoorPath.mockReturnValue([
+      {
+        id: 'start',
+        type: 'room',
+        floor: 1,
+        label: 'Start',
+        buildingId: 'XYZ',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'exit',
+        type: 'building_entry_exit',
+        floor: 1,
+        label: '',
+        buildingId: undefined,
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+    ]);
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={{
+          id: 'mystery-annex',
+          shortCode: 'XYZ',
+          name: 'Mystery Annex',
+          campus: 'SGW',
+          polygons: [],
+        }}
+        externalStartRoomId="start"
+        externalEndRoomId="exit"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => {
+      const steps = mockPathStepsChange.mock.calls.flat(2);
+      expect(steps.some((s: any) => s.label === 'End: XYZ Exit (Floor 1)')).toBe(true);
+    });
+  });
+
+  test('path floor navigation handlers move between route floors and clamp at the ends', async () => {
+    const mockFloorNavReady = jest.fn();
+    findIndoorPath.mockReturnValue([
+      {
+        id: 'a',
+        type: 'room',
+        floor: 1,
+        label: 'Room A',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'b',
+        type: 'stair_landing',
+        floor: 1,
+        label: '',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'c',
+        type: 'room',
+        floor: 2,
+        label: 'Room C',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'd',
+        type: 'stair_landing',
+        floor: 2,
+        label: '',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'e',
+        type: 'room',
+        floor: 3,
+        label: 'Room E',
+        buildingId: 'H',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+    ]);
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        externalStartRoomId="a"
+        externalEndRoomId="e"
+        onFloorNavReady={mockFloorNavReady}
+      />,
+    );
+
+    let prevPathFloor: () => void;
+    let nextPathFloor: () => void;
+
+    await waitFor(() => {
+      expect(mockFloorNavReady).toHaveBeenCalled();
+      [prevPathFloor, nextPathFloor] = mockFloorNavReady.mock.calls.at(-1);
+      expect(getControlsProps().currentFloor).toBe('1');
+    });
+
+    nextPathFloor!();
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('2'));
+    [, nextPathFloor] = mockFloorNavReady.mock.calls.at(-1);
+
+    nextPathFloor!();
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('3'));
+    [prevPathFloor, nextPathFloor] = mockFloorNavReady.mock.calls.at(-1);
+
+    nextPathFloor!();
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('3'));
+    [prevPathFloor, nextPathFloor] = mockFloorNavReady.mock.calls.at(-1);
+
+    prevPathFloor!();
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('2'));
+    [prevPathFloor] = mockFloorNavReady.mock.calls.at(-1);
+
+    prevPathFloor!();
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('1'));
+    [prevPathFloor] = mockFloorNavReady.mock.calls.at(-1);
+
+    prevPathFloor!();
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('1'));
   });
 });
