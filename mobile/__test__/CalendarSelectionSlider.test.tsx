@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import CalendarSelectionSlider from '../src/components/CalendarSelectionSlider';
-import * as googleCalendarAuth from '../src/services/googleCalendarAuth';
+import * as calendarAccess from '../src/services/calendarAccess';
 
 const mockGoogleCalendars = [
   {
@@ -25,26 +25,26 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('../src/services/googleCalendarAuth', () => ({
-  fetchGoogleCalendarListAsync: jest.fn(async () => ({
+jest.mock('../src/services/calendarAccess', () => ({
+  fetchCalendarListAsync: jest.fn(async () => ({
     type: 'success',
     calendars: [],
   })),
 }));
 
 describe('CalendarSelectionSlider', () => {
-  const fetchGoogleCalendarListMock = googleCalendarAuth.fetchGoogleCalendarListAsync as jest.Mock;
+  const fetchCalendarListMock = calendarAccess.fetchCalendarListAsync as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    fetchGoogleCalendarListMock.mockResolvedValue({
+    fetchCalendarListMock.mockResolvedValue({
       type: 'success',
       calendars: [],
     });
   });
 
   test('loads and renders calendar options when fetch succeeds', async () => {
-    fetchGoogleCalendarListMock.mockResolvedValueOnce({
+    fetchCalendarListMock.mockResolvedValueOnce({
       type: 'success',
       calendars: mockGoogleCalendars,
     });
@@ -58,7 +58,7 @@ describe('CalendarSelectionSlider', () => {
   });
 
   test('allows selecting multiple calendars', async () => {
-    fetchGoogleCalendarListMock.mockResolvedValueOnce({
+    fetchCalendarListMock.mockResolvedValueOnce({
       type: 'success',
       calendars: mockGoogleCalendars,
     });
@@ -75,7 +75,7 @@ describe('CalendarSelectionSlider', () => {
   });
 
   test('keeps only provided selected calendars checked when reopened', async () => {
-    fetchGoogleCalendarListMock.mockResolvedValueOnce({
+    fetchCalendarListMock.mockResolvedValueOnce({
       type: 'success',
       calendars: mockGoogleCalendars,
     });
@@ -93,7 +93,7 @@ describe('CalendarSelectionSlider', () => {
   });
 
   test('shows error and retries loading', async () => {
-    fetchGoogleCalendarListMock
+    fetchCalendarListMock
       .mockResolvedValueOnce({
         type: 'error',
         message: 'Unable to load calendar list right now. Please retry.',
@@ -110,7 +110,7 @@ describe('CalendarSelectionSlider', () => {
     );
 
     fireEvent.press(getByTestId('retry-calendar-list-button'));
-    await waitFor(() => expect(fetchGoogleCalendarListMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetchCalendarListMock).toHaveBeenCalledTimes(2));
     expect(getByTestId('calendar-option-primary-calendar')).toBeTruthy();
   });
 
@@ -118,7 +118,7 @@ describe('CalendarSelectionSlider', () => {
     const onDone = jest.fn();
     const { getByTestId } = render(<CalendarSelectionSlider onDone={onDone} />);
 
-    await waitFor(() => expect(fetchGoogleCalendarListMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchCalendarListMock).toHaveBeenCalledTimes(1));
     fireEvent.press(getByTestId('calendar-selection-done-button'));
 
     expect(onDone).toHaveBeenCalledTimes(1);
@@ -128,7 +128,7 @@ describe('CalendarSelectionSlider', () => {
     const onClose = jest.fn();
     const { getByTestId } = render(<CalendarSelectionSlider onClose={onClose} />);
 
-    await waitFor(() => expect(fetchGoogleCalendarListMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchCalendarListMock).toHaveBeenCalledTimes(1));
     fireEvent.press(getByTestId('close-calendar-selection-button'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });

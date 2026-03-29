@@ -9,9 +9,10 @@ const mockInitializeClarityAsync = jest.fn(async () => {});
 const mockCloseCalendarSlider = jest.fn();
 const mockBottomSheetOpen = jest.fn();
 const mockOpenCalendarEventsSlider = jest.fn();
-const mockGetStoredGoogleCalendarSessionState = jest.fn(
+const mockGetCalendarConnectionStateAsync = jest.fn(
   async (): Promise<any> => ({
     status: 'not_connected',
+    source: null,
     session: null,
   }),
 );
@@ -153,8 +154,8 @@ jest.mock('../src/services/clarity', () => ({
   initializeClarityAsync: () => mockInitializeClarityAsync(),
 }));
 
-jest.mock('../src/services/googleCalendarAuth', () => ({
-  getStoredGoogleCalendarSessionState: () => mockGetStoredGoogleCalendarSessionState(),
+jest.mock('../src/services/calendarAccess', () => ({
+  getCalendarConnectionStateAsync: () => mockGetCalendarConnectionStateAsync(),
 }));
 
 describe('App', () => {
@@ -164,8 +165,9 @@ describe('App', () => {
     mockCloseCalendarSlider.mockClear();
     mockBottomSheetOpen.mockClear();
     mockOpenCalendarEventsSlider.mockClear();
-    mockGetStoredGoogleCalendarSessionState.mockResolvedValue({
+    mockGetCalendarConnectionStateAsync.mockResolvedValue({
       status: 'not_connected',
+      source: null,
       session: null,
     });
   });
@@ -259,14 +261,15 @@ describe('App', () => {
     fireEvent.press(getByTestId('open-calendar-shortcut'));
 
     await waitFor(() => expect(mockBottomSheetOpen).toHaveBeenCalledWith(1));
-    expect(mockGetStoredGoogleCalendarSessionState).toHaveBeenCalledTimes(1);
+    expect(mockGetCalendarConnectionStateAsync).toHaveBeenCalledTimes(1);
     expect(mockOpenCalendarEventsSlider).not.toHaveBeenCalled();
     expect(queryByTestId('search-bar')).toBeNull();
   });
 
   test('calendar shortcut opens upcoming classes when Google Calendar is connected', async () => {
-    mockGetStoredGoogleCalendarSessionState.mockResolvedValueOnce({
+    mockGetCalendarConnectionStateAsync.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token',
         tokenType: 'Bearer',
@@ -285,10 +288,27 @@ describe('App', () => {
     });
   });
 
+  test('calendar shortcut opens upcoming classes when device calendars are connected', async () => {
+    mockGetCalendarConnectionStateAsync.mockResolvedValueOnce({
+      status: 'connected',
+      source: 'device',
+      session: null,
+    });
+
+    const { getByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('open-calendar-shortcut'));
+
+    await waitFor(() => {
+      expect(mockBottomSheetOpen).toHaveBeenCalledWith(1);
+      expect(mockOpenCalendarEventsSlider).toHaveBeenCalledWith();
+    });
+  });
+
   test('calendar shortcut logs warning when calendar state loading fails', async () => {
     const error = new Error('calendar auth read failed');
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    mockGetStoredGoogleCalendarSessionState.mockRejectedValueOnce(error);
+    mockGetCalendarConnectionStateAsync.mockRejectedValueOnce(error);
 
     const { getByTestId } = render(<App />);
 

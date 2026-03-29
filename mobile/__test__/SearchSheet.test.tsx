@@ -3,7 +3,7 @@ import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
 import SearchSheet from '../src/components/SearchSheet';
 import { Campus } from '../src/types/Campus';
 import { BuildingShape } from '../src/types/BuildingShape';
-import * as googleCalendarAuth from '../src/services/googleCalendarAuth';
+import * as calendarAccess from '../src/services/calendarAccess';
 
 const mockBuildings: BuildingShape[] = [
   {
@@ -93,26 +93,17 @@ jest.mock('../src/components/indoor/RoomList', () => {
   );
 });
 
-jest.mock('../src/services/googleCalendarAuth', () => ({
-  connectGoogleCalendarAsync: jest.fn(async () => ({ type: 'cancel' })),
-  fetchGoogleCalendarEventsAsync: jest.fn(async () => ({ type: 'success', events: [] })),
-  getStoredGoogleCalendarSessionState: jest.fn(async () => ({
+jest.mock('../src/services/calendarAccess', () => ({
+  connectCalendarAsync: jest.fn(async () => ({ type: 'cancel' })),
+  fetchCalendarEventsAsync: jest.fn(async () => ({ type: 'success', events: [] })),
+  getCalendarConnectionStateAsync: jest.fn(async () => ({
     status: 'not_connected',
+    source: null,
     session: null,
   })),
-  clearGoogleCalendarSession: jest.fn(async () => {}),
-  isGoogleCalendarEventActiveOrUpcoming: jest.fn(
-    (
-      event: {
-        startsAt: number;
-        endsAt?: number;
-      },
-      nowTimestamp: number,
-    ) =>
-      typeof event.endsAt === 'number'
-        ? event.endsAt > nowTimestamp
-        : event.startsAt >= nowTimestamp,
-  ),
+  clearCalendarConnectionAsync: jest.fn(async () => {}),
+  DEVICE_CALENDAR_CONNECTED_HELPER_MESSAGE:
+    'Using device calendars instead. If your Google account syncs to this device, its events should appear here.',
 }));
 
 const createDeferred = <T,>() => {
@@ -125,22 +116,22 @@ const createDeferred = <T,>() => {
 };
 
 describe('SearchSheet', () => {
-  const getStoredSessionStateMock =
-    googleCalendarAuth.getStoredGoogleCalendarSessionState as jest.Mock;
-  const connectGoogleCalendarMock = googleCalendarAuth.connectGoogleCalendarAsync as jest.Mock;
-  const fetchGoogleCalendarEventsMock =
-    googleCalendarAuth.fetchGoogleCalendarEventsAsync as jest.Mock;
-  const clearCalendarSessionMock = googleCalendarAuth.clearGoogleCalendarSession as jest.Mock;
+  const getCalendarConnectionStateMock =
+    calendarAccess.getCalendarConnectionStateAsync as jest.Mock;
+  const connectCalendarMock = calendarAccess.connectCalendarAsync as jest.Mock;
+  const fetchCalendarEventsMock = calendarAccess.fetchCalendarEventsAsync as jest.Mock;
+  const clearCalendarConnectionMock = calendarAccess.clearCalendarConnectionAsync as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    getStoredSessionStateMock.mockResolvedValue({
+    getCalendarConnectionStateMock.mockResolvedValue({
       status: 'not_connected',
+      source: null,
       session: null,
     });
-    connectGoogleCalendarMock.mockResolvedValue({ type: 'cancel' });
-    fetchGoogleCalendarEventsMock.mockResolvedValue({ type: 'success', events: [] });
-    clearCalendarSessionMock.mockResolvedValue(undefined);
+    connectCalendarMock.mockResolvedValue({ type: 'cancel' });
+    fetchCalendarEventsMock.mockResolvedValue({ type: 'success', events: [] });
+    clearCalendarConnectionMock.mockResolvedValue(undefined);
     jest.useRealTimers();
   });
 
@@ -238,7 +229,7 @@ describe('SearchSheet', () => {
   });
 
   test('shows a clear denied-permission message when auth is denied', async () => {
-    connectGoogleCalendarMock.mockResolvedValueOnce({ type: 'denied' });
+    connectCalendarMock.mockResolvedValueOnce({ type: 'denied' });
     const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
 
     await waitFor(() =>
@@ -248,7 +239,7 @@ describe('SearchSheet', () => {
     );
     fireEvent.press(getByTestId('connect-google-calendar-button'));
 
-    await waitFor(() => expect(connectGoogleCalendarMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(connectCalendarMock).toHaveBeenCalledTimes(1));
 
     expect(
       await findByText(
@@ -259,8 +250,9 @@ describe('SearchSheet', () => {
 
   test('shows connected state after successful calendar sign-in', async () => {
     const onCalendarConnected = jest.fn();
-    connectGoogleCalendarMock.mockResolvedValueOnce({
+    connectCalendarMock.mockResolvedValueOnce({
       type: 'success',
+      source: 'google',
       session: {
         accessToken: 'token-1',
         tokenType: 'Bearer',
@@ -279,7 +271,7 @@ describe('SearchSheet', () => {
     );
     fireEvent.press(getByTestId('connect-google-calendar-button'));
 
-    await waitFor(() => expect(connectGoogleCalendarMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(connectCalendarMock).toHaveBeenCalledTimes(1));
 
     expect(queryByText('Google Calendar connected.')).toBeNull();
     expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
@@ -288,9 +280,40 @@ describe('SearchSheet', () => {
     expect(onCalendarConnected).toHaveBeenCalledTimes(1);
   });
 
+  test('shows device-calendar fallback state after fallback connection succeeds', async () => {
+    connectCalendarMock.mockResolvedValueOnce({
+      type: 'success',
+      source: 'device',
+      session: null,
+      message:
+        'Using device calendars instead. If your Google account syncs to this device, its events should appear here.',
+    });
+
+    const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
+
+    await waitFor(() =>
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Connect Google Calendar',
+      ),
+    );
+    fireEvent.press(getByTestId('connect-google-calendar-button'));
+
+    await waitFor(() =>
+      expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
+        'Stop Using Device Calendars',
+      ),
+    );
+    expect(
+      await findByText(
+        'Using device calendars instead. If your Google account syncs to this device, its events should appear here.',
+      ),
+    ).toBeTruthy();
+  });
+
   test('shows next class card and calls GO action when connected with selected calendars', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-live',
         tokenType: 'Bearer',
@@ -298,7 +321,7 @@ describe('SearchSheet', () => {
         expiresAt: Date.now() + 10 * 60 * 1000,
       },
     });
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: [
         {
@@ -321,7 +344,7 @@ describe('SearchSheet', () => {
     );
 
     await waitFor(() => expect(getByTestId('next-class-card')).toBeTruthy());
-    await waitFor(() => expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledWith(['calendar-1']));
+    await waitFor(() => expect(fetchCalendarEventsMock).toHaveBeenCalledWith(['calendar-1']));
     await waitFor(() => expect(getAllByText('Hall Building 435').length).toBeGreaterThan(0));
 
     fireEvent.press(getByTestId('next-class-go-button'));
@@ -336,8 +359,9 @@ describe('SearchSheet', () => {
   });
 
   test('ignores stale next class responses when selected calendars change quickly', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-live',
         tokenType: 'Bearer',
@@ -367,7 +391,7 @@ describe('SearchSheet', () => {
       }[];
     }>();
 
-    fetchGoogleCalendarEventsMock
+    fetchCalendarEventsMock
       .mockImplementationOnce(() => firstRequest.promise)
       .mockImplementationOnce(() => secondRequest.promise);
 
@@ -380,7 +404,7 @@ describe('SearchSheet', () => {
       />,
     );
 
-    await waitFor(() => expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledWith(['calendar-1']));
+    await waitFor(() => expect(fetchCalendarEventsMock).toHaveBeenCalledWith(['calendar-1']));
 
     rerender(
       <SearchSheet
@@ -390,9 +414,7 @@ describe('SearchSheet', () => {
       />,
     );
 
-    await waitFor(() =>
-      expect(fetchGoogleCalendarEventsMock).toHaveBeenLastCalledWith(['calendar-2']),
-    );
+    await waitFor(() => expect(fetchCalendarEventsMock).toHaveBeenLastCalledWith(['calendar-2']));
 
     await act(async () => {
       secondRequest.resolve({
@@ -441,8 +463,9 @@ describe('SearchSheet', () => {
   });
 
   test('filters unsupported locations and chooses the next supported class for GO', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-live',
         tokenType: 'Bearer',
@@ -450,7 +473,7 @@ describe('SearchSheet', () => {
         expiresAt: Date.now() + 10 * 60 * 1000,
       },
     });
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: [
         {
@@ -493,8 +516,9 @@ describe('SearchSheet', () => {
   });
 
   test('shows no upcoming classes in next class card when events are empty', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-live',
         tokenType: 'Bearer',
@@ -502,7 +526,7 @@ describe('SearchSheet', () => {
         expiresAt: Date.now() + 10 * 60 * 1000,
       },
     });
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: [],
     });
@@ -517,8 +541,9 @@ describe('SearchSheet', () => {
   });
 
   test('shows supported-location empty state when upcoming events are filtered out', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-live',
         tokenType: 'Bearer',
@@ -526,7 +551,7 @@ describe('SearchSheet', () => {
         expiresAt: Date.now() + 10 * 60 * 1000,
       },
     });
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: [
         {
@@ -548,8 +573,9 @@ describe('SearchSheet', () => {
   });
 
   test('shows calendar GO error message when provided by parent', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-live',
         tokenType: 'Bearer',
@@ -572,8 +598,9 @@ describe('SearchSheet', () => {
   });
 
   test('shows expired helper and status when a stored session is already expired', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'expired',
+      source: null,
       session: null,
     });
 
@@ -587,8 +614,9 @@ describe('SearchSheet', () => {
   });
 
   test('marks connected sessions as expired immediately when token expiry has passed', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-expired',
         tokenType: 'Bearer',
@@ -599,7 +627,7 @@ describe('SearchSheet', () => {
 
     const { getByTestId, findByText } = render(<SearchSheet buildings={mockBuildings} />);
 
-    await waitFor(() => expect(clearCalendarSessionMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(clearCalendarConnectionMock).toHaveBeenCalledTimes(1));
     expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
       'Reconnect Google Calendar',
     );
@@ -609,9 +637,10 @@ describe('SearchSheet', () => {
   });
 
   test('still marks session as expired if secure-store cleanup fails', async () => {
-    clearCalendarSessionMock.mockRejectedValueOnce(new Error('secure store failed'));
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    clearCalendarConnectionMock.mockRejectedValueOnce(new Error('secure store failed'));
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-expired',
         tokenType: 'Bearer',
@@ -634,8 +663,9 @@ describe('SearchSheet', () => {
 
   test('expires connected session when timeout elapses', async () => {
     jest.useFakeTimers();
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-future',
         tokenType: 'Bearer',
@@ -661,12 +691,13 @@ describe('SearchSheet', () => {
         'Reconnect Google Calendar',
       ),
     );
-    expect(clearCalendarSessionMock).toHaveBeenCalledTimes(1);
+    expect(clearCalendarConnectionMock).toHaveBeenCalledTimes(1);
   });
 
   test('signs out when calendar action button is pressed in connected state', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'connected',
+      source: 'google',
       session: {
         accessToken: 'token-live',
         tokenType: 'Bearer',
@@ -688,20 +719,21 @@ describe('SearchSheet', () => {
 
     fireEvent.press(getByTestId('connect-google-calendar-button'));
 
-    await waitFor(() => expect(clearCalendarSessionMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(clearCalendarConnectionMock).toHaveBeenCalledTimes(1));
     expect(await findByText('Signed out of Google Calendar.')).toBeTruthy();
     expect(getByTestId('connect-google-calendar-button')).toHaveTextContent(
       'Connect Google Calendar',
     );
-    expect(connectGoogleCalendarMock).not.toHaveBeenCalled();
+    expect(connectCalendarMock).not.toHaveBeenCalled();
   });
 
   test('preserves expired status when reconnect fails with generic error', async () => {
-    getStoredSessionStateMock.mockResolvedValueOnce({
+    getCalendarConnectionStateMock.mockResolvedValueOnce({
       status: 'expired',
+      source: null,
       session: null,
     });
-    connectGoogleCalendarMock.mockResolvedValueOnce({
+    connectCalendarMock.mockResolvedValueOnce({
       type: 'error',
       message: 'Failed to refresh token.',
     });

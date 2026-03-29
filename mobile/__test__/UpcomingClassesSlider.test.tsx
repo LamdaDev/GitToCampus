@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { act } from 'react-test-renderer';
 import UpcomingClassesSlider from '../src/components/UpcomingClassesSlider';
-import * as googleCalendarAuth from '../src/services/googleCalendarAuth';
+import * as calendarAccess from '../src/services/calendarAccess';
 import * as calendarRouteLocation from '../src/utils/calendarRouteLocation';
 
 const mockEvents = [
@@ -47,41 +47,28 @@ jest.mock('@gorhom/bottom-sheet', () => {
   };
 });
 
-jest.mock('../src/services/googleCalendarAuth', () => ({
-  fetchGoogleCalendarEventsAsync: jest.fn(async () => ({
+jest.mock('../src/services/calendarAccess', () => ({
+  fetchCalendarEventsAsync: jest.fn(async () => ({
     type: 'success',
     events: [],
   })),
-  isGoogleCalendarEventActiveOrUpcoming: jest.fn(
-    (
-      event: {
-        startsAt: number;
-        endsAt?: number;
-      },
-      nowTimestamp: number,
-    ) =>
-      typeof event.endsAt === 'number'
-        ? event.endsAt > nowTimestamp
-        : event.startsAt >= nowTimestamp,
-  ),
 }));
 
 describe('UpcomingClassesSlider', () => {
   jest.setTimeout(15_000);
 
-  const fetchGoogleCalendarEventsMock =
-    googleCalendarAuth.fetchGoogleCalendarEventsAsync as jest.Mock;
+  const fetchCalendarEventsMock = calendarAccess.fetchCalendarEventsAsync as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    fetchGoogleCalendarEventsMock.mockResolvedValue({
+    fetchCalendarEventsMock.mockResolvedValue({
       type: 'success',
       events: [],
     });
   });
 
   test('loads and renders upcoming class events', async () => {
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: mockEvents,
     });
@@ -101,7 +88,7 @@ describe('UpcomingClassesSlider', () => {
   });
 
   test('includes the end date when an event crosses into the next day', async () => {
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: [
         {
@@ -123,7 +110,7 @@ describe('UpcomingClassesSlider', () => {
   });
 
   test('filters out upcoming events without supported Concordia locations', async () => {
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: [
         {
@@ -159,7 +146,7 @@ describe('UpcomingClassesSlider', () => {
     const parserSpy = jest.spyOn(calendarRouteLocation, 'isSupportedCalendarEventLocation');
 
     try {
-      fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      fetchCalendarEventsMock.mockResolvedValueOnce({
         type: 'success',
         events: mockEvents,
       });
@@ -184,7 +171,7 @@ describe('UpcomingClassesSlider', () => {
   });
 
   test('does not render next class summary card', async () => {
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: mockEvents,
     });
@@ -193,13 +180,13 @@ describe('UpcomingClassesSlider', () => {
       <UpcomingClassesSlider selectedCalendarIds={['calendar-1']} />,
     );
 
-    await waitFor(() => expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchCalendarEventsMock).toHaveBeenCalledTimes(1));
     expect(queryByTestId('next-class-summary-card')).toBeNull();
     expect(queryByText('Next Class')).toBeNull();
   });
 
   test('shows error and retries loading upcoming classes', async () => {
-    fetchGoogleCalendarEventsMock
+    fetchCalendarEventsMock
       .mockResolvedValueOnce({
         type: 'error',
         message: 'Unable to load upcoming classes right now. Please retry.',
@@ -218,12 +205,12 @@ describe('UpcomingClassesSlider', () => {
     );
 
     fireEvent.press(getByTestId('retry-upcoming-classes-button'));
-    await waitFor(() => expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetchCalendarEventsMock).toHaveBeenCalledTimes(2));
     expect(getByTestId('upcoming-class-event-event-1')).toBeTruthy();
   });
 
   test('shows empty state when there are no upcoming classes', async () => {
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: [],
     });
@@ -235,7 +222,7 @@ describe('UpcomingClassesSlider', () => {
   });
 
   test('shows supported-location empty state when upcoming events are filtered out', async () => {
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: [
         {
@@ -264,7 +251,7 @@ describe('UpcomingClassesSlider', () => {
       />,
     );
 
-    await waitFor(() => expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchCalendarEventsMock).toHaveBeenCalledTimes(1));
     fireEvent.press(getByTestId('reselect-calendars-button'));
     expect(onReselectCalendars).toHaveBeenCalledTimes(1);
   });
@@ -275,13 +262,13 @@ describe('UpcomingClassesSlider', () => {
       <UpcomingClassesSlider selectedCalendarIds={['calendar-1']} onClose={onClose} />,
     );
 
-    await waitFor(() => expect(fetchGoogleCalendarEventsMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchCalendarEventsMock).toHaveBeenCalledTimes(1));
     fireEvent.press(getByTestId('close-upcoming-classes-button'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   test('shows only top 12 events and overflow indicator when more events exist', async () => {
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: manyMockEvents,
     });
@@ -310,7 +297,7 @@ describe('UpcomingClassesSlider', () => {
         endsAt: new Date(2026, 8, 14, 10, 31, 0).getTime(),
       };
 
-      fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+      fetchCalendarEventsMock.mockResolvedValueOnce({
         type: 'success',
         events: [inProgressClass],
       });
@@ -335,7 +322,7 @@ describe('UpcomingClassesSlider', () => {
   });
 
   test('shows only the start time when an event end time is unavailable', async () => {
-    fetchGoogleCalendarEventsMock.mockResolvedValueOnce({
+    fetchCalendarEventsMock.mockResolvedValueOnce({
       type: 'success',
       events: [
         {
