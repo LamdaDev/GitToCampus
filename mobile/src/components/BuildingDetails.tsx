@@ -9,7 +9,7 @@ import { BuildingShape } from '../types/BuildingShape';
 import type { UserCoords } from '../screens/MapScreen';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import type { ListRenderItemInfo } from 'react-native';
-import { floorPlans } from '../utils/floorPlans';
+import { hasFloorPlans } from '../utils/floorPlans';
 type BuildingDetailProps = {
   selectedBuilding: BuildingShape | null;
   onClose: () => void;
@@ -107,7 +107,7 @@ export default function BuildingDetails({
   /**
    * hotspotsSection & servicesSection loads any information if present, else it will render nothing
    */
-  const hasIndoor = selectedBuilding?.shortCode ? selectedBuilding.shortCode in floorPlans : false;
+  const hasIndoor = hasFloorPlans(selectedBuilding?.shortCode);
 
   const navigationSection = (
     <View style={buildingDetailsStyles.navigationSection}>

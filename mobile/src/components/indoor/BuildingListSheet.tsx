@@ -11,7 +11,7 @@ import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { SearchBar } from 'react-native-elements';
 import { Ionicons } from '@expo/vector-icons';
 import { searchBuilding } from '../../styles/SearchBuilding.styles';
-import { floorPlans } from '../../utils/floorPlans';
+import { getFloorPlans } from '../../utils/floorPlans';
 import type { BuildingShape } from '../../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
 import { indoorBuildingSheetStyles } from '../../styles/IndoorBottomSheet.styles';
@@ -42,16 +42,14 @@ const IndoorBottomSheet = forwardRef<IndoorBottomSheetRef, Props>(
       close: () => sheetRef.current?.close(),
     }));
 
-    const buildings = useMemo(() => {
-      return getIndoorBuildingKeysWithMetadata(floorPlans).map((code) => ({
-        id: code,
-        shortCode: code,
-        name: indoorBuildingMetadata[code].name,
-        address: indoorBuildingMetadata[code].address,
-        campus: indoorBuildingMetadata[code].campus,
-        polygons: [],
-      }));
-    }, []);
+    const buildings = getIndoorBuildingKeysWithMetadata(getFloorPlans()).map((code) => ({
+      id: code,
+      shortCode: code,
+      name: indoorBuildingMetadata[code].name,
+      address: indoorBuildingMetadata[code].address,
+      campus: indoorBuildingMetadata[code].campus,
+      polygons: [],
+    }));
 
     const searchableBuildings = useMemo(
       () =>

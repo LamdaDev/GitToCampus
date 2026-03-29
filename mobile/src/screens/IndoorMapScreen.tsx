@@ -3,7 +3,7 @@ import { View, Image, Text, UIManager } from 'react-native';
 import IndoorControls from '../components/indoor/IndoorControls';
 import { BuildingShape } from '../types/BuildingShape';
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
-import { floorPlans } from '../utils/floorPlans';
+import { getFloorPlan, getFloorPlansForBuilding } from '../utils/floorPlans';
 import IndoorBottomSheet, { IndoorBottomSheetRef } from '../components/indoor/BuildingListSheet';
 import PathOverlay from '../components/indoor/PathOverlay';
 import { findIndoorPath, type IndoorNode } from '../utils/indoor/indoorPathFinding';
@@ -227,16 +227,10 @@ export default function IndoorMapScreen({
   };
 
   // FLOOR PLANS BASED ON SELECTED BUILDING
-  const indoorFloorPlans = useMemo(() => {
-    const code = selectedBuilding?.shortCode;
-    if (!code || !(code in floorPlans)) return null;
-
-    return floorPlans[code as keyof typeof floorPlans];
-  }, [selectedBuilding?.shortCode]);
-
   const floorLevels = useMemo(() => {
-    return indoorFloorPlans ? Object.keys(indoorFloorPlans) : [];
-  }, [indoorFloorPlans]);
+    const buildingFloorPlans = getFloorPlansForBuilding(selectedBuilding?.shortCode);
+    return buildingFloorPlans ? Object.keys(buildingFloorPlans) : [];
+  }, [selectedBuilding?.shortCode]);
 
   useEffect(() => {
     setSelectedBuilding(building);
@@ -280,7 +274,7 @@ export default function IndoorMapScreen({
     } else {
       onPathStepsChange?.([]);
     }
-  }, [fullPath]);
+  }, [fullPath, onPathStepsChange, selectedBuilding]);
 
   // ── Pass floor nav handlers up to parent ─────────────────────────────────────
   useEffect(() => {
@@ -310,10 +304,7 @@ export default function IndoorMapScreen({
     });
   }, [floorLevels]);
 
-  const plan =
-    indoorFloorPlans && currentFloor !== null
-      ? indoorFloorPlans[currentFloor as unknown as keyof typeof indoorFloorPlans]
-      : null;
+  const plan = getFloorPlan(selectedBuilding?.shortCode, currentFloor);
 
   const nativeSvgSupported = useMemo(() => hasNativeSvgSupport(), []);
   const shouldShowSvgFallback =

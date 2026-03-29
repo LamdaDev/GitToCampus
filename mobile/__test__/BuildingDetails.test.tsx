@@ -352,4 +352,31 @@ describe('Building Details', () => {
     });
     warnSpy.mockRestore();
   });
+
+  test('shows the enter building button for indoor buildings and calls onEnterBuilding', () => {
+    const indoorBuilding: BuildingShape = {
+      ...mockBuildings[0],
+      name: 'H Building',
+      shortCode: 'H',
+    };
+
+    const { UNSAFE_getByProps } = render(
+      <BuildingDetails
+        selectedBuilding={indoorBuilding}
+        onClose={mockOnClose}
+        onShowDirections={mockOnShowDirections}
+        currentBuilding={null}
+        userLocation={null}
+        onEnterBuilding={mockOnEnterBuilding}
+      />,
+    );
+
+    const enterIndoorIcon = UNSAFE_getByProps({ name: 'enter-outline' });
+    expect(enterIndoorIcon.parent).toBeTruthy();
+
+    fireEvent.press(enterIndoorIcon.parent!);
+
+    expect(mockOnEnterBuilding).toHaveBeenCalledTimes(1);
+    expect(mockOnEnterBuilding).toHaveBeenCalledWith(indoorBuilding);
+  });
 });
