@@ -46,6 +46,21 @@ const hasNativeSvgSupport = () => {
   return true;
 };
 
+const parseFloorKeyToGraphFloor = (floorKey: string | null) => {
+  if (!floorKey) return null;
+
+  const numericFloor = Number(floorKey);
+  if (!Number.isNaN(numericFloor)) return numericFloor;
+
+  const normalizedFloorKey = floorKey.trim().toUpperCase();
+  if (normalizedFloorKey.startsWith('S')) {
+    const subLevel = Number(normalizedFloorKey.slice(1));
+    return Number.isNaN(subLevel) ? null : subLevel;
+  }
+
+  return null;
+};
+
 // ── Building graph data keyed by short code ──────────────────────────────────
 // ── SVG coordinates for scaling path overlay ───────────────────────────
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
@@ -160,6 +175,18 @@ export default function IndoorMapScreen({
   const [startRoomId, setStartRoomId] = useState<string | null>(null);
   const [endRoomId, setEndRoomId] = useState<string | null>(null);
 
+  const pathFloorKeyByGraphFloor = useMemo(() => {
+    const selectedBuildingFloorPlans = getFloorPlansForBuilding(selectedBuilding?.shortCode);
+    if (!selectedBuildingFloorPlans) return new Map<number, string>();
+
+    const entries = Object.keys(selectedBuildingFloorPlans).flatMap((floorKey) => {
+      const graphFloor = parseFloorKeyToGraphFloor(floorKey);
+      return graphFloor === null ? [] : [[graphFloor, floorKey] as const];
+    });
+
+    return new Map<number, string>(entries);
+  }, [selectedBuilding?.shortCode]);
+
   // ── Path Logic ──────────────────────────────────────────────────────────────
   const buildingGraph = useMemo(() => {
     return getIndoorGraph(selectedBuilding?.shortCode);
@@ -176,7 +203,8 @@ export default function IndoorMapScreen({
 
   const currentFloorPath = useMemo(() => {
     if (!fullPath || currentFloor === null) return [];
-    const floorNum = Number(currentFloor);
+    const floorNum = parseFloorKeyToGraphFloor(currentFloor);
+    if (floorNum === null) return [];
     return fullPath.filter((n) => n.floor === floorNum);
   }, [fullPath, currentFloor]);
 
@@ -185,14 +213,14 @@ export default function IndoorMapScreen({
     const seen = new Set<string>();
     const floors: string[] = [];
     for (const node of fullPath) {
-      const f = String(node.floor);
+      const f = pathFloorKeyByGraphFloor.get(node.floor) ?? String(node.floor);
       if (!seen.has(f)) {
         seen.add(f);
         floors.push(f);
       }
     }
     return floors;
-  }, [fullPath]);
+  }, [fullPath, pathFloorKeyByGraphFloor]);
 
   // ── Path Prev/Next Floor ──────────────────────────────────────────────────────────────
   const handleNextPathFloor = useCallback(() => {
@@ -227,10 +255,23 @@ export default function IndoorMapScreen({
   };
 
   // FLOOR PLANS BASED ON SELECTED BUILDING
+  const buildingFloorPlans = useMemo(
+    () => getFloorPlansForBuilding(selectedBuilding?.shortCode),
+    [selectedBuilding?.shortCode],
+  );
+
   const floorLevels = useMemo(() => {
-    const buildingFloorPlans = getFloorPlansForBuilding(selectedBuilding?.shortCode);
     return buildingFloorPlans ? Object.keys(buildingFloorPlans) : [];
-  }, [selectedBuilding?.shortCode]);
+  }, [buildingFloorPlans]);
+
+  const floorKeyByGraphFloor = useMemo(() => {
+    const entries = floorLevels.flatMap((floorKey) => {
+      const graphFloor = parseFloorKeyToGraphFloor(floorKey);
+      return graphFloor === null ? [] : [[graphFloor, floorKey] as const];
+    });
+
+    return new Map<number, string>(entries);
+  }, [floorLevels]);
 
   useEffect(() => {
     setSelectedBuilding(building);
@@ -256,8 +297,10 @@ export default function IndoorMapScreen({
   useEffect(() => {
     if (!startRoomId || !endRoomId || !buildingGraph) return;
     const node = buildingGraph.nodes.find((n) => n.id === startRoomId);
-    if (node) setCurrentFloor(String(node.floor));
-  }, [startRoomId, endRoomId, buildingGraph]);
+    if (node) {
+      setCurrentFloor(floorKeyByGraphFloor.get(node.floor) ?? String(node.floor));
+    }
+  }, [buildingGraph, endRoomId, floorKeyByGraphFloor, startRoomId]);
 
   // ── Sync externalroomId from BottomSlider ─────────────────────────────────
   useEffect(() => {

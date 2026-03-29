@@ -167,6 +167,10 @@ describe('IndoorMapScreen', () => {
     capturedSheetProps = null;
     delete mockedFloorPlans.XYZ;
     delete mockedIndoorGraphs.XYZ;
+    mockedIndoorGraphs.MB = {
+      nodes: [{ id: 'mb-101', floor: 1 }],
+      edges: [],
+    };
     mockGetViewManagerConfig.mockImplementation((name: string) =>
       name.startsWith('RNSVG') ? {} : null,
     );
@@ -377,6 +381,26 @@ describe('IndoorMapScreen', () => {
     );
 
     await waitFor(() => expect(mockPathStepsChange).toHaveBeenCalled());
+  });
+
+  test('maps graph floor 2 back to the S2 floor key for MB routes', async () => {
+    mockedIndoorGraphs.MB = {
+      nodes: [{ id: 'mb-s2-start', floor: 2 }],
+      edges: [],
+    };
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingMB}
+        externalStartRoomId="mb-s2-start"
+        externalEndRoomId="mb-s2-end"
+      />,
+    );
+
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('S2'));
   });
 
   test('onPathStepsChange fires with empty array when no valid path exists', async () => {
