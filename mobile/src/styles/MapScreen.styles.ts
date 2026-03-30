@@ -27,6 +27,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
+  poiMarker: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    backgroundColor: '#111827',
+  },
   labels: {
     paddingHorizontal: 6,
     paddingVertical: 2,

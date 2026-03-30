@@ -11,6 +11,7 @@ import * as buildingsRepository from '../src/utils/buildingsRepository';
 import * as geoJson from '../src/utils/geoJson';
 import { getCampusRegion } from '../src/constants/campuses';
 import { POLYGON_THEME } from '../src/styles/MapScreen.styles';
+import * as outdoorPoisRepository from '../src/utils/outdoorPoisRepository';
 
 const mockPassSelectedBuilding = jest.fn();
 const mockPassUserLocation = jest.fn();
@@ -93,6 +94,10 @@ jest.mock('@turf/turf', () => ({
   })),
 }));
 
+jest.mock('../src/utils/outdoorPoisRepository', () => ({
+  findNearbyOutdoorPois: jest.fn(),
+}));
+
 const mockBuildings: BuildingShape[] = [
   {
     id: 'sgw-1',
@@ -140,6 +145,7 @@ describe('MapScreen', () => {
   const linkingMock = Linking as jest.Mocked<typeof Linking>;
   const repoMock = buildingsRepository as jest.Mocked<typeof buildingsRepository>;
   const geoJsonMock = geoJson as jest.Mocked<typeof geoJson>;
+  const outdoorPoisRepoMock = outdoorPoisRepository as jest.Mocked<typeof outdoorPoisRepository>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -155,6 +161,7 @@ describe('MapScreen', () => {
       mockBuildings.find((b) => b.id === id),
     );
     repoMock.findBuildingAt.mockReturnValue(undefined);
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValue([]);
 
     geoJsonMock.centroidOfPolygon.mockImplementation((polygon: any) => {
       if (!polygon || polygon.length === 0) return null;
@@ -1191,6 +1198,96 @@ describe('MapScreen', () => {
     await waitFor(() => {
       expect(mockPassSelectedBuilding).toHaveBeenCalled();
       expect(mockOpenBottomSheet).toHaveBeenCalled();
+    });
+  });
+
+  test('renders POI category chips in outdoor mode', () => {
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+      />,
+    );
+
+    expect(getByTestId('poi-chip-cafe')).toBeTruthy();
+    expect(getByTestId('poi-chip-restaurant')).toBeTruthy();
+  });
+
+  test('selecting cafes renders nearby POI markers for the current campus', async () => {
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValueOnce([
+      {
+        poi: {
+          id: 'sgw-cafe-1',
+          name: 'Campus Cafe',
+          category: 'cafe',
+          campus: 'SGW',
+          latitude: 45.4975,
+          longitude: -73.579,
+          address: '1 Test St',
+        },
+        distance: 120,
+      },
+    ]);
+
+    const { getByTestId, findByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+      />,
+    );
+
+    fireEvent.press(getByTestId('poi-chip-cafe'));
+
+    expect(await findByTestId('poi-marker-sgw-cafe-1')).toBeTruthy();
+    expect(outdoorPoisRepoMock.findNearbyOutdoorPois).toHaveBeenCalledWith('SGW', 'cafe');
+  });
+
+  test('tapping the active POI chip again clears the markers', async () => {
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValue([
+      {
+        poi: {
+          id: 'sgw-restaurant-1',
+          name: 'Campus Restaurant',
+          category: 'restaurant',
+          campus: 'SGW',
+          latitude: 45.4977,
+          longitude: -73.5791,
+          address: '2 Test St',
+        },
+        distance: 150,
+      },
+    ]);
+
+    const { getByTestId, findByTestId, queryByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+      />,
+    );
+
+    const restaurantChip = getByTestId('poi-chip-restaurant');
+    fireEvent.press(restaurantChip);
+    expect(await findByTestId('poi-marker-sgw-restaurant-1')).toBeTruthy();
+
+    fireEvent.press(restaurantChip);
+
+    await waitFor(() => {
+      expect(queryByTestId('poi-marker-sgw-restaurant-1')).toBeNull();
     });
   });
 });
