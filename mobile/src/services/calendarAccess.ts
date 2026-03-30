@@ -57,6 +57,11 @@ export type CalendarEventsResult =
   | { type: 'success'; events: CalendarEventItem[] }
   | { type: 'error'; message: string };
 
+type DeviceCalendarFallbackResult =
+  | Extract<CalendarConnectResult, { type: 'success' }>
+  | Extract<CalendarConnectResult, { type: 'denied' }>
+  | Extract<CalendarConnectResult, { type: 'error' }>;
+
 type DeviceCalendarItem = Awaited<ReturnType<typeof Calendar.getCalendarsAsync>>[number];
 type DeviceCalendarEvent = Awaited<ReturnType<typeof Calendar.getEventsAsync>>[number];
 
@@ -177,7 +182,7 @@ const toDeviceCalendarEventItem = (
   };
 };
 
-const requestDeviceCalendarFallbackAsync = async (): Promise<CalendarConnectResult> => {
+const requestDeviceCalendarFallbackAsync = async (): Promise<DeviceCalendarFallbackResult> => {
   try {
     const permission = await Calendar.requestCalendarPermissionsAsync();
     if (!permission.granted) {
@@ -277,31 +282,23 @@ export const connectCalendarAsync = async (): Promise<CalendarConnectResult> => 
   }
 
   const deviceFallbackResult = await requestDeviceCalendarFallbackAsync();
-  if (deviceFallbackResult.type === 'success') {
-    return {
-      ...deviceFallbackResult,
-      message: joinMessages(googleResult.message, ENABLE_DEVICE_CALENDAR_FALLBACK_MESSAGE),
-    };
+  switch (deviceFallbackResult.type) {
+    case 'success':
+      return {
+        ...deviceFallbackResult,
+        message: joinMessages(googleResult.message, ENABLE_DEVICE_CALENDAR_FALLBACK_MESSAGE),
+      };
+    case 'denied':
+      return {
+        type: 'error',
+        message: joinMessages(googleResult.message, 'Device calendar permission was denied.'),
+      };
+    case 'error':
+      return {
+        type: 'error',
+        message: joinMessages(googleResult.message, deviceFallbackResult.message),
+      };
   }
-
-  if (deviceFallbackResult.type === 'denied') {
-    return {
-      type: 'error',
-      message: joinMessages(googleResult.message, 'Device calendar permission was denied.'),
-    };
-  }
-
-  if (deviceFallbackResult.type === 'error') {
-    return {
-      type: 'error',
-      message: joinMessages(googleResult.message, deviceFallbackResult.message),
-    };
-  }
-
-  return {
-    type: 'error',
-    message: googleResult.message,
-  };
 };
 
 export const clearCalendarConnectionAsync = async (
@@ -344,9 +341,6 @@ const fetchDeviceCalendarEventsAsync = async (
   calendarIds: string[],
 ): Promise<CalendarEventsResult> => {
   const uniqueCalendarIds = [...new Set(calendarIds.map((id) => id.trim()).filter(Boolean))];
-  if (uniqueCalendarIds.length === 0) {
-    return { type: 'success', events: [] };
-  }
 
   const now = new Date();
   const nowTimestamp = now.getTime();
