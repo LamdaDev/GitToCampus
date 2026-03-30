@@ -25,31 +25,20 @@ describe('VL indoor graph', () => {
   });
 
   test('keeps the VL-121-2 to VL-140 route on floor 1', () => {
-    const path = findIndoorPath(
-      vlGraph.nodes,
-      vlGraph.edges,
-      'VL_F1_room_121-2',
-      'VL_F1_room_140',
-    );
+    const path = findIndoorPath(vlGraph.nodes, vlGraph.edges, 'VL_F1_room_121-2', 'VL_F1_room_140');
 
     expect(path).not.toBeNull();
     expect(path.every((node: { floor: number }) => node.floor === 1)).toBe(true);
   });
 
   test('uses a vertical connector for the VL-121-2 to VL-205 route', () => {
-    const path = findIndoorPath(
-      vlGraph.nodes,
-      vlGraph.edges,
-      'VL_F1_room_121-2',
-      'VL_F2_room_205',
-    );
+    const path = findIndoorPath(vlGraph.nodes, vlGraph.edges, 'VL_F1_room_121-2', 'VL_F2_room_205');
 
     expect(path).not.toBeNull();
     expect(path.some((node: { floor: number }) => node.floor === 2)).toBe(true);
     expect(
       path.some(
-        (node: { type: string }) =>
-          node.type === 'stair_landing' || node.type === 'elevator_door',
+        (node: { type: string }) => node.type === 'stair_landing' || node.type === 'elevator_door',
       ),
     ).toBe(true);
   });
