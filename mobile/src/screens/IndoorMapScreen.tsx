@@ -176,7 +176,7 @@ export default function IndoorMapScreen({
 
   const currentFloorPath = useMemo(() => {
     if (!fullPath || currentFloor === null) return [];
-    
+
     return fullPath.filter((n) => n.floor === Number(currentFloor));
   }, [fullPath, currentFloor]);
 
