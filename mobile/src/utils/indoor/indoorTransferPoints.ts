@@ -26,7 +26,7 @@ const INDOOR_TRANSFER_POINTS: Record<IndoorBuildingKey, IndoorTransferPoint> = {
   VE: {
     buildingKey: 'VE',
     campus: 'LOYOLA',
-    accessNodeId: 'VE_F1_building_entry_exit_6',
+    accessNodeId: 'bldg-1_F1_building_entry_exit_2',
     outdoorCoords: { latitude: 45.459026, longitude: -73.638606 },
     accessible: true,
   },
