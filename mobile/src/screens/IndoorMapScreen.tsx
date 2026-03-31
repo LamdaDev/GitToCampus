@@ -49,7 +49,7 @@ const hasNativeSvgSupport = () => {
 // ── Building graph data keyed by short code ──────────────────────────────────
 // ── SVG coordinates for scaling path overlay ───────────────────────────
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
-  H: { width: 2040, height: 2040 },
+  H: { width: 1024, height: 1024 },
   CC: { width: 4096, height: 1024 },
   VE: { width: 1024, height: 1024 },
   MB: { width: 1024, height: 1024 },
@@ -176,8 +176,8 @@ export default function IndoorMapScreen({
 
   const currentFloorPath = useMemo(() => {
     if (!fullPath || currentFloor === null) return [];
-    const floorNum = Number(currentFloor);
-    return fullPath.filter((n) => n.floor === floorNum);
+    
+    return fullPath.filter((n) => n.floor === Number(currentFloor));
   }, [fullPath, currentFloor]);
 
   const pathFloors = useMemo(() => {
