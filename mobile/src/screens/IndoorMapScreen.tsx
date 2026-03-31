@@ -53,7 +53,7 @@ const NODE_SPACES: Record<string, { width: number; height: number }> = {
   CC: { width: 4096, height: 1024 },
   VE: { width: 1024, height: 1024 },
   MB: { width: 949, height: 977 },
-  VL: { width: 831, height: 940 },
+  VL: { width: 1024, height: 1024 },
 };
 
 const SVG_VIEWBOXES: Record<string, { width: number; height: number }> = {
