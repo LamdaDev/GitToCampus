@@ -51,7 +51,7 @@ const hasNativeSvgSupport = () => {
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
   H: { width: 2040, height: 2040 },
   CC: { width: 4096, height: 1024 },
-  VE: { width: 1623, height: 622 },
+  VE: { width: 1024, height: 1024 },
   MB: { width: 949, height: 977 },
   VL: { width: 831, height: 940 },
 };
