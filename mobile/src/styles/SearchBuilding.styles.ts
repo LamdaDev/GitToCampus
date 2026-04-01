@@ -38,10 +38,13 @@ export const searchBuilding = StyleSheet.create({
 
   signIn: {
     backgroundColor: '#ffffff',
-    height: 40,
-    width: '58%',
+    minHeight: 46,
+    minWidth: '58%',
+    maxWidth: '100%',
     alignSelf: 'center',
     marginTop: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     flexDirection: 'row',
     borderRadius: 100,
     alignItems: 'center',
