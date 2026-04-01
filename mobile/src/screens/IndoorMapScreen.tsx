@@ -61,6 +61,20 @@ const parseFloorKeyToGraphFloor = (floorKey: string | null) => {
   return null;
 };
 
+const getFloorKeySortValue = (floorKey: string) => {
+  const normalizedFloorKey = floorKey.trim().toUpperCase();
+
+  if (normalizedFloorKey.startsWith('S')) {
+    const subLevel = Number(normalizedFloorKey.slice(1));
+    return Number.isNaN(subLevel) ? Number.POSITIVE_INFINITY : -subLevel;
+  }
+
+  const numericFloor = Number(normalizedFloorKey);
+  if (!Number.isNaN(numericFloor)) return numericFloor;
+
+  return Number.POSITIVE_INFINITY;
+};
+
 // ── Building graph data keyed by short code ──────────────────────────────────
 // ── SVG coordinates for scaling path overlay ───────────────────────────
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
@@ -118,7 +132,19 @@ const getPathEndpointLabel = ({
   return humanizeIndoorNodeType(node.type);
 };
 
-const getPathSteps = (path: IndoorNode[], building: BuildingShape | null) => {
+const getPathFloorLabel = (
+  floor: number | undefined,
+  floorKeyByGraphFloor?: ReadonlyMap<number, string>,
+) => {
+  if (floor === undefined) return '?';
+  return floorKeyByGraphFloor?.get(floor) ?? String(floor);
+};
+
+const getPathSteps = (
+  path: IndoorNode[],
+  building: BuildingShape | null,
+  floorKeyByGraphFloor?: ReadonlyMap<number, string>,
+) => {
   const steps: { icon: string; label: string }[] = [];
   let prevFloor = path[0]?.floor;
 
@@ -128,12 +154,18 @@ const getPathSteps = (path: IndoorNode[], building: BuildingShape | null) => {
 
     if (node.type === 'elevator_door' || prev.type === 'elevator_door') {
       if (node.floor !== prevFloor) {
-        steps.push({ icon: '🛗', label: `Elevator to floor ${node.floor}` });
+        steps.push({
+          icon: '🛗',
+          label: `Elevator to floor ${getPathFloorLabel(node.floor, floorKeyByGraphFloor)}`,
+        });
         prevFloor = node.floor;
       }
     } else if (node.type === 'stair_landing' || prev.type === 'stair_landing') {
       if (node.floor !== prevFloor) {
-        steps.push({ icon: '🪜', label: `Stairs to floor ${node.floor}` });
+        steps.push({
+          icon: '🪜',
+          label: `Stairs to floor ${getPathFloorLabel(node.floor, floorKeyByGraphFloor)}`,
+        });
         prevFloor = node.floor;
       }
     }
@@ -143,11 +175,11 @@ const getPathSteps = (path: IndoorNode[], building: BuildingShape | null) => {
   const end = path.at(-1);
   steps.unshift({
     icon: '🟢',
-    label: `Start: ${getPathEndpointLabel({ node: start, role: 'start', building })} (Floor ${start.floor})`,
+    label: `Start: ${getPathEndpointLabel({ node: start, role: 'start', building })} (Floor ${getPathFloorLabel(start?.floor, floorKeyByGraphFloor)})`,
   });
   steps.push({
     icon: '🔴',
-    label: `End: ${getPathEndpointLabel({ node: end, role: 'end', building })} (Floor ${end?.floor})`,
+    label: `End: ${getPathEndpointLabel({ node: end, role: 'end', building })} (Floor ${getPathFloorLabel(end?.floor, floorKeyByGraphFloor)})`,
   });
 
   return steps;
@@ -261,7 +293,13 @@ export default function IndoorMapScreen({
   );
 
   const floorLevels = useMemo(() => {
-    return buildingFloorPlans ? Object.keys(buildingFloorPlans) : [];
+    if (!buildingFloorPlans) return [];
+
+    return [...Object.keys(buildingFloorPlans)].sort((floorA, floorB) => {
+      const floorDifference = getFloorKeySortValue(floorA) - getFloorKeySortValue(floorB);
+      if (floorDifference !== 0) return floorDifference;
+      return floorA.localeCompare(floorB);
+    });
   }, [buildingFloorPlans]);
 
   const floorKeyByGraphFloor = useMemo(() => {
@@ -280,7 +318,9 @@ export default function IndoorMapScreen({
   // RESET FLOOR WHEN BUILDING CHANGES
   useEffect(() => {
     if (floorLevels.length > 0) {
-      setCurrentFloor(floorLevels[0]);
+      const defaultFloor =
+        floorLevels.find((floorKey) => getFloorKeySortValue(floorKey) >= 0) ?? floorLevels[0];
+      setCurrentFloor(defaultFloor);
     }
 
     setStartRoomId(null);
@@ -313,11 +353,11 @@ export default function IndoorMapScreen({
 
   useEffect(() => {
     if (fullPath && fullPath.length > 0) {
-      onPathStepsChange?.(getPathSteps(fullPath, selectedBuilding));
+      onPathStepsChange?.(getPathSteps(fullPath, selectedBuilding, pathFloorKeyByGraphFloor));
     } else {
       onPathStepsChange?.([]);
     }
-  }, [fullPath, onPathStepsChange, selectedBuilding]);
+  }, [fullPath, onPathStepsChange, pathFloorKeyByGraphFloor, selectedBuilding]);
 
   // ── Pass floor nav handlers up to parent ─────────────────────────────────────
   useEffect(() => {

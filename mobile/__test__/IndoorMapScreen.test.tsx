@@ -403,6 +403,88 @@ describe('IndoorMapScreen', () => {
     await waitFor(() => expect(getControlsProps().currentFloor).toBe('S2'));
   });
 
+  test('treats MB S2 as a basement floor in building floor navigation', async () => {
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingMB}
+      />,
+    );
+
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('1'));
+
+    getControlsProps().onFloorDown();
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('S2'));
+
+    getControlsProps().onFloorUp();
+    await waitFor(() => expect(getControlsProps().currentFloor).toBe('1'));
+  });
+
+  test('uses the UI floor key in MB path step labels', async () => {
+    const mockPathStepsChange = jest.fn();
+    mockedIndoorGraphs.MB = {
+      nodes: [
+        { id: 'mb-1-start', floor: 1 },
+        { id: 'mb-elevator', floor: 1 },
+        { id: 'mb-s2-end', floor: 2 },
+      ],
+      edges: [],
+    };
+
+    findIndoorPath.mockReturnValue([
+      {
+        id: 'mb-1-start',
+        type: 'room',
+        floor: 1,
+        label: 'MB-1.132',
+        buildingId: 'MB',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'mb-elevator',
+        type: 'elevator_door',
+        floor: 1,
+        label: '',
+        buildingId: 'MB',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+      {
+        id: 'mb-s2-end',
+        type: 'room',
+        floor: 2,
+        label: 'MB-S2.210',
+        buildingId: 'MB',
+        x: 0,
+        y: 0,
+        accessible: true,
+      },
+    ]);
+
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingMB}
+        externalStartRoomId="mb-1-start"
+        externalEndRoomId="mb-s2-end"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => {
+      const steps = mockPathStepsChange.mock.calls.flat(2);
+      expect(steps.some((s: any) => s.label === 'End: MB-S2.210 (Floor S2)')).toBe(true);
+      expect(steps.some((s: any) => s.label === 'Elevator to floor S2')).toBe(true);
+    });
+  });
+
   test('onPathStepsChange fires with empty array when no valid path exists', async () => {
     const mockPathStepsChange = jest.fn();
     render(
