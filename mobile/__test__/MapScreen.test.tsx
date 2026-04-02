@@ -1201,8 +1201,8 @@ describe('MapScreen', () => {
     });
   });
 
-  test('renders POI category chips in outdoor mode', () => {
-    const { getByTestId } = render(
+  test('does not render POI filter controls directly on the map', () => {
+    const { queryByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         passUserLocation={mockPassUserLocation}
@@ -1214,8 +1214,8 @@ describe('MapScreen', () => {
       />,
     );
 
-    expect(getByTestId('poi-chip-cafe')).toBeTruthy();
-    expect(getByTestId('poi-chip-restaurant')).toBeTruthy();
+    expect(queryByTestId('poi-chip-cafe')).toBeNull();
+    expect(queryByTestId('poi-chip-restaurant')).toBeNull();
   });
 
   test('selecting cafes renders nearby POI markers for the current campus', async () => {
@@ -1234,7 +1234,7 @@ describe('MapScreen', () => {
       },
     ]);
 
-    const { getByTestId, findByTestId } = render(
+    const { findByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         passUserLocation={mockPassUserLocation}
@@ -1243,16 +1243,16 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="cafe"
+        selectedPoiRangeKm={3}
       />,
     );
-
-    fireEvent.press(getByTestId('poi-chip-cafe'));
 
     expect(await findByTestId('poi-marker-sgw-cafe-1')).toBeTruthy();
     expect(outdoorPoisRepoMock.findNearbyOutdoorPois).toHaveBeenCalledWith('SGW', 'cafe', 3);
   });
 
-  test('tapping the active POI chip again clears the markers', async () => {
+  test('clears POI markers when no POI category is selected', async () => {
     outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValue([
       {
         poi: {
@@ -1268,7 +1268,7 @@ describe('MapScreen', () => {
       },
     ]);
 
-    const { getByTestId, findByTestId, queryByTestId } = render(
+    const { queryByTestId, rerender } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         passUserLocation={mockPassUserLocation}
@@ -1277,22 +1277,16 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="restaurant"
+        selectedPoiRangeKm={3}
       />,
     );
-
-    const restaurantChip = getByTestId('poi-chip-restaurant');
-    fireEvent.press(restaurantChip);
-    expect(await findByTestId('poi-marker-sgw-restaurant-1')).toBeTruthy();
-
-    fireEvent.press(restaurantChip);
 
     await waitFor(() => {
-      expect(queryByTestId('poi-marker-sgw-restaurant-1')).toBeNull();
+      expect(queryByTestId('poi-marker-sgw-restaurant-1')).toBeTruthy();
     });
-  });
 
-  test('shows range chips after selecting a POI category', async () => {
-    const { getByTestId, findByTestId } = render(
+    rerender(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         passUserLocation={mockPassUserLocation}
@@ -1301,14 +1295,12 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory={null}
+        selectedPoiRangeKm={3}
       />,
     );
 
-    fireEvent.press(getByTestId('poi-chip-cafe'));
-
-    expect(await findByTestId('poi-range-chip-1km')).toBeTruthy();
-    expect(await findByTestId('poi-range-chip-2km')).toBeTruthy();
-    expect(await findByTestId('poi-range-chip-3km')).toBeTruthy();
+    expect(queryByTestId('poi-marker-sgw-restaurant-1')).toBeNull();
   });
 
   test('selecting 2 km range refilters POIs with the curated 2 km bucket', async () => {
@@ -1342,7 +1334,7 @@ describe('MapScreen', () => {
         },
       ]);
 
-    const { getByTestId, findByTestId } = render(
+    const { findByTestId, rerender } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         passUserLocation={mockPassUserLocation}
@@ -1351,13 +1343,26 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="cafe"
+        selectedPoiRangeKm={3}
       />,
     );
 
-    fireEvent.press(getByTestId('poi-chip-cafe'));
     expect(await findByTestId('poi-marker-sgw-cafe-3')).toBeTruthy();
 
-    fireEvent.press(getByTestId('poi-range-chip-2km'));
+    rerender(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="cafe"
+        selectedPoiRangeKm={2}
+      />,
+    );
 
     expect(await findByTestId('poi-marker-sgw-cafe-4')).toBeTruthy();
     expect(outdoorPoisRepoMock.findNearbyOutdoorPois).toHaveBeenLastCalledWith('SGW', 'cafe', 2);
@@ -1379,7 +1384,7 @@ describe('MapScreen', () => {
       },
     ]);
 
-    const { getByTestId, findByTestId, findByText } = render(
+    const { findByTestId, findByText } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         passUserLocation={mockPassUserLocation}
@@ -1388,10 +1393,11 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="cafe"
+        selectedPoiRangeKm={3}
       />,
     );
 
-    fireEvent.press(getByTestId('poi-chip-cafe'));
     fireEvent.press(await findByTestId('poi-marker-sgw-cafe-2'));
 
     expect(await findByTestId('poi-info-card')).toBeTruthy();
@@ -1424,10 +1430,11 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="restaurant"
+        selectedPoiRangeKm={3}
       />,
     );
 
-    fireEvent.press(getByTestId('poi-chip-restaurant'));
     fireEvent.press(await findByTestId('poi-marker-sgw-restaurant-2'));
     expect(await findByTestId('poi-info-card')).toBeTruthy();
 

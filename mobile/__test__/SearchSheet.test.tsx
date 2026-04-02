@@ -181,6 +181,52 @@ describe('SearchSheet', () => {
     expect(getByText('No buildings found')).toBeTruthy();
   });
 
+  test('keeps the POI panel closed until the options button is pressed', () => {
+    const { getByTestId, queryByTestId } = render(<SearchSheet buildings={mockBuildings} />);
+
+    expect(queryByTestId('search-poi-panel')).toBeNull();
+
+    fireEvent.press(getByTestId('search-poi-options-toggle'));
+
+    expect(queryByTestId('search-poi-panel')).toBeTruthy();
+    expect(queryByTestId('search-poi-chip-cafe')).toBeTruthy();
+    expect(queryByTestId('search-poi-chip-restaurant')).toBeTruthy();
+  });
+
+  test('shows POI range controls when a category is selected', () => {
+    const { getByTestId, getByText } = render(
+      <SearchSheet buildings={mockBuildings} selectedPoiCategory="cafe" selectedPoiRangeKm={2} />,
+    );
+
+    fireEvent.press(getByTestId('search-poi-options-toggle'));
+    expect(getByText('Point of Interest Range (km):')).toBeTruthy();
+    expect(getByTestId('search-poi-range-increase')).toBeTruthy();
+    expect(getByTestId('search-poi-range-decrease')).toBeTruthy();
+  });
+
+  test('forwards POI category and range changes', () => {
+    const onPoiCategoryChange = jest.fn();
+    const onPoiRangeChange = jest.fn();
+    const { getByTestId } = render(
+      <SearchSheet
+        buildings={mockBuildings}
+        selectedPoiCategory="cafe"
+        onPoiCategoryChange={onPoiCategoryChange}
+        selectedPoiRangeKm={2}
+        onPoiRangeChange={onPoiRangeChange}
+      />,
+    );
+
+    fireEvent.press(getByTestId('search-poi-options-toggle'));
+    fireEvent.press(getByTestId('search-poi-chip-restaurant'));
+    fireEvent.press(getByTestId('search-poi-range-increase'));
+    fireEvent.press(getByTestId('search-poi-range-decrease'));
+
+    expect(onPoiCategoryChange).toHaveBeenCalledWith('restaurant');
+    expect(onPoiRangeChange).toHaveBeenNthCalledWith(1, 3);
+    expect(onPoiRangeChange).toHaveBeenNthCalledWith(2, 1);
+  });
+
   test('renders room results when search mode is rooms', () => {
     const { getByTestId, queryByText } = render(
       <SearchSheet buildings={mockBuildings} searchMode="rooms" />,

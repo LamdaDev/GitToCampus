@@ -17,6 +17,7 @@ import {
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
 import { getSupportedActiveOrUpcomingEvents } from '../utils/googleCalendarEventSelection';
+import type { PoiCategory, PoiRangeKm } from '../types/Poi';
 import type { RoomNode } from './indoor/RoomList';
 import RoomList from './indoor/RoomList';
 
@@ -29,6 +30,10 @@ type SearchBarProps = {
   calendarGoErrorMessage?: string | null;
   searchMode?: SearchMode;
   onSelectRoom?: (room: RoomNode) => void;
+  selectedPoiCategory?: PoiCategory | null;
+  onPoiCategoryChange?: (category: PoiCategory | null) => void;
+  selectedPoiRangeKm?: PoiRangeKm;
+  onPoiRangeChange?: (rangeKm: PoiRangeKm) => void;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
@@ -45,8 +50,13 @@ export default function SearchSheet({
   calendarGoErrorMessage = null,
   searchMode = 'buildings',
   onSelectRoom,
+  selectedPoiCategory = null,
+  onPoiCategoryChange,
+  selectedPoiRangeKm = 3,
+  onPoiRangeChange,
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
+  const [isPoiPanelOpen, setIsPoiPanelOpen] = useState(false);
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [isCalendarConnecting, setIsCalendarConnecting] = useState(false);
@@ -370,18 +380,97 @@ export default function SearchSheet({
 
   return (
     <View style={searchBuilding.screen}>
-      <SearchBarCompat
-        placeholder="Search buildings..."
-        onChangeText={handleSearchChange}
-        value={search}
-        platform="default"
-        containerStyle={searchBuilding.searchOuter}
-        inputContainerStyle={searchBuilding.searchInner}
-        inputStyle={searchBuilding.searchText}
-        placeholderTextColor={'#ffffffc9'}
-        leftIconContainerStyle={{ opacity: 0.9, paddingLeft: 2 }}
-        searchIcon={{ name: 'search', type: 'ionicon', size: 25, color: '#d7c9cf' }}
-      />
+      <View style={searchBuilding.searchBarRow}>
+        <SearchBarCompat
+          placeholder="Get to..."
+          onChangeText={handleSearchChange}
+          value={search}
+          platform="default"
+          containerStyle={searchBuilding.searchOuter}
+          inputContainerStyle={searchBuilding.searchInner}
+          inputStyle={searchBuilding.searchText}
+          placeholderTextColor={'#ffffffc9'}
+          leftIconContainerStyle={{ opacity: 0.9, paddingLeft: 2 }}
+          searchIcon={{ name: 'search', type: 'ionicon', size: 25, color: '#d7c9cf' }}
+        />
+        <TouchableOpacity
+          testID="search-poi-options-toggle"
+          accessibilityRole="button"
+          accessibilityLabel="Open POI options"
+          style={searchBuilding.searchOptionsButton}
+          activeOpacity={0.85}
+          onPress={() => setIsPoiPanelOpen((previous) => !previous)}
+        >
+          <Ionicons name="options-outline" size={24} color="#fff4f6" />
+        </TouchableOpacity>
+      </View>
+
+      {isPoiPanelOpen ? (
+        <View style={searchBuilding.poiControlsPanel} testID="search-poi-panel">
+          <View style={searchBuilding.poiCategoryColumn}>
+            {(['cafe', 'restaurant'] as PoiCategory[]).map((category) => {
+              const isSelected = selectedPoiCategory === category;
+              return (
+                <TouchableOpacity
+                  key={category}
+                  testID={`search-poi-chip-${category}`}
+                  style={[
+                    searchBuilding.poiCategoryCheckboxRow,
+                    isSelected && searchBuilding.poiCategoryCheckboxRowSelected,
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={() => onPoiCategoryChange?.(isSelected ? null : category)}
+                >
+                  <Text style={searchBuilding.poiCategoryCheckboxLabel}>
+                    {category === 'cafe' ? 'Cafes' : 'Restaurants'}
+                  </Text>
+                  <View
+                    style={[
+                      searchBuilding.poiCategoryCheckbox,
+                      isSelected && searchBuilding.poiCategoryCheckboxSelected,
+                    ]}
+                  >
+                    {isSelected ? <Ionicons name="checkmark" size={18} color="#fff" /> : null}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {selectedPoiCategory ? (
+            <View style={searchBuilding.poiRangeRow}>
+              <Text style={searchBuilding.poiRangeLabel}>Point of Interest Range (km):</Text>
+              <View style={searchBuilding.poiRangeControl}>
+                <View style={searchBuilding.poiRangeValueBox}>
+                  <Text style={searchBuilding.poiRangeValueText}>{selectedPoiRangeKm}</Text>
+                </View>
+                <View style={searchBuilding.poiRangeStepper}>
+                  <TouchableOpacity
+                    testID="search-poi-range-increase"
+                    style={searchBuilding.poiRangeStepperButton}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      onPoiRangeChange?.(Math.min(3, selectedPoiRangeKm + 1) as PoiRangeKm)
+                    }
+                  >
+                    <Ionicons name="chevron-up" size={22} color="#fff4f6" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    testID="search-poi-range-decrease"
+                    style={searchBuilding.poiRangeStepperButton}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      onPoiRangeChange?.(Math.max(1, selectedPoiRangeKm - 1) as PoiRangeKm)
+                    }
+                  >
+                    <Ionicons name="chevron-down" size={22} color="#fff4f6" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
 
       {calendarStatus === 'connected' ? (
         <View style={searchBuilding.nextClassCard} testID="next-class-card">

@@ -30,8 +30,6 @@ import { centroidOfPolygon } from '../utils/geoJson';
 import { decodePolyline } from '../utils/polyline';
 
 import MapControls from '../components/MapControls';
-import PoiCategoryChips from '../components/PoiCategoryChips';
-import PoiRangeChips from '../components/PoiRangeChips';
 import * as turf from '@turf/turf';
 import IndoorMapScreen from './IndoorMapScreen';
 import type { OutdoorPoi, PoiCategory, PoiRangeKm } from '../types/Poi';
@@ -58,6 +56,8 @@ type MapScreenProps = {
   onReopenIndoorNav?: () => void;
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
   indoorTravelMode?: 'walking' | 'disability';
+  selectedPoiCategory?: PoiCategory | null;
+  selectedPoiRangeKm?: PoiRangeKm;
 };
 
 export type MapScreenHandle = {
@@ -601,11 +601,11 @@ function MapScreen({
   onIndoorFloorNavReady,
   onIndoorRouteChange,
   indoorTravelMode,
+  selectedPoiCategory = null,
+  selectedPoiRangeKm = 3,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
-  const [selectedPoiCategory, setSelectedPoiCategory] = useState<PoiCategory | null>(null);
-  const [selectedPoiRangeKm, setSelectedPoiRangeKm] = useState<PoiRangeKm>(3);
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [currentBuildingId, setCurrentBuildingId] = useState<string | null>(null);
@@ -893,22 +893,6 @@ function MapScreen({
         />
       ) : (
         <>
-          <PoiCategoryChips
-            selectedCategory={selectedPoiCategory}
-            onSelectCategory={(category) => {
-              setSelectedPoiCategory(category);
-              setSelectedPoiId(null);
-            }}
-          />
-          {selectedPoiCategory ? (
-            <PoiRangeChips
-              selectedRangeKm={selectedPoiRangeKm}
-              onSelectRangeKm={(rangeKm) => {
-                setSelectedPoiRangeKm(rangeKm);
-                setSelectedPoiId(null);
-              }}
-            />
-          ) : null}
           {selectedPoi ? (
             <View style={styles.poiInfoCard} testID="poi-info-card">
               <Text style={styles.poiInfoCategory}>{selectedPoi.category.toUpperCase()}</Text>
