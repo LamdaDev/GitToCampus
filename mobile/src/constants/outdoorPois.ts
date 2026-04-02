@@ -143,8 +143,8 @@ export const OUTDOOR_POIS: OutdoorPoi[] = [
     address: '8 Sherbrooke St W, Montreal, Quebec H2X 4C9',
   },
   /**
- * less than 1km radius for loyola cafes
- */
+   * less than 1km radius for loyola cafes
+   */
   {
     id: 'cafe-loy-01',
     name: 'Hingston Cafe',

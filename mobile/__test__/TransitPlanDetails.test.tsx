@@ -1,5 +1,6 @@
-import React from 'react';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { fireEvent, render } from '@testing-library/react-native';
+import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import TransitPlanDetails from '../src/components/TransitPlanDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';

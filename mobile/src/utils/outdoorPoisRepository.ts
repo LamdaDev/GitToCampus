@@ -20,6 +20,17 @@ export const getCampusOutdoorPoisByCategory = (
   category: PoiCategory,
 ): OutdoorPoi[] => getCampusOutdoorPois(campus).filter((poi) => poi.category === category);
 
+const POI_RANGE_BUCKET_THRESHOLDS: Record<Campus, Record<PoiCategory, readonly number[]>> = {
+  SGW: {
+    cafe: [7, 12],
+    restaurant: [9, 12],
+  },
+  LOYOLA: {
+    cafe: [2, 7],
+    restaurant: [4, 10],
+  },
+} as const;
+
 const getPoiSequenceNumber = (poi: OutdoorPoi): number => {
   const segments = poi.id.split('-');
   const rawSequence = segments.at(-1) ?? '';
@@ -29,27 +40,10 @@ const getPoiSequenceNumber = (poi: OutdoorPoi): number => {
 
 const getPoiRangeBucketKm = (poi: OutdoorPoi): PoiRangeKm => {
   const sequenceNumber = getPoiSequenceNumber(poi);
+  const [firstBucketMax, secondBucketMax] = POI_RANGE_BUCKET_THRESHOLDS[poi.campus][poi.category];
 
-  if (poi.campus === 'SGW' && poi.category === 'cafe') {
-    if (sequenceNumber <= 7) return 1;
-    if (sequenceNumber <= 12) return 2;
-    return 3;
-  }
-
-  if (poi.campus === 'LOYOLA' && poi.category === 'cafe') {
-    if (sequenceNumber <= 2) return 1;
-    if (sequenceNumber <= 7) return 2;
-    return 3;
-  }
-
-  if (poi.campus === 'SGW' && poi.category === 'restaurant') {
-    if (sequenceNumber <= 9) return 1;
-    if (sequenceNumber <= 12) return 2;
-    return 3;
-  }
-
-  if (sequenceNumber <= 4) return 1;
-  if (sequenceNumber <= 10) return 2;
+  if (sequenceNumber <= firstBucketMax) return 1;
+  if (sequenceNumber <= secondBucketMax) return 2;
   return 3;
 };
 
