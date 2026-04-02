@@ -31,9 +31,10 @@ import { decodePolyline } from '../utils/polyline';
 
 import MapControls from '../components/MapControls';
 import PoiCategoryChips from '../components/PoiCategoryChips';
+import PoiRangeChips from '../components/PoiRangeChips';
 import * as turf from '@turf/turf';
 import IndoorMapScreen from './IndoorMapScreen';
-import type { OutdoorPoi, PoiCategory } from '../types/Poi';
+import type { OutdoorPoi, PoiCategory, PoiRangeKm } from '../types/Poi';
 import { findNearbyOutdoorPois } from '../utils/outdoorPoisRepository';
 
 type MapScreenProps = {
@@ -470,8 +471,13 @@ const renderPolygonItems = (
   return elements;
 };
 
-const renderPoiMarker = (poi: OutdoorPoi) => {
+const renderPoiMarker = (
+  poi: OutdoorPoi,
+  selectedPoiId: string | null,
+  onPoiPress: (poi: OutdoorPoi) => void,
+) => {
   const markerTheme = POI_MARKER_THEME[poi.category];
+  const isSelected = poi.id === selectedPoiId;
 
   return (
     <Marker
@@ -480,9 +486,16 @@ const renderPoiMarker = (poi: OutdoorPoi) => {
       coordinate={{ latitude: poi.latitude, longitude: poi.longitude }}
       title={poi.name}
       description={poi.address}
+      onPress={() => onPoiPress(poi)}
       tracksViewChanges={false}
     >
-      <View style={[styles.poiMarker, { backgroundColor: markerTheme.color }]}>
+      <View
+        style={[
+          styles.poiMarker,
+          { backgroundColor: isSelected ? markerTheme.selectedColor : markerTheme.color },
+          isSelected && styles.poiMarkerSelected,
+        ]}
+      >
         <Ionicons name={markerTheme.iconName} size={18} color="#fff" />
       </View>
     </Marker>
@@ -592,6 +605,8 @@ function MapScreen({
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedPoiCategory, setSelectedPoiCategory] = useState<PoiCategory | null>(null);
+  const [selectedPoiRangeKm, setSelectedPoiRangeKm] = useState<PoiRangeKm>(3);
+  const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [currentBuildingId, setCurrentBuildingId] = useState<string | null>(null);
   const { height: windowHeight } = useWindowDimensions();
@@ -653,6 +668,7 @@ function MapScreen({
       setSelectedBuildingId(null);
       return;
     }
+    setSelectedPoiId(null);
     setSelectedBuildingId(externalSelectedBuilding.id);
     setSelectedCampus(externalSelectedBuilding.campus);
   }, [externalSelectedBuilding]);
@@ -676,12 +692,14 @@ function MapScreen({
   const handleToggleCampus = useCallback(() => {
     setSelectedCampus((prev) => (prev === 'SGW' ? 'LOYOLA' : 'SGW'));
     setSelectedBuildingId(null);
+    setSelectedPoiId(null);
   }, []);
 
   const handlePolygonPress = useCallback(
     (item: PolygonRenderItem) => {
       armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
 
+      setSelectedPoiId(null);
       setSelectedBuildingId(item.buildingId);
       setSelectedCampus(item.campus);
 
@@ -715,6 +733,7 @@ function MapScreen({
     if (consumePolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef)) return;
 
     setSelectedBuildingId(null);
+    setSelectedPoiId(null);
     passSelectedBuilding(null);
     onMapPress?.();
   }, [onMapPress, passSelectedBuilding]);
@@ -785,11 +804,25 @@ function MapScreen({
   );
   const visiblePois = useMemo(() => {
     if (!selectedPoiCategory) return [];
-    return findNearbyOutdoorPois(selectedCampus, selectedPoiCategory).map((entry) => entry.poi);
-  }, [selectedCampus, selectedPoiCategory]);
+    return findNearbyOutdoorPois(selectedCampus, selectedPoiCategory, selectedPoiRangeKm).map(
+      (entry) => entry.poi,
+    );
+  }, [selectedCampus, selectedPoiCategory, selectedPoiRangeKm]);
+  const selectedPoi = useMemo(
+    () => visiblePois.find((poi) => poi.id === selectedPoiId) ?? null,
+    [selectedPoiId, visiblePois],
+  );
+  const handlePoiPress = useCallback(
+    (poi: OutdoorPoi) => {
+      setSelectedPoiId(poi.id);
+      setSelectedBuildingId(null);
+      passSelectedBuilding(null);
+    },
+    [passSelectedBuilding],
+  );
   const renderedPoiMarkers = useMemo(
-    () => visiblePois.map((poi) => renderPoiMarker(poi)),
-    [visiblePois],
+    () => visiblePois.map((poi) => renderPoiMarker(poi, selectedPoiId, handlePoiPress)),
+    [handlePoiPress, selectedPoiId, visiblePois],
   );
 
   const mapProps = {
@@ -862,8 +895,27 @@ function MapScreen({
         <>
           <PoiCategoryChips
             selectedCategory={selectedPoiCategory}
-            onSelectCategory={setSelectedPoiCategory}
+            onSelectCategory={(category) => {
+              setSelectedPoiCategory(category);
+              setSelectedPoiId(null);
+            }}
           />
+          {selectedPoiCategory ? (
+            <PoiRangeChips
+              selectedRangeKm={selectedPoiRangeKm}
+              onSelectRangeKm={(rangeKm) => {
+                setSelectedPoiRangeKm(rangeKm);
+                setSelectedPoiId(null);
+              }}
+            />
+          ) : null}
+          {selectedPoi ? (
+            <View style={styles.poiInfoCard} testID="poi-info-card">
+              <Text style={styles.poiInfoCategory}>{selectedPoi.category.toUpperCase()}</Text>
+              <Text style={styles.poiInfoTitle}>{selectedPoi.name}</Text>
+              <Text style={styles.poiInfoAddress}>{selectedPoi.address}</Text>
+            </View>
+          ) : null}
           <MapControls
             selectedCampus={selectedCampus}
             onToggleCampus={handleToggleCampus}

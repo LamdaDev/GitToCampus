@@ -1,9 +1,9 @@
 import { getDistance } from 'geolib';
 import { getCampusRegion } from '../constants/campuses';
 import { OUTDOOR_POIS } from '../constants/outdoorPois';
-import { POI_RESULT_LIMIT, POI_SEARCH_RADIUS_METERS } from '../constants/poi';
+import { POI_RESULT_LIMIT } from '../constants/poi';
 import type { Campus } from '../types/Campus';
-import type { OutdoorPoi, PoiCategory } from '../types/Poi';
+import type { OutdoorPoi, PoiCategory, PoiRangeKm } from '../types/Poi';
 
 export type NearbyOutdoorPoiResult = {
   poi: OutdoorPoi;
@@ -20,10 +20,43 @@ export const getCampusOutdoorPoisByCategory = (
   category: PoiCategory,
 ): OutdoorPoi[] => getCampusOutdoorPois(campus).filter((poi) => poi.category === category);
 
+const getPoiSequenceNumber = (poi: OutdoorPoi): number => {
+  const segments = poi.id.split('-');
+  const rawSequence = segments.at(-1) ?? '';
+  const parsedSequence = Number.parseInt(rawSequence, 10);
+  return Number.isFinite(parsedSequence) ? parsedSequence : Number.MAX_SAFE_INTEGER;
+};
+
+const getPoiRangeBucketKm = (poi: OutdoorPoi): PoiRangeKm => {
+  const sequenceNumber = getPoiSequenceNumber(poi);
+
+  if (poi.campus === 'SGW' && poi.category === 'cafe') {
+    if (sequenceNumber <= 7) return 1;
+    if (sequenceNumber <= 12) return 2;
+    return 3;
+  }
+
+  if (poi.campus === 'LOYOLA' && poi.category === 'cafe') {
+    if (sequenceNumber <= 2) return 1;
+    if (sequenceNumber <= 7) return 2;
+    return 3;
+  }
+
+  if (poi.campus === 'SGW' && poi.category === 'restaurant') {
+    if (sequenceNumber <= 9) return 1;
+    if (sequenceNumber <= 12) return 2;
+    return 3;
+  }
+
+  if (sequenceNumber <= 4) return 1;
+  if (sequenceNumber <= 10) return 2;
+  return 3;
+};
+
 export const findNearbyOutdoorPois = (
   campus: Campus,
   category: PoiCategory,
-  radiusMeters: number = POI_SEARCH_RADIUS_METERS,
+  maxRangeKm: PoiRangeKm = 3,
   limit: number = POI_RESULT_LIMIT,
 ): NearbyOutdoorPoiResult[] => {
   const campusCenter = getCampusRegion(campus);
@@ -42,7 +75,7 @@ export const findNearbyOutdoorPois = (
         },
       ),
     }))
-    .filter((entry) => entry.distance <= radiusMeters)
+    .filter((entry) => getPoiRangeBucketKm(entry.poi) <= maxRangeKm)
     .sort((left, right) => left.distance - right.distance)
     .slice(0, limit);
 };

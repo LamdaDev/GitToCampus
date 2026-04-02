@@ -5,7 +5,7 @@ const MOCK_REGIONS = {
 
 const samplePois = [
   {
-    id: 'sgw-cafe-near',
+    id: 'cafe-sgw-01',
     name: 'SGW Cafe Near',
     category: 'cafe',
     campus: 'SGW',
@@ -14,7 +14,7 @@ const samplePois = [
     address: '1 Test St',
   },
   {
-    id: 'sgw-cafe-far',
+    id: 'cafe-sgw-08',
     name: 'SGW Cafe Far',
     category: 'cafe',
     campus: 'SGW',
@@ -23,7 +23,7 @@ const samplePois = [
     address: '2 Test St',
   },
   {
-    id: 'sgw-restaurant-near',
+    id: 'restaurant-sgw-01',
     name: 'SGW Restaurant Near',
     category: 'restaurant',
     campus: 'SGW',
@@ -32,7 +32,7 @@ const samplePois = [
     address: '3 Test St',
   },
   {
-    id: 'loy-cafe-near',
+    id: 'cafe-loy-01',
     name: 'LOY Cafe Near',
     category: 'cafe',
     campus: 'LOYOLA',
@@ -87,14 +87,14 @@ describe('outdoorPoisRepository', () => {
     expect(repo.getCampusOutdoorPoisByCategory('LOYOLA', 'restaurant')).toHaveLength(0);
   });
 
-  test('findNearbyOutdoorPois filters by radius, sorts by distance, and respects limit', () => {
+  test('findNearbyOutdoorPois filters by curated range bucket, sorts by distance, and respects limit', () => {
     const { repo, mocks } = loadRepository();
 
     mocks.getDistanceMock
       .mockReturnValueOnce(120)
       .mockReturnValueOnce(4500);
 
-    const results = repo.findNearbyOutdoorPois('SGW', 'cafe', 3000, 30);
+    const results = repo.findNearbyOutdoorPois('SGW', 'cafe', 1, 30);
 
     expect(results).toHaveLength(1);
     expect(results[0]).toEqual({
@@ -113,7 +113,7 @@ describe('outdoorPoisRepository', () => {
       samplePois[0],
       {
         ...samplePois[0],
-        id: 'sgw-cafe-closer',
+        id: 'cafe-sgw-02',
         name: 'SGW Cafe Closer',
       },
     ];
@@ -131,10 +131,10 @@ describe('outdoorPoisRepository', () => {
     }));
 
     const repoReloaded = require('../src/utils/outdoorPoisRepository');
-    const results = repoReloaded.findNearbyOutdoorPois('SGW', 'cafe', 3000, 1);
+    const results = repoReloaded.findNearbyOutdoorPois('SGW', 'cafe', 1, 1);
 
     expect(results).toHaveLength(1);
     expect(results[0].distance).toBe(90);
-    expect(results[0].poi.id).toBe('sgw-cafe-closer');
+    expect(results[0].poi.id).toBe('cafe-sgw-02');
   });
 });
