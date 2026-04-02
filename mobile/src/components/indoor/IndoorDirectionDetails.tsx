@@ -116,9 +116,10 @@ export default function IndoorDirectionDetails({
           <TouchableOpacity
             testID="clear-button"
             style={directionDetailsStyles.iconButton}
+            accessibilityLabel="Clear route"
             onPress={onClear}
           >
-            <Ionicons name="close-sharp" size={22} color="#fff" />
+            <Ionicons name="refresh-outline" size={22} color="#fff" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -126,7 +127,7 @@ export default function IndoorDirectionDetails({
             style={directionDetailsStyles.iconButton}
             onPress={onClose}
           >
-            <Ionicons name="chevron-down-outline" size={25} color="#fff" />
+            <Ionicons name="close-sharp" size={25} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>

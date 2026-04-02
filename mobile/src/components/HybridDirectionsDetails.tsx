@@ -201,15 +201,17 @@ export default function HybridDirectionsDetails({
             <TouchableOpacity
               testID="hybrid-clear-button"
               style={directionDetailsStyles.iconButton}
+              accessibilityLabel="Clear route"
               onPress={onClear}
             >
-              <Ionicons name="close-sharp" size={22} color="#fff" />
+              <Ionicons name="refresh-outline" size={22} color="#fff" />
             </TouchableOpacity>
           ) : null}
 
           <TouchableOpacity
             testID="hybrid-directions-close-button"
             style={directionDetailsStyles.iconButton}
+            accessibilityLabel="Close directions"
             onPress={onClose}
           >
             <Ionicons name="close-outline" size={25} color="#fff" />
