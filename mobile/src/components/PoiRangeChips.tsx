@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import type { PoiRangeKm } from '../types/Poi';
 import styles from '../styles/PoiRangeChips.styles';
 
-type Props = {
+type PoiRangeChipsProps = {
   selectedRangeKm: PoiRangeKm;
   onSelectRangeKm: (rangeKm: PoiRangeKm) => void;
   disabled?: boolean;
@@ -11,7 +11,11 @@ type Props = {
 
 const rangeOptions: PoiRangeKm[] = [1, 2, 3];
 
-const PoiRangeChips = ({ selectedRangeKm, onSelectRangeKm, disabled = false }: Props) => {
+const PoiRangeChips = ({
+  selectedRangeKm,
+  onSelectRangeKm,
+  disabled = false,
+}: PoiRangeChipsProps) => {
   return (
     <View style={styles.container} pointerEvents="box-none">
       {rangeOptions.map((rangeKm) => {

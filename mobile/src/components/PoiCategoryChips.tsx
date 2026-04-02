@@ -4,7 +4,7 @@ import { POI_CATEGORY_LABELS } from '../constants/poi';
 import type { PoiCategory } from '../types/Poi';
 import styles from '../styles/PoiCategoryChips.styles';
 
-type Props = {
+type PoiCategoryChipsProps = {
   selectedCategory: PoiCategory | null;
   onSelectCategory: (category: PoiCategory | null) => void;
   disabled?: boolean;
@@ -12,7 +12,11 @@ type Props = {
 
 const categories = Object.keys(POI_CATEGORY_LABELS) as PoiCategory[];
 
-const PoiCategoryChips = ({ selectedCategory, onSelectCategory, disabled = false }: Props) => {
+const PoiCategoryChips = ({
+  selectedCategory,
+  onSelectCategory,
+  disabled = false,
+}: PoiCategoryChipsProps) => {
   return (
     <View style={styles.container} pointerEvents="box-none">
       {categories.map((category) => {

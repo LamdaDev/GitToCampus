@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Campus } from '../types/Campus';
 import { getCampusRegion } from '../constants/campuses';
 import styles, { POLYGON_THEME } from '../styles/MapScreen.styles';
-import { POI_MARKER_THEME } from '../constants/poi';
+import { POI_MARKER_THEME } from '../styles/poi';
 import {
   getCampusBuildingShapes,
   getBuildingShapeById,
