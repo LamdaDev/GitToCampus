@@ -362,7 +362,7 @@ type BottomSheetProps = {
   selectedPoiCategory?: PoiCategory | null;
   onPoiCategoryChange?: (category: PoiCategory | null) => void;
   selectedPoiRangeKm?: PoiRangeKm;
-  onPoiRangeChange?: (rangeKm: PoiRangeKm) => void;
+  onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -702,7 +702,7 @@ type SearchContentProps = {
   selectedPoiCategory?: PoiCategory | null;
   onPoiCategoryChange?: (category: PoiCategory | null) => void;
   selectedPoiRangeKm?: PoiRangeKm;
-  onPoiRangeChange?: (rangeKm: PoiRangeKm) => void;
+  onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
 };
 
 const SearchContent = ({
@@ -784,7 +784,7 @@ const renderBottomSheetContent = (props: {
   selectedPoiCategory?: PoiCategory | null;
   onPoiCategoryChange?: (category: PoiCategory | null) => void;
   selectedPoiRangeKm?: PoiRangeKm;
-  onPoiRangeChange?: (rangeKm: PoiRangeKm) => void;
+  onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
   selectedBuilding: BuildingShape | null;
   indoorNavigationBuilding: BuildingShape | null;
   closeSheet: () => void;

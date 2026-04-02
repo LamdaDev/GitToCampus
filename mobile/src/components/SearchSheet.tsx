@@ -33,7 +33,7 @@ type SearchBarProps = {
   selectedPoiCategory?: PoiCategory | null;
   onPoiCategoryChange?: (category: PoiCategory | null) => void;
   selectedPoiRangeKm?: PoiRangeKm;
-  onPoiRangeChange?: (rangeKm: PoiRangeKm) => void;
+  onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
@@ -274,6 +274,7 @@ export default function SearchSheet({
   const handleSearchChange = useCallback((text?: string) => {
     setSearch(text ?? '');
   }, []);
+  const poiOptionsAccessibilityLabel = isPoiPanelOpen ? 'Close POI options' : 'Open POI options';
   const showsRooms = searchMode === 'rooms' || searchMode === 'mixed';
   const showsBuildings = searchMode === 'buildings' || searchMode === 'mixed';
 
@@ -396,7 +397,8 @@ export default function SearchSheet({
         <TouchableOpacity
           testID="search-poi-options-toggle"
           accessibilityRole="button"
-          accessibilityLabel="Open POI options"
+          accessibilityLabel={poiOptionsAccessibilityLabel}
+          accessibilityState={{ expanded: isPoiPanelOpen }}
           style={searchBuilding.searchOptionsButton}
           activeOpacity={0.85}
           onPress={() => setIsPoiPanelOpen((previous) => !previous)}
@@ -450,7 +452,9 @@ export default function SearchSheet({
                     style={searchBuilding.poiRangeStepperButton}
                     activeOpacity={0.8}
                     onPress={() =>
-                      onPoiRangeChange?.(Math.min(3, selectedPoiRangeKm + 1) as PoiRangeKm)
+                      onPoiRangeChange?.(
+                        (previousRangeKm) => Math.min(3, previousRangeKm + 1) as PoiRangeKm,
+                      )
                     }
                   >
                     <Ionicons name="chevron-up" size={22} color="#fff4f6" />
@@ -460,7 +464,9 @@ export default function SearchSheet({
                     style={searchBuilding.poiRangeStepperButton}
                     activeOpacity={0.8}
                     onPress={() =>
-                      onPoiRangeChange?.(Math.max(1, selectedPoiRangeKm - 1) as PoiRangeKm)
+                      onPoiRangeChange?.(
+                        (previousRangeKm) => Math.max(1, previousRangeKm - 1) as PoiRangeKm,
+                      )
                     }
                   >
                     <Ionicons name="chevron-down" size={22} color="#fff4f6" />

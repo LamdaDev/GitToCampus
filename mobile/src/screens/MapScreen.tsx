@@ -808,12 +808,9 @@ function MapScreen({
       (entry) => entry.poi,
     );
   }, [selectedCampus, selectedPoiCategory, selectedPoiRangeKm]);
-  const selectedPoi = useMemo(
-    () => visiblePois.find((poi) => poi.id === selectedPoiId) ?? null,
-    [selectedPoiId, visiblePois],
-  );
   const handlePoiPress = useCallback(
     (poi: OutdoorPoi) => {
+      armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
       setSelectedPoiId(poi.id);
       setSelectedBuildingId(null);
       passSelectedBuilding(null);
@@ -893,13 +890,6 @@ function MapScreen({
         />
       ) : (
         <>
-          {selectedPoi ? (
-            <View style={styles.poiInfoCard} testID="poi-info-card">
-              <Text style={styles.poiInfoCategory}>{selectedPoi.category.toUpperCase()}</Text>
-              <Text style={styles.poiInfoTitle}>{selectedPoi.name}</Text>
-              <Text style={styles.poiInfoAddress}>{selectedPoi.address}</Text>
-            </View>
-          ) : null}
           <MapControls
             selectedCampus={selectedCampus}
             onToggleCampus={handleToggleCampus}

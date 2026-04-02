@@ -1368,7 +1368,7 @@ describe('MapScreen', () => {
     expect(outdoorPoisRepoMock.findNearbyOutdoorPois).toHaveBeenLastCalledWith('SGW', 'cafe', 2);
   });
 
-  test('tapping a POI marker shows its info card', async () => {
+  test('tapping a POI marker does not show an info card overlay', async () => {
     outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValueOnce([
       {
         poi: {
@@ -1384,7 +1384,7 @@ describe('MapScreen', () => {
       },
     ]);
 
-    const { findByTestId, findByText } = render(
+    const { findByTestId, queryByTestId, queryByText } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         passUserLocation={mockPassUserLocation}
@@ -1400,12 +1400,12 @@ describe('MapScreen', () => {
 
     fireEvent.press(await findByTestId('poi-marker-sgw-cafe-2'));
 
-    expect(await findByTestId('poi-info-card')).toBeTruthy();
-    expect(await findByText('Campus Coffee')).toBeTruthy();
-    expect(await findByText('1455 Test Ave')).toBeTruthy();
+    expect(queryByTestId('poi-info-card')).toBeNull();
+    expect(queryByText('Campus Coffee')).toBeNull();
+    expect(queryByText('1455 Test Ave')).toBeNull();
   });
 
-  test('tapping the map clears the selected POI info card', async () => {
+  test('tapping the map after selecting a POI does not render an info card overlay', async () => {
     outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValueOnce([
       {
         poi: {
@@ -1436,7 +1436,7 @@ describe('MapScreen', () => {
     );
 
     fireEvent.press(await findByTestId('poi-marker-sgw-restaurant-2'));
-    expect(await findByTestId('poi-info-card')).toBeTruthy();
+    expect(queryByTestId('poi-info-card')).toBeNull();
 
     fireEvent.press(getByTestId('campus-map'));
 
