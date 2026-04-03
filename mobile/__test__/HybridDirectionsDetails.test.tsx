@@ -105,6 +105,26 @@ describe('HybridDirectionsDetails', () => {
     expect(onPressGo).toHaveBeenCalledTimes(1);
   });
 
+  test('uses distinct reset and close header affordances', () => {
+    const { getByLabelText, getByText } = render(
+      <HybridDirectionsDetails
+        onClose={jest.fn()}
+        onClear={jest.fn()}
+        startLabel="H-811"
+        destinationLabel="VE-1.615"
+        selectedIndoorMode="walking"
+        selectedOutdoorMode="walking"
+        onIndoorModeChange={jest.fn()}
+        onOutdoorModeChange={jest.fn()}
+      />,
+    );
+
+    expect(getByLabelText('Clear route')).toBeTruthy();
+    expect(getByLabelText('Close directions')).toBeTruthy();
+    expect(getByText('refresh-outline')).toBeTruthy();
+    expect(getByText('close-outline')).toBeTruthy();
+  });
+
   test('renders the hybrid error message instead of the default subtitle when provided', () => {
     const { getByTestId, queryByText } = render(
       <HybridDirectionsDetails

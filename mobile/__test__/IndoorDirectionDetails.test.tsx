@@ -5,8 +5,14 @@ import IndoorDirectionDetails from '../src/components/indoor/IndoorDirectionDeta
 /* ---------- MOCKS ---------- */
 
 jest.mock('@expo/vector-icons', () => ({
-  Ionicons: 'Ionicons',
-  FontAwesome: 'FontAwesome',
+  Ionicons: ({ name }: { name: string }) => {
+    const { Text } = require('react-native');
+    return <Text>{name}</Text>;
+  },
+  FontAwesome: ({ name }: { name: string }) => {
+    const { Text } = require('react-native');
+    return <Text>{name}</Text>;
+  },
 }));
 
 jest.mock('react-native-paper', () => ({
@@ -23,6 +29,7 @@ describe('IndoorDirectionDetails FULL COVERAGE', () => {
 
     expect(getByText(/Directions/i)).toBeTruthy();
     expect(getByTestId('directions-close-button')).toBeTruthy();
+    expect(getByText('close-sharp')).toBeTruthy();
   });
 
   it('shows fallback text when start/destination are null', () => {
@@ -53,6 +60,20 @@ describe('IndoorDirectionDetails FULL COVERAGE', () => {
     fireEvent.press(getByTestId('directions-close-button'));
 
     expect(mockClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the turning-arrow icon for clearing the route', () => {
+    const { getByLabelText, getByText } = render(
+      <IndoorDirectionDetails
+        onClose={jest.fn()}
+        onClear={jest.fn()}
+        startRoom={null}
+        destinationRoom={null}
+      />,
+    );
+
+    expect(getByLabelText('Clear route')).toBeTruthy();
+    expect(getByText('refresh-outline')).toBeTruthy();
   });
 
   it('calls onPressStart and onPressDestination', () => {

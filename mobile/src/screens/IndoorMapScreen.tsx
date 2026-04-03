@@ -46,6 +46,44 @@ const hasNativeSvgSupport = () => {
   return true;
 };
 
+const parseFloorKeyToGraphFloor = (floorKey: string | null) => {
+  if (!floorKey) return null;
+
+  const numericFloor = Number(floorKey);
+  if (!Number.isNaN(numericFloor)) return numericFloor;
+
+  const normalizedFloorKey = floorKey.trim().toUpperCase();
+  if (normalizedFloorKey.startsWith('S')) {
+    const subLevel = Number(normalizedFloorKey.slice(1));
+    return Number.isNaN(subLevel) ? null : subLevel;
+  }
+
+  return null;
+};
+
+const getFloorKeySortValue = (floorKey: string) => {
+  const normalizedFloorKey = floorKey.trim().toUpperCase();
+
+  if (normalizedFloorKey.startsWith('S')) {
+    const subLevel = Number(normalizedFloorKey.slice(1));
+    return Number.isNaN(subLevel) ? Number.POSITIVE_INFINITY : -subLevel;
+  }
+
+  const numericFloor = Number(normalizedFloorKey);
+  if (!Number.isNaN(numericFloor)) return numericFloor;
+
+  return Number.POSITIVE_INFINITY;
+};
+
+const buildFloorKeyByGraphFloorMap = (floorKeys: readonly string[]) => {
+  const entries = floorKeys.flatMap((floorKey) => {
+    const graphFloor = parseFloorKeyToGraphFloor(floorKey);
+    return graphFloor === null ? [] : [[graphFloor, floorKey] as const];
+  });
+
+  return new Map<number, string>(entries);
+};
+
 // ── Building graph data keyed by short code ──────────────────────────────────
 // ── SVG coordinates for scaling path overlay ───────────────────────────
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
@@ -103,7 +141,19 @@ const getPathEndpointLabel = ({
   return humanizeIndoorNodeType(node.type);
 };
 
-const getPathSteps = (path: IndoorNode[], building: BuildingShape | null) => {
+const getPathFloorLabel = (
+  floor: number | undefined,
+  floorKeyByGraphFloor?: ReadonlyMap<number, string>,
+) => {
+  if (floor === undefined) return '?';
+  return floorKeyByGraphFloor?.get(floor) ?? String(floor);
+};
+
+const getPathSteps = (
+  path: IndoorNode[],
+  building: BuildingShape | null,
+  floorKeyByGraphFloor?: ReadonlyMap<number, string>,
+) => {
   const steps: { icon: string; label: string }[] = [];
   let prevFloor = path[0]?.floor;
 
@@ -113,12 +163,18 @@ const getPathSteps = (path: IndoorNode[], building: BuildingShape | null) => {
 
     if (node.type === 'elevator_door' || prev.type === 'elevator_door') {
       if (node.floor !== prevFloor) {
-        steps.push({ icon: '🛗', label: `Elevator to floor ${node.floor}` });
+        steps.push({
+          icon: '🛗',
+          label: `Elevator to floor ${getPathFloorLabel(node.floor, floorKeyByGraphFloor)}`,
+        });
         prevFloor = node.floor;
       }
     } else if (node.type === 'stair_landing' || prev.type === 'stair_landing') {
       if (node.floor !== prevFloor) {
-        steps.push({ icon: '🪜', label: `Stairs to floor ${node.floor}` });
+        steps.push({
+          icon: '🪜',
+          label: `Stairs to floor ${getPathFloorLabel(node.floor, floorKeyByGraphFloor)}`,
+        });
         prevFloor = node.floor;
       }
     }
@@ -128,11 +184,11 @@ const getPathSteps = (path: IndoorNode[], building: BuildingShape | null) => {
   const end = path.at(-1);
   steps.unshift({
     icon: '🟢',
-    label: `Start: ${getPathEndpointLabel({ node: start, role: 'start', building })} (Floor ${start.floor})`,
+    label: `Start: ${getPathEndpointLabel({ node: start, role: 'start', building })} (Floor ${getPathFloorLabel(start?.floor, floorKeyByGraphFloor)})`,
   });
   steps.push({
     icon: '🔴',
-    label: `End: ${getPathEndpointLabel({ node: end, role: 'end', building })} (Floor ${end?.floor})`,
+    label: `End: ${getPathEndpointLabel({ node: end, role: 'end', building })} (Floor ${getPathFloorLabel(end?.floor, floorKeyByGraphFloor)})`,
   });
 
   return steps;
@@ -160,6 +216,27 @@ export default function IndoorMapScreen({
   const [startRoomId, setStartRoomId] = useState<string | null>(null);
   const [endRoomId, setEndRoomId] = useState<string | null>(null);
 
+  // FLOOR PLANS BASED ON SELECTED BUILDING
+  const buildingFloorPlans = useMemo(
+    () => getFloorPlansForBuilding(selectedBuilding?.shortCode),
+    [selectedBuilding?.shortCode],
+  );
+
+  const floorLevels = useMemo(() => {
+    if (!buildingFloorPlans) return [];
+
+    return [...Object.keys(buildingFloorPlans)].sort((floorA, floorB) => {
+      const floorDifference = getFloorKeySortValue(floorA) - getFloorKeySortValue(floorB);
+      if (floorDifference !== 0) return floorDifference;
+      return floorA.localeCompare(floorB);
+    });
+  }, [buildingFloorPlans]);
+
+  const floorKeyByGraphFloor = useMemo(
+    () => buildFloorKeyByGraphFloorMap(floorLevels),
+    [floorLevels],
+  );
+
   // ── Path Logic ──────────────────────────────────────────────────────────────
   const buildingGraph = useMemo(() => {
     return getIndoorGraph(selectedBuilding?.shortCode);
@@ -176,8 +253,9 @@ export default function IndoorMapScreen({
 
   const currentFloorPath = useMemo(() => {
     if (!fullPath || currentFloor === null) return [];
-
-    return fullPath.filter((n) => n.floor === Number(currentFloor));
+    const floorNum = parseFloorKeyToGraphFloor(currentFloor);
+    if (floorNum === null) return [];
+    return fullPath.filter((n) => n.floor === floorNum);
   }, [fullPath, currentFloor]);
 
   const pathFloors = useMemo(() => {
@@ -185,14 +263,14 @@ export default function IndoorMapScreen({
     const seen = new Set<string>();
     const floors: string[] = [];
     for (const node of fullPath) {
-      const f = String(node.floor);
+      const f = floorKeyByGraphFloor.get(node.floor) ?? String(node.floor);
       if (!seen.has(f)) {
         seen.add(f);
         floors.push(f);
       }
     }
     return floors;
-  }, [fullPath]);
+  }, [floorKeyByGraphFloor, fullPath]);
 
   // ── Path Prev/Next Floor ──────────────────────────────────────────────────────────────
   const handleNextPathFloor = useCallback(() => {
@@ -226,12 +304,6 @@ export default function IndoorMapScreen({
     bottomSheetRef.current?.close();
   };
 
-  // FLOOR PLANS BASED ON SELECTED BUILDING
-  const floorLevels = useMemo(() => {
-    const buildingFloorPlans = getFloorPlansForBuilding(selectedBuilding?.shortCode);
-    return buildingFloorPlans ? Object.keys(buildingFloorPlans) : [];
-  }, [selectedBuilding?.shortCode]);
-
   useEffect(() => {
     setSelectedBuilding(building);
   }, [building]);
@@ -239,7 +311,9 @@ export default function IndoorMapScreen({
   // RESET FLOOR WHEN BUILDING CHANGES
   useEffect(() => {
     if (floorLevels.length > 0) {
-      setCurrentFloor(floorLevels[0]);
+      const defaultFloor =
+        floorLevels.find((floorKey) => getFloorKeySortValue(floorKey) >= 0) ?? floorLevels[0];
+      setCurrentFloor(defaultFloor);
     }
 
     setStartRoomId(null);
@@ -256,8 +330,10 @@ export default function IndoorMapScreen({
   useEffect(() => {
     if (!startRoomId || !endRoomId || !buildingGraph) return;
     const node = buildingGraph.nodes.find((n) => n.id === startRoomId);
-    if (node) setCurrentFloor(String(node.floor));
-  }, [startRoomId, endRoomId, buildingGraph]);
+    if (node) {
+      setCurrentFloor(floorKeyByGraphFloor.get(node.floor) ?? String(node.floor));
+    }
+  }, [buildingGraph, endRoomId, floorKeyByGraphFloor, startRoomId]);
 
   // ── Sync externalroomId from BottomSlider ─────────────────────────────────
   useEffect(() => {
@@ -270,11 +346,11 @@ export default function IndoorMapScreen({
 
   useEffect(() => {
     if (fullPath && fullPath.length > 0) {
-      onPathStepsChange?.(getPathSteps(fullPath, selectedBuilding));
+      onPathStepsChange?.(getPathSteps(fullPath, selectedBuilding, floorKeyByGraphFloor));
     } else {
       onPathStepsChange?.([]);
     }
-  }, [fullPath, onPathStepsChange, selectedBuilding]);
+  }, [floorKeyByGraphFloor, fullPath, onPathStepsChange, selectedBuilding]);
 
   // ── Pass floor nav handlers up to parent ─────────────────────────────────────
   useEffect(() => {
