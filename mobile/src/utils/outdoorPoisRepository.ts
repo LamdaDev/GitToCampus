@@ -24,10 +24,12 @@ const POI_RANGE_BUCKET_THRESHOLDS: Record<Campus, Record<PoiCategory, readonly n
   SGW: {
     cafe: [7, 12],
     restaurant: [9, 12],
+    depanneur: [3, 5],
   },
   LOYOLA: {
     cafe: [2, 7],
     restaurant: [4, 10],
+    depanneur: [3, 5],
   },
 } as const;
 

@@ -1,6 +1,6 @@
 import type { Campus } from './Campus';
 
-export type PoiCategory = 'cafe' | 'restaurant';
+export type PoiCategory = 'cafe' | 'restaurant' | 'depanneur';
 export type PoiRangeKm = 1 | 2 | 3;
 
 export type OutdoorPoi = {

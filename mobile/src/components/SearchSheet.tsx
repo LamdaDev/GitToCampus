@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Animated, Easing, Text, TouchableOpacity, View } from 'react-native';
 import { SearchBar } from 'react-native-elements';
 import { searchBuilding } from '../styles/SearchBuilding.styles';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,6 +40,7 @@ const SearchBarCompat = SearchBar as React.ComponentType<any>;
 const SEARCH_LIST_INITIAL_NUM_TO_RENDER = 12;
 const SEARCH_LIST_MAX_TO_RENDER_PER_BATCH = 12;
 const SEARCH_LIST_WINDOW_SIZE = 7;
+const POI_PANEL_ANIMATION_DURATION_MS = 1000;
 
 export default function SearchSheet({
   buildings,
@@ -57,6 +58,7 @@ export default function SearchSheet({
 }: Readonly<SearchBarProps>) {
   const [search, setSearch] = useState('');
   const [isPoiPanelOpen, setIsPoiPanelOpen] = useState(false);
+  const [shouldRenderPoiPanel, setShouldRenderPoiPanel] = useState(false);
   const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarConnectionStatus>('loading');
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [isCalendarConnecting, setIsCalendarConnecting] = useState(false);
@@ -65,6 +67,7 @@ export default function SearchSheet({
   const [isNextClassLoading, setIsNextClassLoading] = useState(false);
   const [hasOnlyUnsupportedNextClassEvents, setHasOnlyUnsupportedNextClassEvents] = useState(false);
   const nextClassRequestIdRef = useRef(0);
+  const poiPanelAnimation = useRef(new Animated.Value(0)).current;
 
   const nextClassLabel = useMemo(() => {
     if (isNextClassLoading) return 'Loading next class...';
@@ -201,6 +204,29 @@ export default function SearchSheet({
     void loadNextClass();
   }, [loadNextClass]);
 
+  useEffect(() => {
+    if (isPoiPanelOpen) {
+      setShouldRenderPoiPanel(true);
+    }
+
+    const animation = Animated.timing(poiPanelAnimation, {
+      toValue: isPoiPanelOpen ? 1 : 0,
+      duration: POI_PANEL_ANIMATION_DURATION_MS,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+
+    animation.start(({ finished }) => {
+      if (finished && !isPoiPanelOpen) {
+        setShouldRenderPoiPanel(false);
+      }
+    });
+
+    return () => {
+      animation.stop();
+    };
+  }, [isPoiPanelOpen, poiPanelAnimation]);
+
   const handleConnectCalendar = useCallback(async () => {
     setIsCalendarConnecting(true);
     setCalendarMessage(null);
@@ -275,6 +301,26 @@ export default function SearchSheet({
     setSearch(text ?? '');
   }, []);
   const poiOptionsAccessibilityLabel = isPoiPanelOpen ? 'Close POI options' : 'Open POI options';
+  const poiPanelAnimatedStyle = useMemo(
+    () => ({
+      opacity: poiPanelAnimation,
+      transform: [
+        {
+          translateY: poiPanelAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-24, 0],
+          }),
+        },
+        {
+          scaleY: poiPanelAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.92, 1],
+          }),
+        },
+      ],
+    }),
+    [poiPanelAnimation],
+  );
   const showsRooms = searchMode === 'rooms' || searchMode === 'mixed';
   const showsBuildings = searchMode === 'buildings' || searchMode === 'mixed';
 
@@ -407,10 +453,14 @@ export default function SearchSheet({
         </TouchableOpacity>
       </View>
 
-      {isPoiPanelOpen ? (
-        <View style={searchBuilding.poiControlsPanel} testID="search-poi-panel">
+      {shouldRenderPoiPanel ? (
+        <Animated.View
+          style={[searchBuilding.poiControlsPanel, poiPanelAnimatedStyle]}
+          testID="search-poi-panel"
+          pointerEvents={isPoiPanelOpen ? 'auto' : 'none'}
+        >
           <View style={searchBuilding.poiCategoryColumn}>
-            {(['cafe', 'restaurant'] as PoiCategory[]).map((category) => {
+            {(['cafe', 'restaurant', 'depanneur'] as PoiCategory[]).map((category) => {
               const isSelected = selectedPoiCategory === category;
               return (
                 <TouchableOpacity
@@ -424,7 +474,11 @@ export default function SearchSheet({
                   onPress={() => onPoiCategoryChange?.(isSelected ? null : category)}
                 >
                   <Text style={searchBuilding.poiCategoryCheckboxLabel}>
-                    {category === 'cafe' ? 'Cafes' : 'Restaurants'}
+                    {category === 'cafe'
+                      ? 'Cafes'
+                      : category === 'restaurant'
+                        ? 'Restaurants'
+                        : 'Depanneurs'}
                   </Text>
                   <View
                     style={[
@@ -475,7 +529,7 @@ export default function SearchSheet({
               </View>
             </View>
           ) : null}
-        </View>
+        </Animated.View>
       ) : null}
 
       {calendarStatus === 'connected' ? (

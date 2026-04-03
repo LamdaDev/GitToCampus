@@ -194,6 +194,7 @@ describe('SearchSheet', () => {
     expect(queryByTestId('search-poi-panel')).toBeTruthy();
     expect(queryByTestId('search-poi-chip-cafe')).toBeTruthy();
     expect(queryByTestId('search-poi-chip-restaurant')).toBeTruthy();
+    expect(queryByTestId('search-poi-chip-depanneur')).toBeTruthy();
     expect(getByTestId('search-poi-options-toggle').props.accessibilityLabel).toBe(
       'Close POI options',
     );
@@ -236,6 +237,18 @@ describe('SearchSheet', () => {
     expect(onPoiRangeChange.mock.calls[0][0](2)).toBe(3);
     expect(typeof onPoiRangeChange.mock.calls[1][0]).toBe('function');
     expect(onPoiRangeChange.mock.calls[1][0](2)).toBe(1);
+  });
+
+  test('forwards depanneur category selection', () => {
+    const onPoiCategoryChange = jest.fn();
+    const { getByTestId } = render(
+      <SearchSheet buildings={mockBuildings} onPoiCategoryChange={onPoiCategoryChange} />,
+    );
+
+    fireEvent.press(getByTestId('search-poi-options-toggle'));
+    fireEvent.press(getByTestId('search-poi-chip-depanneur'));
+
+    expect(onPoiCategoryChange).toHaveBeenCalledWith('depanneur');
   });
 
   test('renders room results when search mode is rooms', () => {
