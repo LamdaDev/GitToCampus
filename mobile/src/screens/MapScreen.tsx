@@ -1,5 +1,4 @@
 import React, {
-  Fragment,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -8,7 +7,14 @@ import React, {
   useState,
 } from 'react';
 import { useWindowDimensions, View, Text, Platform } from 'react-native';
-import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, {
+  Marker,
+  Polygon,
+  Polyline,
+  PROVIDER_GOOGLE,
+  type LatLng,
+  type Region,
+} from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as Linking from 'expo-linking';
 import type { SharedValue } from 'react-native-reanimated';
@@ -21,7 +27,7 @@ import {
   getBuildingShapeById,
   findBuildingAt,
 } from '../utils/buildingsRepository';
-import type { OutdoorRouteOverlay, PolygonRenderItem } from '../types/Map';
+import type { BuildingLabelRenderItem, OutdoorRouteOverlay, PolygonRenderItem } from '../types/Map';
 
 import { BuildingShape } from '../types/BuildingShape';
 import { centroidOfPolygon } from '../utils/geoJson';
@@ -76,8 +82,12 @@ const ROUTE_LINE_WIDTH = 6;
 const WALKING_DASH_PATTERN = [12, 8];
 const ROUTE_POLYLINE_STROKE_PROPS = { strokeColor: ROUTE_LINE_COLOR } as const;
 const POLYGON_PRESS_GUARD_RESET_DELAY_MS = 0;
-//EDIT THIS VALUE TO ADJUST HOW MUCH ZOOM IS REQUIRED TO SHOW BUILDING LABELS
-const SHOW_LABEL_ZOOM_THRESHOLD = 0.0086;
+const DEFAULT_LABEL_ZOOM_THRESHOLD = 0.0066;
+const MIN_LABEL_ZOOM_THRESHOLD = 0.0048;
+const MAX_LABEL_ZOOM_THRESHOLD = 0.0092;
+const LABEL_THRESHOLD_REFERENCE_AREA = 0.00000008;
+const LABEL_THRESHOLD_AREA_EXPONENT = 0.18;
+const BUILDING_LABEL_ZOOM_OVERRIDES: Record<string, number> = {};
 type PolygonPressGuardTimeoutRef = {
   current: ReturnType<typeof setTimeout> | null;
 };
@@ -229,7 +239,6 @@ const flattenBuildingsByCampus = (
       items.push({
         key: `${campus}-${building.id}-${idx}`,
         buildingId: building.id,
-        buildingShortCode: building.shortCode ?? '',
         campus,
         coordinates,
       });
@@ -333,9 +342,58 @@ const watchUserLocation = async (
   return subscription;
 };
 
-const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]) => {
+const clampNumber = (value: number, min: number, max: number) => {
+  return Math.min(Math.max(value, min), max);
+};
+
+const approximatePolygonArea = (coordinates: LatLng[]) => {
+  if (coordinates.length < 3) return 0;
+
+  let twiceArea = 0;
+  for (let index = 0; index < coordinates.length; index += 1) {
+    const current = coordinates[index];
+    const next = coordinates[(index + 1) % coordinates.length];
+    twiceArea += current.longitude * next.latitude - next.longitude * current.latitude;
+  }
+
+  return Math.abs(twiceArea / 2);
+};
+
+const getLargestPolygon = (polygons: LatLng[][]) => {
+  if (polygons.length === 0) return null;
+
+  let largestPolygon = polygons[0];
+  let largestPolygonArea = approximatePolygonArea(polygons[0]);
+
+  for (let index = 1; index < polygons.length; index += 1) {
+    const nextPolygon = polygons[index];
+    const nextPolygonArea = approximatePolygonArea(nextPolygon);
+    if (nextPolygonArea > largestPolygonArea) {
+      largestPolygon = nextPolygon;
+      largestPolygonArea = nextPolygonArea;
+    }
+  }
+
+  return largestPolygon;
+};
+
+const getClosedTurfRing = (coordinates: LatLng[]) => {
+  if (coordinates.length === 0) return [];
+
+  const ring = coordinates.map((coordinate) => [coordinate.longitude, coordinate.latitude]);
+  const [firstLongitude, firstLatitude] = ring[0];
+  const [lastLongitude, lastLatitude] = ring[ring.length - 1];
+
+  if (firstLongitude !== lastLongitude || firstLatitude !== lastLatitude) {
+    ring.push([firstLongitude, firstLatitude]);
+  }
+
+  return ring;
+};
+
+const getPolygonCenter = (coordinates: LatLng[]) => {
   try {
-    const polygon = turf.polygon([coordinates.map((c) => [c.longitude, c.latitude])]);
+    const polygon = turf.polygon([getClosedTurfRing(coordinates)]);
     const center = turf.pointOnFeature(polygon);
     return {
       latitude: center.geometry.coordinates[1],
@@ -344,6 +402,55 @@ const getPolygonCenter = (coordinates: { latitude: number; longitude: number }[]
   } catch {
     return centroidOfPolygon(coordinates) ?? coordinates[0] ?? { latitude: 0, longitude: 0 };
   }
+};
+
+const getBuildingCenter = (building: BuildingShape) => {
+  const anchorPolygon = getLargestPolygon(building.polygons) ?? building.polygons[0];
+  return anchorPolygon ? getPolygonCenter(anchorPolygon) : { latitude: 0, longitude: 0 };
+};
+
+const getBuildingLabelZoomThreshold = (building: BuildingShape) => {
+  const override = BUILDING_LABEL_ZOOM_OVERRIDES[building.id];
+  if (typeof override === 'number') return override;
+
+  const anchorPolygon = getLargestPolygon(building.polygons) ?? building.polygons[0];
+  const polygonArea = anchorPolygon ? approximatePolygonArea(anchorPolygon) : 0;
+
+  if (polygonArea <= 0) return DEFAULT_LABEL_ZOOM_THRESHOLD;
+
+  const normalizedAreaScale = Math.pow(
+    polygonArea / LABEL_THRESHOLD_REFERENCE_AREA,
+    LABEL_THRESHOLD_AREA_EXPONENT,
+  );
+
+  return clampNumber(
+    DEFAULT_LABEL_ZOOM_THRESHOLD * normalizedAreaScale,
+    MIN_LABEL_ZOOM_THRESHOLD,
+    MAX_LABEL_ZOOM_THRESHOLD,
+  );
+};
+
+const flattenBuildingLabelsByCampus = (
+  campus: Campus,
+  buildings: ReturnType<typeof getCampusBuildingShapes>,
+): BuildingLabelRenderItem[] => {
+  const items: BuildingLabelRenderItem[] = [];
+
+  for (const building of buildings) {
+    const label = building.shortCode?.trim() ?? building.name.trim();
+    if (!label) continue;
+
+    items.push({
+      key: `${campus}-${building.id}`,
+      buildingId: building.id,
+      campus,
+      label,
+      center: getBuildingCenter(building),
+      zoomThreshold: getBuildingLabelZoomThreshold(building),
+    });
+  }
+
+  return items;
 };
 
 const getPolygonRenderColors = (
@@ -397,6 +504,7 @@ const PolygonMarker = React.memo(function PolygonMarker({
     <Marker
       testID="map-label"
       coordinate={center}
+      anchor={{ x: 0.5, y: 0.5 }}
       tracksViewChanges={tracksViewChanges}
       tappable={false}
     >
@@ -412,13 +520,10 @@ const renderPolygonItem = (
   selectedBuildingId: string | null,
   currentBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
-  zoomLevel: number,
 ) => {
   const theme = POLYGON_THEME[item.campus];
   const isSelected = item.buildingId === selectedBuildingId;
   const isCurrent = item.buildingId === currentBuildingId;
-
-  const center = getPolygonCenter(item.coordinates);
 
   const { strokeColor, fillColor, strokeWidth } = getPolygonRenderColors(
     theme,
@@ -426,26 +531,16 @@ const renderPolygonItem = (
     isCurrent,
   );
 
-  const showBuildingLabel = zoomLevel < SHOW_LABEL_ZOOM_THRESHOLD;
   return (
-    <Fragment key={item.key}>
-      <Polygon
-        coordinates={item.coordinates}
-        tappable
-        strokeColor={strokeColor}
-        fillColor={fillColor}
-        strokeWidth={strokeWidth}
-        onPress={() => onPolygonPress(item)}
-      />
-
-      {showBuildingLabel && (
-        <PolygonMarker
-          center={center}
-          label={item.buildingShortCode}
-          backgroundColor={theme.labelFill}
-        />
-      )}
-    </Fragment>
+    <Polygon
+      key={item.key}
+      coordinates={item.coordinates}
+      tappable
+      strokeColor={strokeColor}
+      fillColor={fillColor}
+      strokeWidth={strokeWidth}
+      onPress={() => onPolygonPress(item)}
+    />
   );
 };
 
@@ -454,15 +549,80 @@ const renderPolygonItems = (
   selectedBuildingId: string | null,
   currentBuildingId: string | null,
   onPolygonPress: (item: PolygonRenderItem) => void,
-  zoomLevel: number,
 ) => {
   const elements: React.ReactElement[] = [];
   for (const item of polygonItems) {
-    elements.push(
-      renderPolygonItem(item, selectedBuildingId, currentBuildingId, onPolygonPress, zoomLevel),
-    );
+    elements.push(renderPolygonItem(item, selectedBuildingId, currentBuildingId, onPolygonPress));
   }
   return elements;
+};
+
+const renderBuildingLabelItem = (item: BuildingLabelRenderItem) => {
+  const theme = POLYGON_THEME[item.campus];
+
+  return (
+    <PolygonMarker
+      key={item.key}
+      center={item.center}
+      label={item.label}
+      backgroundColor={theme.labelFill}
+    />
+  );
+};
+
+const renderBuildingLabelItems = (
+  buildingLabelItems: BuildingLabelRenderItem[],
+  visibleLabelKeys: string[],
+) => {
+  const visibleLabelKeySet = new Set(visibleLabelKeys);
+  const elements: React.ReactElement[] = [];
+
+  for (const item of buildingLabelItems) {
+    if (!visibleLabelKeySet.has(item.key)) continue;
+    elements.push(renderBuildingLabelItem(item));
+  }
+
+  return elements;
+};
+
+const isCoordinateInsideRegion = (coordinate: LatLng, region: Region) => {
+  const latitudeRadius = Math.abs(region.latitudeDelta) / 2;
+  const longitudeRadius = Math.abs(region.longitudeDelta) / 2;
+
+  return (
+    coordinate.latitude >= region.latitude - latitudeRadius &&
+    coordinate.latitude <= region.latitude + latitudeRadius &&
+    coordinate.longitude >= region.longitude - longitudeRadius &&
+    coordinate.longitude <= region.longitude + longitudeRadius
+  );
+};
+
+const getVisibleBuildingLabelKeys = (
+  buildingLabelItems: BuildingLabelRenderItem[],
+  region: Region,
+) => {
+  if (!Number.isFinite(region.latitudeDelta) || !Number.isFinite(region.longitudeDelta)) return [];
+
+  const visibleKeys: string[] = [];
+
+  for (const item of buildingLabelItems) {
+    if (region.latitudeDelta > item.zoomThreshold) continue;
+    if (!isCoordinateInsideRegion(item.center, region)) continue;
+    visibleKeys.push(item.key);
+  }
+
+  return visibleKeys;
+};
+
+const areStringArraysEqual = (left: string[], right: string[]) => {
+  if (left === right) return true;
+  if (left.length !== right.length) return false;
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) return false;
+  }
+
+  return true;
 };
 
 const selectBuildingAtCoords = (
@@ -642,6 +802,14 @@ function MapScreen({
     ],
     [sgwBuildings, loyolaBuildings],
   );
+  const buildingLabelItems: BuildingLabelRenderItem[] = useMemo(
+    () => [
+      ...flattenBuildingLabelsByCampus('SGW', sgwBuildings),
+      ...flattenBuildingLabelsByCampus('LOYOLA', loyolaBuildings),
+    ],
+    [sgwBuildings, loyolaBuildings],
+  );
+  const [visibleBuildingLabelKeys, setVisibleBuildingLabelKeys] = useState<string[]>([]);
 
   const selectedBuilding = useMemo(() => {
     if (!selectedBuildingId) return null;
@@ -669,7 +837,7 @@ function MapScreen({
 
   const selectedMarkerCoordinate = useMemo(() => {
     if (!selectedBuilding) return null;
-    return centroidOfPolygon(selectedBuilding.polygons[0]) ?? { latitude: 0, longitude: 0 };
+    return getBuildingCenter(selectedBuilding);
   }, [selectedBuilding]);
 
   const handleRecenter = useCallback(() => {
@@ -740,23 +908,27 @@ function MapScreen({
       tracksViewChanges={false}
     />
   ) : null;
-  const initialRegion = getCampusRegion('SGW');
 
-  const [zoomLevel, setZoomLevel] = useState(initialRegion.latitudeDelta);
-  const handleRegionChange = useCallback((region: any) => {
-    setZoomLevel(region.latitudeDelta);
-  }, []);
+  const handleRegionChange = useCallback(
+    (region: Region) => {
+      setVisibleBuildingLabelKeys((previousVisibleKeys) => {
+        const nextVisibleKeys = getVisibleBuildingLabelKeys(buildingLabelItems, region);
+        return areStringArraysEqual(previousVisibleKeys, nextVisibleKeys)
+          ? previousVisibleKeys
+          : nextVisibleKeys;
+      });
+    },
+    [buildingLabelItems],
+  );
 
   const renderedPolygons = useMemo(
     () =>
-      renderPolygonItems(
-        polygonItems,
-        selectedBuildingId,
-        currentBuildingId,
-        handlePolygonPress,
-        zoomLevel,
-      ),
-    [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId, zoomLevel],
+      renderPolygonItems(polygonItems, selectedBuildingId, currentBuildingId, handlePolygonPress),
+    [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId],
+  );
+  const renderedBuildingLabels = useMemo(
+    () => renderBuildingLabelItems(buildingLabelItems, visibleBuildingLabelKeys),
+    [buildingLabelItems, visibleBuildingLabelKeys],
   );
 
   const mapProps = {
@@ -790,6 +962,7 @@ function MapScreen({
         onRegionChangeComplete={handleRegionChange}
       >
         {renderedPolygons}
+        {renderedBuildingLabels}
         {selectedMarker}
         {showRoute && (
           <>

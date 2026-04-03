@@ -5,6 +5,7 @@ import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import * as ReactNative from 'react-native';
 import { Polygon } from 'react-native-maps';
+import * as turf from '@turf/turf';
 import MapScreen from '../src/screens/MapScreen';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import * as buildingsRepository from '../src/utils/buildingsRepository';
@@ -87,10 +88,32 @@ jest.mock('../src/utils/geoJson', () => {
 });
 
 jest.mock('@turf/turf', () => ({
-  polygon: jest.fn(),
-  pointOnFeature: jest.fn(() => ({
-    geometry: { coordinates: [0, 0] },
+  polygon: jest.fn((coordinates: number[][][]) => ({
+    geometry: { coordinates },
   })),
+  pointOnFeature: jest.fn((polygon: { geometry?: { coordinates?: number[][][] } }) => {
+    const ring = polygon?.geometry?.coordinates?.[0] ?? [];
+    const points = ring.length > 1 ? ring.slice(0, -1) : ring;
+
+    if (points.length === 0) {
+      return {
+        geometry: { coordinates: [0, 0] },
+      };
+    }
+
+    let longitudeSum = 0;
+    let latitudeSum = 0;
+    for (const [longitude, latitude] of points) {
+      longitudeSum += longitude;
+      latitudeSum += latitude;
+    }
+
+    return {
+      geometry: {
+        coordinates: [longitudeSum / points.length, latitudeSum / points.length],
+      },
+    };
+  }),
 }));
 
 const mockBuildings: BuildingShape[] = [
@@ -140,6 +163,7 @@ describe('MapScreen', () => {
   const linkingMock = Linking as jest.Mocked<typeof Linking>;
   const repoMock = buildingsRepository as jest.Mocked<typeof buildingsRepository>;
   const geoJsonMock = geoJson as jest.Mocked<typeof geoJson>;
+  const turfMock = turf as jest.Mocked<typeof turf>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -165,6 +189,32 @@ describe('MapScreen', () => {
         lonSum += p.longitude;
       }
       return { latitude: latSum / polygon.length, longitude: lonSum / polygon.length };
+    });
+    turfMock.polygon.mockImplementation(
+      (coordinates: number[][][]) =>
+        ({
+          geometry: { coordinates },
+        }) as any,
+    );
+    turfMock.pointOnFeature.mockImplementation((polygon: any) => {
+      const ring = polygon?.geometry?.coordinates?.[0] ?? [];
+      const points = ring.length > 1 ? ring.slice(0, -1) : ring;
+      if (points.length === 0) {
+        return { geometry: { coordinates: [0, 0] } } as any;
+      }
+
+      let longitudeSum = 0;
+      let latitudeSum = 0;
+      for (const [longitude, latitude] of points) {
+        longitudeSum += longitude;
+        latitudeSum += latitude;
+      }
+
+      return {
+        geometry: {
+          coordinates: [longitudeSum / points.length, latitudeSum / points.length],
+        },
+      } as any;
     });
 
     locationMock.requestForegroundPermissionsAsync.mockResolvedValue({
@@ -323,8 +373,11 @@ describe('MapScreen', () => {
     expect(marker.props.title).toBe('Administration');
   });
 
-  test('uses fallback marker coordinates when centroid is null', async () => {
-    geoJsonMock.centroidOfPolygon.mockReturnValueOnce(null);
+  test('uses the first polygon vertex when center helpers cannot compute a point', async () => {
+    geoJsonMock.centroidOfPolygon.mockReturnValue(null);
+    turfMock.polygon.mockImplementation(() => {
+      throw new Error('invalid polygon');
+    });
 
     const { UNSAFE_getAllByType, getByTestId } = render(
       <MapScreen
@@ -342,7 +395,7 @@ describe('MapScreen', () => {
 
     await waitFor(() => {
       const marker = getByTestId('map-marker');
-      expect(marker.props.coordinate).toEqual({ latitude: 0, longitude: 0 });
+      expect(marker.props.coordinate).toEqual({ latitude: 45.5, longitude: -73.57 });
     });
   });
 
@@ -1142,8 +1195,8 @@ describe('MapScreen', () => {
     expect(fitCall?.[1]?.edgePadding?.bottom).toBe(expectedBottomPadding);
   });
 
-  test('renders all polygons with markers and labels', async () => {
-    const { getAllByTestId, getByTestId } = render(
+  test('renders one label per building only after zooming in enough', async () => {
+    const { getByTestId, queryAllByTestId } = render(
       <MapScreen
         passSelectedBuilding={mockPassSelectedBuilding}
         passUserLocation={mockPassUserLocation}
@@ -1156,22 +1209,22 @@ describe('MapScreen', () => {
     );
 
     const map = getByTestId('campus-map');
+    expect(queryAllByTestId('map-label')).toHaveLength(0);
 
     act(() => {
       map.props.onRegionChangeComplete({
-        latitude: 45,
-        longitude: -73,
+        latitude: 45.5233,
+        longitude: -73.5967,
         latitudeDelta: 0.001,
         longitudeDelta: 0.001,
       });
     });
 
     await waitFor(() => {
-      const markers = getAllByTestId('map-label');
-      expect(markers.length).toBe(mockBuildings.reduce((sum, b) => sum + b.polygons.length, 0));
+      const markers = queryAllByTestId('map-label');
+      expect(markers.length).toBe(1);
+      expect(markers[0].props.anchor).toEqual({ x: 0.5, y: 0.5 });
     });
-
-    expect(getAllByTestId('map-label')).toBeTruthy();
   });
   test('pressing a polygon selects it and applies styling', async () => {
     const { UNSAFE_getAllByType } = render(
