@@ -8,9 +8,17 @@ import type { Campus } from './Campus';
 export type PolygonRenderItem = {
   key: string;
   buildingId: string;
-  buildingShortCode: string;
   campus: Campus;
   coordinates: LatLng[];
+};
+
+export type BuildingLabelRenderItem = {
+  key: string;
+  buildingId: string;
+  campus: Campus;
+  label: string;
+  center: LatLng;
+  zoomThreshold: number;
 };
 
 export type OutdoorRouteSegment = {
