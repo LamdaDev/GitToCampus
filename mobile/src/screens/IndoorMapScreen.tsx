@@ -338,11 +338,8 @@ export default function IndoorMapScreen({
   // ── Sync externalroomId from BottomSlider ─────────────────────────────────
   useEffect(() => {
     if (externalStartRoomId !== undefined) setStartRoomId(externalStartRoomId ?? null);
-  }, [externalStartRoomId]);
-
-  useEffect(() => {
     if (externalEndRoomId !== undefined) setEndRoomId(externalEndRoomId ?? null);
-  }, [externalEndRoomId]);
+  }, [externalEndRoomId, externalStartRoomId, selectedBuilding?.shortCode]);
 
   useEffect(() => {
     if (fullPath && fullPath.length > 0) {
