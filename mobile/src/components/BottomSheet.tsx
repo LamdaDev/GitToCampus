@@ -16,6 +16,7 @@ import { ViewType } from '../types/ViewType';
 import { buildingDetailsStyles } from '../styles/BuildingDetails.styles';
 import { directionDetailsStyles } from '../styles/DirectionDetails.styles';
 import BuildingDetails from './BuildingDetails';
+import PoiDetails from './PoiDetails';
 import DirectionDetails from './DirectionDetails';
 import TransitPlanDetails from './TransitPlanDetails';
 import ShuttleScheduleDetails from './ShuttleScheduleDetails';
@@ -52,7 +53,7 @@ import IndoorDirectionDetails from './indoor/IndoorDirectionDetails';
 import IndoorNavigationDetails from './indoor/IndoorNavigationDetails';
 import { IndoorRoutePlannerMode } from '../types/SheetMode';
 import type { SearchMode } from '../types/SearchMode';
-import type { PoiCategory, PoiRangeKm } from '../types/Poi';
+import type { OutdoorPoi, PoiCategory, PoiRangeKm } from '../types/Poi';
 import HybridDirectionsDetails from './HybridDirectionsDetails';
 import { getIndoorBuildingKeyFromShape } from '../utils/indoor/buildingKeys';
 import { buildCrossBuildingRouteFlow } from '../utils/indoor/crossBuildingRouteFlow';
@@ -359,6 +360,7 @@ type BottomSheetProps = {
   onNextPathFloor?: () => void;
   onIndoorTravelModeChange?: (mode: 'walking' | 'disability') => void;
   onShowOutdoorMap?: () => void;
+  selectedPoi?: OutdoorPoi | null;
   selectedPoiCategory?: PoiCategory | null;
   onPoiCategoryChange?: (category: PoiCategory | null) => void;
   selectedPoiRangeKm?: PoiRangeKm;
@@ -699,6 +701,7 @@ type SearchContentProps = {
   calendarGoErrorMessage: string | null;
   searchMode: SearchMode;
   onSelectRoom: (room: RoomNode) => void;
+  selectedPoi?: OutdoorPoi | null;
   selectedPoiCategory?: PoiCategory | null;
   onPoiCategoryChange?: (category: PoiCategory | null) => void;
   selectedPoiRangeKm?: PoiRangeKm;
@@ -721,6 +724,7 @@ const SearchContent = ({
   calendarGoErrorMessage,
   searchMode,
   onSelectRoom,
+  selectedPoi: _selectedPoi,
   selectedPoiCategory,
   onPoiCategoryChange,
   selectedPoiRangeKm = 3,
@@ -781,6 +785,7 @@ const renderBottomSheetContent = (props: {
   calendarGoErrorMessage: string | null;
   searchMode: SearchMode;
   activeView: ViewType;
+  selectedPoi?: OutdoorPoi | null;
   selectedPoiCategory?: PoiCategory | null;
   onPoiCategoryChange?: (category: PoiCategory | null) => void;
   selectedPoiRangeKm?: PoiRangeKm;
@@ -788,11 +793,13 @@ const renderBottomSheetContent = (props: {
   selectedBuilding: BuildingShape | null;
   indoorNavigationBuilding: BuildingShape | null;
   closeSheet: () => void;
+  showPoiDirections: (poi: OutdoorPoi) => void;
   showDirections: (building: BuildingShape, asDestination?: boolean) => void;
   onEnterBuilding: (building: BuildingShape) => void;
   currentBuilding: BuildingShape | null;
   userLocation: UserCoords | null;
   destinationBuilding: BuildingShape | null;
+  destinationPoi?: OutdoorPoi | null;
   routeTransitSteps: TransitInstruction[];
   showDirectionsPanel: () => void;
   startBuilding: BuildingShape | null;
@@ -856,6 +863,16 @@ const renderBottomSheetContent = (props: {
         currentBuilding={props.currentBuilding}
         userLocation={props.userLocation}
         onEnterBuilding={props.onEnterBuilding}
+      />
+    );
+  }
+
+  if (props.activeView === 'poi') {
+    return (
+      <PoiDetails
+        selectedPoi={props.selectedPoi ?? null}
+        onClose={props.closeSheet}
+        onGetDirections={props.showPoiDirections}
       />
     );
   }
@@ -996,6 +1013,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onNextPathFloor,
       onIndoorTravelModeChange,
       onShowOutdoorMap,
+      selectedPoi,
       selectedPoiCategory,
       onPoiCategoryChange,
       selectedPoiRangeKm,
@@ -1028,6 +1046,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
+    const [destinationPoi, setDestinationPoi] = useState<OutdoorPoi | null>(null);
     const [startLocationSnapshot, setStartLocationSnapshot] = useState<UserCoords | null>(null);
     const [routeStartSource, setRouteStartSource] = useState<'current' | 'manual'>('current');
     const [isRouteLoading, setIsRouteLoading] = useState(false);
@@ -1044,7 +1063,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [shuttlePlan, setShuttlePlan] = useState<ShuttlePlan | null>(null);
     const previousSelectedBuildingIdRef = useRef<string | null>(selectedBuilding?.id ?? null);
     const startCampus = startBuilding?.campus ?? currentBuilding?.campus ?? null;
-    const destinationCampus = destinationBuilding?.campus ?? null;
+    const destinationCampus = destinationBuilding?.campus ?? destinationPoi?.campus ?? null;
     const isCrossCampusRoute = Boolean(
       startCampus && destinationCampus && startCampus !== destinationCampus,
     );
@@ -1095,6 +1114,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setDestinationEndpoint(null);
       setStartBuilding(null);
       setDestinationBuilding(null);
+      setDestinationPoi(null);
       setStartLocationSnapshot(null);
       setRouteStartSource('current');
       setHybridOutdoorTravelMode('walking');
@@ -1365,6 +1385,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         // Walking figure: building is destination, start is current location
         setStartBuilding(currentBuilding ?? null);
         setStartLocationSnapshot(currentBuilding ? null : userLocation);
+        setDestinationPoi(null);
         setDestinationBuilding(building);
         setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
         setDestinationEndpoint({ kind: 'building', building });
@@ -1373,6 +1394,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setRouteStartSource('manual');
         setStartBuilding(building);
         setStartLocationSnapshot(null);
+        setDestinationPoi(null);
         setDestinationBuilding(null);
         setStartEndpoint({ kind: 'building', building });
         setDestinationEndpoint(null);
@@ -1380,6 +1402,33 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setActiveView('directions');
       snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
     };
+
+    const showPoiDirections = useCallback(
+      (poi: OutdoorPoi) => {
+        clearCrossBuildingRouteFlowState();
+        setHybridOutdoorTravelMode('walking');
+        setTravelMode('walking');
+        setRouteStartSource('current');
+        setStartRoom(null);
+        setDestinationRoom(null);
+        onIndoorRouteChange?.(null, null);
+        setStartBuilding(currentBuilding ?? null);
+        setStartLocationSnapshot(currentBuilding ? null : userLocation);
+        setDestinationBuilding(null);
+        setDestinationPoi(poi);
+        setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
+        setDestinationEndpoint(null);
+        setActiveView('directions');
+        snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+      },
+      [
+        clearCrossBuildingRouteFlowState,
+        currentBuilding,
+        onIndoorRouteChange,
+        snapToDirectionsPanel,
+        userLocation,
+      ],
+    );
 
     const showTransitPlan = () => {
       setActiveView('transit-plan');
@@ -1410,6 +1459,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartLocationSnapshot(null);
       setStartBuilding(null);
       setDestinationBuilding(null);
+      setDestinationPoi(null);
       setStartEndpoint(null);
       setDestinationEndpoint(null);
       setStartRoom(null);
@@ -1437,6 +1487,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
       setStartBuilding(currentBuilding ?? null);
       setStartLocationSnapshot(currentBuilding ? null : userLocation);
+      setDestinationPoi(null);
       setDestinationBuilding(chosenBuilding);
       setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
       setDestinationEndpoint({ kind: 'building', building: chosenBuilding });
@@ -1462,6 +1513,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           const { destinationBuilding: resolvedDestinationBuilding, startPoint } = resolved.value;
           passSelectedBuilding(resolvedDestinationBuilding);
           setDestinationBuilding(resolvedDestinationBuilding);
+          setDestinationPoi(null);
           setDestinationEndpoint({ kind: 'building', building: resolvedDestinationBuilding });
           setStartEndpoint(null);
           setStartRoom(null);
@@ -1511,6 +1563,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartEndpoint(nextEndpoint);
       } else {
         setDestinationBuilding(building);
+        setDestinationPoi(null);
         setDestinationRoom(building.name);
         setDestinationEndpoint(nextEndpoint);
       }
@@ -1647,18 +1700,40 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ]);
 
     useEffect(() => {
+      if (isSearchActive) return;
+      if (isRouteUiVisible(activeView)) return;
+      if (selectedPoi) {
+        setActiveView('poi');
+        return;
+      }
+
+      if (activeView === 'poi') {
+        setActiveView('building');
+      }
+    }, [activeView, isSearchActive, selectedPoi]);
+
+    useEffect(() => {
       const selectedBuildingId = selectedBuilding?.id ?? null;
       const didSelectedBuildingChange =
         selectedBuildingId !== previousSelectedBuildingIdRef.current;
       previousSelectedBuildingIdRef.current = selectedBuildingId;
 
       if (activeView !== 'directions') return;
+      if (destinationPoi) return;
       if (!selectedBuilding) return;
       if (selectedBuilding.id === startBuilding?.id) return;
       if (!didSelectedBuildingChange && destinationBuilding) return;
 
       setDestinationBuilding(selectedBuilding);
-    }, [selectedBuilding, activeView, startBuilding?.id, destinationBuilding]);
+    }, [selectedBuilding, activeView, startBuilding?.id, destinationBuilding, destinationPoi]);
+
+    useEffect(() => {
+      if (activeView !== 'directions') return;
+      if (!selectedPoi) return;
+
+      setDestinationBuilding(null);
+      setDestinationPoi(selectedPoi);
+    }, [activeView, selectedPoi]);
 
     const startCoords = useMemo(() => {
       if (routeOriginOverride) return routeOriginOverride;
@@ -1670,9 +1745,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const destinationCoords = useMemo(() => {
       if (routeDestinationOverride) return routeDestinationOverride;
+      if (destinationPoi) {
+        return {
+          latitude: destinationPoi.latitude,
+          longitude: destinationPoi.longitude,
+        };
+      }
       if (!destinationBuilding) return null;
       return centroidOfPolygons(destinationBuilding.polygons);
-    }, [destinationBuilding, routeDestinationOverride]);
+    }, [destinationBuilding, destinationPoi, routeDestinationOverride]);
 
     const routeCoordinates = useMemo(
       () => decodePolyline(routeEncodedPolyline),
@@ -1936,6 +2017,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       handleCalendarGoFromSearch,
       calendarGoErrorMessage,
       searchMode: internalSearchMode,
+      selectedPoi,
       selectedPoiCategory,
       onPoiCategoryChange,
       selectedPoiRangeKm,
@@ -1944,11 +2026,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       selectedBuilding,
       indoorNavigationBuilding,
       closeSheet,
+      showPoiDirections,
       showDirections,
       onEnterBuilding: handleEnterBuilding,
       currentBuilding,
       userLocation,
       destinationBuilding,
+      destinationPoi,
       routeTransitSteps,
       showDirectionsPanel,
       startBuilding,
