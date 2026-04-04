@@ -231,6 +231,22 @@ jest.mock('../src/components/BuildingDetails', () => {
   return MockBuildingDetails;
 });
 
+jest.mock('../src/components/PoiDetails', () => {
+  const { View, Button, Text } = require('react-native');
+
+  return ({ selectedPoi, onClose, onGetDirections }: any) => (
+    <View testID="poi-details">
+      <Text testID="poi-name">{selectedPoi?.name}</Text>
+      <Button testID="poi-close-button" title="Close" onPress={onClose} />
+      <Button
+        testID="poi-get-directions-button"
+        title="Get Directions"
+        onPress={() => onGetDirections?.(selectedPoi)}
+      />
+    </View>
+  );
+});
+
 jest.mock('../src/components/DirectionDetails', () => {
   const { View, Text, TouchableOpacity } = require('react-native');
   const React = require('react');
@@ -785,6 +801,281 @@ describe('BottomSheet', () => {
 
     // The bottom sheet's close method should have been called
     expect(mockClose).toHaveBeenCalled();
+  });
+
+  test('renders PoiDetails when a POI is selected', () => {
+    const ref = createRef<BottomSliderHandle>();
+    const selectedPoi = {
+      id: 'poi-1',
+      name: 'Campus Coffee',
+      category: 'cafe' as const,
+      campus: 'SGW' as const,
+      latitude: 45.4975,
+      longitude: -73.5789,
+      address: '1455 Test Ave',
+    };
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        selectedPoi={selectedPoi}
+      />,
+    );
+
+    expect(getByTestId('poi-details')).toBeTruthy();
+    expect(getByTestId('poi-name').props.children).toBe('Campus Coffee');
+    expect(getByTestId('poi-get-directions-button')).toBeTruthy();
+  });
+
+  test('requests outdoor directions to the selected POI when Get Directions is pressed', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const selectedPoi = {
+      id: 'poi-2',
+      name: 'Campus Snack Spot',
+      category: 'depanneur' as const,
+      campus: 'SGW' as const,
+      latitude: 45.4975,
+      longitude: -73.5775,
+      address: '1500 Test Ave',
+    };
+
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValueOnce({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 800,
+      distanceText: '800 m',
+      durationSeconds: 600,
+      durationText: '10 mins',
+      bounds: null,
+    });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        selectedPoi={selectedPoi}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    fireEvent.press(getByTestId('poi-get-directions-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalledWith(
+        expect.objectContaining({
+          destination: {
+            latitude: selectedPoi.latitude,
+            longitude: selectedPoi.longitude,
+          },
+          mode: 'walking',
+        }),
+      );
+      expect(getByTestId('route-summary-state').props.children).toContain('10 mins');
+    });
+  });
+
+  test('shows a retryable route error for POI directions and retries with the same POI destination', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const selectedPoi = {
+      id: 'poi-3',
+      name: 'Late Night Snack',
+      category: 'depanneur' as const,
+      campus: 'SGW' as const,
+      latitude: 45.4968,
+      longitude: -73.5769,
+      address: '1600 Test Ave',
+    };
+
+    directionsServiceMock.fetchOutdoorDirections
+      .mockRejectedValueOnce(new DirectionsServiceError('NETWORK_ERROR', 'Network down'))
+      .mockResolvedValueOnce({
+        polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+        distanceMeters: 950,
+        distanceText: '950 m',
+        durationSeconds: 720,
+        durationText: '12 mins',
+        bounds: null,
+      });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        selectedPoi={selectedPoi}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    fireEvent.press(getByTestId('poi-get-directions-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-error-state').props.children).toBe(
+        'Network issue while loading route. Check connection and retry.',
+      );
+    });
+
+    fireEvent.press(getByTestId('route-retry-button'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThanOrEqual(
+        2,
+      );
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          destination: {
+            latitude: selectedPoi.latitude,
+            longitude: selectedPoi.longitude,
+          },
+          mode: 'walking',
+        }),
+      );
+      expect(getByTestId('route-summary-state').props.children).toContain('12 mins');
+    });
+  });
+
+  test('POI directions fall back to manual start selection when current location is unavailable', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const selectedPoi = {
+      id: 'poi-4',
+      name: 'Study Snacks',
+      category: 'depanneur' as const,
+      campus: 'SGW' as const,
+      latitude: 45.4959,
+      longitude: -73.5772,
+      address: '1705 Test Ave',
+    };
+
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValueOnce({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1100,
+      distanceText: '1.1 km',
+      durationSeconds: 780,
+      durationText: '13 mins',
+      bounds: null,
+    });
+
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        selectedPoi={selectedPoi}
+        currentBuilding={null}
+        userLocation={null}
+      />,
+    );
+
+    fireEvent.press(getByTestId('poi-get-directions-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('route-error-state').props.children).toBe(
+        'Set your start location to continue.',
+      );
+      expect(directionsServiceMock.fetchOutdoorDirections).not.toHaveBeenCalled();
+    });
+
+    fireEvent.press(getByTestId('press-start'));
+    await pressAndFlush(getByTestId('press-building-in-search'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalledWith(
+        expect.objectContaining({
+          destination: {
+            latitude: selectedPoi.latitude,
+            longitude: selectedPoi.longitude,
+          },
+          mode: 'walking',
+        }),
+      );
+      expect(getByTestId('can-start-navigation-state').props.children).toBe('false');
+      expect(getByTestId('route-summary-state').props.children).toContain('13 mins');
+    });
+  });
+
+  test('changing the selected POI while directions are open refreshes the route destination', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const firstPoi = {
+      id: 'poi-5',
+      name: 'Cafe One',
+      category: 'cafe' as const,
+      campus: 'SGW' as const,
+      latitude: 45.4971,
+      longitude: -73.5783,
+      address: '1400 Test Ave',
+    };
+    const secondPoi = {
+      id: 'poi-6',
+      name: 'Cafe Two',
+      category: 'cafe' as const,
+      campus: 'SGW' as const,
+      latitude: 45.4982,
+      longitude: -73.5771,
+      address: '1500 Test Ave',
+    };
+
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 900,
+      distanceText: '900 m',
+      durationSeconds: 660,
+      durationText: '11 mins',
+      bounds: null,
+    });
+
+    const { getByTestId, rerender } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        selectedPoi={firstPoi}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    fireEvent.press(getByTestId('poi-get-directions-button'));
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalledWith(
+        expect.objectContaining({
+          destination: {
+            latitude: firstPoi.latitude,
+            longitude: firstPoi.longitude,
+          },
+          mode: 'walking',
+        }),
+      );
+    });
+
+    const initialCallCount = directionsServiceMock.fetchOutdoorDirections.mock.calls.length;
+
+    rerender(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        selectedPoi={secondPoi}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThan(
+        initialCallCount,
+      );
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          destination: {
+            latitude: secondPoi.latitude,
+            longitude: secondPoi.longitude,
+          },
+          mode: 'walking',
+        }),
+      );
+    });
   });
 
   test('renders DirectionDetails when onShowDirections is called', () => {
