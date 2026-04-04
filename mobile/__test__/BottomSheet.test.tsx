@@ -253,6 +253,8 @@ jest.mock('../src/components/DirectionDetails', () => {
 
   return ({
     destinationBuilding,
+    destinationLabel,
+    destinationAddress,
     onClose,
     onPressStart,
     onPressDestination,
@@ -307,6 +309,8 @@ jest.mock('../src/components/DirectionDetails', () => {
           <Text testID="destination-id">
             {destinationBuilding ? destinationBuilding.id : 'none'}
           </Text>
+          <Text testID="destination-label-state">{destinationLabel ?? 'none'}</Text>
+          <Text testID="destination-address-state">{destinationAddress ?? 'none'}</Text>
           <Text testID="cross-campus-state">{isCrossCampusRoute ? 'true' : 'false'}</Text>
           <Text testID="route-loading-state">{isRouteLoading ? 'true' : 'false'}</Text>
           <Text testID="route-error-state">{routeErrorMessage ?? 'none'}</Text>
@@ -864,6 +868,8 @@ describe('BottomSheet', () => {
 
     await waitFor(() => {
       expect(getByTestId('direction-details')).toBeTruthy();
+      expect(getByTestId('destination-label-state').props.children).toBe(selectedPoi.name);
+      expect(getByTestId('destination-address-state').props.children).toBe(selectedPoi.address);
       expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalledWith(
         expect.objectContaining({
           destination: {
