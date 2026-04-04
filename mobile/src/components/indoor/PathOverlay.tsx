@@ -50,9 +50,9 @@ export default function PathOverlay({
               x2={node.x * scaleX}
               y2={node.y * scaleY}
               stroke="#0057FF"
-              strokeWidth={8}
-              strokeDasharray="16,10"
-              strokeOpacity={0.7}
+              strokeWidth={4}
+              strokeDasharray="6,6"
+              strokeOpacity={1}
               strokeLinecap="round"
             />
           );
@@ -67,7 +67,7 @@ export default function PathOverlay({
               key={`dot-${node.id}`}
               cx={node.x * scaleX}
               cy={node.y * scaleY}
-              r={isStart || isEnd ? 24 : 10}
+              r={isStart || isEnd ? 10 : 0}
               fill={getDotColor(node, isStart, isEnd)}
               stroke="#fff"
               strokeWidth={isStart || isEnd ? 5 : 2}

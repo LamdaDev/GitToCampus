@@ -1556,9 +1556,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartBuilding(flow.originBuilding);
       setDestinationBuilding(flow.destinationBuilding);
       passSelectedBuilding(flow.originBuilding);
+      onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
       enterIndoorView();
       onEnterBuilding(flow.originBuilding);
-      onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
       setActiveView('indoor-navigation');
       requestAnimationFrame(() => {
         sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
@@ -1609,12 +1609,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       continueCrossBuildingRouteFlowToDestinationIndoor();
       resetRouteState();
       passSelectedBuilding(crossBuildingRouteFlow.destinationBuilding);
-      enterIndoorView();
-      onEnterBuilding(crossBuildingRouteFlow.destinationBuilding);
       onIndoorRouteChange?.(
         crossBuildingRouteFlow.destinationTransferPoint.accessNodeId,
         crossBuildingRouteFlow.destinationRoomEndpoint.id,
       );
+      enterIndoorView();
+      onEnterBuilding(crossBuildingRouteFlow.destinationBuilding);
       setActiveView('indoor-navigation');
       requestAnimationFrame(() => {
         sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
