@@ -14,17 +14,6 @@ import VE_2 from '../assets/floor_plans/VE_2.svg';
 import VL_1 from '../assets/floor_plans/VL_1.png';
 import VL_2 from '../assets/floor_plans/VL_2.png';
 
-type FloorPlanDefinition =
-  | {
-      type: 'svg';
-      data: typeof CC_1;
-      viewBox: { width: number; height: number };
-    }
-  | {
-      type: 'png';
-      data: typeof MB_1;
-    };
-
 const buildFloorPlans = () =>
   ({
     CC: {

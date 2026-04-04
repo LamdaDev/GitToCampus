@@ -12,10 +12,12 @@ import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-nativ
 import * as Location from 'expo-location';
 import * as Linking from 'expo-linking';
 import type { SharedValue } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 
 import type { Campus } from '../types/Campus';
 import { getCampusRegion } from '../constants/campuses';
 import styles, { POLYGON_THEME } from '../styles/MapScreen.styles';
+import { POI_MARKER_THEME } from '../styles/poi';
 import {
   getCampusBuildingShapes,
   getBuildingShapeById,
@@ -30,6 +32,8 @@ import { decodePolyline } from '../utils/polyline';
 import MapControls from '../components/MapControls';
 import * as turf from '@turf/turf';
 import IndoorMapScreen from './IndoorMapScreen';
+import type { OutdoorPoi, PoiCategory, PoiRangeKm } from '../types/Poi';
+import { findNearbyOutdoorPois } from '../utils/outdoorPoisRepository';
 
 type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
@@ -52,6 +56,8 @@ type MapScreenProps = {
   onReopenIndoorNav?: () => void;
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
   indoorTravelMode?: 'walking' | 'disability';
+  selectedPoiCategory?: PoiCategory | null;
+  selectedPoiRangeKm?: PoiRangeKm;
 };
 
 export type MapScreenHandle = {
@@ -465,6 +471,37 @@ const renderPolygonItems = (
   return elements;
 };
 
+const renderPoiMarker = (
+  poi: OutdoorPoi,
+  selectedPoiId: string | null,
+  onPoiPress: (poi: OutdoorPoi) => void,
+) => {
+  const markerTheme = POI_MARKER_THEME[poi.category];
+  const isSelected = poi.id === selectedPoiId;
+
+  return (
+    <Marker
+      key={poi.id}
+      testID={`poi-marker-${poi.id}`}
+      coordinate={{ latitude: poi.latitude, longitude: poi.longitude }}
+      title={poi.name}
+      description={poi.address}
+      onPress={() => onPoiPress(poi)}
+      tracksViewChanges={false}
+    >
+      <View
+        style={[
+          styles.poiMarker,
+          { backgroundColor: isSelected ? markerTheme.selectedColor : markerTheme.color },
+          isSelected && styles.poiMarkerSelected,
+        ]}
+      >
+        <Ionicons name={markerTheme.iconName} size={18} color="#fff" />
+      </View>
+    </Marker>
+  );
+};
+
 const selectBuildingAtCoords = (
   coords: UserCoords,
   setCurrentBuildingId: (id: string | null) => void,
@@ -564,9 +601,12 @@ function MapScreen({
   onIndoorFloorNavReady,
   onIndoorRouteChange,
   indoorTravelMode,
+  selectedPoiCategory = null,
+  selectedPoiRangeKm = 3,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+  const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [currentBuildingId, setCurrentBuildingId] = useState<string | null>(null);
   const { height: windowHeight } = useWindowDimensions();
@@ -628,6 +668,7 @@ function MapScreen({
       setSelectedBuildingId(null);
       return;
     }
+    setSelectedPoiId(null);
     setSelectedBuildingId(externalSelectedBuilding.id);
     setSelectedCampus(externalSelectedBuilding.campus);
   }, [externalSelectedBuilding]);
@@ -651,12 +692,14 @@ function MapScreen({
   const handleToggleCampus = useCallback(() => {
     setSelectedCampus((prev) => (prev === 'SGW' ? 'LOYOLA' : 'SGW'));
     setSelectedBuildingId(null);
+    setSelectedPoiId(null);
   }, []);
 
   const handlePolygonPress = useCallback(
     (item: PolygonRenderItem) => {
       armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
 
+      setSelectedPoiId(null);
       setSelectedBuildingId(item.buildingId);
       setSelectedCampus(item.campus);
 
@@ -690,6 +733,7 @@ function MapScreen({
     if (consumePolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef)) return;
 
     setSelectedBuildingId(null);
+    setSelectedPoiId(null);
     passSelectedBuilding(null);
     onMapPress?.();
   }, [onMapPress, passSelectedBuilding]);
@@ -758,6 +802,25 @@ function MapScreen({
       ),
     [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId, zoomLevel],
   );
+  const visiblePois = useMemo(() => {
+    if (!selectedPoiCategory) return [];
+    return findNearbyOutdoorPois(selectedCampus, selectedPoiCategory, selectedPoiRangeKm).map(
+      (entry) => entry.poi,
+    );
+  }, [selectedCampus, selectedPoiCategory, selectedPoiRangeKm]);
+  const handlePoiPress = useCallback(
+    (poi: OutdoorPoi) => {
+      armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
+      setSelectedPoiId(poi.id);
+      setSelectedBuildingId(null);
+      passSelectedBuilding(null);
+    },
+    [passSelectedBuilding],
+  );
+  const renderedPoiMarkers = useMemo(
+    () => visiblePois.map((poi) => renderPoiMarker(poi, selectedPoiId, handlePoiPress)),
+    [handlePoiPress, selectedPoiId, visiblePois],
+  );
 
   const mapProps = {
     ref: mapRef,
@@ -790,6 +853,7 @@ function MapScreen({
         onRegionChangeComplete={handleRegionChange}
       >
         {renderedPolygons}
+        {renderedPoiMarkers}
         {selectedMarker}
         {showRoute && (
           <>
