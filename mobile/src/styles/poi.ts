@@ -14,8 +14,8 @@ export const POI_MARKER_THEME: Record<PoiCategory, PoiMarkerTheme> = {
   },
   restaurant: {
     iconName: 'restaurant-outline',
-    color: '#9f1239',
-    selectedColor: '#ef4444',
+    color: '#1d4ed8',
+    selectedColor: '#60a5fa',
   },
   depanneur: {
     iconName: 'storefront-outline',

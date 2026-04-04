@@ -17,7 +17,6 @@ type DirectionDetailProps = {
   startBuilding: BuildingShape | null;
   destinationBuilding: BuildingShape | null;
   destinationLabel?: string | null;
-  destinationAddress?: string | null;
   userLocation: UserCoords | null;
   currentBuilding: BuildingShape | null;
   isCrossCampusRoute?: boolean;
@@ -307,7 +306,6 @@ export default function DirectionDetails({
   startBuilding,
   destinationBuilding,
   destinationLabel = null,
-  destinationAddress = null,
   onClose,
   userLocation,
   currentBuilding,
@@ -528,9 +526,6 @@ export default function DirectionDetails({
           })}
         </View>
       )}
-      {destinationAddress ? (
-        <Text style={directionDetailsStyles.routeMetaText}>{destinationAddress}</Text>
-      ) : null}
       {stageActionLabel && onStageAction ? (
         <TouchableOpacity
           testID="route-stage-action-button"

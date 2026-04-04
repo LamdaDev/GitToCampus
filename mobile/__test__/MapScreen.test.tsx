@@ -1244,7 +1244,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="cafe"
+        selectedPoiCategories={['cafe']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1278,7 +1278,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="restaurant"
+        selectedPoiCategories={['restaurant']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1296,7 +1296,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory={null}
+        selectedPoiCategories={[]}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1344,7 +1344,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="cafe"
+        selectedPoiCategories={['cafe']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1360,7 +1360,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="cafe"
+        selectedPoiCategories={['cafe']}
         selectedPoiRangeKm={2}
       />,
     );
@@ -1394,7 +1394,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="cafe"
+        selectedPoiCategories={['cafe']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1432,7 +1432,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="restaurant"
+        selectedPoiCategories={['restaurant']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1487,7 +1487,7 @@ describe('MapScreen', () => {
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
         selectedPoi={selectedPoi}
-        selectedPoiCategory="depanneur"
+        selectedPoiCategories={['depanneur']}
         selectedPoiRangeKm={3}
         outdoorRoute={outdoorRoute}
       />,

@@ -53,7 +53,7 @@ import IndoorDirectionDetails from './indoor/IndoorDirectionDetails';
 import IndoorNavigationDetails from './indoor/IndoorNavigationDetails';
 import { IndoorRoutePlannerMode } from '../types/SheetMode';
 import type { SearchMode } from '../types/SearchMode';
-import type { OutdoorPoi, PoiCategory, PoiRangeKm } from '../types/Poi';
+import type { OutdoorPoi, PoiCategorySelection, PoiRangeKm } from '../types/Poi';
 import HybridDirectionsDetails from './HybridDirectionsDetails';
 import { getIndoorBuildingKeyFromShape } from '../utils/indoor/buildingKeys';
 import { buildCrossBuildingRouteFlow } from '../utils/indoor/crossBuildingRouteFlow';
@@ -361,8 +361,8 @@ type BottomSheetProps = {
   onIndoorTravelModeChange?: (mode: 'walking' | 'disability') => void;
   onShowOutdoorMap?: () => void;
   selectedPoi?: OutdoorPoi | null;
-  selectedPoiCategory?: PoiCategory | null;
-  onPoiCategoryChange?: (category: PoiCategory | null) => void;
+  selectedPoiCategories?: PoiCategorySelection;
+  onPoiCategoryChange?: React.Dispatch<React.SetStateAction<PoiCategorySelection>>;
   selectedPoiRangeKm?: PoiRangeKm;
   onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
 };
@@ -702,8 +702,8 @@ type SearchContentProps = {
   searchMode: SearchMode;
   onSelectRoom: (room: RoomNode) => void;
   selectedPoi?: OutdoorPoi | null;
-  selectedPoiCategory?: PoiCategory | null;
-  onPoiCategoryChange?: (category: PoiCategory | null) => void;
+  selectedPoiCategories?: PoiCategorySelection;
+  onPoiCategoryChange?: React.Dispatch<React.SetStateAction<PoiCategorySelection>>;
   selectedPoiRangeKm?: PoiRangeKm;
   onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
 };
@@ -725,7 +725,7 @@ const SearchContent = ({
   searchMode,
   onSelectRoom,
   selectedPoi: _selectedPoi,
-  selectedPoiCategory,
+  selectedPoiCategories,
   onPoiCategoryChange,
   selectedPoiRangeKm = 3,
   onPoiRangeChange,
@@ -760,7 +760,7 @@ const SearchContent = ({
       calendarGoErrorMessage={calendarGoErrorMessage}
       searchMode={searchMode}
       onSelectRoom={onSelectRoom}
-      selectedPoiCategory={selectedPoiCategory}
+      selectedPoiCategories={selectedPoiCategories}
       onPoiCategoryChange={onPoiCategoryChange}
       selectedPoiRangeKm={selectedPoiRangeKm}
       onPoiRangeChange={onPoiRangeChange}
@@ -786,8 +786,8 @@ const renderBottomSheetContent = (props: {
   searchMode: SearchMode;
   activeView: ViewType;
   selectedPoi?: OutdoorPoi | null;
-  selectedPoiCategory?: PoiCategory | null;
-  onPoiCategoryChange?: (category: PoiCategory | null) => void;
+  selectedPoiCategories?: PoiCategorySelection;
+  onPoiCategoryChange?: React.Dispatch<React.SetStateAction<PoiCategorySelection>>;
   selectedPoiRangeKm?: PoiRangeKm;
   onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
   selectedBuilding: BuildingShape | null;
@@ -969,7 +969,6 @@ const renderBottomSheetContent = (props: {
       startBuilding={props.startBuilding}
       destinationBuilding={props.destinationBuilding}
       destinationLabel={props.destinationPoi?.name ?? null}
-      destinationAddress={props.destinationPoi?.address ?? null}
       userLocation={props.userLocation}
       currentBuilding={props.currentBuilding}
       isCrossCampusRoute={props.isCrossCampusRoute}
@@ -1016,7 +1015,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onIndoorTravelModeChange,
       onShowOutdoorMap,
       selectedPoi,
-      selectedPoiCategory,
+      selectedPoiCategories,
       onPoiCategoryChange,
       selectedPoiRangeKm,
       onPoiRangeChange,
@@ -2012,7 +2011,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       calendarGoErrorMessage,
       searchMode: internalSearchMode,
       selectedPoi,
-      selectedPoiCategory,
+      selectedPoiCategories,
       onPoiCategoryChange,
       selectedPoiRangeKm,
       onPoiRangeChange,

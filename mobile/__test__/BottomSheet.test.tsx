@@ -869,7 +869,7 @@ describe('BottomSheet', () => {
     await waitFor(() => {
       expect(getByTestId('direction-details')).toBeTruthy();
       expect(getByTestId('destination-label-state').props.children).toBe(selectedPoi.name);
-      expect(getByTestId('destination-address-state').props.children).toBe(selectedPoi.address);
+      expect(getByTestId('destination-address-state').props.children).toBe('none');
       expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalledWith(
         expect.objectContaining({
           destination: {

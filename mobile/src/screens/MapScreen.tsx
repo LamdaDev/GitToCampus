@@ -32,7 +32,7 @@ import { decodePolyline } from '../utils/polyline';
 import MapControls from '../components/MapControls';
 import * as turf from '@turf/turf';
 import IndoorMapScreen from './IndoorMapScreen';
-import type { OutdoorPoi, PoiCategory, PoiRangeKm } from '../types/Poi';
+import type { OutdoorPoi, PoiCategorySelection, PoiRangeKm } from '../types/Poi';
 import { findNearbyOutdoorPois } from '../utils/outdoorPoisRepository';
 
 type MapScreenProps = {
@@ -58,7 +58,7 @@ type MapScreenProps = {
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
   indoorTravelMode?: 'walking' | 'disability';
   selectedPoi?: OutdoorPoi | null;
-  selectedPoiCategory?: PoiCategory | null;
+  selectedPoiCategories?: PoiCategorySelection;
   selectedPoiRangeKm?: PoiRangeKm;
 };
 
@@ -609,7 +609,7 @@ function MapScreen({
   onIndoorRouteChange,
   indoorTravelMode,
   selectedPoi = null,
-  selectedPoiCategory = null,
+  selectedPoiCategories = [],
   selectedPoiRangeKm = 3,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
@@ -822,11 +822,17 @@ function MapScreen({
     [currentBuildingId, handlePolygonPress, polygonItems, selectedBuildingId, zoomLevel],
   );
   const visiblePois = useMemo(() => {
-    if (!selectedPoiCategory) return [];
-    return findNearbyOutdoorPois(selectedCampus, selectedPoiCategory, selectedPoiRangeKm).map(
-      (entry) => entry.poi,
-    );
-  }, [selectedCampus, selectedPoiCategory, selectedPoiRangeKm]);
+    if (selectedPoiCategories.length === 0) return [];
+
+    const uniquePois = new Map<string, OutdoorPoi>();
+    selectedPoiCategories.forEach((category) => {
+      findNearbyOutdoorPois(selectedCampus, category, selectedPoiRangeKm).forEach((entry) => {
+        uniquePois.set(entry.poi.id, entry.poi);
+      });
+    });
+
+    return Array.from(uniquePois.values());
+  }, [selectedCampus, selectedPoiCategories, selectedPoiRangeKm]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -839,7 +845,7 @@ function MapScreen({
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [selectedPoiCategory, selectedPoiId, selectedPoiRangeKm, visiblePois]);
+  }, [selectedPoiCategories, selectedPoiId, selectedPoiRangeKm, visiblePois]);
 
   const handlePoiPress = useCallback(
     (poi: OutdoorPoi) => {
