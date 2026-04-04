@@ -80,6 +80,7 @@ const ROUTE_FIT_FALLBACK_PANEL_RATIO = 0.52;
 const ROUTE_FIT_EXTRA_BOTTOM_PADDING = 24;
 const ROUTE_FIT_HORIZONTAL_PADDING = 70;
 const ROUTE_FIT_TOP_PADDING = 110;
+const ANDROID_POI_MARKER_REFRESH_MS = 350;
 
 const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
@@ -478,6 +479,7 @@ const renderPolygonItems = (
 const renderPoiMarker = (
   poi: OutdoorPoi,
   selectedPoiId: string | null,
+  tracksViewChanges: boolean,
   onPoiPress: (poi: OutdoorPoi) => void,
 ) => {
   const markerTheme = POI_MARKER_THEME[poi.category];
@@ -491,6 +493,7 @@ const renderPoiMarker = (
       title={poi.name}
       description={poi.address}
       onPress={() => onPoiPress(poi)}
+      tracksViewChanges={tracksViewChanges}
     >
       <View
         style={[
@@ -612,6 +615,9 @@ function MapScreen({
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
+  const [poiMarkersTrackViewChanges, setPoiMarkersTrackViewChanges] = useState(
+    Platform.OS === 'android',
+  );
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [currentBuildingId, setCurrentBuildingId] = useState<string | null>(null);
   const { height: windowHeight } = useWindowDimensions();
@@ -821,6 +827,20 @@ function MapScreen({
       (entry) => entry.poi,
     );
   }, [selectedCampus, selectedPoiCategory, selectedPoiRangeKm]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    setPoiMarkersTrackViewChanges(true);
+    const timeoutId = setTimeout(() => {
+      setPoiMarkersTrackViewChanges(false);
+    }, ANDROID_POI_MARKER_REFRESH_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [selectedPoiCategory, selectedPoiId, selectedPoiRangeKm, visiblePois]);
+
   const handlePoiPress = useCallback(
     (poi: OutdoorPoi) => {
       armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
@@ -833,8 +853,11 @@ function MapScreen({
     [openBottomSheet, passSelectedBuilding, passSelectedPoi],
   );
   const renderedPoiMarkers = useMemo(
-    () => visiblePois.map((poi) => renderPoiMarker(poi, selectedPoiId, handlePoiPress)),
-    [handlePoiPress, selectedPoiId, visiblePois],
+    () =>
+      visiblePois.map((poi) =>
+        renderPoiMarker(poi, selectedPoiId, poiMarkersTrackViewChanges, handlePoiPress),
+      ),
+    [handlePoiPress, poiMarkersTrackViewChanges, selectedPoiId, visiblePois],
   );
 
   const mapProps = {
