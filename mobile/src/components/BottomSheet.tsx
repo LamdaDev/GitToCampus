@@ -183,6 +183,9 @@ const toInternalSnapIndex = (index: number) => {
   return index;
 };
 
+const clampSnapIndex = (index: number, availableSnapPointCount: number) =>
+  Math.max(0, Math.min(index, availableSnapPointCount - 1));
+
 const isShuttleWeekdayDebugEnabled = () =>
   (process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY ?? '').trim().toLowerCase() === 'true';
 
@@ -1145,10 +1148,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         );
         return;
       }
-      sheetRef.current?.snapToIndex(toInternalSnapIndex(index));
+      sheetRef.current?.snapToIndex(clampSnapIndex(toInternalSnapIndex(index), snapPoints.length));
     };
     const setSnapPoint = (index: number) => {
-      sheetRef.current?.snapToIndex(toInternalSnapIndex(index));
+      sheetRef.current?.snapToIndex(clampSnapIndex(toInternalSnapIndex(index), snapPoints.length));
     };
     const snapToKnownPosition = useCallback(
       (position: string, fallbackIndex: number) => {

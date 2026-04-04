@@ -3064,6 +3064,36 @@ describe('BottomSheet', () => {
     });
   });
 
+  test('open() clamps snap index safely when navigation snap points are active', async () => {
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: 'mock-polyline',
+      distanceMeters: 1200,
+      distanceText: '1.2 km',
+      durationSeconds: 840,
+      durationText: '14 mins',
+      bounds: null,
+    });
+
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+        userLocation={{ latitude: 45.4585, longitude: -73.6412 }}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await waitFor(() => expect(getByTestId('route-go-button')).toBeTruthy());
+    fireEvent.press(getByTestId('route-go-button'));
+
+    mockSnapToIndex.mockClear();
+    expect(() => ref.current?.open(0)).not.toThrow();
+    expect(mockSnapToIndex).toHaveBeenCalledWith(SNAP_INDEX_NAVIGATION_MAX);
+  });
+
   test('clearIndoorSearch resets indoor route state', async () => {
     const onIndoorRouteChange = jest.fn();
     const ref = createRef<BottomSliderHandle>();
