@@ -13,6 +13,8 @@ import type { OutdoorRouteOverlay } from './types/Map';
 import { useSharedValue } from 'react-native-reanimated';
 import { initializeClarityAsync } from './services/clarity';
 import { getCalendarConnectionStateAsync } from './services/calendarAccess';
+import type { PoiCategory, PoiRangeKm } from './types/Poi';
+
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -34,6 +36,8 @@ const App = () => {
   const [outdoorRoute, setOutdoorRoute] = useState<OutdoorRouteOverlay | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
   const [sheetMode, setSheetMode] = useState<SheetMode>('detail');
+  const [selectedPoiCategory, setSelectedPoiCategory] = useState<PoiCategory | null>(null);
+  const [selectedPoiRangeKm, setSelectedPoiRangeKm] = useState<PoiRangeKm>(3);
   const [indoorStartRoomId, setIndoorStartRoomId] = useState<string | null>(null);
   const [indoorEndRoomId, setIndoorEndRoomId] = useState<string | null>(null);
   const [indoorPathSteps, setIndoorPathSteps] = useState<{ icon: string; label: string }[]>([]);
@@ -175,6 +179,8 @@ const App = () => {
           indoorPathStepsChange={setIndoorPathSteps}
           onIndoorFloorNavReady={handleIndoorFloorNavReady}
           indoorTravelMode={indoorTravelMode}
+          selectedPoiCategory={selectedPoiCategory}
+          selectedPoiRangeKm={selectedPoiRangeKm}
         />
 
         {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -200,6 +206,10 @@ const App = () => {
           onIndoorRouteChange={handleIndoorRouteChange}
           onIndoorTravelModeChange={setIndoorTravelMode}
           onShowOutdoorMap={handleShowOutdoorMap}
+          selectedPoiCategory={selectedPoiCategory}
+          onPoiCategoryChange={setSelectedPoiCategory}
+          selectedPoiRangeKm={selectedPoiRangeKm}
+          onPoiRangeChange={setSelectedPoiRangeKm}
         />
       </SafeAreaView>
     </GestureHandlerRootView>

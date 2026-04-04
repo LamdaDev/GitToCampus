@@ -5,7 +5,7 @@ describe('getIndoorTransferPoint', () => {
     expect(getIndoorTransferPoint('H')).toEqual({
       buildingKey: 'H',
       campus: 'SGW',
-      accessNodeId: 'Hall_F1_building_entry_exit_3',
+      accessNodeId: 'H1_F1_building_entry_exit_7',
       outdoorCoords: { latitude: 45.497092, longitude: -73.5788 },
       accessible: true,
     });

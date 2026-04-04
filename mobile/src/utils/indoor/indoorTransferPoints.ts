@@ -5,14 +5,14 @@ const INDOOR_TRANSFER_POINTS: Record<IndoorBuildingKey, IndoorTransferPoint> = {
   H: {
     buildingKey: 'H',
     campus: 'SGW',
-    accessNodeId: 'Hall_F1_building_entry_exit_3',
+    accessNodeId: 'H1_F1_building_entry_exit_7',
     outdoorCoords: { latitude: 45.497092, longitude: -73.5788 },
     accessible: true,
   },
   MB: {
     buildingKey: 'MB',
     campus: 'SGW',
-    accessNodeId: 'MB_F1_doorway_40',
+    accessNodeId: 'MB_F1_building_entry_exit_3',
     outdoorCoords: { latitude: 45.495223, longitude: -73.57916 },
     accessible: true,
   },
@@ -26,14 +26,14 @@ const INDOOR_TRANSFER_POINTS: Record<IndoorBuildingKey, IndoorTransferPoint> = {
   VE: {
     buildingKey: 'VE',
     campus: 'LOYOLA',
-    accessNodeId: 'VE_F1_building_entry_exit_6',
+    accessNodeId: 'bldg-1_F1_building_entry_exit_2',
     outdoorCoords: { latitude: 45.459026, longitude: -73.638606 },
     accessible: true,
   },
   VL: {
     buildingKey: 'VL',
     campus: 'LOYOLA',
-    accessNodeId: 'VL_F1_doorway_35',
+    accessNodeId: 'VL_F1_building_entry_exit_1',
     outdoorCoords: { latitude: 45.459044, longitude: -73.638305 },
     accessible: true,
   },
