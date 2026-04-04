@@ -1143,6 +1143,12 @@ describe('BottomSheet', () => {
       'room-h-811',
       'Hall_F1_building_entry_exit_3',
     );
+    expect(onIndoorRouteChange.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      enterIndoorView.mock.invocationCallOrder[0],
+    );
+    expect(onIndoorRouteChange.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      onEnterBuilding.mock.invocationCallOrder[0],
+    );
     expect(getByTestId('indoor-navigation-details')).toBeTruthy();
     expect(getByTestId('indoor-stage-action-button')).toBeTruthy();
     expect(getByTestId('indoor-navigation-start-room').props.children).toBe('H-811');
@@ -1239,6 +1245,9 @@ describe('BottomSheet', () => {
       'room-ve-1615',
     );
     expect(enterIndoorView).toHaveBeenCalledTimes(2);
+    expect(onIndoorRouteChange.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      onEnterBuilding.mock.invocationCallOrder.at(-1) ?? Number.POSITIVE_INFINITY,
+    );
     expect(getByTestId('indoor-navigation-details')).toBeTruthy();
     expect(getByTestId('indoor-navigation-start-room').props.children).toBe('VE Entrance');
     expect(getByTestId('indoor-navigation-destination-room').props.children).toBe('VE-1.615');

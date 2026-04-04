@@ -87,11 +87,11 @@ const buildFloorKeyByGraphFloorMap = (floorKeys: readonly string[]) => {
 // ── Building graph data keyed by short code ──────────────────────────────────
 // ── SVG coordinates for scaling path overlay ───────────────────────────
 const NODE_SPACES: Record<string, { width: number; height: number }> = {
-  H: { width: 2040, height: 2040 },
+  H: { width: 1024, height: 1024 },
   CC: { width: 4096, height: 1024 },
-  VE: { width: 1623, height: 622 },
-  MB: { width: 949, height: 977 },
-  VL: { width: 831, height: 940 },
+  VE: { width: 1024, height: 1024 },
+  MB: { width: 1024, height: 1024 },
+  VL: { width: 1024, height: 1024 },
 };
 
 const SVG_VIEWBOXES: Record<string, { width: number; height: number }> = {
@@ -338,11 +338,8 @@ export default function IndoorMapScreen({
   // ── Sync externalroomId from BottomSlider ─────────────────────────────────
   useEffect(() => {
     if (externalStartRoomId !== undefined) setStartRoomId(externalStartRoomId ?? null);
-  }, [externalStartRoomId]);
-
-  useEffect(() => {
     if (externalEndRoomId !== undefined) setEndRoomId(externalEndRoomId ?? null);
-  }, [externalEndRoomId]);
+  }, [externalEndRoomId, externalStartRoomId, selectedBuilding?.shortCode]);
 
   useEffect(() => {
     if (fullPath && fullPath.length > 0) {

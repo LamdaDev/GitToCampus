@@ -52,6 +52,7 @@ import IndoorDirectionDetails from './indoor/IndoorDirectionDetails';
 import IndoorNavigationDetails from './indoor/IndoorNavigationDetails';
 import { IndoorRoutePlannerMode } from '../types/SheetMode';
 import type { SearchMode } from '../types/SearchMode';
+import type { PoiCategory, PoiRangeKm } from '../types/Poi';
 import HybridDirectionsDetails from './HybridDirectionsDetails';
 import { getIndoorBuildingKeyFromShape } from '../utils/indoor/buildingKeys';
 import { buildCrossBuildingRouteFlow } from '../utils/indoor/crossBuildingRouteFlow';
@@ -358,6 +359,10 @@ type BottomSheetProps = {
   onNextPathFloor?: () => void;
   onIndoorTravelModeChange?: (mode: 'walking' | 'disability') => void;
   onShowOutdoorMap?: () => void;
+  selectedPoiCategory?: PoiCategory | null;
+  onPoiCategoryChange?: (category: PoiCategory | null) => void;
+  selectedPoiRangeKm?: PoiRangeKm;
+  onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
 };
 
 const ROUTE_UI_VIEWS = new Set<ViewType>([
@@ -694,6 +699,10 @@ type SearchContentProps = {
   calendarGoErrorMessage: string | null;
   searchMode: SearchMode;
   onSelectRoom: (room: RoomNode) => void;
+  selectedPoiCategory?: PoiCategory | null;
+  onPoiCategoryChange?: (category: PoiCategory | null) => void;
+  selectedPoiRangeKm?: PoiRangeKm;
+  onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
 };
 
 const SearchContent = ({
@@ -712,6 +721,10 @@ const SearchContent = ({
   calendarGoErrorMessage,
   searchMode,
   onSelectRoom,
+  selectedPoiCategory,
+  onPoiCategoryChange,
+  selectedPoiRangeKm = 3,
+  onPoiRangeChange,
 }: SearchContentProps) => {
   if (calendarSliderMode === 'events' && !isInternalSearch) {
     return (
@@ -743,6 +756,10 @@ const SearchContent = ({
       calendarGoErrorMessage={calendarGoErrorMessage}
       searchMode={searchMode}
       onSelectRoom={onSelectRoom}
+      selectedPoiCategory={selectedPoiCategory}
+      onPoiCategoryChange={onPoiCategoryChange}
+      selectedPoiRangeKm={selectedPoiRangeKm}
+      onPoiRangeChange={onPoiRangeChange}
     />
   );
 };
@@ -764,6 +781,10 @@ const renderBottomSheetContent = (props: {
   calendarGoErrorMessage: string | null;
   searchMode: SearchMode;
   activeView: ViewType;
+  selectedPoiCategory?: PoiCategory | null;
+  onPoiCategoryChange?: (category: PoiCategory | null) => void;
+  selectedPoiRangeKm?: PoiRangeKm;
+  onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
   selectedBuilding: BuildingShape | null;
   indoorNavigationBuilding: BuildingShape | null;
   closeSheet: () => void;
@@ -975,6 +996,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onNextPathFloor,
       onIndoorTravelModeChange,
       onShowOutdoorMap,
+      selectedPoiCategory,
+      onPoiCategoryChange,
+      selectedPoiRangeKm,
+      onPoiRangeChange,
     },
     ref,
   ) => {
@@ -1531,9 +1556,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartBuilding(flow.originBuilding);
       setDestinationBuilding(flow.destinationBuilding);
       passSelectedBuilding(flow.originBuilding);
+      onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
       enterIndoorView();
       onEnterBuilding(flow.originBuilding);
-      onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
       setActiveView('indoor-navigation');
       requestAnimationFrame(() => {
         sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
@@ -1584,12 +1609,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       continueCrossBuildingRouteFlowToDestinationIndoor();
       resetRouteState();
       passSelectedBuilding(crossBuildingRouteFlow.destinationBuilding);
-      enterIndoorView();
-      onEnterBuilding(crossBuildingRouteFlow.destinationBuilding);
       onIndoorRouteChange?.(
         crossBuildingRouteFlow.destinationTransferPoint.accessNodeId,
         crossBuildingRouteFlow.destinationRoomEndpoint.id,
       );
+      enterIndoorView();
+      onEnterBuilding(crossBuildingRouteFlow.destinationBuilding);
       setActiveView('indoor-navigation');
       requestAnimationFrame(() => {
         sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
@@ -1911,6 +1936,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       handleCalendarGoFromSearch,
       calendarGoErrorMessage,
       searchMode: internalSearchMode,
+      selectedPoiCategory,
+      onPoiCategoryChange,
+      selectedPoiRangeKm,
+      onPoiRangeChange,
       activeView,
       selectedBuilding,
       indoorNavigationBuilding,

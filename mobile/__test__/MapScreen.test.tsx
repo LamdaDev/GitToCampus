@@ -12,6 +12,7 @@ import * as buildingsRepository from '../src/utils/buildingsRepository';
 import * as geoJson from '../src/utils/geoJson';
 import { getCampusRegion } from '../src/constants/campuses';
 import { POLYGON_THEME } from '../src/styles/MapScreen.styles';
+import * as outdoorPoisRepository from '../src/utils/outdoorPoisRepository';
 
 const mockPassSelectedBuilding = jest.fn();
 const mockPassUserLocation = jest.fn();
@@ -116,6 +117,10 @@ jest.mock('@turf/turf', () => ({
   }),
 }));
 
+jest.mock('../src/utils/outdoorPoisRepository', () => ({
+  findNearbyOutdoorPois: jest.fn(),
+}));
+
 const mockBuildings: BuildingShape[] = [
   {
     id: 'sgw-1',
@@ -164,6 +169,7 @@ describe('MapScreen', () => {
   const repoMock = buildingsRepository as jest.Mocked<typeof buildingsRepository>;
   const geoJsonMock = geoJson as jest.Mocked<typeof geoJson>;
   const turfMock = turf as jest.Mocked<typeof turf>;
+  const outdoorPoisRepoMock = outdoorPoisRepository as jest.Mocked<typeof outdoorPoisRepository>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -179,6 +185,7 @@ describe('MapScreen', () => {
       mockBuildings.find((b) => b.id === id),
     );
     repoMock.findBuildingAt.mockReturnValue(undefined);
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValue([]);
 
     geoJsonMock.centroidOfPolygon.mockImplementation((polygon: any) => {
       if (!polygon || polygon.length === 0) return null;
@@ -1244,6 +1251,250 @@ describe('MapScreen', () => {
     await waitFor(() => {
       expect(mockPassSelectedBuilding).toHaveBeenCalled();
       expect(mockOpenBottomSheet).toHaveBeenCalled();
+    });
+  });
+
+  test('does not render POI filter controls directly on the map', () => {
+    const { queryByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+      />,
+    );
+
+    expect(queryByTestId('poi-chip-cafe')).toBeNull();
+    expect(queryByTestId('poi-chip-restaurant')).toBeNull();
+  });
+
+  test('selecting cafes renders nearby POI markers for the current campus', async () => {
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValueOnce([
+      {
+        poi: {
+          id: 'sgw-cafe-1',
+          name: 'Campus Cafe',
+          category: 'cafe',
+          campus: 'SGW',
+          latitude: 45.4975,
+          longitude: -73.579,
+          address: '1 Test St',
+        },
+        distance: 120,
+      },
+    ]);
+
+    const { findByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="cafe"
+        selectedPoiRangeKm={3}
+      />,
+    );
+
+    expect(await findByTestId('poi-marker-sgw-cafe-1')).toBeTruthy();
+    expect(outdoorPoisRepoMock.findNearbyOutdoorPois).toHaveBeenCalledWith('SGW', 'cafe', 3);
+  });
+
+  test('clears POI markers when no POI category is selected', async () => {
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValue([
+      {
+        poi: {
+          id: 'sgw-restaurant-1',
+          name: 'Campus Restaurant',
+          category: 'restaurant',
+          campus: 'SGW',
+          latitude: 45.4977,
+          longitude: -73.5791,
+          address: '2 Test St',
+        },
+        distance: 150,
+      },
+    ]);
+
+    const { queryByTestId, rerender } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="restaurant"
+        selectedPoiRangeKm={3}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(queryByTestId('poi-marker-sgw-restaurant-1')).toBeTruthy();
+    });
+
+    rerender(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory={null}
+        selectedPoiRangeKm={3}
+      />,
+    );
+
+    expect(queryByTestId('poi-marker-sgw-restaurant-1')).toBeNull();
+  });
+
+  test('selecting 2 km range refilters POIs with the curated 2 km bucket', async () => {
+    outdoorPoisRepoMock.findNearbyOutdoorPois
+      .mockReturnValueOnce([
+        {
+          poi: {
+            id: 'sgw-cafe-3',
+            name: 'Nearby Cafe',
+            category: 'cafe',
+            campus: 'SGW',
+            latitude: 45.4976,
+            longitude: -73.5789,
+            address: '3 Test St',
+          },
+          distance: 300,
+        },
+      ])
+      .mockReturnValueOnce([
+        {
+          poi: {
+            id: 'sgw-cafe-4',
+            name: 'Two Kilometer Cafe',
+            category: 'cafe',
+            campus: 'SGW',
+            latitude: 45.499,
+            longitude: -73.58,
+            address: '4 Test St',
+          },
+          distance: 1800,
+        },
+      ]);
+
+    const { findByTestId, rerender } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="cafe"
+        selectedPoiRangeKm={3}
+      />,
+    );
+
+    expect(await findByTestId('poi-marker-sgw-cafe-3')).toBeTruthy();
+
+    rerender(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="cafe"
+        selectedPoiRangeKm={2}
+      />,
+    );
+
+    expect(await findByTestId('poi-marker-sgw-cafe-4')).toBeTruthy();
+    expect(outdoorPoisRepoMock.findNearbyOutdoorPois).toHaveBeenLastCalledWith('SGW', 'cafe', 2);
+  });
+
+  test('tapping a POI marker does not show an info card overlay', async () => {
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValueOnce([
+      {
+        poi: {
+          id: 'sgw-cafe-2',
+          name: 'Campus Coffee',
+          category: 'cafe',
+          campus: 'SGW',
+          latitude: 45.4978,
+          longitude: -73.5788,
+          address: '1455 Test Ave',
+        },
+        distance: 95,
+      },
+    ]);
+
+    const { findByTestId, queryByTestId, queryByText } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="cafe"
+        selectedPoiRangeKm={3}
+      />,
+    );
+
+    fireEvent.press(await findByTestId('poi-marker-sgw-cafe-2'));
+
+    expect(queryByTestId('poi-info-card')).toBeNull();
+    expect(queryByText('Campus Coffee')).toBeNull();
+    expect(queryByText('1455 Test Ave')).toBeNull();
+  });
+
+  test('tapping the map after selecting a POI does not render an info card overlay', async () => {
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValueOnce([
+      {
+        poi: {
+          id: 'sgw-restaurant-2',
+          name: 'Campus Eats',
+          category: 'restaurant',
+          campus: 'SGW',
+          latitude: 45.4978,
+          longitude: -73.5786,
+          address: '2000 Test Ave',
+        },
+        distance: 88,
+      },
+    ]);
+
+    const { getByTestId, findByTestId, queryByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        selectedPoiCategory="restaurant"
+        selectedPoiRangeKm={3}
+      />,
+    );
+
+    fireEvent.press(await findByTestId('poi-marker-sgw-restaurant-2'));
+    expect(queryByTestId('poi-info-card')).toBeNull();
+
+    fireEvent.press(getByTestId('campus-map'));
+
+    await waitFor(() => {
+      expect(queryByTestId('poi-info-card')).toBeNull();
     });
   });
 });

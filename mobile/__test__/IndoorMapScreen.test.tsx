@@ -167,6 +167,17 @@ describe('IndoorMapScreen', () => {
     capturedSheetProps = null;
     delete mockedFloorPlans.XYZ;
     delete mockedIndoorGraphs.XYZ;
+    mockedIndoorGraphs.H = {
+      nodes: [
+        { id: 'a', floor: 1 },
+        { id: 'b', floor: 1 },
+        { id: 'c', floor: 2 },
+        { id: 'd', floor: 3 },
+        { id: 'h-101', floor: 1 },
+        { id: 'h-202', floor: 2 },
+      ],
+      edges: [],
+    };
     mockedIndoorGraphs.MB = {
       nodes: [{ id: 'mb-101', floor: 1 }],
       edges: [],
@@ -383,9 +394,107 @@ describe('IndoorMapScreen', () => {
     await waitFor(() => expect(mockPathStepsChange).toHaveBeenCalled());
   });
 
+  test('reapplies external route ids after switching to the matching building graph', async () => {
+    const mockPathStepsChange = jest.fn();
+    findIndoorPath.mockImplementation(
+      (nodes: any[], _edges: any[], startId: string, endId: string) => {
+        const nodeIds = nodes.map((node) => node.id);
+        if (
+          nodeIds.includes('hall-start') &&
+          nodeIds.includes('hall-exit') &&
+          startId === 'hall-start' &&
+          endId === 'hall-exit'
+        ) {
+          return [
+            {
+              id: 'hall-start',
+              type: 'room',
+              floor: 1,
+              label: 'H-110',
+              buildingId: 'H',
+              x: 0,
+              y: 0,
+              accessible: true,
+            },
+            {
+              id: 'hall-exit',
+              type: 'building_entry_exit',
+              floor: 1,
+              label: '',
+              buildingId: 'H',
+              x: 0,
+              y: 0,
+              accessible: true,
+            },
+          ];
+        }
+
+        return null;
+      },
+    );
+
+    mockedIndoorGraphs.MB = {
+      nodes: [{ id: 'mb-101', floor: 1 }],
+      edges: [],
+    };
+    mockedIndoorGraphs.H = {
+      nodes: [
+        { id: 'hall-start', floor: 1 },
+        { id: 'hall-exit', floor: 1 },
+      ],
+      edges: [],
+    };
+
+    const { rerender } = render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingMB}
+        externalStartRoomId="hall-start"
+        externalEndRoomId="hall-exit"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    rerender(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+        externalStartRoomId="hall-start"
+        externalEndRoomId="hall-exit"
+        onPathStepsChange={mockPathStepsChange}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(findIndoorPath).toHaveBeenCalledWith(
+        mockedIndoorGraphs.H.nodes,
+        mockedIndoorGraphs.H.edges,
+        'hall-start',
+        'hall-exit',
+        {
+          accessibleOnly: false,
+          preferElevators: false,
+        },
+      );
+    });
+
+    await waitFor(() => {
+      const steps = mockPathStepsChange.mock.calls.flat(2);
+      expect(steps.some((step: any) => step.label === 'Start: H-110 (Floor 1)')).toBe(true);
+      expect(steps.some((step: any) => step.label === 'End: H Exit (Floor 1)')).toBe(true);
+    });
+  });
+
   test('maps graph floor 2 back to the S2 floor key for MB routes', async () => {
     mockedIndoorGraphs.MB = {
-      nodes: [{ id: 'mb-s2-start', floor: 2 }],
+      nodes: [
+        { id: 'mb-s2-start', floor: 2 },
+        { id: 'mb-s2-end', floor: 2 },
+      ],
       edges: [],
     };
 

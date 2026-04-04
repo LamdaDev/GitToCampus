@@ -4,453 +4,93 @@
   },
   "nodes": [
     {
-      "id": "MB_F1_room_1.210",
-      "type": "room",
+      "id": "MB_F1_building_entry_exit_3",
+      "type": "building_entry_exit",
       "buildingId": "MB",
       "floor": 1,
-      "x": 652,
-      "y": 340,
-      "label": "MB-1.210",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.294",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 583,
-      "y": 171,
-      "label": "MB-1.294",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.345",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 826,
-      "y": 201,
-      "label": "MB-1.345",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.347",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 827,
-      "y": 146,
-      "label": "MB-1.347",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.338",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 833,
-      "y": 496,
-      "label": "MB-1.338",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.315",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 783,
-      "y": 539,
-      "label": "MB-1.315",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.310",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 677,
-      "y": 526,
-      "label": "MB-1.310",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.115",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 845,
-      "y": 977,
-      "label": "MB-1.115",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.494",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 926,
-      "y": 888,
-      "label": "MB-1.494",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.130",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 626,
-      "y": 833,
-      "label": "MB-1.130",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.134",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 654,
-      "y": 755,
-      "label": "MB-1.134",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.410",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 709,
-      "y": 763,
-      "label": "MB-1.410",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.132",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 679,
-      "y": 825,
-      "label": "MB-1.132",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.434",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 753,
-      "y": 896,
-      "label": "MB-1.434",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_1.430",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 808,
-      "y": 789,
-      "label": "MB-1.430",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_room_63",
-      "type": "room",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 792,
-      "y": 702,
+      "x": 464,
+      "y": 828,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB_F1_room_1.437",
-      "type": "room",
+      "id": "MB_F1_building_entry_exit_4",
+      "type": "building_entry_exit",
       "buildingId": "MB",
       "floor": 1,
-      "x": 909,
-      "y": 690,
-      "label": "MB-1.437",
+      "x": 418,
+      "y": 121,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "MB_F1_elevator_1",
-      "type": "elevator_door",
+      "id": "MB_F1_stair_landing_12",
+      "type": "stair_landing",
       "buildingId": "MB",
       "floor": 1,
-      "x": 637,
-      "y": 563,
-      "label": "mb-elevator1",
-      "accessible": true
+      "x": 405,
+      "y": 307,
+      "label": "",
+      "accessible": false
     },
     {
-      "id": "MB_F1_elevator_2",
-      "type": "elevator_door",
+      "id": "MB_F1_doorway_86",
+      "type": "doorway",
       "buildingId": "MB",
       "floor": 1,
-      "x": 677,
-      "y": 565,
-      "label": "mb-elevator2",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_elevator_3",
-      "type": "elevator_door",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 722,
-      "y": 562,
-      "label": "mb-elevator3",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_elevator_4",
-      "type": "elevator_door",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 636,
-      "y": 646,
-      "label": "MB-elevator4",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_elevator_5",
-      "type": "elevator_door",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 680,
+      "x": 764,
       "y": 643,
-      "label": "MB-elevator5",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_elevator_6",
-      "type": "elevator_door",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 717,
-      "y": 644,
-      "label": "MB-elevator6",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_32",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 551,
-      "y": 182,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB_F1_doorway_33",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 748,
-      "y": 163,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_34",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 742,
-      "y": 236,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_35",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 763,
-      "y": 606,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_36",
-      "type": "doorway",
+      "id": "MB_F1_stair_landing_13",
+      "type": "stair_landing",
       "buildingId": "MB",
       "floor": 1,
       "x": 805,
-      "y": 606,
+      "y": 644,
       "label": "",
-      "accessible": true
+      "accessible": false
     },
     {
-      "id": "MB_F1_doorway_37",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 570,
-      "y": 524,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_38",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 618,
-      "y": 693,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_39",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 738,
-      "y": 956,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_40",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 737,
-      "y": 890,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_41",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 866,
-      "y": 864,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_42",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 883,
-      "y": 833,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_43",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 853,
-      "y": 727,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_44",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 613,
-      "y": 850,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_45",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 677,
-      "y": 833,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_46",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 731,
-      "y": 820,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_47",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 775,
-      "y": 822,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_48",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 619,
-      "y": 743,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_49",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 620,
-      "y": 532,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_50",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 782,
-      "y": 566,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_stair_1",
+      "id": "MB_F1_stair_landing_14",
       "type": "stair_landing",
       "buildingId": "MB",
       "floor": 1,
-      "x": 493,
-      "y": 652,
-      "label": "MB-stair1",
+      "x": 494,
+      "y": 656,
+      "label": "",
+      "accessible": false
+    },
+    {
+      "id": "MB_F1_elevator_door_1",
+      "type": "elevator_door",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 639,
+      "y": 646,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "MB_F1_stair_2",
-      "type": "stair_landing",
+      "id": "MB_F1_elevator_door_2",
+      "type": "elevator_door",
       "buildingId": "MB",
       "floor": 1,
-      "x": 533,
-      "y": 466,
-      "label": "MB-stair2",
+      "x": 682,
+      "y": 647,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "MB_F1_stair3",
-      "type": "stair_landing",
+      "id": "MB_F1_elevator_door_3",
+      "type": "elevator_door",
       "buildingId": "MB",
       "floor": 1,
-      "x": 404,
-      "y": 315,
-      "label": "MB-stair3",
+      "x": 721,
+      "y": 646,
+      "label": "",
       "accessible": true
     },
     {
@@ -458,8 +98,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 686,
-      "y": 956,
+      "x": 494,
+      "y": 828,
       "label": "",
       "accessible": true
     },
@@ -468,8 +108,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 682,
-      "y": 905,
+      "x": 560,
+      "y": 828,
       "label": "",
       "accessible": true
     },
@@ -478,8 +118,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 680,
-      "y": 859,
+      "x": 560,
+      "y": 889,
       "label": "",
       "accessible": true
     },
@@ -488,8 +128,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 751,
-      "y": 857,
+      "x": 620,
+      "y": 889,
       "label": "",
       "accessible": true
     },
@@ -498,8 +138,38 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 832,
-      "y": 848,
+      "x": 699,
+      "y": 889,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_87",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 620,
+      "y": 850,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_88",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 739,
+      "y": 889,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_89",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 738,
+      "y": 949,
       "label": "",
       "accessible": true
     },
@@ -508,8 +178,48 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 615,
-      "y": 886,
+      "x": 699,
+      "y": 949,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_84",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 817,
+      "y": 974,
+      "label": "MB-1.115",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_90",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 684,
+      "y": 834,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_91",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 733,
+      "y": 820,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_92",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 774,
+      "y": 820,
       "label": "",
       "accessible": true
     },
@@ -518,8 +228,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 556,
-      "y": 880,
+      "x": 684,
+      "y": 889,
       "label": "",
       "accessible": true
     },
@@ -528,8 +238,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 549,
-      "y": 827,
+      "x": 699,
+      "y": 851,
       "label": "",
       "accessible": true
     },
@@ -538,8 +248,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 550,
-      "y": 781,
+      "x": 753,
+      "y": 851,
       "label": "",
       "accessible": true
     },
@@ -548,8 +258,78 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 493,
-      "y": 823,
+      "x": 753,
+      "y": 820,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_85",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 753,
+      "y": 889,
+      "label": "MB-1.434",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_87",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 712,
+      "y": 793,
+      "label": "MB-1.410",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_88",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 822,
+      "y": 789,
+      "label": "MB-1.430",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_89",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 684,
+      "y": 820,
+      "label": "MB-1.132",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_90",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 627,
+      "y": 812,
+      "label": "MB-1.130",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_91",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 882,
+      "y": 889,
+      "label": "MB-1.494",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_93",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 873,
+      "y": 909,
       "label": "",
       "accessible": true
     },
@@ -558,8 +338,18 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 496,
-      "y": 746,
+      "x": 873,
+      "y": 888,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_94",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 840,
+      "y": 864,
       "label": "",
       "accessible": true
     },
@@ -568,8 +358,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 553,
-      "y": 688,
+      "x": 840,
+      "y": 888,
       "label": "",
       "accessible": true
     },
@@ -578,8 +368,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 555,
-      "y": 605,
+      "x": 840,
+      "y": 851,
       "label": "",
       "accessible": true
     },
@@ -588,9 +378,29 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 796,
-      "y": 764,
+      "x": 884,
+      "y": 851,
       "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_95",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 884,
+      "y": 834,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_92",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 915,
+      "y": 749,
+      "label": "MB-1.437",
       "accessible": true
     },
     {
@@ -598,8 +408,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 616,
-      "y": 602,
+      "x": 684,
+      "y": 851,
       "label": "",
       "accessible": true
     },
@@ -608,8 +418,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 679,
-      "y": 605,
+      "x": 560,
+      "y": 741,
       "label": "",
       "accessible": true
     },
@@ -618,9 +428,49 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 722,
-      "y": 601,
+      "x": 560,
+      "y": 689,
       "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_96",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 618,
+      "y": 741,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_97",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 619,
+      "y": 689,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_94",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 677,
+      "y": 696,
+      "label": "MB-1.424",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_95",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 646,
+      "y": 741,
+      "label": "MB-1.134",
       "accessible": true
     },
     {
@@ -628,8 +478,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 783,
-      "y": 592,
+      "x": 561,
+      "y": 607,
       "label": "",
       "accessible": true
     },
@@ -638,8 +488,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 561,
-      "y": 551,
+      "x": 639,
+      "y": 607,
       "label": "",
       "accessible": true
     },
@@ -648,8 +498,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 483,
-      "y": 529,
+      "x": 682,
+      "y": 607,
       "label": "",
       "accessible": true
     },
@@ -658,18 +508,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 486,
-      "y": 410,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_hallway_waypoint_66",
-      "type": "hallway_waypoint",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 475,
-      "y": 285,
+      "x": 721,
+      "y": 607,
       "label": "",
       "accessible": true
     },
@@ -678,8 +518,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 460,
-      "y": 193,
+      "x": 752,
+      "y": 607,
       "label": "",
       "accessible": true
     },
@@ -688,9 +528,79 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 390,
-      "y": 163,
+      "x": 752,
+      "y": 643,
       "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_98",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 764,
+      "y": 607,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_96",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 782,
+      "y": 595,
+      "label": "MB-1.309",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_97",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 835,
+      "y": 578,
+      "label": "MB-1.35",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_98",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 785,
+      "y": 551,
+      "label": "MB-1.315",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_99",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 800,
+      "y": 501,
+      "label": "MB-1.338",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_99",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 619,
+      "y": 533,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_100",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 660,
+      "y": 530,
+      "label": "MB-1.310",
       "accessible": true
     },
     {
@@ -698,8 +608,28 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 522,
-      "y": 210,
+      "x": 561,
+      "y": 533,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_100",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 804,
+      "y": 607,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_101",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 782,
+      "y": 568,
       "label": "",
       "accessible": true
     },
@@ -708,8 +638,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 591,
-      "y": 226,
+      "x": 782,
+      "y": 607,
       "label": "",
       "accessible": true
     },
@@ -718,9 +648,59 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 654,
-      "y": 235,
+      "x": 822,
+      "y": 607,
       "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_102",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 822,
+      "y": 520,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_103",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 752,
+      "y": 665,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_101",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 798,
+      "y": 721,
+      "label": "MB-1.301",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_104",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 553,
+      "y": 273,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_102",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 671,
+      "y": 384,
+      "label": "MB-1.210",
       "accessible": true
     },
     {
@@ -728,8 +708,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 715,
-      "y": 258,
+      "x": 493,
+      "y": 533,
       "label": "",
       "accessible": true
     },
@@ -738,18 +718,8 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 750,
-      "y": 199,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB_F1_doorway_54",
-      "type": "doorway",
-      "buildingId": "MB",
-      "floor": 1,
-      "x": 827,
-      "y": 519,
+      "x": 493,
+      "y": 418,
       "label": "",
       "accessible": true
     },
@@ -758,2302 +728,2632 @@
       "type": "hallway_waypoint",
       "buildingId": "MB",
       "floor": 1,
-      "x": 829,
-      "y": 561,
+      "x": 538,
+      "y": 418,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB_F1_room_1.424",
+      "id": "MB_F1_hallway_waypoint_75",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 538,
+      "y": 273,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_76",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 538,
+      "y": 226,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_77",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 493,
+      "y": 226,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_78",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 493,
+      "y": 121,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_79",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 418,
+      "y": 180,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_80",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 386,
+      "y": 180,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_105",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 553,
+      "y": 190,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_103",
       "type": "room",
       "buildingId": "MB",
       "floor": 1,
-      "x": 704,
-      "y": 694,
-      "label": "MB-1.424",
+      "x": 586,
+      "y": 141,
+      "label": "MB-1.294",
       "accessible": true
     },
     {
-      "id": "mb-s2",
+      "id": "MB_F1_room_104",
       "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 625,
-      "y": 333,
-      "label": "MB-S2.210",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 790,
+      "y": 144,
+      "label": "MB-1.347",
       "accessible": true
     },
     {
-      "id": "mb-s2-330",
+      "id": "MB_F1_room_105",
       "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 774,
-      "y": 328,
-      "label": "MB-S2.330",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 794,
+      "y": 206,
+      "label": "MB-1.345",
       "accessible": true
     },
     {
-      "id": "mb-s2-245",
+      "id": "MB_F1_doorway_106",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 746,
+      "y": 239,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_107",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 746,
+      "y": 162,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_81",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 538,
+      "y": 190,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_83",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 456,
+      "y": 180,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_84",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 493,
+      "y": 180,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_85",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 642,
+      "y": 226,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_87",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 669,
+      "y": 247,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_88",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 746,
+      "y": 247,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_room_21",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 813,
+      "y": 788,
+      "label": "MB-1.432",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_57",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 447,
-      "y": 146,
+      "x": 414,
+      "y": 435,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_58",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 488,
+      "y": 513,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_59",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 488,
+      "y": 250,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_60",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 527,
+      "y": 250,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_61",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 527,
+      "y": 221,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_62",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 589,
+      "y": 221,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_63",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 694,
+      "y": 221,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_64",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 717,
+      "y": 221,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_65",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 641,
+      "y": 221,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_66",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 681,
+      "y": 221,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_25",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 446,
+      "y": 149,
       "label": "MB-S2.245",
       "accessible": true
     },
     {
-      "id": "mb-s1-255",
+      "id": "MB_F2_room_26",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 595,
-      "y": 142,
+      "x": 588,
+      "y": 144,
       "label": "MB-S2.255",
       "accessible": true
     },
     {
-      "id": "mb-2-285",
+      "id": "MB_F2_room_27",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 798,
-      "y": 137,
+      "x": 642,
+      "y": 129,
+      "label": "MB-S2.273",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_28",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 682,
+      "y": 129,
+      "label": "MB-S2.275",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_29",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 718,
+      "y": 128,
+      "label": "MB-S2.279",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_30",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 805,
+      "y": 166,
       "label": "MB-S2.285",
       "accessible": true
     },
     {
-      "id": "mb-2-435",
+      "id": "MB_F2_room_31",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 901,
-      "y": 682,
-      "label": "MB-S2.435",
+      "x": 787,
+      "y": 383,
+      "label": "MB-S2.230",
       "accessible": true
     },
     {
-      "id": "mb-2-445",
+      "id": "MB_F2_room_32",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 949,
-      "y": 801,
-      "label": "MB-S2.445",
+      "x": 623,
+      "y": 382,
+      "label": "MB-S2.210",
       "accessible": true
     },
     {
-      "id": "mb-2-428",
+      "id": "MB_F2_room_33",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 814,
-      "y": 806,
-      "label": "MB-S2.428",
+      "x": 673,
+      "y": 526,
+      "label": "MB-S2.345",
       "accessible": true
     },
     {
-      "id": "mb-2-437",
+      "id": "MB_F2_room_34",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 768,
-      "y": 719,
-      "label": "MB-S2.437",
+      "x": 766,
+      "y": 542,
+      "label": "MB-S2.230",
       "accessible": true
     },
     {
-      "id": "mb-2-420",
+      "id": "MB_F2_room_35",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 708,
-      "y": 745,
-      "label": "MB-S2.420",
+      "x": 767,
+      "y": 677,
+      "label": "MB-S2.438",
       "accessible": true
     },
     {
-      "id": "mb-2-410",
+      "id": "MB_F2_room_36",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 636,
-      "y": 744,
-      "label": "MB-S2.410",
-      "accessible": true
-    },
-    {
-      "id": "mb-2-440",
-      "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 709,
+      "x": 675,
       "y": 688,
       "label": "MB-S2.440",
       "accessible": true
     },
     {
-      "id": "mb-2-146",
+      "id": "MB_F2_room_37",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 448,
+      "x": 483,
       "y": 661,
       "label": "MB-S2.146",
       "accessible": true
     },
     {
-      "id": "mb-2-230",
+      "id": "MB_F2_room_38",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 765,
-      "y": 538,
-      "label": "MB-S2.230",
-      "accessible": true
-    },
-    {
-      "id": "mb-2-279",
-      "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 717,
-      "y": 121,
-      "label": "MB-S2.279",
-      "accessible": true
-    },
-    {
-      "id": "mb-2-275",
-      "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 676,
-      "y": 120,
-      "label": "MB-S2.275",
-      "accessible": true
-    },
-    {
-      "id": "mb-2-273",
-      "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 641,
-      "y": 118,
-      "label": "MB-S2.273",
-      "accessible": true
-    },
-    {
-      "id": "mb-2-235",
-      "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 677,
-      "y": 525,
-      "label": "MB-S2.235",
-      "accessible": true
-    },
-    {
-      "id": "mb-2-294",
-      "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 803,
-      "y": 636,
-      "label": "MB-S2.394",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-348",
-      "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 767,
-      "y": 675,
-      "label": "MB-S2.348",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-210-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 545,
-      "y": 268,
-      "label": "door-210",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-330-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 846,
-      "y": 515,
-      "label": "door-330",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-230-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 766,
-      "y": 566,
-      "label": "door-230",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-245-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 614,
-      "y": 526,
-      "label": "door-245",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-146-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 540,
-      "y": 640,
-      "label": "door-146",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-115-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 569,
-      "y": 886,
-      "label": "door-115",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-401-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 635,
-      "y": 856,
-      "label": "door-401",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-494-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 757,
-      "y": 856,
-      "label": "door-494",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-435-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 886,
-      "y": 769,
-      "label": "door-435",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-445-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 906,
-      "y": 814,
-      "label": "door-445",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-394-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 781,
-      "y": 619,
-      "label": "door-394",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-438-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 751,
-      "y": 660,
-      "label": "door-438",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-428-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 836,
-      "y": 823,
-      "label": "door-428",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-437-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 756,
-      "y": 787,
-      "label": "door-437",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-420-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 702,
-      "y": 814,
-      "label": "door-420",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-410-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 649,
-      "y": 811,
-      "label": "door-410",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-440-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 614,
-      "y": 667,
-      "label": "door-440",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-145-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 570,
-      "y": 704,
-      "label": "door-145",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-149-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 569,
-      "y": 726,
-      "label": "door-149",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-135-door",
-      "type": "doorway",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 571,
-      "y": 750,
-      "label": "door-135",
-      "accessible": true
-    },
-    {
-      "id": "mb-s2-145",
-      "type": "room",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 498,
-      "y": 702,
+      "x": 554,
+      "y": 705,
       "label": "MB-S2.145",
       "accessible": true
     },
     {
-      "id": "mb-s2-149",
+      "id": "MB_F2_room_39",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 500,
-      "y": 722,
+      "x": 556,
+      "y": 723,
       "label": "MB-S2.149",
       "accessible": true
     },
     {
-      "id": "mb-s2-135",
+      "id": "MB_F2_room_40",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 500,
+      "x": 554,
       "y": 741,
       "label": "MB-S2.135",
       "accessible": true
     },
     {
-      "id": "mb-s2-115",
+      "id": "MB_F2_room_41",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 496,
-      "y": 841,
+      "x": 497,
+      "y": 868,
       "label": "MB-S2.115",
       "accessible": true
     },
     {
-      "id": "mb-s2-105",
+      "id": "MB_F2_room_42",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 523,
-      "y": 953,
+      "x": 537,
+      "y": 974,
       "label": "MB-S2.105",
       "accessible": true
     },
     {
-      "id": "mb-s2-401",
+      "id": "MB_F2_room_43",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 676,
-      "y": 951,
+      "x": 679,
+      "y": 930,
       "label": "MB-S2.401",
       "accessible": true
     },
     {
-      "id": "mb-s2-465",
+      "id": "MB_F2_room_44",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 810,
-      "y": 977,
+      "x": 826,
+      "y": 885,
+      "label": "MB-S2.494",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_45",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 809,
+      "y": 958,
       "label": "MB-S2.465",
       "accessible": true
     },
     {
-      "id": "mb-s2-455",
+      "id": "MB_F2_room_46",
       "type": "room",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 936,
-      "y": 931,
+      "x": 946,
+      "y": 953,
       "label": "MB-S2.455",
       "accessible": true
     },
     {
-      "id": "MB-S2_F1_doorway_21",
+      "id": "MB_F2_room_47",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 954,
+      "y": 831,
+      "label": "MB-S2.445",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_48",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 818,
+      "y": 805,
+      "label": "MB-S2.428",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_49",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 768,
+      "y": 736,
+      "label": "MB-S2.437",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_50",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 886,
+      "y": 710,
+      "label": "MB-S2.435",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_stair_landing_8",
+      "type": "stair_landing",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 402,
+      "y": 347,
+      "label": "",
+      "accessible": false
+    },
+    {
+      "id": "MB_F2_stair_landing_9",
+      "type": "stair_landing",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 488,
+      "y": 597,
+      "label": "",
+      "accessible": false
+    },
+    {
+      "id": "MB_F2_stair_landing_10",
+      "type": "stair_landing",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 805,
+      "y": 644,
+      "label": "",
+      "accessible": false
+    },
+    {
+      "id": "MB_F2_elevator_door_7",
+      "type": "elevator_door",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 635,
+      "y": 639,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_elevator_door_8",
+      "type": "elevator_door",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 677,
+      "y": 639,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_elevator_door_9",
+      "type": "elevator_door",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 721,
+      "y": 639,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_23",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 876,
-      "y": 918,
+      "x": 694,
+      "y": 250,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F1_doorway_22",
+      "id": "MB_F2_doorway_24",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 891,
-      "y": 892,
+      "x": 717,
+      "y": 250,
       "label": "",
       "accessible": true
     },
     {
-      "id": "mb-s2-105-door",
+      "id": "MB_F2_doorway_25",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 597,
-      "y": 920,
-      "label": "door-105",
+      "x": 739,
+      "y": 221,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F1_doorway_26",
+      "id": "MB_F2_doorway_26",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 440,
-      "y": 206,
+      "x": 717,
+      "y": 162,
       "label": "",
       "accessible": true
     },
     {
-      "id": "mb-s2-255-door",
+      "id": "MB_F2_doorway_27",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 582,
-      "y": 206,
-      "label": "door-255",
+      "x": 681,
+      "y": 162,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "mb-s2-273-door",
+      "id": "MB_F2_doorway_28",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 640,
-      "y": 161,
-      "label": "door-273",
+      "x": 641,
+      "y": 162,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "mb-s2-275-door",
+      "id": "MB_F2_doorway_29",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 679,
-      "y": 159,
-      "label": "door-275",
+      "x": 589,
+      "y": 205,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "mb-s2-279-door",
+      "id": "MB_F2_doorway_30",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 719,
-      "y": 159,
-      "label": "door-279",
+      "x": 527,
+      "y": 205,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "mb-s2-285-door",
+      "id": "MB_F2_doorway_31",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 737,
-      "y": 204,
-      "label": "door-285",
+      "x": 614,
+      "y": 529,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F1_doorway_33",
+      "id": "MB_F2_doorway_32",
       "type": "doorway",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 439,
-      "y": 206,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_1",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 597,
-      "y": 891,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_2",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 593,
-      "y": 842,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_3",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 672,
-      "y": 839,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_4",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 675,
-      "y": 812,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_5",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 754,
-      "y": 835,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_6",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 834,
-      "y": 842,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_7",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 885,
-      "y": 838,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_8",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 880,
-      "y": 872,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_9",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 875,
-      "y": 902,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_10",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 590,
-      "y": 750,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_11",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 591,
-      "y": 704,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_12",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 590,
-      "y": 637,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_13",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 584,
-      "y": 593,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_14",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 704,
-      "y": 203,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_15",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 651,
-      "y": 217,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_16",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 511,
-      "y": 220,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_17",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 523,
-      "y": 311,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_18",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 523,
-      "y": 311,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_19",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 529,
-      "y": 510,
-      "label": "",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_20",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 529,
+      "x": 753,
       "y": 567,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F1_hallway_waypoint_21",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
+      "id": "MB_F2_doorway_33",
+      "type": "doorway",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 698,
-      "y": 598,
+      "x": 753,
+      "y": 661,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F1_hallway_waypoint_22",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
+      "id": "MB_F2_doorway_34",
+      "type": "doorway",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 760,
-      "y": 598,
+      "x": 765,
+      "y": 644,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F1_hallway_waypoint_23",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
+      "id": "MB_F2_doorway_35",
+      "type": "doorway",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 843,
-      "y": 600,
+      "x": 842,
+      "y": 515,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F0_elevator2",
-      "type": "elevator_door",
-      "buildingId": "MB-S2",
+      "id": "MB_F2_doorway_36",
+      "type": "doorway",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 676,
-      "y": 637,
-      "label": "elevator2",
+      "x": 527,
+      "y": 640,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F0_hallway_elevator3",
-      "type": "elevator_door",
-      "buildingId": "MB-S2",
+      "id": "MB_F2_doorway_37",
+      "type": "doorway",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 720,
-      "y": 638,
-      "label": "elevator3",
+      "x": 570,
+      "y": 705,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F0_elevator4",
-      "type": "elevator_door",
-      "buildingId": "MB-S2",
+      "id": "MB_F2_doorway_38",
+      "type": "doorway",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 634,
-      "y": 560,
-      "label": "elevator4",
+      "x": 570,
+      "y": 725,
+      "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F0_elevator5",
-      "type": "elevator_door",
-      "buildingId": "MB-S2",
+      "id": "MB_F2_doorway_39",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 570,
+      "y": 746,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_40",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 570,
+      "y": 794,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_41",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 660,
+      "y": 801,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_42",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 690,
+      "y": 801,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_43",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 589,
+      "y": 921,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_44",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 644,
+      "y": 856,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_45",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 755,
+      "y": 788,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_46",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 782,
+      "y": 825,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_47",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 819,
+      "y": 856,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_48",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 876,
+      "y": 919,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_49",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 888,
+      "y": 903,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_50",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 876,
+      "y": 768,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_51",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 907,
+      "y": 871,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_67",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 635,
+      "y": 607,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_68",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
       "floor": 2,
       "x": 677,
-      "y": 560,
-      "label": "elevator5",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F0_elevator6",
-      "type": "elevator_door",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 715,
-      "y": 560,
-      "label": "elevator6",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F0_stair1",
-      "type": "stair_landing",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 485,
-      "y": 596,
-      "label": "stair1",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F0_stair2",
-      "type": "stair_landing",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 433,
-      "y": 597,
-      "label": "stair2",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F0_stair3",
-      "type": "stair_landing",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 400,
-      "y": 347,
-      "label": "stair3",
-      "accessible": true
-    },
-    {
-      "id": "MB-S2_F1_hallway_waypoint_34",
-      "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
-      "floor": 2,
-      "x": 455,
-      "y": 296,
+      "y": 607,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F1_hallway_waypoint_35",
+      "id": "MB_F2_hallway_waypoint_69",
       "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 473,
-      "y": 457,
+      "x": 721,
+      "y": 607,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F1_hallway_waypoint_36",
+      "id": "MB_F2_hallway_waypoint_70",
       "type": "hallway_waypoint",
-      "buildingId": "MB-S2",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 424,
-      "y": 480,
+      "x": 753,
+      "y": 644,
       "label": "",
       "accessible": true
     },
     {
-      "id": "MB-S2_F0_elevator1",
-      "type": "elevator_door",
-      "buildingId": "MB-S2",
+      "id": "MB_F2_hallway_waypoint_71",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
       "floor": 2,
-      "x": 634,
-      "y": 637,
-      "label": "elevator1",
+      "x": 753,
+      "y": 607,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_72",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 842,
+      "y": 607,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_73",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 527,
+      "y": 529,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_74",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 527,
+      "y": 607,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_75",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 589,
+      "y": 607,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_76",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 589,
+      "y": 705,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_77",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 589,
+      "y": 725,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_78",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 589,
+      "y": 746,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_79",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 589,
+      "y": 794,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_80",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 589,
+      "y": 842,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_81",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 643,
+      "y": 842,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_82",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 660,
+      "y": 842,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_83",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 690,
+      "y": 842,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_84",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 755,
+      "y": 842,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_85",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 782,
+      "y": 842,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_86",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 819,
+      "y": 842,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_87",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 876,
+      "y": 842,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_88",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 876,
+      "y": 871,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_89",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 876,
+      "y": 903,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_90",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 488,
+      "y": 435,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_53",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 614,
+      "y": 705,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_51",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 646,
+      "y": 742,
+      "label": "MB-S2.410",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_room_52",
+      "type": "room",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 711,
+      "y": 743,
+      "label": "MB-S2.420",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_doorway_54",
+      "type": "doorway",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 566,
+      "y": 515,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F2_hallway_waypoint_91",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 2,
+      "x": 566,
+      "y": 529,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_94",
+      "type": "hallway_waypoint",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 873,
+      "y": 974,
+      "label": "",
       "accessible": true
     }
   ],
   "edges": [
     {
-      "source": "MB_F1_stair_1",
+      "source": "MB_F1_doorway_94",
+      "target": "MB_F1_room_91",
+      "type": "room_to_door",
+      "weight": 49,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_94",
+      "target": "MB_F1_hallway_waypoint_56",
+      "type": "door_to_hallway",
+      "weight": 24,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_56",
       "target": "MB_F1_hallway_waypoint_55",
       "type": "hallway",
-      "weight": 94,
-      "accessible": false
+      "weight": 33,
+      "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_55",
-      "target": "MB_F1_hallway_waypoint_54",
+      "target": "MB_F1_doorway_93",
+      "type": "door_to_hallway",
+      "weight": 21,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_89",
+      "target": "MB_F1_room_84",
+      "type": "room_to_door",
+      "weight": 83,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_89",
+      "target": "MB_F1_hallway_waypoint_50",
+      "type": "door_to_hallway",
+      "weight": 39,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_50",
+      "target": "MB_F1_hallway_waypoint_49",
       "type": "hallway",
-      "weight": 77,
+      "weight": 60,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_49",
+      "target": "MB_F1_hallway_waypoint_51",
+      "type": "hallway",
+      "weight": 15,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_51",
+      "target": "MB_F1_hallway_waypoint_48",
+      "type": "hallway",
+      "weight": 64,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_48",
+      "target": "MB_F1_hallway_waypoint_47",
+      "type": "hallway",
+      "weight": 60,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_49",
+      "target": "MB_F1_doorway_88",
+      "type": "door_to_hallway",
+      "weight": 40,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_54",
+      "target": "MB_F1_doorway_91",
+      "type": "door_to_hallway",
+      "weight": 20,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_54",
+      "target": "MB_F1_doorway_92",
+      "type": "door_to_hallway",
+      "weight": 21,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_91",
+      "target": "MB_F1_room_87",
+      "type": "room_to_door",
+      "weight": 34,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_92",
+      "target": "MB_F1_room_88",
+      "type": "room_to_door",
+      "weight": 57,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_49",
       "target": "MB_F1_hallway_waypoint_52",
       "type": "hallway",
-      "weight": 56,
+      "weight": 38,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_52",
       "target": "MB_F1_hallway_waypoint_53",
       "type": "hallway",
-      "weight": 46,
+      "weight": 54,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_53",
-      "target": "MB_F1_hallway_waypoint_56",
-      "type": "hallway",
-      "weight": 93,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_52",
-      "target": "MB_F1_hallway_waypoint_51",
-      "type": "hallway",
-      "weight": 53,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_51",
-      "target": "MB_F1_hallway_waypoint_50",
-      "type": "hallway",
-      "weight": 59,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_50",
-      "target": "MB_F1_hallway_waypoint_46",
-      "type": "hallway",
-      "weight": 70,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_50",
-      "target": "MB_F1_hallway_waypoint_45",
-      "type": "hallway",
-      "weight": 100,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_46",
-      "target": "MB_F1_hallway_waypoint_45",
-      "type": "hallway",
-      "weight": 51,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_45",
-      "target": "MB_F1_doorway_39",
-      "type": "door_to_hallway",
-      "weight": 52,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_45",
-      "target": "MB_F1_doorway_40",
-      "type": "door_to_hallway",
-      "weight": 83,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_46",
-      "target": "MB_F1_doorway_40",
-      "type": "door_to_hallway",
-      "weight": 57,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_46",
-      "target": "MB_F1_hallway_waypoint_47",
-      "type": "hallway",
-      "weight": 46,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_50",
-      "target": "MB_F1_hallway_waypoint_47",
-      "type": "hallway",
-      "weight": 70,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_47",
-      "target": "MB_F1_hallway_waypoint_48",
-      "type": "hallway",
-      "weight": 71,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_47",
-      "target": "MB_F1_doorway_40",
-      "type": "door_to_hallway",
-      "weight": 65,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_48",
-      "target": "MB_F1_doorway_46",
-      "type": "door_to_hallway",
-      "weight": 42,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_48",
-      "target": "MB_F1_doorway_47",
-      "type": "door_to_hallway",
-      "weight": 42,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_48",
-      "target": "MB_F1_hallway_waypoint_49",
-      "type": "hallway",
-      "weight": 81,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_49",
-      "target": "MB_F1_doorway_41",
-      "type": "door_to_hallway",
-      "weight": 38,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_49",
-      "target": "MB_F1_doorway_42",
-      "type": "door_to_hallway",
-      "weight": 53,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_47",
-      "target": "MB_F1_room_1.132",
-      "type": "door_to_hallway",
-      "weight": 34,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_50",
-      "target": "MB_F1_doorway_44",
-      "type": "door_to_hallway",
-      "weight": 36,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_46",
-      "target": "MB_F1_doorway_39",
-      "type": "door_to_hallway",
-      "weight": 76,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_46",
-      "target": "MB_F1_doorway_44",
-      "type": "door_to_hallway",
-      "weight": 88,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_51",
-      "target": "MB_F1_doorway_44",
-      "type": "door_to_hallway",
-      "weight": 64,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_53",
-      "target": "MB_F1_doorway_48",
-      "type": "door_to_hallway",
-      "weight": 79,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_56",
-      "target": "MB_F1_doorway_48",
-      "type": "door_to_hallway",
-      "weight": 86,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_56",
-      "target": "MB_F1_doorway_38",
-      "type": "door_to_hallway",
-      "weight": 65,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_53",
-      "target": "MB_F1_doorway_38",
-      "type": "door_to_hallway",
-      "weight": 111,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_56",
       "target": "MB_F1_hallway_waypoint_57",
       "type": "hallway",
-      "weight": 83,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_doorway_47",
-      "target": "MB_F1_hallway_waypoint_58",
-      "type": "door_to_hallway",
-      "weight": 62,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_58",
-      "target": "MB_F1_doorway_43",
-      "type": "door_to_hallway",
-      "weight": 68,
+      "weight": 87,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_57",
-      "target": "MB_F1_hallway_waypoint_59",
-      "type": "hallway",
-      "weight": 61,
+      "target": "MB_F1_doorway_94",
+      "type": "door_to_hallway",
+      "weight": 13,
       "accessible": true
     },
     {
-      "source": "MB_F1_hallway_waypoint_59",
-      "target": "MB_F1_elevator_1",
+      "source": "MB_F1_hallway_waypoint_57",
+      "target": "MB_F1_hallway_waypoint_58",
       "type": "hallway",
       "weight": 44,
       "accessible": true
     },
     {
-      "source": "MB_F1_hallway_waypoint_59",
-      "target": "MB_F1_elevator_4",
+      "source": "MB_F1_hallway_waypoint_58",
+      "target": "MB_F1_doorway_95",
+      "type": "door_to_hallway",
+      "weight": 17,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_53",
+      "target": "MB_F1_hallway_waypoint_54",
       "type": "hallway",
-      "weight": 48,
+      "weight": 31,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_51",
+      "target": "MB_F1_hallway_waypoint_59",
+      "type": "hallway",
+      "weight": 38,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_59",
+      "target": "MB_F1_hallway_waypoint_52",
+      "type": "hallway",
+      "weight": 15,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_59",
+      "target": "MB_F1_doorway_90",
+      "type": "door_to_hallway",
+      "weight": 17,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_90",
+      "target": "MB_F1_room_89",
+      "type": "room_to_door",
+      "weight": 14,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_48",
+      "target": "MB_F1_doorway_87",
+      "type": "door_to_hallway",
+      "weight": 39,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_87",
+      "target": "MB_F1_room_90",
+      "type": "room_to_door",
+      "weight": 39,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_47",
+      "target": "MB_F1_hallway_waypoint_46",
+      "type": "hallway",
+      "weight": 61,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_46",
+      "target": "MB_F1_hallway_waypoint_45",
+      "type": "hallway",
+      "weight": 66,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_45",
+      "target": "MB_F1_building_entry_exit_3",
+      "type": "hallway",
+      "weight": 30,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_96",
+      "target": "MB_F1_room_95",
+      "type": "room_to_door",
+      "weight": 28,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_97",
+      "target": "MB_F1_room_94",
+      "type": "room_to_door",
+      "weight": 58,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_46",
       "target": "MB_F1_hallway_waypoint_60",
       "type": "hallway",
-      "weight": 63,
+      "weight": 87,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_60",
+      "target": "MB_F1_doorway_96",
+      "type": "door_to_hallway",
+      "weight": 58,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_60",
       "target": "MB_F1_hallway_waypoint_61",
       "type": "hallway",
-      "weight": 43,
+      "weight": 52,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_61",
-      "target": "MB_F1_elevator_3",
-      "type": "hallway",
-      "weight": 39,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_61",
-      "target": "MB_F1_elevator_6",
-      "type": "hallway",
-      "weight": 41,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_60",
-      "target": "MB_F1_elevator_5",
-      "type": "hallway",
-      "weight": 38,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_60",
-      "target": "MB_F1_elevator_2",
-      "type": "hallway",
-      "weight": 40,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_61",
-      "target": "MB_F1_doorway_35",
+      "target": "MB_F1_doorway_97",
       "type": "door_to_hallway",
-      "weight": 41,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_doorway_35",
-      "target": "MB_F1_hallway_waypoint_62",
-      "type": "door_to_hallway",
-      "weight": 24,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_62",
-      "target": "MB_F1_doorway_36",
-      "type": "door_to_hallway",
-      "weight": 26,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_62",
-      "target": "MB_F1_doorway_50",
-      "type": "door_to_hallway",
-      "weight": 26,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_60",
-      "target": "MB_F1_elevator_1",
-      "type": "hallway",
-      "weight": 62,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_elevator_4",
-      "target": "MB_F1_hallway_waypoint_60",
-      "type": "hallway",
       "weight": 59,
       "accessible": true
     },
     {
-      "source": "MB_F1_hallway_waypoint_57",
+      "source": "MB_F1_hallway_waypoint_45",
+      "target": "MB_F1_stair_landing_14",
+      "type": "hallway",
+      "weight": 172,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_61",
+      "target": "MB_F1_hallway_waypoint_62",
+      "type": "hallway",
+      "weight": 82,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_62",
       "target": "MB_F1_hallway_waypoint_63",
       "type": "hallway",
-      "weight": 54,
+      "weight": 78,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_63",
-      "target": "MB_F1_doorway_37",
-      "type": "door_to_hallway",
-      "weight": 28,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_63",
-      "target": "MB_F1_doorway_49",
-      "type": "door_to_hallway",
-      "weight": 62,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_57",
-      "target": "MB_F1_doorway_49",
-      "type": "door_to_hallway",
-      "weight": 98,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_57",
       "target": "MB_F1_hallway_waypoint_64",
       "type": "hallway",
-      "weight": 105,
+      "weight": 43,
       "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_57",
-      "target": "MB_F1_stair_2",
-      "type": "hallway",
-      "weight": 141,
-      "accessible": false
     },
     {
       "source": "MB_F1_hallway_waypoint_64",
       "target": "MB_F1_hallway_waypoint_65",
       "type": "hallway",
-      "weight": 119,
+      "weight": 39,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_63",
+      "target": "MB_F1_elevator_door_1",
+      "type": "hallway",
+      "weight": 39,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_64",
+      "target": "MB_F1_elevator_door_2",
+      "type": "hallway",
+      "weight": 40,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_65",
-      "target": "MB_F1_hallway_waypoint_66",
+      "target": "MB_F1_elevator_door_3",
       "type": "hallway",
-      "weight": 125,
+      "weight": 39,
       "accessible": true
     },
     {
-      "source": "MB_F1_hallway_waypoint_66",
+      "source": "MB_F1_hallway_waypoint_65",
       "target": "MB_F1_hallway_waypoint_67",
       "type": "hallway",
-      "weight": 93,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_66",
-      "target": "MB_F1_hallway_waypoint_69",
-      "type": "hallway",
-      "weight": 89,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_69",
-      "target": "MB_F1_hallway_waypoint_67",
-      "type": "hallway",
-      "weight": 64,
+      "weight": 31,
       "accessible": true
     },
     {
       "source": "MB_F1_hallway_waypoint_67",
       "target": "MB_F1_hallway_waypoint_68",
       "type": "hallway",
-      "weight": 76,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_68",
-      "target": "MB_F1_hallway_waypoint_66",
-      "type": "hallway",
-      "weight": 149,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_68",
-      "target": "MB_F1_stair3",
-      "type": "hallway",
-      "weight": 153,
-      "accessible": false
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_69",
-      "target": "MB_F1_doorway_32",
-      "type": "door_to_hallway",
-      "weight": 40,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_69",
-      "target": "MB_F1_hallway_waypoint_70",
-      "type": "hallway",
-      "weight": 71,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_70",
-      "target": "MB_F1_hallway_waypoint_71",
-      "type": "hallway",
-      "weight": 64,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_71",
-      "target": "MB_F1_hallway_waypoint_72",
-      "type": "hallway",
-      "weight": 65,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_72",
-      "target": "MB_F1_doorway_34",
-      "type": "door_to_hallway",
-      "weight": 35,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_doorway_34",
-      "target": "MB_F1_hallway_waypoint_73",
-      "type": "door_to_hallway",
-      "weight": 38,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_hallway_waypoint_73",
-      "target": "MB_F1_doorway_33",
-      "type": "door_to_hallway",
       "weight": 36,
       "accessible": true
     },
     {
-      "source": "MB_F1_doorway_36",
-      "target": "MB_F1_hallway_waypoint_74",
+      "source": "MB_F1_hallway_waypoint_68",
+      "target": "MB_F1_doorway_86",
       "type": "door_to_hallway",
-      "weight": 51,
+      "weight": 12,
       "accessible": true
     },
     {
-      "source": "MB_F1_hallway_waypoint_74",
-      "target": "MB_F1_doorway_54",
+      "source": "MB_F1_doorway_86",
+      "target": "MB_F1_stair_landing_13",
       "type": "door_to_hallway",
-      "weight": 42,
+      "weight": 41,
       "accessible": true
     },
     {
-      "source": "MB_F1_hallway_waypoint_63",
-      "target": "MB_F1_stair_2",
-      "type": "hallway",
-      "weight": 89,
-      "accessible": false
-    },
-    {
-      "source": "mb-s2-279-door",
-      "target": "MB-S2_F1_hallway_waypoint_14",
+      "source": "MB_F1_hallway_waypoint_67",
+      "target": "MB_F1_doorway_98",
       "type": "door_to_hallway",
-      "weight": 46,
+      "weight": 12,
       "accessible": true
     },
     {
-      "source": "mb-s2-275-door",
-      "target": "MB-S2_F1_hallway_waypoint_14",
-      "type": "door_to_hallway",
-      "weight": 51,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_15",
-      "target": "MB-S2_F1_hallway_waypoint_14",
-      "type": "hallway",
-      "weight": 55,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_15",
-      "target": "mb-s2-273-door",
-      "type": "door_to_hallway",
-      "weight": 57,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_15",
-      "target": "mb-s2-255-door",
-      "type": "door_to_hallway",
-      "weight": 70,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_15",
-      "target": "MB-S2_F1_hallway_waypoint_16",
-      "type": "hallway",
-      "weight": 140,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_16",
-      "target": "mb-s2-255-door",
-      "type": "door_to_hallway",
-      "weight": 72,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_16",
-      "target": "MB-S2_F1_hallway_waypoint_17",
-      "type": "hallway",
-      "weight": 92,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_17",
-      "target": "mb-s2-210-door",
-      "type": "door_to_hallway",
-      "weight": 48,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_16",
-      "target": "MB-S2_F1_hallway_waypoint_34",
-      "type": "hallway",
-      "weight": 94,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_16",
-      "target": "MB-S2_F1_doorway_26",
-      "type": "door_to_hallway",
-      "weight": 72,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-285-door",
-      "target": "MB-S2_F1_hallway_waypoint_14",
-      "type": "door_to_hallway",
-      "weight": 33,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_34",
-      "target": "MB-S2_F1_hallway_waypoint_35",
-      "type": "hallway",
-      "weight": 162,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_35",
-      "target": "MB-S2_F1_hallway_waypoint_36",
-      "type": "hallway",
-      "weight": 54,
-      "accessible": false
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_36",
-      "target": "MB-S2_F0_stair3",
-      "type": "hallway",
-      "weight": 135,
-      "accessible": false
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_36",
-      "target": "MB-S2_F0_stair2",
-      "type": "hallway",
-      "weight": 117,
-      "accessible": false
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_35",
-      "target": "MB-S2_F0_stair1",
-      "type": "hallway",
-      "weight": 140,
-      "accessible": false
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_17",
-      "target": "MB-S2_F1_hallway_waypoint_19",
-      "type": "hallway",
-      "weight": 199,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_19",
-      "target": "MB-S2_F1_hallway_waypoint_20",
-      "type": "hallway",
-      "weight": 57,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_20",
-      "target": "mb-s2-245-door",
-      "type": "door_to_hallway",
-      "weight": 94,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_20",
-      "target": "MB-S2_F1_hallway_waypoint_13",
-      "type": "hallway",
-      "weight": 61,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_13",
-      "target": "MB-S2_F1_hallway_waypoint_12",
-      "type": "hallway",
-      "weight": 44,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-146-door",
-      "target": "MB-S2_F1_hallway_waypoint_13",
-      "type": "door_to_hallway",
-      "weight": 64,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_13",
-      "target": "MB-S2_F1_hallway_waypoint_21",
-      "type": "hallway",
-      "weight": 114,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_13",
-      "target": "MB-S2_F0_elevator4",
-      "type": "hallway",
-      "weight": 60,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_21",
-      "target": "MB-S2_F0_elevator5",
-      "type": "hallway",
-      "weight": 43,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_21",
-      "target": "MB-S2_F0_elevator6",
-      "type": "hallway",
-      "weight": 42,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_21",
-      "target": "MB-S2_F1_hallway_waypoint_22",
-      "type": "hallway",
-      "weight": 62,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-230-door",
-      "target": "MB-S2_F1_hallway_waypoint_22",
-      "type": "door_to_hallway",
-      "weight": 33,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_22",
-      "target": "MB-S2_F1_hallway_waypoint_23",
-      "type": "hallway",
-      "weight": 83,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-330-door",
-      "target": "MB-S2_F1_hallway_waypoint_23",
-      "type": "door_to_hallway",
-      "weight": 85,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_22",
-      "target": "mb-s2-394-door",
-      "type": "door_to_hallway",
-      "weight": 30,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_22",
-      "target": "mb-s2-438-door",
-      "type": "door_to_hallway",
-      "weight": 63,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_21",
-      "target": "MB-S2_F0_hallway_elevator3",
-      "type": "hallway",
-      "weight": 46,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_21",
-      "target": "MB-S2_F0_elevator2",
-      "type": "hallway",
-      "weight": 45,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_13",
-      "target": "MB-S2_F0_elevator1",
-      "type": "hallway",
-      "weight": 67,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_12",
-      "target": "MB-S2_F1_hallway_waypoint_11",
-      "type": "hallway",
-      "weight": 67,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_12",
-      "target": "mb-s2-440-door",
-      "type": "door_to_hallway",
-      "weight": 38,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_11",
-      "target": "mb-s2-440-door",
-      "type": "door_to_hallway",
-      "weight": 44,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-145-door",
-      "target": "MB-S2_F1_hallway_waypoint_11",
-      "type": "door_to_hallway",
-      "weight": 21,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_10",
-      "target": "MB-S2_F1_hallway_waypoint_11",
-      "type": "hallway",
-      "weight": 46,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-135-door",
-      "target": "MB-S2_F1_hallway_waypoint_10",
-      "type": "door_to_hallway",
-      "weight": 19,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-149-door",
-      "target": "MB-S2_F1_hallway_waypoint_11",
-      "type": "door_to_hallway",
-      "weight": 31,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-149-door",
-      "target": "MB-S2_F1_hallway_waypoint_10",
-      "type": "door_to_hallway",
-      "weight": 32,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_10",
-      "target": "MB-S2_F1_hallway_waypoint_2",
-      "type": "hallway",
-      "weight": 92,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_2",
-      "target": "MB-S2_F1_hallway_waypoint_3",
-      "type": "hallway",
-      "weight": 79,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_3",
-      "target": "MB-S2_F1_hallway_waypoint_4",
-      "type": "hallway",
-      "weight": 27,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_4",
-      "target": "mb-s2-410-door",
-      "type": "door_to_hallway",
-      "weight": 26,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_4",
-      "target": "mb-s2-420-door",
-      "type": "door_to_hallway",
-      "weight": 27,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_3",
-      "target": "MB-S2_F1_hallway_waypoint_5",
-      "type": "hallway",
-      "weight": 82,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_5",
-      "target": "mb-s2-437-door",
-      "type": "door_to_hallway",
-      "weight": 48,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_5",
-      "target": "mb-s2-494-door",
-      "type": "door_to_hallway",
-      "weight": 21,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_2",
-      "target": "MB-S2_F1_hallway_waypoint_1",
-      "type": "hallway",
-      "weight": 49,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_1",
-      "target": "mb-s2-105-door",
-      "type": "door_to_hallway",
-      "weight": 29,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_2",
-      "target": "mb-s2-115-door",
-      "type": "door_to_hallway",
-      "weight": 50,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_2",
-      "target": "mb-s2-401-door",
-      "type": "door_to_hallway",
-      "weight": 44,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_5",
-      "target": "MB-S2_F1_hallway_waypoint_6",
-      "type": "hallway",
-      "weight": 80,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_6",
-      "target": "mb-s2-428-door",
-      "type": "door_to_hallway",
-      "weight": 19,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_6",
-      "target": "MB-S2_F1_hallway_waypoint_7",
-      "type": "hallway",
-      "weight": 51,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_7",
-      "target": "MB-S2_F1_hallway_waypoint_8",
-      "type": "hallway",
-      "weight": 34,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_8",
-      "target": "MB-S2_F1_doorway_22",
-      "type": "door_to_hallway",
-      "weight": 23,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_8",
-      "target": "MB-S2_F1_hallway_waypoint_9",
-      "type": "hallway",
-      "weight": 30,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_9",
-      "target": "MB-S2_F1_doorway_21",
-      "type": "door_to_hallway",
-      "weight": 16,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_7",
-      "target": "mb-s2-445-door",
-      "type": "door_to_hallway",
-      "weight": 32,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F1_hallway_waypoint_7",
-      "target": "mb-s2-435-door",
-      "type": "door_to_hallway",
-      "weight": 69,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F0_elevator4",
-      "target": "MB_F1_elevator_1",
-      "type": "elevator",
-      "weight": 0,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_elevator_2",
-      "target": "MB-S2_F0_elevator5",
-      "type": "elevator",
-      "weight": 0,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_elevator_3",
-      "target": "MB-S2_F0_elevator6",
-      "type": "elevator",
-      "weight": 0,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_elevator_4",
-      "target": "MB-S2_F0_elevator1",
-      "type": "elevator",
-      "weight": 0,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_elevator_5",
-      "target": "MB-S2_F0_elevator2",
-      "type": "elevator",
-      "weight": 0,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_elevator_6",
-      "target": "MB-S2_F0_hallway_elevator3",
-      "type": "elevator",
-      "weight": 0,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F0_stair3",
-      "target": "MB_F1_stair3",
-      "type": "stair",
-      "weight": 0,
-      "accessible": true
-    },
-    {
-      "source": "MB-S2_F0_stair1",
-      "target": "MB_F1_stair_1",
-      "type": "stair",
-      "weight": 0,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.294",
-      "target": "MB_F1_doorway_32",
-      "type": "room_to_door",
-      "weight": 34,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.345",
-      "target": "MB_F1_doorway_33",
-      "type": "room_to_door",
-      "weight": 87,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.347",
-      "target": "MB_F1_doorway_33",
-      "type": "room_to_door",
-      "weight": 81,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.210",
-      "target": "MB_F1_hallway_waypoint_72",
-      "type": "door_to_hallway",
-      "weight": 103,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.338",
-      "target": "MB_F1_doorway_54",
-      "type": "room_to_door",
-      "weight": 24,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.315",
-      "target": "MB_F1_doorway_50",
-      "type": "room_to_door",
-      "weight": 27,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.310",
-      "target": "MB_F1_doorway_49",
-      "type": "room_to_door",
-      "weight": 57,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.115",
-      "target": "MB_F1_doorway_39",
-      "type": "room_to_door",
-      "weight": 109,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.494",
-      "target": "MB_F1_doorway_41",
-      "type": "room_to_door",
-      "weight": 65,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.130",
-      "target": "MB_F1_doorway_44",
-      "type": "room_to_door",
-      "weight": 21,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.134",
-      "target": "MB_F1_doorway_48",
-      "type": "room_to_door",
-      "weight": 37,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.410",
-      "target": "MB_F1_doorway_46",
-      "type": "room_to_door",
-      "weight": 61,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.434",
-      "target": "MB_F1_doorway_40",
-      "type": "room_to_door",
-      "weight": 17,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.430",
-      "target": "MB_F1_doorway_47",
-      "type": "room_to_door",
-      "weight": 47,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.437",
-      "target": "MB_F1_doorway_43",
-      "type": "room_to_door",
-      "weight": 67,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_1.424",
-      "target": "MB_F1_doorway_38",
-      "type": "room_to_door",
-      "weight": 86,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_room_63",
-      "target": "MB_F1_hallway_waypoint_58",
-      "type": "door_to_hallway",
-      "weight": 62,
-      "accessible": true
-    },
-    {
-      "source": "MB_F1_doorway_45",
-      "target": "MB_F1_hallway_waypoint_47",
-      "type": "door_to_hallway",
-      "weight": 26,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2",
-      "target": "mb-s2-210-door",
-      "type": "room_to_door",
-      "weight": 103,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-245",
-      "target": "mb-s2-245-door",
-      "type": "room_to_door",
-      "weight": 415,
-      "accessible": true
-    },
-    {
-      "source": "mb-s1-255",
-      "target": "mb-s2-255-door",
-      "type": "room_to_door",
-      "weight": 65,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-285",
-      "target": "mb-s2-285-door",
-      "type": "room_to_door",
-      "weight": 91,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-275",
-      "target": "mb-s2-275-door",
-      "type": "room_to_door",
-      "weight": 39,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-279",
-      "target": "mb-s2-279-door",
-      "type": "room_to_door",
-      "weight": 38,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-273",
-      "target": "mb-s2-273-door",
-      "type": "room_to_door",
-      "weight": 43,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-230",
-      "target": "mb-s2-230-door",
-      "type": "room_to_door",
-      "weight": 28,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-410",
-      "target": "mb-s2-410-door",
-      "type": "room_to_door",
-      "weight": 68,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-420",
-      "target": "mb-s2-420-door",
-      "type": "room_to_door",
-      "weight": 69,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-428",
-      "target": "mb-s2-428-door",
-      "type": "room_to_door",
-      "weight": 28,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-435",
-      "target": "mb-s2-435-door",
-      "type": "room_to_door",
-      "weight": 88,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-437",
-      "target": "mb-s2-437-door",
-      "type": "room_to_door",
-      "weight": 69,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-440",
-      "target": "mb-s2-440-door",
-      "type": "room_to_door",
-      "weight": 97,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-445",
-      "target": "mb-s2-445-door",
-      "type": "room_to_door",
-      "weight": 45,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-146",
-      "target": "mb-s2-146-door",
-      "type": "room_to_door",
-      "weight": 94,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-145",
-      "target": "mb-s2-145-door",
-      "type": "room_to_door",
-      "weight": 72,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-149",
-      "target": "mb-s2-149-door",
-      "type": "room_to_door",
-      "weight": 69,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-135",
-      "target": "mb-s2-135-door",
-      "type": "room_to_door",
-      "weight": 72,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-115",
-      "target": "mb-s2-115-door",
-      "type": "room_to_door",
-      "weight": 86,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-105",
-      "target": "mb-s2-105-door",
-      "type": "room_to_door",
-      "weight": 81,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-401",
-      "target": "mb-s2-401-door",
-      "type": "room_to_door",
-      "weight": 103,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-330",
-      "target": "MB-S2_F1_hallway_waypoint_14",
-      "type": "door_to_hallway",
-      "weight": 143,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-235",
-      "target": "MB-S2_F1_hallway_waypoint_21",
-      "type": "door_to_hallway",
-      "weight": 76,
-      "accessible": true
-    },
-    {
-      "source": "mb-2-294",
-      "target": "mb-s2-394-door",
-      "type": "room_to_door",
-      "weight": 28,
-      "accessible": true
-    },
-    {
-      "source": "mb-s2-348",
-      "target": "mb-s2-438-door",
+      "source": "MB_F1_doorway_98",
+      "target": "MB_F1_room_96",
       "type": "room_to_door",
       "weight": 22,
       "accessible": true
     },
     {
-      "source": "mb-s2-455",
-      "target": "MB-S2_F1_doorway_22",
-      "type": "room_to_door",
-      "weight": 60,
+      "source": "MB_F1_hallway_waypoint_62",
+      "target": "MB_F1_hallway_waypoint_69",
+      "type": "hallway",
+      "weight": 74,
       "accessible": true
     },
     {
-      "source": "mb-s2-465",
-      "target": "MB-S2_F1_doorway_21",
+      "source": "MB_F1_hallway_waypoint_69",
+      "target": "MB_F1_doorway_99",
+      "type": "door_to_hallway",
+      "weight": 58,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_99",
+      "target": "MB_F1_room_100",
       "type": "room_to_door",
+      "weight": 41,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_98",
+      "target": "MB_F1_doorway_100",
+      "type": "hallway",
+      "weight": 40,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_100",
+      "target": "MB_F1_room_97",
+      "type": "room_to_door",
+      "weight": 42,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_98",
+      "target": "MB_F1_hallway_waypoint_70",
+      "type": "door_to_hallway",
+      "weight": 18,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_70",
+      "target": "MB_F1_doorway_101",
+      "type": "door_to_hallway",
+      "weight": 39,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_101",
+      "target": "MB_F1_room_98",
+      "type": "room_to_door",
+      "weight": 17,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_100",
+      "target": "MB_F1_hallway_waypoint_71",
+      "type": "door_to_hallway",
+      "weight": 18,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_71",
+      "target": "MB_F1_doorway_102",
+      "type": "door_to_hallway",
+      "weight": 87,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_102",
+      "target": "MB_F1_room_99",
+      "type": "room_to_door",
+      "weight": 29,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_68",
+      "target": "MB_F1_doorway_103",
+      "type": "door_to_hallway",
+      "weight": 22,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_103",
+      "target": "MB_F1_room_101",
+      "type": "room_to_door",
+      "weight": 72,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_69",
+      "target": "MB_F1_hallway_waypoint_72",
+      "type": "hallway",
+      "weight": 68,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_72",
+      "target": "MB_F1_hallway_waypoint_73",
+      "type": "hallway",
+      "weight": 115,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_73",
+      "target": "MB_F1_hallway_waypoint_74",
+      "type": "hallway",
+      "weight": 45,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_74",
+      "target": "MB_F1_hallway_waypoint_75",
+      "type": "hallway",
+      "weight": 145,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_75",
+      "target": "MB_F1_doorway_104",
+      "type": "door_to_hallway",
+      "weight": 15,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_104",
+      "target": "MB_F1_room_102",
+      "type": "room_to_door",
+      "weight": 162,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_73",
+      "target": "MB_F1_hallway_waypoint_77",
+      "type": "hallway",
+      "weight": 192,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_77",
+      "target": "MB_F1_hallway_waypoint_76",
+      "type": "hallway",
+      "weight": 45,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_76",
+      "target": "MB_F1_hallway_waypoint_75",
+      "type": "hallway",
+      "weight": 47,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_105",
+      "target": "MB_F1_room_103",
+      "type": "room_to_door",
+      "weight": 59,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_81",
+      "target": "MB_F1_doorway_105",
+      "type": "door_to_hallway",
+      "weight": 15,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_81",
+      "target": "MB_F1_hallway_waypoint_76",
+      "type": "hallway",
+      "weight": 36,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_building_entry_exit_4",
+      "target": "MB_F1_hallway_waypoint_78",
+      "type": "hallway",
+      "weight": 75,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_building_entry_exit_4",
+      "target": "MB_F1_hallway_waypoint_79",
+      "type": "hallway",
+      "weight": 58,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_79",
+      "target": "MB_F1_hallway_waypoint_80",
+      "type": "hallway",
+      "weight": 32,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_80",
+      "target": "MB_F1_stair_landing_12",
+      "type": "hallway",
+      "weight": 129,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_77",
+      "target": "MB_F1_hallway_waypoint_84",
+      "type": "hallway",
+      "weight": 46,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_84",
+      "target": "MB_F1_hallway_waypoint_78",
+      "type": "hallway",
+      "weight": 59,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_84",
+      "target": "MB_F1_hallway_waypoint_83",
+      "type": "hallway",
+      "weight": 37,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_83",
+      "target": "MB_F1_hallway_waypoint_79",
+      "type": "hallway",
+      "weight": 38,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_76",
+      "target": "MB_F1_hallway_waypoint_85",
+      "type": "hallway",
+      "weight": 104,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_85",
+      "target": "MB_F1_hallway_waypoint_87",
+      "type": "hallway",
+      "weight": 34,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_87",
+      "target": "MB_F1_hallway_waypoint_88",
+      "type": "hallway",
+      "weight": 77,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_88",
+      "target": "MB_F1_doorway_106",
+      "type": "door_to_hallway",
+      "weight": 8,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_106",
+      "target": "MB_F1_room_105",
+      "type": "room_to_door",
+      "weight": 58,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_106",
+      "target": "MB_F1_doorway_107",
+      "type": "hallway",
+      "weight": 77,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_107",
+      "target": "MB_F1_room_104",
+      "type": "room_to_door",
+      "weight": 48,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_95",
+      "target": "MB_F1_room_92",
+      "type": "room_to_door",
+      "weight": 90,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_92",
+      "target": "MB_F1_room_21",
+      "type": "room_to_door",
+      "weight": 50,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_50",
+      "target": "MB_F2_room_50",
+      "type": "room_to_door",
+      "weight": 59,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_51",
+      "target": "MB_F2_room_47",
+      "type": "room_to_door",
+      "weight": 62,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_49",
+      "target": "MB_F2_room_46",
+      "type": "room_to_door",
+      "weight": 77,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_48",
+      "target": "MB_F2_room_45",
+      "type": "room_to_door",
+      "weight": 78,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_89",
+      "target": "MB_F2_doorway_48",
+      "type": "door_to_hallway",
+      "weight": 16,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_89",
+      "target": "MB_F2_doorway_49",
+      "type": "door_to_hallway",
+      "weight": 12,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_88",
+      "target": "MB_F2_hallway_waypoint_89",
+      "type": "hallway",
+      "weight": 32,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_88",
+      "target": "MB_F2_doorway_51",
+      "type": "door_to_hallway",
+      "weight": 31,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_88",
+      "target": "MB_F2_hallway_waypoint_87",
+      "type": "hallway",
+      "weight": 29,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_87",
+      "target": "MB_F2_doorway_50",
+      "type": "door_to_hallway",
+      "weight": 74,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_86",
+      "target": "MB_F2_hallway_waypoint_87",
+      "type": "hallway",
+      "weight": 57,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_stair_landing_8",
+      "target": "MB_F2_hallway_waypoint_57",
+      "type": "hallway",
       "weight": 89,
       "accessible": true
     },
     {
-      "source": "MB-S2_F1_doorway_33",
-      "target": "MB-S2_F1_hallway_waypoint_16",
+      "source": "MB_F2_stair_landing_9",
+      "target": "MB_F2_hallway_waypoint_58",
+      "type": "hallway",
+      "weight": 84,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_58",
+      "target": "MB_F2_hallway_waypoint_90",
+      "type": "hallway",
+      "weight": 78,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_57",
+      "target": "MB_F2_hallway_waypoint_90",
+      "type": "hallway",
+      "weight": 74,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_90",
+      "target": "MB_F2_hallway_waypoint_59",
+      "type": "hallway",
+      "weight": 185,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_59",
+      "target": "MB_F2_hallway_waypoint_60",
+      "type": "hallway",
+      "weight": 39,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_60",
+      "target": "MB_F2_hallway_waypoint_61",
+      "type": "hallway",
+      "weight": 29,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_61",
+      "target": "MB_F2_doorway_30",
       "type": "door_to_hallway",
-      "weight": 73,
+      "weight": 16,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_61",
+      "target": "MB_F2_hallway_waypoint_62",
+      "type": "hallway",
+      "weight": 62,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_62",
+      "target": "MB_F2_doorway_29",
+      "type": "door_to_hallway",
+      "weight": 16,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_62",
+      "target": "MB_F2_hallway_waypoint_65",
+      "type": "hallway",
+      "weight": 52,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_65",
+      "target": "MB_F2_doorway_28",
+      "type": "door_to_hallway",
+      "weight": 59,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_65",
+      "target": "MB_F2_hallway_waypoint_66",
+      "type": "hallway",
+      "weight": 40,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_66",
+      "target": "MB_F2_doorway_27",
+      "type": "door_to_hallway",
+      "weight": 59,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_66",
+      "target": "MB_F2_hallway_waypoint_63",
+      "type": "hallway",
+      "weight": 13,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_63",
+      "target": "MB_F2_doorway_23",
+      "type": "door_to_hallway",
+      "weight": 29,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_63",
+      "target": "MB_F2_hallway_waypoint_64",
+      "type": "hallway",
+      "weight": 23,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_64",
+      "target": "MB_F2_doorway_24",
+      "type": "door_to_hallway",
+      "weight": 29,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_64",
+      "target": "MB_F2_doorway_25",
+      "type": "door_to_hallway",
+      "weight": 22,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_64",
+      "target": "MB_F2_doorway_26",
+      "type": "door_to_hallway",
+      "weight": 59,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_29",
+      "target": "MB_F2_room_26",
+      "type": "room_to_door",
+      "weight": 61,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_30",
+      "target": "MB_F2_room_25",
+      "type": "room_to_door",
+      "weight": 98,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_28",
+      "target": "MB_F2_room_27",
+      "type": "room_to_door",
+      "weight": 33,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_27",
+      "target": "MB_F2_room_28",
+      "type": "room_to_door",
+      "weight": 33,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_26",
+      "target": "MB_F2_room_29",
+      "type": "room_to_door",
+      "weight": 34,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_25",
+      "target": "MB_F2_room_30",
+      "type": "room_to_door",
+      "weight": 86,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_23",
+      "target": "MB_F2_room_32",
+      "type": "room_to_door",
+      "weight": 150,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_24",
+      "target": "MB_F2_room_31",
+      "type": "room_to_door",
+      "weight": 150,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_60",
+      "target": "MB_F2_hallway_waypoint_73",
+      "type": "hallway",
+      "weight": 279,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_31",
+      "target": "MB_F2_room_33",
+      "type": "room_to_door",
+      "weight": 59,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_73",
+      "target": "MB_F2_hallway_waypoint_74",
+      "type": "hallway",
+      "weight": 78,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_74",
+      "target": "MB_F2_doorway_36",
+      "type": "door_to_hallway",
+      "weight": 33,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_36",
+      "target": "MB_F2_room_37",
+      "type": "room_to_door",
+      "weight": 49,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_74",
+      "target": "MB_F2_hallway_waypoint_75",
+      "type": "hallway",
+      "weight": 62,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_75",
+      "target": "MB_F2_hallway_waypoint_67",
+      "type": "hallway",
+      "weight": 46,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_67",
+      "target": "MB_F2_hallway_waypoint_68",
+      "type": "hallway",
+      "weight": 42,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_68",
+      "target": "MB_F2_hallway_waypoint_69",
+      "type": "hallway",
+      "weight": 44,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_69",
+      "target": "MB_F2_hallway_waypoint_71",
+      "type": "hallway",
+      "weight": 32,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_71",
+      "target": "MB_F2_doorway_32",
+      "type": "door_to_hallway",
+      "weight": 40,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_71",
+      "target": "MB_F2_hallway_waypoint_70",
+      "type": "hallway",
+      "weight": 37,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_70",
+      "target": "MB_F2_doorway_34",
+      "type": "door_to_hallway",
+      "weight": 12,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_70",
+      "target": "MB_F2_doorway_33",
+      "type": "door_to_hallway",
+      "weight": 17,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_34",
+      "target": "MB_F2_stair_landing_10",
+      "type": "door_to_hallway",
+      "weight": 40,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_33",
+      "target": "MB_F2_room_35",
+      "type": "room_to_door",
+      "weight": 21,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_71",
+      "target": "MB_F2_hallway_waypoint_72",
+      "type": "hallway",
+      "weight": 89,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_72",
+      "target": "MB_F2_doorway_35",
+      "type": "door_to_hallway",
+      "weight": 92,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_68",
+      "target": "MB_F2_elevator_door_8",
+      "type": "hallway",
+      "weight": 32,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_69",
+      "target": "MB_F2_elevator_door_9",
+      "type": "hallway",
+      "weight": 32,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_67",
+      "target": "MB_F2_elevator_door_7",
+      "type": "hallway",
+      "weight": 32,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_75",
+      "target": "MB_F2_hallway_waypoint_76",
+      "type": "hallway",
+      "weight": 98,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_76",
+      "target": "MB_F2_hallway_waypoint_77",
+      "type": "hallway",
+      "weight": 20,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_77",
+      "target": "MB_F2_hallway_waypoint_78",
+      "type": "hallway",
+      "weight": 21,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_78",
+      "target": "MB_F2_doorway_39",
+      "type": "door_to_hallway",
+      "weight": 19,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_77",
+      "target": "MB_F2_doorway_38",
+      "type": "door_to_hallway",
+      "weight": 19,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_76",
+      "target": "MB_F2_doorway_37",
+      "type": "door_to_hallway",
+      "weight": 19,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_37",
+      "target": "MB_F2_room_38",
+      "type": "room_to_door",
+      "weight": 16,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_38",
+      "target": "MB_F2_room_39",
+      "type": "room_to_door",
+      "weight": 14,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_39",
+      "target": "MB_F2_room_40",
+      "type": "room_to_door",
+      "weight": 17,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_78",
+      "target": "MB_F2_hallway_waypoint_79",
+      "type": "hallway",
+      "weight": 48,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_79",
+      "target": "MB_F2_doorway_40",
+      "type": "door_to_hallway",
+      "weight": 19,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_40",
+      "target": "MB_F2_room_41",
+      "type": "room_to_door",
+      "weight": 104,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_79",
+      "target": "MB_F2_hallway_waypoint_80",
+      "type": "hallway",
+      "weight": 48,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_80",
+      "target": "MB_F2_doorway_43",
+      "type": "door_to_hallway",
+      "weight": 79,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_43",
+      "target": "MB_F2_room_42",
+      "type": "room_to_door",
+      "weight": 74,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_80",
+      "target": "MB_F2_hallway_waypoint_81",
+      "type": "hallway",
+      "weight": 54,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_81",
+      "target": "MB_F2_doorway_44",
+      "type": "door_to_hallway",
+      "weight": 14,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_81",
+      "target": "MB_F2_hallway_waypoint_82",
+      "type": "hallway",
+      "weight": 17,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_82",
+      "target": "MB_F2_doorway_41",
+      "type": "door_to_hallway",
+      "weight": 41,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_82",
+      "target": "MB_F2_hallway_waypoint_83",
+      "type": "hallway",
+      "weight": 30,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_83",
+      "target": "MB_F2_doorway_42",
+      "type": "door_to_hallway",
+      "weight": 41,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_44",
+      "target": "MB_F2_room_43",
+      "type": "room_to_door",
+      "weight": 82,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_83",
+      "target": "MB_F2_hallway_waypoint_84",
+      "type": "hallway",
+      "weight": 65,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_84",
+      "target": "MB_F2_doorway_45",
+      "type": "door_to_hallway",
+      "weight": 54,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_84",
+      "target": "MB_F2_hallway_waypoint_85",
+      "type": "hallway",
+      "weight": 27,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_85",
+      "target": "MB_F2_doorway_46",
+      "type": "door_to_hallway",
+      "weight": 17,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_85",
+      "target": "MB_F2_hallway_waypoint_86",
+      "type": "hallway",
+      "weight": 37,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_86",
+      "target": "MB_F2_doorway_47",
+      "type": "door_to_hallway",
+      "weight": 14,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_46",
+      "target": "MB_F2_room_48",
+      "type": "room_to_door",
+      "weight": 41,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_47",
+      "target": "MB_F2_room_44",
+      "type": "room_to_door",
+      "weight": 30,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_76",
+      "target": "MB_F2_doorway_53",
+      "type": "door_to_hallway",
+      "weight": 25,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_53",
+      "target": "MB_F2_room_36",
+      "type": "room_to_door",
+      "weight": 63,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_42",
+      "target": "MB_F2_room_52",
+      "type": "room_to_door",
+      "weight": 62,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_41",
+      "target": "MB_F2_room_51",
+      "type": "room_to_door",
+      "weight": 61,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_32",
+      "target": "MB_F2_room_34",
+      "type": "room_to_door",
+      "weight": 28,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_stair_landing_8",
+      "target": "MB_F1_stair_landing_12",
+      "type": "stair",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_stair_landing_9",
+      "target": "MB_F1_stair_landing_14",
+      "type": "stair",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_stair_landing_10",
+      "target": "MB_F1_stair_landing_13",
+      "type": "stair",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_elevator_door_7",
+      "target": "MB_F1_elevator_door_1",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_elevator_door_8",
+      "target": "MB_F1_elevator_door_2",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_elevator_door_9",
+      "target": "MB_F1_elevator_door_3",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_35",
+      "target": "MB_F2_room_31",
+      "type": "room_to_door",
+      "weight": 143,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_73",
+      "target": "MB_F2_hallway_waypoint_91",
+      "type": "hallway",
+      "weight": 39,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_91",
+      "target": "MB_F2_doorway_54",
+      "type": "door_to_hallway",
+      "weight": 14,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_hallway_waypoint_91",
+      "target": "MB_F2_doorway_31",
+      "type": "door_to_hallway",
+      "weight": 48,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_54",
+      "target": "MB_F2_room_32",
+      "type": "room_to_door",
+      "weight": 145,
+      "accessible": true
+    },
+    {
+      "source": "MB_F2_doorway_45",
+      "target": "MB_F2_room_49",
+      "type": "room_to_door",
+      "weight": 54,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_88",
+      "target": "MB_F1_room_85",
+      "type": "room_to_door",
+      "weight": 14,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_93",
+      "target": "MB_F1_hallway_waypoint_94",
+      "type": "door_to_hallway",
+      "weight": 65,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_hallway_waypoint_94",
+      "target": "MB_F1_room_84",
+      "type": "door_to_hallway",
+      "weight": 56,
       "accessible": true
     }
   ]
