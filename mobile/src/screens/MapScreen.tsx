@@ -889,15 +889,13 @@ function MapScreen({
           indoorTravelMode={indoorTravelMode}
         />
       ) : (
-        <>
-          <MapControls
-            selectedCampus={selectedCampus}
-            onToggleCampus={handleToggleCampus}
-            onRecenter={handleRecenter}
-            onOpenCalendar={onOpenCalendar}
-            bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
-          />
-        </>
+        <MapControls
+          selectedCampus={selectedCampus}
+          onToggleCampus={handleToggleCampus}
+          onRecenter={handleRecenter}
+          onOpenCalendar={onOpenCalendar}
+          bottomSheetAnimatedPosition={bottomSheetAnimatedPosition}
+        />
       )}
     </View>
   );

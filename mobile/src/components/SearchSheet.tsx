@@ -462,6 +462,12 @@ export default function SearchSheet({
           <View style={searchBuilding.poiCategoryColumn}>
             {(['cafe', 'restaurant', 'depanneur'] as PoiCategory[]).map((category) => {
               const isSelected = selectedPoiCategory === category;
+              const categoryLabel =
+                category === 'cafe'
+                  ? 'Cafes'
+                  : category === 'restaurant'
+                    ? 'Restaurants'
+                    : 'Depanneurs';
               return (
                 <TouchableOpacity
                   key={category}
@@ -473,13 +479,7 @@ export default function SearchSheet({
                   activeOpacity={0.85}
                   onPress={() => onPoiCategoryChange?.(isSelected ? null : category)}
                 >
-                  <Text style={searchBuilding.poiCategoryCheckboxLabel}>
-                    {category === 'cafe'
-                      ? 'Cafes'
-                      : category === 'restaurant'
-                        ? 'Restaurants'
-                        : 'Depanneurs'}
-                  </Text>
+                  <Text style={searchBuilding.poiCategoryCheckboxLabel}>{categoryLabel}</Text>
                   <View
                     style={[
                       searchBuilding.poiCategoryCheckbox,
