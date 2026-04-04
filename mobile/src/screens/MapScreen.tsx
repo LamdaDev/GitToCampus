@@ -491,7 +491,6 @@ const renderPoiMarker = (
       title={poi.name}
       description={poi.address}
       onPress={() => onPoiPress(poi)}
-      tracksViewChanges={false}
     >
       <View
         style={[

@@ -1002,7 +1002,7 @@ describe('BottomSheet', () => {
     });
   });
 
-  test('changing the selected POI while directions are open refreshes the route destination', async () => {
+  test('changing selectedPoi alone does not override an active POI directions destination', async () => {
     const ref = createRef<BottomSliderHandle>();
     const firstPoi = {
       id: 'poi-5',
@@ -1068,20 +1068,73 @@ describe('BottomSheet', () => {
       />,
     );
 
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBe(initialCallCount);
+    expect(getByTestId('destination-label-state').props.children).toBe(firstPoi.name);
+  });
+
+  test('selecting a POI while a building route is active does not replace the route destination', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const selectedPoi = {
+      id: 'poi-switch-1',
+      name: 'Switch Cafe',
+      category: 'cafe' as const,
+      campus: 'SGW' as const,
+      latitude: 45.4988,
+      longitude: -73.5764,
+      address: '1550 Test Ave',
+    };
+
+    directionsServiceMock.fetchOutdoorDirections.mockResolvedValue({
+      polyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      distanceMeters: 1000,
+      distanceText: '1.0 km',
+      durationSeconds: 720,
+      durationText: '12 mins',
+      bounds: null,
+    });
+
+    const { getByTestId, rerender } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
     await waitFor(() => {
-      expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBeGreaterThan(
-        initialCallCount,
-      );
-      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenLastCalledWith(
+      expect(directionsServiceMock.fetchOutdoorDirections).toHaveBeenCalledWith(
         expect.objectContaining({
-          destination: {
-            latitude: secondPoi.latitude,
-            longitude: secondPoi.longitude,
-          },
+          destination: expect.any(Object),
           mode: 'walking',
         }),
       );
     });
+
+    const initialCallCount = directionsServiceMock.fetchOutdoorDirections.mock.calls.length;
+
+    rerender(
+      <BottomSlider
+        {...defaultProps}
+        ref={ref}
+        selectedBuilding={null}
+        selectedPoi={selectedPoi}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(directionsServiceMock.fetchOutdoorDirections.mock.calls.length).toBe(initialCallCount);
+    expect(getByTestId('destination-id').props.children).toBe(mockBuildings[1].id);
   });
 
   test('renders DirectionDetails when onShowDirections is called', () => {

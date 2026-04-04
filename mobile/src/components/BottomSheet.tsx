@@ -1703,8 +1703,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     useEffect(() => {
       if (isSearchActive) return;
-      if (isRouteUiVisible(activeView)) return;
       if (selectedPoi) {
+        if (isRouteUiVisible(activeView)) return;
         setActiveView('poi');
         return;
       }
@@ -1728,14 +1728,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
       setDestinationBuilding(selectedBuilding);
     }, [selectedBuilding, activeView, startBuilding?.id, destinationBuilding, destinationPoi]);
-
-    useEffect(() => {
-      if (activeView !== 'directions') return;
-      if (!selectedPoi) return;
-
-      setDestinationBuilding(null);
-      setDestinationPoi(selectedPoi);
-    }, [activeView, selectedPoi]);
 
     const startCoords = useMemo(() => {
       if (routeOriginOverride) return routeOriginOverride;
