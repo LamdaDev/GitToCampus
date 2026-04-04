@@ -370,7 +370,8 @@ export default function DirectionDetails({
   };
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
-  const resolvedDestinationLabel = destinationLabel ?? destinationBuilding?.name ?? 'Set destination';
+  const resolvedDestinationLabel =
+    destinationLabel ?? destinationBuilding?.name ?? 'Set destination';
   const routeEtaText = formatEta(routeDurationSeconds);
   const nextDepartureInMinutes = shuttlePlan?.nextDepartureInMinutes ?? null;
   const effectiveDirection =
