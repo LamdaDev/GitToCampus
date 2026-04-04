@@ -55,9 +55,9 @@ DUE TO MISSING FLOOR PLANS WITH ROOM NUMBERS, THE ROOMS HAVE BEEN ID FROM 201-20
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.1505246"
-     inkscape:cx="797.46233"
-     inkscape:cy="93.001057"
+     inkscape:zoom="6.1748507"
+     inkscape:cx="718.96475"
+     inkscape:cy="150.93482"
      inkscape:document-units="px"
      inkscape:current-layer="g4664"
      showgrid="false"
@@ -171,20 +171,24 @@ DUE TO MISSING FLOOR PLANS WITH ROOM NUMBERS, THE ROOMS HAVE BEEN ID FROM 201-20
     <g
        clip-path="url(#clip4_1_300)"
        id="g184"
-       transform="translate(5.8794782,-106.97889)">
+       transform="translate(5.8794782,-106.97889)"
+       style="fill:#f59e0b;fill-opacity:1">
       <path
          d="m 714.4,270.3 c -0.462,-1.203 -2.109,-1.267 -1.712,-3.015 0.03,-0.129 -0.109,-0.229 -0.221,-0.162 -1.069,0.631 -1.838,1.895 -1.193,3.551 0.053,0.135 -0.106,0.262 -0.221,0.174 -0.533,-0.404 -0.589,-0.985 -0.542,-1.4 0.018,-0.153 -0.183,-0.227 -0.268,-0.1 -0.2,0.306 -0.404,0.801 -0.404,1.547 0.112,1.65 1.506,2.157 2.007,2.221 0.716,0.092 1.491,-0.041 2.048,-0.551 0.612,-0.568 0.836,-1.476 0.506,-2.265 z m -2.734,1.482 c 0.424,-0.104 0.642,-0.41 0.701,-0.681 0.098,-0.421 -0.283,-0.834 -0.026,-1.5 0.097,0.551 0.963,0.896 0.963,1.497 0.024,0.745 -0.783,1.385 -1.638,0.684 z"
          fill="#000000"
-         id="path184" />
+         id="path184"
+         style="fill:#f59e0b;fill-opacity:1" />
     </g>
     <g
        clip-path="url(#clip5_1_300)"
        id="g185"
-       transform="translate(5.8794782,-106.97889)">
+       transform="translate(5.8794782,-106.97889)"
+       style="fill:#f59e0b;fill-opacity:1">
       <path
          d="m 727.125,265.875 v 19.25 h -19.25 v -19.25 z m 0,-2.75 h -19.25 c -1.513,0 -2.75,1.237 -2.75,2.75 v 19.25 c 0,1.513 1.237,2.75 2.75,2.75 h 19.25 c 1.513,0 2.75,-1.237 2.75,-2.75 v -19.25 c 0,-1.513 -1.237,-2.75 -2.75,-2.75 z m -1.375,4.125 h -6.078 v 4.579 h -3.547 v 4.578 h -3.547 V 281 h -3.328 v 2.75 h 6.078 v -4.579 h 3.547 v -4.578 h 3.547 V 270 h 3.328 z"
          fill="#000000"
-         id="path185" />
+         id="path185"
+         style="fill:#f59e0b;fill-opacity:1" />
     </g>
   </g>
 </svg>
