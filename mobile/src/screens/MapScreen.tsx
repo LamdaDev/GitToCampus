@@ -39,6 +39,7 @@ type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
   passUserLocation: React.Dispatch<React.SetStateAction<UserCoords | null>>;
   passCurrentBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
+  passSelectedPoi?: React.Dispatch<React.SetStateAction<OutdoorPoi | null>>;
   openBottomSheet: () => void;
   onMapPress?: () => void;
   onOpenCalendar?: () => void;
@@ -56,6 +57,7 @@ type MapScreenProps = {
   onReopenIndoorNav?: () => void;
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
   indoorTravelMode?: 'walking' | 'disability';
+  selectedPoi?: OutdoorPoi | null;
   selectedPoiCategory?: PoiCategory | null;
   selectedPoiRangeKm?: PoiRangeKm;
 };
@@ -66,6 +68,8 @@ export type MapScreenHandle = {
 };
 
 export type UserCoords = { latitude: number; longitude: number };
+
+const noopSelectedPoiSetter = () => {};
 
 const LOCATION_OPTIONS: Location.LocationOptions = {
   accuracy: Location.Accuracy.Balanced,
@@ -585,6 +589,7 @@ function MapScreen({
   passSelectedBuilding,
   passUserLocation,
   passCurrentBuilding,
+  passSelectedPoi = noopSelectedPoiSetter,
   openBottomSheet,
   onMapPress,
   onOpenCalendar,
@@ -601,6 +606,7 @@ function MapScreen({
   onIndoorFloorNavReady,
   onIndoorRouteChange,
   indoorTravelMode,
+  selectedPoi = null,
   selectedPoiCategory = null,
   selectedPoiRangeKm = 3,
 }: Readonly<MapScreenProps>) {
@@ -657,6 +663,10 @@ function MapScreen({
   }, [userCoords]);
 
   useEffect(() => {
+    setSelectedPoiId(selectedPoi?.id ?? null);
+  }, [selectedPoi]);
+
+  useEffect(() => {
     const targetRegion = getCampusRegion(selectedCampus);
     if (mapRef.current?.animateToRegion) {
       mapRef.current.animateToRegion(targetRegion, 1000);
@@ -668,10 +678,11 @@ function MapScreen({
       setSelectedBuildingId(null);
       return;
     }
+    passSelectedPoi(null);
     setSelectedPoiId(null);
     setSelectedBuildingId(externalSelectedBuilding.id);
     setSelectedCampus(externalSelectedBuilding.campus);
-  }, [externalSelectedBuilding]);
+  }, [externalSelectedBuilding, passSelectedPoi]);
 
   const sgwBuildings = useMemo(() => getCampusBuildingShapes('SGW'), []);
   const loyolaBuildings = useMemo(() => getCampusBuildingShapes('LOYOLA'), []);
@@ -693,12 +704,14 @@ function MapScreen({
     setSelectedCampus((prev) => (prev === 'SGW' ? 'LOYOLA' : 'SGW'));
     setSelectedBuildingId(null);
     setSelectedPoiId(null);
-  }, []);
+    passSelectedPoi(null);
+  }, [passSelectedPoi]);
 
   const handlePolygonPress = useCallback(
     (item: PolygonRenderItem) => {
       armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
 
+      passSelectedPoi(null);
       setSelectedPoiId(null);
       setSelectedBuildingId(item.buildingId);
       setSelectedCampus(item.campus);
@@ -707,7 +720,7 @@ function MapScreen({
       passSelectedBuilding(building ?? null);
       openBottomSheet();
     },
-    [openBottomSheet, passSelectedBuilding],
+    [openBottomSheet, passSelectedBuilding, passSelectedPoi],
   );
 
   const selectedMarkerCoordinate = useMemo(() => {
@@ -735,8 +748,9 @@ function MapScreen({
     setSelectedBuildingId(null);
     setSelectedPoiId(null);
     passSelectedBuilding(null);
+    passSelectedPoi(null);
     onMapPress?.();
-  }, [onMapPress, passSelectedBuilding]);
+  }, [onMapPress, passSelectedBuilding, passSelectedPoi]);
 
   const mapInitialRegion = useMemo(() => getCampusRegion('SGW'), []);
 
@@ -811,11 +825,13 @@ function MapScreen({
   const handlePoiPress = useCallback(
     (poi: OutdoorPoi) => {
       armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
+      passSelectedPoi(poi);
       setSelectedPoiId(poi.id);
       setSelectedBuildingId(null);
       passSelectedBuilding(null);
+      openBottomSheet();
     },
-    [passSelectedBuilding],
+    [openBottomSheet, passSelectedBuilding, passSelectedPoi],
   );
   const renderedPoiMarkers = useMemo(
     () => visiblePois.map((poi) => renderPoiMarker(poi, selectedPoiId, handlePoiPress)),
