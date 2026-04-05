@@ -17,7 +17,7 @@ import {
   type GoogleCalendarConnectionStatus,
 } from '../services/googleCalendarAuth';
 import { getSupportedActiveOrUpcomingEvents } from '../utils/googleCalendarEventSelection';
-import type { PoiCategory, PoiRangeKm } from '../types/Poi';
+import type { PoiCategory, PoiCategorySelection, PoiRangeKm } from '../types/Poi';
 import type { RoomNode } from './indoor/RoomList';
 import RoomList from './indoor/RoomList';
 
@@ -30,8 +30,8 @@ type SearchBarProps = {
   calendarGoErrorMessage?: string | null;
   searchMode?: SearchMode;
   onSelectRoom?: (room: RoomNode) => void;
-  selectedPoiCategory?: PoiCategory | null;
-  onPoiCategoryChange?: (category: PoiCategory | null) => void;
+  selectedPoiCategories?: PoiCategorySelection;
+  onPoiCategoryChange?: React.Dispatch<React.SetStateAction<PoiCategorySelection>>;
   selectedPoiRangeKm?: PoiRangeKm;
   onPoiRangeChange?: React.Dispatch<React.SetStateAction<PoiRangeKm>>;
 };
@@ -51,7 +51,7 @@ export default function SearchSheet({
   calendarGoErrorMessage = null,
   searchMode = 'buildings',
   onSelectRoom,
-  selectedPoiCategory = null,
+  selectedPoiCategories = [],
   onPoiCategoryChange,
   selectedPoiRangeKm = 3,
   onPoiRangeChange,
@@ -461,7 +461,7 @@ export default function SearchSheet({
         >
           <View style={searchBuilding.poiCategoryColumn}>
             {(['cafe', 'restaurant', 'depanneur'] as PoiCategory[]).map((category) => {
-              const isSelected = selectedPoiCategory === category;
+              const isSelected = selectedPoiCategories.includes(category);
               const categoryLabel =
                 category === 'cafe'
                   ? 'Cafes'
@@ -477,7 +477,13 @@ export default function SearchSheet({
                     isSelected && searchBuilding.poiCategoryCheckboxRowSelected,
                   ]}
                   activeOpacity={0.85}
-                  onPress={() => onPoiCategoryChange?.(isSelected ? null : category)}
+                  onPress={() =>
+                    onPoiCategoryChange?.((previousCategories) =>
+                      previousCategories.includes(category)
+                        ? previousCategories.filter((entry) => entry !== category)
+                        : [...previousCategories, category],
+                    )
+                  }
                 >
                   <Text style={searchBuilding.poiCategoryCheckboxLabel}>{categoryLabel}</Text>
                   <View
@@ -493,7 +499,7 @@ export default function SearchSheet({
             })}
           </View>
 
-          {selectedPoiCategory ? (
+          {selectedPoiCategories.length > 0 ? (
             <View style={searchBuilding.poiRangeRow}>
               <Text style={searchBuilding.poiRangeLabel}>Point of Interest Range (km):</Text>
               <View style={searchBuilding.poiRangeControl}>

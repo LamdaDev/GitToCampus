@@ -13,6 +13,7 @@ import * as geoJson from '../src/utils/geoJson';
 import { getCampusRegion } from '../src/constants/campuses';
 import { POLYGON_THEME } from '../src/styles/MapScreen.styles';
 import * as outdoorPoisRepository from '../src/utils/outdoorPoisRepository';
+import { POI_MARKER_THEME } from '../src/styles/poi';
 
 const mockPassSelectedBuilding = jest.fn();
 const mockPassUserLocation = jest.fn();
@@ -1296,7 +1297,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="cafe"
+        selectedPoiCategories={['cafe']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1330,7 +1331,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="restaurant"
+        selectedPoiCategories={['restaurant']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1348,7 +1349,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory={null}
+        selectedPoiCategories={[]}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1396,7 +1397,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="cafe"
+        selectedPoiCategories={['cafe']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1412,7 +1413,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="cafe"
+        selectedPoiCategories={['cafe']}
         selectedPoiRangeKm={2}
       />,
     );
@@ -1446,7 +1447,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="cafe"
+        selectedPoiCategories={['cafe']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1456,6 +1457,7 @@ describe('MapScreen', () => {
     expect(queryByTestId('poi-info-card')).toBeNull();
     expect(queryByText('Campus Coffee')).toBeNull();
     expect(queryByText('1455 Test Ave')).toBeNull();
+    expect(mockOpenBottomSheet).toHaveBeenCalled();
   });
 
   test('tapping the map after selecting a POI does not render an info card overlay', async () => {
@@ -1483,7 +1485,7 @@ describe('MapScreen', () => {
         hideAppSearchBar={mockHideAppSearchBar}
         revealSearchBar={mockRevealSearchBar}
         exitIndoorView={mockExitIndoorView}
-        selectedPoiCategory="restaurant"
+        selectedPoiCategories={['restaurant']}
         selectedPoiRangeKm={3}
       />,
     );
@@ -1496,5 +1498,60 @@ describe('MapScreen', () => {
     await waitFor(() => {
       expect(queryByTestId('poi-info-card')).toBeNull();
     });
+  });
+
+  test('keeps the selected POI highlighted while an outdoor route is displayed', async () => {
+    const selectedPoi = {
+      id: 'sgw-dep-1',
+      name: 'Campus Dep',
+      category: 'depanneur' as const,
+      campus: 'SGW' as const,
+      latitude: 45.4974,
+      longitude: -73.5784,
+      address: '1700 Test Ave',
+    };
+
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValueOnce([
+      {
+        poi: selectedPoi,
+        distance: 120,
+      },
+    ]);
+
+    const outdoorRoute = {
+      encodedPolyline: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
+      coordinates: [
+        { latitude: 45.497, longitude: -73.579 },
+        { latitude: 45.4974, longitude: -73.5784 },
+      ],
+      start: { latitude: 45.497, longitude: -73.579 },
+      destination: { latitude: 45.4974, longitude: -73.5784 },
+      mode: 'walking' as const,
+    };
+
+    const { findByTestId, getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        passSelectedPoi={jest.fn()}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        selectedPoi={selectedPoi}
+        selectedPoiCategories={['depanneur']}
+        selectedPoiRangeKm={3}
+        outdoorRoute={outdoorRoute}
+      />,
+    );
+
+    const marker = await findByTestId('poi-marker-sgw-dep-1');
+    const markerBubble = marker.props.children;
+    const flattenedStyle = ReactNative.StyleSheet.flatten(markerBubble.props.style);
+
+    expect(flattenedStyle.backgroundColor).toBe(POI_MARKER_THEME.depanneur.selectedColor);
+    expect(getByTestId('route-start-marker')).toBeTruthy();
+    expect(getByTestId('route-end-marker')).toBeTruthy();
   });
 });

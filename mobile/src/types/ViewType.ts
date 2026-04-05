@@ -1,5 +1,6 @@
 export type ViewType =
   | 'building'
+  | 'poi'
   | 'directions'
   | 'hybrid-directions'
   | 'transit-plan'
