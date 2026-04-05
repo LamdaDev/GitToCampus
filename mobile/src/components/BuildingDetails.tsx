@@ -135,7 +135,7 @@ export default function BuildingDetails({
         <TouchableOpacity
           testID="switch-to-indoor-button"
           accessibilityRole="button"
-          accessibilityLabel="Switch to indoor view"
+          accessibilityLabel="indoor view"
           accessibilityHint="Open this building's indoor map"
           style={buildingDetailsStyles.switchToIndoorButton}
           onPress={handleEnterBuildingPress}
@@ -147,7 +147,7 @@ export default function BuildingDetails({
             style={buildingDetailsStyles.switchToIndoorIcon}
           />
           <Text numberOfLines={1} style={buildingDetailsStyles.switchToIndoorButtonText}>
-            Switch to Indoor
+            Indoor view
           </Text>
         </TouchableOpacity>
       ) : null}
