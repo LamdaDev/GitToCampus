@@ -111,23 +111,26 @@ export default function BuildingDetails({
 
   const navigationSection = (
     <View style={buildingDetailsStyles.navigationSection}>
-      <View style={buildingDetailsStyles.navigationButtonsGroup}>
-        <TouchableOpacity
-          style={buildingDetailsStyles.navigationButton}
-          onPress={handleDirectionsToPress}
-        >
-          <Feather name="corner-down-right" size={20} color="#fff" />
-          <Text style={buildingDetailsStyles.navigationButtonText}>Directions To</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={buildingDetailsStyles.navigationButton}
+        onPress={handleDirectionsToPress}
+      >
+        <Feather name="corner-down-right" size={18} color="#fff" />
+        <Text numberOfLines={1} style={buildingDetailsStyles.navigationButtonText}>
+          Directions To
+        </Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={buildingDetailsStyles.navigationButton}
-          onPress={handleStartFromPress}
-        >
-          <Ionicons name="navigate-outline" size={20} color="#fff" />
-          <Text style={buildingDetailsStyles.navigationButtonText}>Start From</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={buildingDetailsStyles.navigationButton}
+        onPress={handleStartFromPress}
+      >
+        <Ionicons name="navigate-outline" size={18} color="#fff" />
+        <Text numberOfLines={1} style={buildingDetailsStyles.navigationButtonText}>
+          Start From
+        </Text>
+      </TouchableOpacity>
+
       {hasIndoor && onEnterBuilding ? (
         <TouchableOpacity
           testID="switch-to-indoor-button"
@@ -139,11 +142,13 @@ export default function BuildingDetails({
         >
           <Ionicons
             name="enter-outline"
-            size={20}
+            size={18}
             color="#fff"
             style={buildingDetailsStyles.switchToIndoorIcon}
           />
-          <Text style={buildingDetailsStyles.switchToIndoorButtonText}>Switch to Indoor</Text>
+          <Text numberOfLines={1} style={buildingDetailsStyles.switchToIndoorButtonText}>
+            Switch to Indoor
+          </Text>
         </TouchableOpacity>
       ) : null}
     </View>
