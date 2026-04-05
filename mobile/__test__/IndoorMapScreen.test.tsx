@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { act, render, waitFor } from '@testing-library/react-native';
 import IndoorControls from '../src/components/indoor/IndoorControls';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import { UIManager } from 'react-native';
@@ -26,6 +26,7 @@ let capturedSheetProps: {
   reOpenSearchBar: () => void;
   onPressBuilding: (b: BuildingShape) => void;
 } | null = null;
+let capturedZoomableViewProps: Record<string, unknown> | null = null;
 
 // ─── Dependency mocks ─────────────────────────────────────────────────────────
 
@@ -33,8 +34,10 @@ jest.mock('@openspacelabs/react-native-zoomable-view', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
-    ReactNativeZoomableView: ({ children }: { children: React.ReactNode }) =>
-      React.createElement(View, { testID: 'zoomable-view' }, children),
+    ReactNativeZoomableView: (props: { children: React.ReactNode }) => {
+      capturedZoomableViewProps = props as unknown as Record<string, unknown>;
+      return React.createElement(View, { testID: 'zoomable-view' }, props.children);
+    },
   };
 });
 
@@ -159,12 +162,20 @@ const getSheetProps = () => {
   return capturedSheetProps;
 };
 
+const getZoomableViewProps = () => {
+  if (!capturedZoomableViewProps) {
+    throw new Error('ReactNativeZoomableView has not rendered yet');
+  }
+  return capturedZoomableViewProps;
+};
+
 // ─── Suite ────────────────────────────────────────────────────────────────────
 
 describe('IndoorMapScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedSheetProps = null;
+    capturedZoomableViewProps = null;
     delete mockedFloorPlans.XYZ;
     delete mockedIndoorGraphs.XYZ;
     mockedIndoorGraphs.H = {
@@ -246,6 +257,105 @@ describe('IndoorMapScreen', () => {
 
     expect(mockOnExitIndoor).toHaveBeenCalledTimes(1);
     expect(mockOnOpenCalendar).toHaveBeenCalledTimes(1);
+  });
+
+  test('auto exits only after a deliberate zoom-out gesture that ends near min zoom', () => {
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        onOpenCalendar={mockOnOpenCalendar}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+      />,
+    );
+
+    const onZoomAfter = getZoomableViewProps().onZoomAfter as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+    const onZoomBefore = getZoomableViewProps().onZoomBefore as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+    const onZoomEnd = getZoomableViewProps().onZoomEnd as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+
+    expect(onZoomBefore).toBeDefined();
+    expect(onZoomAfter).toBeDefined();
+    expect(onZoomEnd).toBeDefined();
+
+    act(() => {
+      onZoomBefore?.(null, null, { zoomLevel: 0.4 });
+      onZoomAfter?.(null, null, { zoomLevel: 0.8 });
+      onZoomEnd?.(null, null, { zoomLevel: 0.8 });
+    });
+    expect(mockOnExitIndoor).toHaveBeenCalledTimes(0);
+
+    act(() => {
+      onZoomBefore?.(null, null, { zoomLevel: 0.9 });
+      onZoomAfter?.(null, null, { zoomLevel: 0.4 });
+      onZoomEnd?.(null, null, { zoomLevel: 0.4 });
+    });
+    expect(mockOnExitIndoor).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      onZoomBefore?.(null, null, { zoomLevel: 0.8 });
+      onZoomAfter?.(null, null, { zoomLevel: 0.4 });
+      onZoomEnd?.(null, null, { zoomLevel: 0.4 });
+    });
+    expect(mockOnExitIndoor).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not auto exit when zoom end payload is invalid', () => {
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+      />,
+    );
+
+    const onZoomEnd = getZoomableViewProps().onZoomEnd as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+
+    expect(onZoomEnd).toBeDefined();
+
+    act(() => {
+      onZoomEnd?.(null, null, { zoomLevel: Number.NaN });
+    });
+
+    expect(mockOnExitIndoor).not.toHaveBeenCalled();
+  });
+
+  test('does not auto exit on small zoom-out gestures near minimum zoom', () => {
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+      />,
+    );
+
+    const onZoomBefore = getZoomableViewProps().onZoomBefore as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+    const onZoomAfter = getZoomableViewProps().onZoomAfter as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+    const onZoomEnd = getZoomableViewProps().onZoomEnd as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+
+    act(() => {
+      onZoomBefore?.(null, null, { zoomLevel: 0.45 });
+      onZoomAfter?.(null, null, { zoomLevel: 0.41 });
+      onZoomEnd?.(null, null, { zoomLevel: 0.41 });
+    });
+
+    expect(mockOnExitIndoor).not.toHaveBeenCalled();
   });
 
   test('openAvailableBuildings opens sheet, hides search bar and sets isIndoorSheetOpen', async () => {

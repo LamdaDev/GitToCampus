@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useWindowDimensions, View, Text, Platform } from 'react-native';
+import { useWindowDimensions, View, Text, Platform, Animated } from 'react-native';
 import MapView, {
   Marker,
   Polygon,
@@ -34,6 +34,8 @@ import type { BuildingLabelRenderItem, OutdoorRouteOverlay, PolygonRenderItem } 
 import { BuildingShape } from '../types/BuildingShape';
 import { centroidOfPolygon } from '../utils/geoJson';
 import { decodePolyline } from '../utils/polyline';
+import { hasFloorPlans } from '../utils/floorPlans';
+import { getIndoorBuildingKeyFromShape } from '../utils/indoor/buildingKeys';
 
 import MapControls from '../components/MapControls';
 import * as turf from '@turf/turf';
@@ -66,6 +68,7 @@ type MapScreenProps = {
   selectedPoi?: OutdoorPoi | null;
   selectedPoiCategories?: PoiCategorySelection;
   selectedPoiRangeKm?: PoiRangeKm;
+  onAutoIndoorEntry?: () => void;
 };
 
 export type MapScreenHandle = {
@@ -87,6 +90,10 @@ const ROUTE_FIT_EXTRA_BOTTOM_PADDING = 24;
 const ROUTE_FIT_HORIZONTAL_PADDING = 70;
 const ROUTE_FIT_TOP_PADDING = 110;
 const ANDROID_POI_MARKER_REFRESH_MS = 350;
+const AUTO_INDOOR_ENTRY_LATITUDE_DELTA_THRESHOLD = 0.0009;
+const AUTO_INDOOR_ENTRY_LONGITUDE_DELTA_THRESHOLD = 0.0009;
+const AUTO_INDOOR_REENTRY_COOLDOWN_MS = 1200;
+const INDOOR_FADE_DURATION_MS = 220;
 
 const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
@@ -681,6 +688,12 @@ const selectBuildingAtCoords = (
   }
 };
 
+const hasIndoorFeatureSupport = (building: BuildingShape | null | undefined) => {
+  const indoorBuildingKey = getIndoorBuildingKeyFromShape(building);
+  if (!indoorBuildingKey) return false;
+  return hasFloorPlans(indoorBuildingKey);
+};
+
 const initLocationTracking = async (
   onPositionUpdate: (coords: UserCoords) => void,
 ): Promise<Location.LocationSubscription | null> => {
@@ -770,6 +783,7 @@ function MapScreen({
   selectedPoi = null,
   selectedPoiCategories = [],
   selectedPoiRangeKm = 3,
+  onAutoIndoorEntry,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
@@ -779,11 +793,66 @@ function MapScreen({
   );
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [currentBuildingId, setCurrentBuildingId] = useState<string | null>(null);
+  const [indoorBuilding, setIndoorBuilding] = useState<BuildingShape | null>(null);
+  const indoorOpacity = useRef(new Animated.Value(0)).current;
   const { height: windowHeight } = useWindowDimensions();
 
   const mapRef = useRef<any>(null);
+  const autoIndoorReentryCooldownUntilRef = useRef(0);
+  const indoorFadeAnimationRef = useRef<Animated.CompositeAnimation | null>(null);
+  const indoorFadeTransitionIdRef = useRef(0);
   const shouldIgnoreNextMapPressRef = useRef(false);
   const polygonPressGuardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const stopIndoorFadeAnimation = useCallback(() => {
+    if (!indoorFadeAnimationRef.current) return;
+    indoorFadeAnimationRef.current.stop();
+    indoorFadeAnimationRef.current = null;
+  }, []);
+
+  const runIndoorFade = useCallback(
+    (toValue: number, transitionId: number, onComplete?: () => void) => {
+      stopIndoorFadeAnimation();
+      const fadeAnimation = Animated.timing(indoorOpacity, {
+        toValue,
+        duration: INDOOR_FADE_DURATION_MS,
+        useNativeDriver: true,
+      });
+      indoorFadeAnimationRef.current = fadeAnimation;
+      fadeAnimation.start(({ finished }) => {
+        if (indoorFadeAnimationRef.current === fadeAnimation) {
+          indoorFadeAnimationRef.current = null;
+        }
+        if (!finished) return;
+        if (indoorFadeTransitionIdRef.current !== transitionId) return;
+        onComplete?.();
+      });
+    },
+    [indoorOpacity, stopIndoorFadeAnimation],
+  );
+
+  const showIndoorBuilding = useCallback(
+    (building: BuildingShape) => {
+      indoorFadeTransitionIdRef.current += 1;
+      const transitionId = indoorFadeTransitionIdRef.current;
+      setIndoorBuilding(building);
+      indoorOpacity.setValue(0);
+      runIndoorFade(1, transitionId);
+    },
+    [indoorOpacity, runIndoorFade],
+  );
+
+  const hideIndoorBuilding = useCallback(() => {
+    autoIndoorReentryCooldownUntilRef.current = Date.now() + AUTO_INDOOR_REENTRY_COOLDOWN_MS;
+    exitIndoorView();
+    if (!indoorBuilding) return;
+
+    indoorFadeTransitionIdRef.current += 1;
+    const transitionId = indoorFadeTransitionIdRef.current;
+    runIndoorFade(0, transitionId, () => {
+      setIndoorBuilding(null);
+    });
+  }, [exitIndoorView, indoorBuilding, runIndoorFade]);
   const handleUserPositionUpdate = useCallback((coords: UserCoords) => {
     setUserCoords((previousCoords) => {
       if (
@@ -818,8 +887,9 @@ function MapScreen({
       lifecycle.isActive = false;
       lifecycle.subscription?.remove();
       clearPolygonPressGuardTimeout(polygonPressGuardTimeoutRef);
+      stopIndoorFadeAnimation();
     };
-  }, [handleUserPositionUpdate]);
+  }, [handleUserPositionUpdate, stopIndoorFadeAnimation]);
 
   useEffect(() => {
     if (!userCoords) return;
@@ -979,8 +1049,42 @@ function MapScreen({
           ? previousVisibleKeys
           : nextVisibleKeys;
       });
+
+      if (indoorBuilding) return;
+      if (Date.now() < autoIndoorReentryCooldownUntilRef.current) return;
+      if (!Number.isFinite(region.latitudeDelta) || !Number.isFinite(region.longitudeDelta)) return;
+      if (region.latitudeDelta > AUTO_INDOOR_ENTRY_LATITUDE_DELTA_THRESHOLD) return;
+      if (region.longitudeDelta > AUTO_INDOOR_ENTRY_LONGITUDE_DELTA_THRESHOLD) return;
+
+      let centeredBuilding: BuildingShape | null = null;
+      try {
+        centeredBuilding = findBuildingAt({
+          latitude: region.latitude,
+          longitude: region.longitude,
+        });
+      } catch (error) {
+        console.warn('Error resolving indoor auto-entry candidate', error);
+        return;
+      }
+
+      if (!centeredBuilding || !hasIndoorFeatureSupport(centeredBuilding)) return;
+
+      passSelectedPoi(null);
+      setSelectedPoiId(null);
+      setSelectedBuildingId(centeredBuilding.id);
+      setSelectedCampus(centeredBuilding.campus);
+      passSelectedBuilding(centeredBuilding);
+      onAutoIndoorEntry?.();
+      showIndoorBuilding(centeredBuilding);
     },
-    [buildingLabelItems],
+    [
+      buildingLabelItems,
+      indoorBuilding,
+      onAutoIndoorEntry,
+      passSelectedBuilding,
+      passSelectedPoi,
+      showIndoorBuilding,
+    ],
   );
 
   const renderedPolygons = useMemo(
@@ -1048,16 +1152,13 @@ function MapScreen({
     onPress: handleMapPress,
   } as const;
 
-  const [indoorBuilding, setIndoorBuilding] = useState<BuildingShape | null>(null);
-
   useImperativeHandle(mapHandle, () => ({
-    showIndoor: (building: BuildingShape) => setIndoorBuilding(building),
-    hideIndoor: () => setIndoorBuilding(null),
+    showIndoor: (building: BuildingShape) => showIndoorBuilding(building),
+    hideIndoor: () => hideIndoorBuilding(),
   }));
 
   const resetIndoorBuilding = () => {
-    setIndoorBuilding(null);
-    exitIndoorView();
+    hideIndoorBuilding();
   };
   return (
     <View style={styles.container}>
@@ -1091,20 +1192,32 @@ function MapScreen({
       </MapView>
 
       {indoorBuilding ? (
-        <IndoorMapScreen
-          onExitIndoor={() => resetIndoorBuilding()}
-          onOpenCalendar={onOpenCalendar}
-          building={indoorBuilding}
-          hideAppSearchBar={hideAppSearchBar}
-          revealSearchBar={revealSearchBar}
-          externalStartRoomId={indoorStartRoomId}
-          externalEndRoomId={indoorEndRoomId}
-          onPathStepsChange={indoorPathStepsChange}
-          onFloorNavReady={onIndoorFloorNavReady}
-          onIndoorRouteChange={onIndoorRouteChange}
-          indoorTravelMode={indoorTravelMode}
-        />
-      ) : (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            opacity: indoorOpacity,
+          }}
+        >
+          <IndoorMapScreen
+            onExitIndoor={() => resetIndoorBuilding()}
+            onOpenCalendar={onOpenCalendar}
+            building={indoorBuilding}
+            hideAppSearchBar={hideAppSearchBar}
+            revealSearchBar={revealSearchBar}
+            externalStartRoomId={indoorStartRoomId}
+            externalEndRoomId={indoorEndRoomId}
+            onPathStepsChange={indoorPathStepsChange}
+            onFloorNavReady={onIndoorFloorNavReady}
+            onIndoorRouteChange={onIndoorRouteChange}
+            indoorTravelMode={indoorTravelMode}
+          />
+        </Animated.View>
+      ) : null}
+      {indoorBuilding ? null : (
         <MapControls
           selectedCampus={selectedCampus}
           onToggleCampus={handleToggleCampus}
