@@ -25,7 +25,7 @@ const MapControls = ({
   onOpenCalendar,
   bottomSheetAnimatedPosition,
 }: Props) => {
-  const label = selectedCampus === 'SGW' ? 'SGW' : 'LOY';
+  const label = selectedCampus === 'SGW' ? 'LOY' : 'SGW';
   const { height: windowHeight } = useWindowDimensions();
   const statusBarTopOffset =
     Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : IOS_SAFE_TOP_OFFSET;
