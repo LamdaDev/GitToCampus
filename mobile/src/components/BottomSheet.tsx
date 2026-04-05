@@ -1490,15 +1490,25 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       openCalendarSelectionSlider();
     }, [openCalendarSelectionSlider]);
 
-    const handleCloseUpcomingClassesSlider = useCallback(() => {
+    const handleCloseCalendarSlider = useCallback(() => {
       setCalendarSliderMode(null);
     }, []);
+    const handleCloseUpcomingClassesSlider = handleCloseCalendarSlider;
+    const handleCloseCalendarSelectionSlider = handleCloseCalendarSlider;
 
-    const handleCloseCalendarSelectionSlider = useCallback(() => {
-      setCalendarSliderMode(null);
-    }, []);
+    const getCurrentBuildingStartState = useCallback(() => {
+      const resolvedCurrentBuilding = currentBuilding ?? null;
 
-    const showDirections = (building: BuildingShape, asDestination?: boolean) => {
+      return {
+        startBuilding: resolvedCurrentBuilding,
+        startLocationSnapshot: resolvedCurrentBuilding ? null : userLocation,
+        startEndpoint: resolvedCurrentBuilding
+          ? ({ kind: 'building', building: resolvedCurrentBuilding } as MixedEndpoint)
+          : null,
+      };
+    }, [currentBuilding, userLocation]);
+
+    const resetToWalkingDirectionsBaseState = useCallback(() => {
       clearCrossBuildingRouteFlowState();
       setHybridOutdoorTravelMode('walking');
       setTravelMode('walking');
@@ -1506,14 +1516,24 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartRoom(null);
       setDestinationRoom(null);
       onIndoorRouteChange?.(null, null);
+    }, [clearCrossBuildingRouteFlowState, onIndoorRouteChange]);
+
+    const openDirectionsView = useCallback(() => {
+      setActiveView('directions');
+      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+    }, [snapToDirectionsPanel]);
+
+    const showDirections = (building: BuildingShape, asDestination?: boolean) => {
+      resetToWalkingDirectionsBaseState();
       if (asDestination) {
         // Walking figure: building is destination, start is current location
-        setStartBuilding(currentBuilding ?? null);
-        setStartLocationSnapshot(currentBuilding ? null : userLocation);
+        const currentStartState = getCurrentBuildingStartState();
+        setStartBuilding(currentStartState.startBuilding);
+        setStartLocationSnapshot(currentStartState.startLocationSnapshot);
         setDestinationPoi(null);
         setDestinationLocationSnapshot(null);
         setDestinationBuilding(building);
-        setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
+        setStartEndpoint(currentStartState.startEndpoint);
         setDestinationEndpoint({ kind: 'building', building });
       } else {
         // "Set as starting point" button: building is start
@@ -1526,36 +1546,24 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartEndpoint({ kind: 'building', building });
         setDestinationEndpoint(null);
       }
-      setActiveView('directions');
-      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+      openDirectionsView();
     };
 
     const showPoiDirections = useCallback(
       (poi: OutdoorPoi) => {
-        clearCrossBuildingRouteFlowState();
-        setHybridOutdoorTravelMode('walking');
-        setTravelMode('walking');
-        setRouteStartSource('current');
-        setStartRoom(null);
-        setDestinationRoom(null);
-        onIndoorRouteChange?.(null, null);
-        setStartBuilding(currentBuilding ?? null);
-        setStartLocationSnapshot(currentBuilding ? null : userLocation);
+        const currentStartState = getCurrentBuildingStartState();
+
+        resetToWalkingDirectionsBaseState();
+        setStartBuilding(currentStartState.startBuilding);
+        setStartLocationSnapshot(currentStartState.startLocationSnapshot);
         setDestinationBuilding(null);
         setDestinationPoi(poi);
         setDestinationLocationSnapshot(null);
-        setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
+        setStartEndpoint(currentStartState.startEndpoint);
         setDestinationEndpoint(null);
-        setActiveView('directions');
-        snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+        openDirectionsView();
       },
-      [
-        clearCrossBuildingRouteFlowState,
-        currentBuilding,
-        onIndoorRouteChange,
-        snapToDirectionsPanel,
-        userLocation,
-      ],
+      [getCurrentBuildingStartState, openDirectionsView, resetToWalkingDirectionsBaseState],
     );
 
     const showTransitPlan = () => {
@@ -1609,26 +1617,21 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     );
 
     const closeSearchBuilding = (chosenBuilding: BuildingShape) => {
-      clearCrossBuildingRouteFlowState();
-      setHybridOutdoorTravelMode('walking');
+      const currentStartState = getCurrentBuildingStartState();
+
+      resetToWalkingDirectionsBaseState();
       passSelectedBuilding(chosenBuilding);
 
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
-      setStartBuilding(currentBuilding ?? null);
-      setStartLocationSnapshot(currentBuilding ? null : userLocation);
+      setStartBuilding(currentStartState.startBuilding);
+      setStartLocationSnapshot(currentStartState.startLocationSnapshot);
       setDestinationPoi(null);
       setDestinationLocationSnapshot(null);
       setDestinationBuilding(chosenBuilding);
-      setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
+      setStartEndpoint(currentStartState.startEndpoint);
       setDestinationEndpoint({ kind: 'building', building: chosenBuilding });
-      setStartRoom(null);
-      setDestinationRoom(null);
-      setTravelMode('walking');
-      setRouteStartSource('current');
-      setActiveView('directions');
-      onIndoorRouteChange?.(null, null);
       onExitSearch();
-      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+      openDirectionsView();
     };
 
     const handleUpcomingClassPress = useCallback(
