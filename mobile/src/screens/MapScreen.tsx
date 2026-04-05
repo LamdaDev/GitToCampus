@@ -38,13 +38,14 @@ import { decodePolyline } from '../utils/polyline';
 import MapControls from '../components/MapControls';
 import * as turf from '@turf/turf';
 import IndoorMapScreen from './IndoorMapScreen';
-import type { OutdoorPoi, PoiCategory, PoiRangeKm } from '../types/Poi';
+import type { OutdoorPoi, PoiCategorySelection, PoiRangeKm } from '../types/Poi';
 import { findNearbyOutdoorPois } from '../utils/outdoorPoisRepository';
 
 type MapScreenProps = {
   passSelectedBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
   passUserLocation: React.Dispatch<React.SetStateAction<UserCoords | null>>;
   passCurrentBuilding: React.Dispatch<React.SetStateAction<BuildingShape | null>>;
+  passSelectedPoi?: React.Dispatch<React.SetStateAction<OutdoorPoi | null>>;
   openBottomSheet: () => void;
   onMapPress?: () => void;
   onOpenCalendar?: () => void;
@@ -62,7 +63,8 @@ type MapScreenProps = {
   onReopenIndoorNav?: () => void;
   onIndoorRouteChange?: (startId: string | null, endId: string | null) => void;
   indoorTravelMode?: 'walking' | 'disability';
-  selectedPoiCategory?: PoiCategory | null;
+  selectedPoi?: OutdoorPoi | null;
+  selectedPoiCategories?: PoiCategorySelection;
   selectedPoiRangeKm?: PoiRangeKm;
 };
 
@@ -73,6 +75,8 @@ export type MapScreenHandle = {
 
 export type UserCoords = { latitude: number; longitude: number };
 
+const noopSelectedPoiSetter = () => {};
+
 const LOCATION_OPTIONS: Location.LocationOptions = {
   accuracy: Location.Accuracy.Balanced,
   distanceInterval: 5,
@@ -82,6 +86,7 @@ const ROUTE_FIT_FALLBACK_PANEL_RATIO = 0.52;
 const ROUTE_FIT_EXTRA_BOTTOM_PADDING = 24;
 const ROUTE_FIT_HORIZONTAL_PADDING = 70;
 const ROUTE_FIT_TOP_PADDING = 110;
+const ANDROID_POI_MARKER_REFRESH_MS = 350;
 
 const ROUTE_LINE_COLOR = '#0472f8';
 const ROUTE_LINE_WIDTH = 6;
@@ -634,6 +639,7 @@ const areStringArraysEqual = (left: string[], right: string[]) => {
 const renderPoiMarker = (
   poi: OutdoorPoi,
   selectedPoiId: string | null,
+  tracksViewChanges: boolean,
   onPoiPress: (poi: OutdoorPoi) => void,
 ) => {
   const markerTheme = POI_MARKER_THEME[poi.category];
@@ -647,7 +653,7 @@ const renderPoiMarker = (
       title={poi.name}
       description={poi.address}
       onPress={() => onPoiPress(poi)}
-      tracksViewChanges={false}
+      tracksViewChanges={tracksViewChanges}
     >
       <View
         style={[
@@ -744,6 +750,7 @@ function MapScreen({
   passSelectedBuilding,
   passUserLocation,
   passCurrentBuilding,
+  passSelectedPoi = noopSelectedPoiSetter,
   openBottomSheet,
   onMapPress,
   onOpenCalendar,
@@ -760,12 +767,16 @@ function MapScreen({
   onIndoorFloorNavReady,
   onIndoorRouteChange,
   indoorTravelMode,
-  selectedPoiCategory = null,
+  selectedPoi = null,
+  selectedPoiCategories = [],
   selectedPoiRangeKm = 3,
 }: Readonly<MapScreenProps>) {
   const [selectedCampus, setSelectedCampus] = useState<Campus>('SGW');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
+  const [poiMarkersTrackViewChanges, setPoiMarkersTrackViewChanges] = useState(
+    Platform.OS === 'android',
+  );
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [currentBuildingId, setCurrentBuildingId] = useState<string | null>(null);
   const { height: windowHeight } = useWindowDimensions();
@@ -816,6 +827,10 @@ function MapScreen({
   }, [userCoords]);
 
   useEffect(() => {
+    setSelectedPoiId(selectedPoi?.id ?? null);
+  }, [selectedPoi]);
+
+  useEffect(() => {
     const targetRegion = getCampusRegion(selectedCampus);
     if (mapRef.current?.animateToRegion) {
       mapRef.current.animateToRegion(targetRegion, 1000);
@@ -827,10 +842,11 @@ function MapScreen({
       setSelectedBuildingId(null);
       return;
     }
+    passSelectedPoi(null);
     setSelectedPoiId(null);
     setSelectedBuildingId(externalSelectedBuilding.id);
     setSelectedCampus(externalSelectedBuilding.campus);
-  }, [externalSelectedBuilding]);
+  }, [externalSelectedBuilding, passSelectedPoi]);
 
   const sgwBuildings = useMemo(() => getCampusBuildingShapes('SGW'), []);
   const loyolaBuildings = useMemo(() => getCampusBuildingShapes('LOYOLA'), []);
@@ -860,12 +876,14 @@ function MapScreen({
     setSelectedCampus((prev) => (prev === 'SGW' ? 'LOYOLA' : 'SGW'));
     setSelectedBuildingId(null);
     setSelectedPoiId(null);
-  }, []);
+    passSelectedPoi(null);
+  }, [passSelectedPoi]);
 
   const handlePolygonPress = useCallback(
     (item: PolygonRenderItem) => {
       armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
 
+      passSelectedPoi(null);
       setSelectedPoiId(null);
       setSelectedBuildingId(item.buildingId);
       setSelectedCampus(item.campus);
@@ -874,7 +892,7 @@ function MapScreen({
       passSelectedBuilding(building ?? null);
       openBottomSheet();
     },
-    [openBottomSheet, passSelectedBuilding],
+    [openBottomSheet, passSelectedBuilding, passSelectedPoi],
   );
 
   const selectedMarkerCoordinate = useMemo(() => {
@@ -902,8 +920,9 @@ function MapScreen({
     setSelectedBuildingId(null);
     setSelectedPoiId(null);
     passSelectedBuilding(null);
+    passSelectedPoi(null);
     onMapPress?.();
-  }, [onMapPress, passSelectedBuilding]);
+  }, [onMapPress, passSelectedBuilding, passSelectedPoi]);
 
   const mapInitialRegion = useMemo(() => getCampusRegion('SGW'), []);
 
@@ -974,23 +993,48 @@ function MapScreen({
     [buildingLabelItems, visibleBuildingLabelKeys],
   );
   const visiblePois = useMemo(() => {
-    if (!selectedPoiCategory) return [];
-    return findNearbyOutdoorPois(selectedCampus, selectedPoiCategory, selectedPoiRangeKm).map(
-      (entry) => entry.poi,
-    );
-  }, [selectedCampus, selectedPoiCategory, selectedPoiRangeKm]);
+    if (selectedPoiCategories.length === 0) return [];
+
+    const uniquePois = new Map<string, OutdoorPoi>();
+    selectedPoiCategories.forEach((category) => {
+      findNearbyOutdoorPois(selectedCampus, category, selectedPoiRangeKm).forEach((entry) => {
+        uniquePois.set(entry.poi.id, entry.poi);
+      });
+    });
+
+    return Array.from(uniquePois.values());
+  }, [selectedCampus, selectedPoiCategories, selectedPoiRangeKm]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    setPoiMarkersTrackViewChanges(true);
+    const timeoutId = setTimeout(() => {
+      setPoiMarkersTrackViewChanges(false);
+    }, ANDROID_POI_MARKER_REFRESH_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [selectedPoiCategories, selectedPoiId, selectedPoiRangeKm, visiblePois]);
+
   const handlePoiPress = useCallback(
     (poi: OutdoorPoi) => {
       armPolygonPressGuard(shouldIgnoreNextMapPressRef, polygonPressGuardTimeoutRef);
+      passSelectedPoi(poi);
       setSelectedPoiId(poi.id);
       setSelectedBuildingId(null);
       passSelectedBuilding(null);
+      openBottomSheet();
     },
-    [passSelectedBuilding],
+    [openBottomSheet, passSelectedBuilding, passSelectedPoi],
   );
   const renderedPoiMarkers = useMemo(
-    () => visiblePois.map((poi) => renderPoiMarker(poi, selectedPoiId, handlePoiPress)),
-    [handlePoiPress, selectedPoiId, visiblePois],
+    () =>
+      visiblePois.map((poi) =>
+        renderPoiMarker(poi, selectedPoiId, poiMarkersTrackViewChanges, handlePoiPress),
+      ),
+    [handlePoiPress, poiMarkersTrackViewChanges, selectedPoiId, visiblePois],
   );
 
   const mapProps = {
