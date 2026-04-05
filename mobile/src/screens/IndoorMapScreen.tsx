@@ -234,7 +234,7 @@ export default function IndoorMapScreen({
   const floorLevels = useMemo(() => {
     if (!buildingFloorPlans) return [];
 
-    return [...Object.keys(buildingFloorPlans)].sort((floorA, floorB) => {
+    return Object.keys(buildingFloorPlans).sort((floorA, floorB) => {
       const floorDifference = getFloorKeySortValue(floorA) - getFloorKeySortValue(floorB);
       if (floorDifference !== 0) return floorDifference;
       return floorA.localeCompare(floorB);

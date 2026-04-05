@@ -41,6 +41,20 @@ const SEARCH_LIST_INITIAL_NUM_TO_RENDER = 12;
 const SEARCH_LIST_MAX_TO_RENDER_PER_BATCH = 12;
 const SEARCH_LIST_WINDOW_SIZE = 7;
 const POI_PANEL_ANIMATION_DURATION_MS = 1000;
+const POI_CATEGORY_OPTIONS = ['cafe', 'restaurant', 'depanneur'] as const;
+
+const getPoiCategoryLabel = (category: PoiCategory) => {
+  switch (category) {
+    case 'cafe':
+      return 'Cafes';
+    case 'restaurant':
+      return 'Restaurants';
+    case 'depanneur':
+      return 'Depanneurs';
+    default:
+      return category;
+  }
+};
 
 export default function SearchSheet({
   buildings,
@@ -300,6 +314,34 @@ export default function SearchSheet({
   const handleSearchChange = useCallback((text?: string) => {
     setSearch(text ?? '');
   }, []);
+  const handleTogglePoiPanel = useCallback(() => {
+    setIsPoiPanelOpen((previous) => !previous);
+  }, []);
+  const handlePoiCategoryToggle = useCallback(
+    (category: PoiCategory) => {
+      onPoiCategoryChange?.((previousCategories) => {
+        if (previousCategories.includes(category)) {
+          return previousCategories.filter((entry) => entry !== category);
+        }
+        return [...previousCategories, category];
+      });
+    },
+    [onPoiCategoryChange],
+  );
+  const poiCategoryToggleHandlers = useMemo(
+    () => ({
+      cafe: () => handlePoiCategoryToggle('cafe'),
+      restaurant: () => handlePoiCategoryToggle('restaurant'),
+      depanneur: () => handlePoiCategoryToggle('depanneur'),
+    }),
+    [handlePoiCategoryToggle],
+  );
+  const handleIncreasePoiRange = useCallback(() => {
+    onPoiRangeChange?.((previousRangeKm) => Math.min(3, previousRangeKm + 1) as PoiRangeKm);
+  }, [onPoiRangeChange]);
+  const handleDecreasePoiRange = useCallback(() => {
+    onPoiRangeChange?.((previousRangeKm) => Math.max(1, previousRangeKm - 1) as PoiRangeKm);
+  }, [onPoiRangeChange]);
   const poiOptionsAccessibilityLabel = isPoiPanelOpen ? 'Close POI options' : 'Open POI options';
   const poiPanelAnimatedStyle = useMemo(
     () => ({
@@ -447,7 +489,7 @@ export default function SearchSheet({
           accessibilityState={{ expanded: isPoiPanelOpen }}
           style={searchBuilding.searchOptionsButton}
           activeOpacity={0.85}
-          onPress={() => setIsPoiPanelOpen((previous) => !previous)}
+          onPress={handleTogglePoiPanel}
         >
           <Ionicons name="options-outline" size={24} color="#fff4f6" />
         </TouchableOpacity>
@@ -460,14 +502,9 @@ export default function SearchSheet({
           pointerEvents={isPoiPanelOpen ? 'auto' : 'none'}
         >
           <View style={searchBuilding.poiCategoryColumn}>
-            {(['cafe', 'restaurant', 'depanneur'] as PoiCategory[]).map((category) => {
+            {POI_CATEGORY_OPTIONS.map((category) => {
               const isSelected = selectedPoiCategories.includes(category);
-              const categoryLabel =
-                category === 'cafe'
-                  ? 'Cafes'
-                  : category === 'restaurant'
-                    ? 'Restaurants'
-                    : 'Depanneurs';
+              const categoryLabel = getPoiCategoryLabel(category);
               return (
                 <TouchableOpacity
                   key={category}
@@ -477,13 +514,7 @@ export default function SearchSheet({
                     isSelected && searchBuilding.poiCategoryCheckboxRowSelected,
                   ]}
                   activeOpacity={0.85}
-                  onPress={() =>
-                    onPoiCategoryChange?.((previousCategories) =>
-                      previousCategories.includes(category)
-                        ? previousCategories.filter((entry) => entry !== category)
-                        : [...previousCategories, category],
-                    )
-                  }
+                  onPress={poiCategoryToggleHandlers[category]}
                 >
                   <Text style={searchBuilding.poiCategoryCheckboxLabel}>{categoryLabel}</Text>
                   <View
@@ -511,11 +542,7 @@ export default function SearchSheet({
                     testID="search-poi-range-increase"
                     style={searchBuilding.poiRangeStepperButton}
                     activeOpacity={0.8}
-                    onPress={() =>
-                      onPoiRangeChange?.(
-                        (previousRangeKm) => Math.min(3, previousRangeKm + 1) as PoiRangeKm,
-                      )
-                    }
+                    onPress={handleIncreasePoiRange}
                   >
                     <Ionicons name="chevron-up" size={22} color="#fff4f6" />
                   </TouchableOpacity>
@@ -523,11 +550,7 @@ export default function SearchSheet({
                     testID="search-poi-range-decrease"
                     style={searchBuilding.poiRangeStepperButton}
                     activeOpacity={0.8}
-                    onPress={() =>
-                      onPoiRangeChange?.(
-                        (previousRangeKm) => Math.max(1, previousRangeKm - 1) as PoiRangeKm,
-                      )
-                    }
+                    onPress={handleDecreasePoiRange}
                   >
                     <Ionicons name="chevron-down" size={22} color="#fff4f6" />
                   </TouchableOpacity>

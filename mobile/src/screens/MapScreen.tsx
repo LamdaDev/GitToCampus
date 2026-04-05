@@ -400,7 +400,7 @@ const getClosedTurfRing = (coordinates: LatLng[]) => {
 
   const ring = coordinates.map((coordinate) => [coordinate.longitude, coordinate.latitude]);
   const [firstLongitude, firstLatitude] = ring[0];
-  const [lastLongitude, lastLatitude] = ring[ring.length - 1];
+  const [lastLongitude, lastLatitude] = ring.at(-1) ?? ring[0];
 
   if (firstLongitude !== lastLongitude || firstLatitude !== lastLatitude) {
     ring.push([firstLongitude, firstLatitude]);

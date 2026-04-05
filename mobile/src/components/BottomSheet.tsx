@@ -330,6 +330,12 @@ const shouldShowHybridDirectionsPanel = (
   return roomEndpoint.room.buildingKey !== otherBuildingKey;
 };
 
+const hasRoomEndpoint = (start: MixedEndpoint | null, destination: MixedEndpoint | null) =>
+  start?.kind === 'room' || destination?.kind === 'room';
+
+const hasBuildingEndpoint = (start: MixedEndpoint | null, destination: MixedEndpoint | null) =>
+  start?.kind === 'building' || destination?.kind === 'building';
+
 const getHybridRouteGuidanceMessage = (
   start: MixedEndpoint | null,
   destination: MixedEndpoint | null,
@@ -393,16 +399,18 @@ const resolveSwapStartFromDestination = ({
   previousDestinationRoom: string | null;
 }) => {
   if (previousDestinationBuilding) {
+    const startEndpoint: MixedEndpoint =
+      previousDestinationEndpoint?.kind === 'building'
+        ? previousDestinationEndpoint
+        : {
+            kind: 'building',
+            building: previousDestinationBuilding,
+          };
+
     return {
       startBuilding: previousDestinationBuilding,
       startLocationSnapshot: null,
-      startEndpoint:
-        previousDestinationEndpoint?.kind === 'building'
-          ? previousDestinationEndpoint
-          : ({
-              kind: 'building',
-              building: previousDestinationBuilding,
-            } satisfies MixedEndpoint),
+      startEndpoint,
       startRoom: previousDestinationRoom ?? previousDestinationBuilding.name,
       routeStartSource: 'manual' as RouteStartSource,
     };
@@ -429,16 +437,18 @@ const resolveSwapDestinationFromStart = ({
   previousStartRoom: string | null;
 }) => {
   if (resolvedCurrentStartBuilding) {
+    const destinationEndpoint: MixedEndpoint =
+      previousStartEndpoint?.kind === 'building'
+        ? previousStartEndpoint
+        : {
+            kind: 'building',
+            building: resolvedCurrentStartBuilding,
+          };
+
     return {
       destinationBuilding: resolvedCurrentStartBuilding,
       destinationLocationSnapshot: null,
-      destinationEndpoint:
-        previousStartEndpoint?.kind === 'building'
-          ? previousStartEndpoint
-          : ({
-              kind: 'building',
-              building: resolvedCurrentStartBuilding,
-            } satisfies MixedEndpoint),
+      destinationEndpoint,
       destinationRoom: previousStartRoom ?? resolvedCurrentStartBuilding.name,
       selectedBuilding: resolvedCurrentStartBuilding,
     };
@@ -980,8 +990,8 @@ const renderBottomSheetContent = (props: {
     return <SearchContent {...props} />;
   }
 
-  if (props.activeView === 'building') {
-    return (
+  const viewContentByType: Partial<Record<ViewType, () => React.JSX.Element>> = {
+    building: () => (
       <BuildingDetails
         selectedBuilding={props.selectedBuilding}
         onClose={props.closeSheet}
@@ -990,32 +1000,23 @@ const renderBottomSheetContent = (props: {
         userLocation={props.userLocation}
         onEnterBuilding={props.onEnterBuilding}
       />
-    );
-  }
-
-  if (props.activeView === 'poi') {
-    return (
+    ),
+    poi: () => (
       <PoiDetails
         selectedPoi={props.selectedPoi ?? null}
         onClose={props.closeSheet}
         onGetDirections={props.showPoiDirections}
       />
-    );
-  }
-
-  if (props.activeView === 'transit-plan') {
-    return (
+    ),
+    'transit-plan': () => (
       <TransitPlanDetails
         destinationBuilding={props.destinationBuilding}
         routeTransitSteps={props.routeTransitSteps}
         onBack={props.showDirectionsPanel}
         onClose={props.closeSheet}
       />
-    );
-  }
-
-  if (props.activeView === 'shuttle-schedule') {
-    return (
+    ),
+    'shuttle-schedule': () => (
       <ShuttleScheduleDetails
         startBuilding={props.startBuilding}
         destinationBuilding={props.destinationBuilding}
@@ -1023,20 +1024,14 @@ const renderBottomSheetContent = (props: {
         onBack={props.showDirectionsPanel}
         onClose={props.closeSheet}
       />
-    );
-  }
-
-  if (props.activeView === 'navigation') {
-    return (
+    ),
+    navigation: () => (
       <NavigationView
         navigationSummary={props.navigationSummary}
         endNavigation={props.endNavigation}
       />
-    );
-  }
-
-  if (props.activeView === 'indoor-directions') {
-    return (
+    ),
+    'indoor-directions': () => (
       <IndoorDirectionsView
         startRoom={props.startRoom}
         destinationRoom={props.destinationRoom}
@@ -1048,11 +1043,8 @@ const renderBottomSheetContent = (props: {
         onTravelModeChange={props.setIndoorTravelMode}
         selectedTravelMode={props.indoorTravelMode}
       />
-    );
-  }
-
-  if (props.activeView === 'hybrid-directions') {
-    return (
+    ),
+    'hybrid-directions': () => (
       <HybridDirectionsView
         startLabel={props.hybridStartLabel}
         destinationLabel={props.hybridDestinationLabel}
@@ -1068,11 +1060,8 @@ const renderBottomSheetContent = (props: {
         summaryMessage={props.hybridSummaryMessage}
         goDisabled={props.hybridGoDisabled}
       />
-    );
-  }
-
-  if (props.activeView === 'indoor-navigation') {
-    return (
+    ),
+    'indoor-navigation': () => (
       <IndoorNavigationView
         startRoom={props.indoorNavigationStartLabel}
         destinationRoom={props.indoorNavigationDestinationLabel}
@@ -1086,8 +1075,11 @@ const renderBottomSheetContent = (props: {
         stageActionLabel={props.indoorStageActionLabel}
         onStageAction={props.onIndoorStageAction}
       />
-    );
-  }
+    ),
+  };
+
+  const activeViewContentRenderer = viewContentByType[props.activeView];
+  if (activeViewContentRenderer) return activeViewContentRenderer();
 
   return (
     <DirectionDetails
@@ -1336,6 +1328,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const resolveViewForSelections = useCallback(
       (nextStart: MixedEndpoint | null, nextDestination: MixedEndpoint | null): ViewType => {
+        const includesRoomEndpoint = hasRoomEndpoint(nextStart, nextDestination);
+        const includesBuildingEndpoint = hasBuildingEndpoint(nextStart, nextDestination);
+
         if (shouldShowHybridDirectionsPanel(nextStart, nextDestination)) {
           return 'hybrid-directions';
         }
@@ -1344,18 +1339,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           return 'indoor-directions';
         }
 
-        if (
-          (nextStart?.kind === 'room' || nextDestination?.kind === 'room') &&
-          (nextStart?.kind === 'building' || nextDestination?.kind === 'building')
-        ) {
+        if (includesRoomEndpoint && includesBuildingEndpoint) {
           return 'indoor-directions';
         }
 
-        if (nextStart?.kind === 'building' || nextDestination?.kind === 'building') {
+        if (includesBuildingEndpoint) {
           return 'directions';
         }
 
-        if (nextStart?.kind === 'room' || nextDestination?.kind === 'room') {
+        if (includesRoomEndpoint) {
           return 'indoor-directions';
         }
 
@@ -2025,13 +2017,13 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const hasAvailableShuttlePlan = Boolean(
       travelMode === 'shuttle' &&
       shuttlePlan?.isServiceAvailable &&
-      shuttlePlan.nextDepartureInMinutes !== null &&
+      shuttlePlan?.nextDepartureInMinutes !== null &&
       shuttlePlan.preShuttleWalk?.origin &&
-      shuttlePlan.preShuttleWalk.destination &&
+      shuttlePlan.preShuttleWalk?.destination &&
       shuttlePlan.shuttleRide?.origin &&
-      shuttlePlan.shuttleRide.destination &&
+      shuttlePlan.shuttleRide?.destination &&
       shuttlePlan.postShuttleWalk?.origin &&
-      shuttlePlan.postShuttleWalk.destination,
+      shuttlePlan.postShuttleWalk?.destination,
     );
     const routeRequestMode: DirectionsTravelMode = toDirectionsTravelMode(travelMode);
 

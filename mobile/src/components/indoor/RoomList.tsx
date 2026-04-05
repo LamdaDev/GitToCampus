@@ -58,7 +58,7 @@ const getBuildingData = (buildingKey: IndoorBuildingKey, search: string) => {
     if (node.type === 'room' && node.label && node.label.trim() !== '') {
       const label = node.label.toLowerCase();
 
-      const roomNumber = label.replace(/[^0-9]/g, '');
+      const roomNumber = label.replaceAll(/\D/g, '');
 
       if (!searchLower || roomNumber.startsWith(searchLower) || label.startsWith(searchLower)) {
         if (!grouped[node.floor]) grouped[node.floor] = [];
@@ -76,10 +76,30 @@ const getBuildingData = (buildingKey: IndoorBuildingKey, search: string) => {
     }
   });
 
-  Object.values(grouped).forEach((rooms) => rooms.sort((a, b) => a.label.localeCompare(b.label)));
+  Object.values(grouped).forEach((rooms) => {
+    rooms.sort((a, b) => a.label.localeCompare(b.label));
+  });
 
   return grouped;
 };
+
+type FloorSectionProps = {
+  floor: string;
+  rooms: RoomNode[];
+  onSelectRoom?: (room: RoomNode) => void;
+};
+
+const FloorSection = ({ floor, rooms, onSelectRoom }: Readonly<FloorSectionProps>) => (
+  <View style={{ marginBottom: 12 }}>
+    <Text style={styles.floorTitle}>Floor {floor}</Text>
+
+    {rooms.map((room) => (
+      <TouchableOpacity key={room.id} onPress={() => onSelectRoom?.(room)} style={styles.roomItem}>
+        <Text style={styles.roomText}>{room.label}</Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+);
 
 const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props) => {
   const [openBuilding, setOpenBuilding] = useState<IndoorBuildingKey | null>(null);
@@ -155,6 +175,9 @@ const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props)
       const floors = buildingCache[buildingId];
 
       if (isSearching && !floors) return null;
+      const sortedFloorEntries = floors
+        ? Object.entries(floors).sort(([floorA], [floorB]) => Number(floorA) - Number(floorB))
+        : [];
 
       const isOpen = isSearching
         ? !collapsedBuildings.has(buildingId)
@@ -184,23 +207,9 @@ const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props)
 
           {isOpen && floors && (
             <View style={styles.contentContainer}>
-              {Object.entries(floors)
-                .sort(([a], [b]) => Number(a) - Number(b))
-                .map(([floor, rooms]) => (
-                  <View key={floor} style={{ marginBottom: 12 }}>
-                    <Text style={styles.floorTitle}>Floor {floor}</Text>
-
-                    {rooms.map((room) => (
-                      <TouchableOpacity
-                        key={room.id}
-                        onPress={() => onSelectRoom?.(room)}
-                        style={styles.roomItem}
-                      >
-                        <Text style={styles.roomText}>{room.label}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                ))}
+              {sortedFloorEntries.map(([floor, rooms]) => (
+                <FloorSection key={floor} floor={floor} rooms={rooms} onSelectRoom={onSelectRoom} />
+              ))}
             </View>
           )}
         </View>
