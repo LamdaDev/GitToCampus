@@ -1,0 +1,9 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    point: 44%,50%
+- tapOn: 
+- tapOn: 
+- tapOn: 
+- doubleTapOn:
+    point: 50%,50%
