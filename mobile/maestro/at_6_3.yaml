@@ -1,0 +1,23 @@
+appId: host.exp.exponent
+---
+# Tap on a building polygon to select it
+- tapOn:
+    point: '50%,50%'
+
+# Wait for building details to appear
+- assertVisible: Henry F. Hall Building
+- tapOn: Start From
+- tapOn: LOY
+
+- tapOn:
+    point: '45%,40%'
+
+# Swap start & destination
+- tapOn: 
+
+# Verify that the focus campus changed to the destination location campus (Red marker, SGW)
+# (So now the toggle directs to the opposite campus, LOY)
+- assertVisible: LOY
+
+- tapOn: 
+- assertVisible: SGW

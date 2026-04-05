@@ -1,0 +1,43 @@
+appId: host.exp.exponent
+---
+# Tap on a building polygon to select it
+- tapOn:
+    point: "50%,50%"
+- assertVisible: Henry F. Hall Building
+
+- tapOn: Start From
+- tapOn: Set destination
+- tapOn: Get to...
+- inputText: Molson
+- doubleTapOn: John Molson School of Business
+- tapOn: Henry F. Hall Building
+
+# Change start location to an indoor room
+- tapOn: Get to...
+- inputText: H-110
+
+- doubleTapOn:
+    text: H-110
+    index: 1
+
+- tapOn:
+    text: John Molson School of Business
+    index: 1
+
+- tapOn: Get to...
+- inputText: MB
+- doubleTapOn:
+    text: MB-1.294
+
+- tapOn: GO
+
+- swipe:
+    start: "50%, 55%"
+    end: "50%, 75%"
+
+- tapOn: Continue to Outdoor Directions
+- tapOn: Enter Building
+
+- swipe:
+    start: "50%, 55%"
+    end: "50%, 85%"
