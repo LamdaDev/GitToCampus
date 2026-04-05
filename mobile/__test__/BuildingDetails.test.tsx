@@ -360,7 +360,7 @@ describe('Building Details', () => {
       shortCode: 'H',
     };
 
-    const { getByTestId, getByText } = render(
+    const { getByTestId, getByText, UNSAFE_getByProps } = render(
       <BuildingDetails
         selectedBuilding={indoorBuilding}
         onClose={mockOnClose}
@@ -372,6 +372,7 @@ describe('Building Details', () => {
     );
 
     expect(getByText('Switch to Indoor')).toBeTruthy();
+    expect(UNSAFE_getByProps({ name: 'enter-outline' })).toBeTruthy();
     fireEvent.press(getByTestId('switch-to-indoor-button'));
 
     expect(mockOnEnterBuilding).toHaveBeenCalledTimes(1);

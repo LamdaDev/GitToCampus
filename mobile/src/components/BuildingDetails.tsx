@@ -111,21 +111,41 @@ export default function BuildingDetails({
 
   const navigationSection = (
     <View style={buildingDetailsStyles.navigationSection}>
-      <TouchableOpacity
-        style={buildingDetailsStyles.navigationButton}
-        onPress={handleDirectionsToPress}
-      >
-        <Feather name="corner-down-right" size={20} color="#fff" />
-        <Text style={buildingDetailsStyles.navigationButtonText}>Directions To</Text>
-      </TouchableOpacity>
+      <View style={buildingDetailsStyles.navigationButtonsGroup}>
+        <TouchableOpacity
+          style={buildingDetailsStyles.navigationButton}
+          onPress={handleDirectionsToPress}
+        >
+          <Feather name="corner-down-right" size={20} color="#fff" />
+          <Text style={buildingDetailsStyles.navigationButtonText}>Directions To</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={buildingDetailsStyles.navigationButton}
-        onPress={handleStartFromPress}
-      >
-        <Ionicons name="navigate-outline" size={20} color="#fff" />
-        <Text style={buildingDetailsStyles.navigationButtonText}>Start From</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={buildingDetailsStyles.navigationButton}
+          onPress={handleStartFromPress}
+        >
+          <Ionicons name="navigate-outline" size={20} color="#fff" />
+          <Text style={buildingDetailsStyles.navigationButtonText}>Start From</Text>
+        </TouchableOpacity>
+      </View>
+      {hasIndoor && onEnterBuilding ? (
+        <TouchableOpacity
+          testID="switch-to-indoor-button"
+          accessibilityRole="button"
+          accessibilityLabel="Switch to indoor view"
+          accessibilityHint="Open this building's indoor map"
+          style={buildingDetailsStyles.switchToIndoorButton}
+          onPress={handleEnterBuildingPress}
+        >
+          <Ionicons
+            name="enter-outline"
+            size={20}
+            color="#fff"
+            style={buildingDetailsStyles.switchToIndoorIcon}
+          />
+          <Text style={buildingDetailsStyles.switchToIndoorButtonText}>Switch to Indoor</Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 
@@ -193,21 +213,6 @@ export default function BuildingDetails({
           <Text style={buildingDetailsStyles.subtitle}>{selectedBuilding?.address}</Text>
         </View>
         <View style={buildingDetailsStyles.headerIcons}>
-          {/**Hides the 'enter building' button if no floor plan exists  */}
-          {hasIndoor && onEnterBuilding ? (
-            <TouchableOpacity
-              testID="switch-to-indoor-button"
-              accessibilityRole="button"
-              accessibilityLabel="Switch to indoor view"
-              accessibilityHint="Open this building's indoor map"
-              style={buildingDetailsStyles.switchToIndoorButton}
-              onPress={handleEnterBuildingPress}
-            >
-              <Text style={buildingDetailsStyles.switchToIndoorButtonText}>Switch to Indoor</Text>
-            </TouchableOpacity>
-          ) : (
-            ''
-          )}
           <TouchableOpacity style={buildingDetailsStyles.iconButton} onPress={onClose}>
             <Ionicons name="close-sharp" size={25} color="#fff" />
           </TouchableOpacity>
