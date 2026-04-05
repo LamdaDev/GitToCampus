@@ -371,7 +371,7 @@ describe('Building Details', () => {
       />,
     );
 
-    expect(getByText('Switch to Indoor')).toBeTruthy();
+    expect(getByText('Indoor view')).toBeTruthy();
     expect(UNSAFE_getByProps({ name: 'enter-outline' })).toBeTruthy();
     fireEvent.press(getByTestId('switch-to-indoor-button'));
 
