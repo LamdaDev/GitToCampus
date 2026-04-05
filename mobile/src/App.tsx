@@ -183,6 +183,7 @@ const App = () => {
           selectedPoiCategories={selectedPoiCategories}
           selectedPoiRangeKm={selectedPoiRangeKm}
           selectedPoi={selectedPoi}
+          onAutoIndoorEntry={toggleIndoorView}
         />
 
         {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
