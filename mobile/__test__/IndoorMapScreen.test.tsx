@@ -306,6 +306,58 @@ describe('IndoorMapScreen', () => {
     expect(mockOnExitIndoor).toHaveBeenCalledTimes(1);
   });
 
+  test('does not auto exit when zoom end payload is invalid', () => {
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+      />,
+    );
+
+    const onZoomEnd = getZoomableViewProps().onZoomEnd as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+
+    expect(onZoomEnd).toBeDefined();
+
+    act(() => {
+      onZoomEnd?.(null, null, { zoomLevel: Number.NaN });
+    });
+
+    expect(mockOnExitIndoor).not.toHaveBeenCalled();
+  });
+
+  test('does not auto exit on small zoom-out gestures near minimum zoom', () => {
+    render(
+      <IndoorMapScreen
+        onExitIndoor={mockOnExitIndoor}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        building={buildingH}
+      />,
+    );
+
+    const onZoomBefore = getZoomableViewProps().onZoomBefore as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+    const onZoomAfter = getZoomableViewProps().onZoomAfter as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+    const onZoomEnd = getZoomableViewProps().onZoomEnd as
+      | ((event: unknown, gestureState: unknown, zoomEvent: { zoomLevel: number }) => void)
+      | undefined;
+
+    act(() => {
+      onZoomBefore?.(null, null, { zoomLevel: 0.45 });
+      onZoomAfter?.(null, null, { zoomLevel: 0.41 });
+      onZoomEnd?.(null, null, { zoomLevel: 0.41 });
+    });
+
+    expect(mockOnExitIndoor).not.toHaveBeenCalled();
+  });
+
   test('openAvailableBuildings opens sheet, hides search bar and sets isIndoorSheetOpen', async () => {
     render(
       <IndoorMapScreen
