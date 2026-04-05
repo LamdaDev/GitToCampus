@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Calendar from 'expo-calendar';
 import {
   clearGoogleCalendarSession,
   connectGoogleCalendarAsync,
@@ -12,6 +11,11 @@ import {
   type GoogleCalendarListItem,
   type GoogleCalendarSession,
 } from './googleCalendarAuth';
+import {
+  EXPO_CALENDAR_UNAVAILABLE_MESSAGE,
+  getOptionalExpoCalendarModule,
+  type ExpoCalendarModule,
+} from './optionalExpoCalendar';
 
 const DEVICE_CALENDAR_ENABLED_STORAGE_KEY = 'gittocampus.deviceCalendar.enabled.v1';
 const DEVICE_CALENDAR_EVENTS_LOOKAHEAD_DAYS = 30;
@@ -62,8 +66,8 @@ type DeviceCalendarFallbackResult =
   | Extract<CalendarConnectResult, { type: 'denied' }>
   | Extract<CalendarConnectResult, { type: 'error' }>;
 
-type DeviceCalendarItem = Awaited<ReturnType<typeof Calendar.getCalendarsAsync>>[number];
-type DeviceCalendarEvent = Awaited<ReturnType<typeof Calendar.getEventsAsync>>[number];
+type DeviceCalendarItem = Awaited<ReturnType<ExpoCalendarModule['getCalendarsAsync']>>[number];
+type DeviceCalendarEvent = Awaited<ReturnType<ExpoCalendarModule['getEventsAsync']>>[number];
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
@@ -108,6 +112,8 @@ const dedupeCalendarEvents = (events: CalendarEventItem[]): CalendarEventItem[] 
 
   return Array.from(dedupedEvents.values());
 };
+
+const getDeviceCalendarModule = () => getOptionalExpoCalendarModule();
 
 const getDeviceCalendarEnabledAsync = async () => {
   try {
@@ -183,8 +189,16 @@ const toDeviceCalendarEventItem = (
 };
 
 const requestDeviceCalendarFallbackAsync = async (): Promise<DeviceCalendarFallbackResult> => {
+  const calendar = getDeviceCalendarModule();
+  if (!calendar) {
+    return {
+      type: 'error',
+      message: EXPO_CALENDAR_UNAVAILABLE_MESSAGE,
+    };
+  }
+
   try {
-    const permission = await Calendar.requestCalendarPermissionsAsync();
+    const permission = await calendar.requestCalendarPermissionsAsync();
     if (!permission.granted) {
       return { type: 'denied' };
     }
@@ -227,8 +241,17 @@ const getConnectedCalendarSourceAsync = async (): Promise<CalendarConnectionStat
     };
   }
 
+  const calendar = getDeviceCalendarModule();
+  if (!calendar) {
+    return {
+      status: googleState.status,
+      source: null,
+      session: googleState.session,
+    };
+  }
+
   try {
-    const permission = await Calendar.getCalendarPermissionsAsync();
+    const permission = await calendar.getCalendarPermissionsAsync();
     if (!permission.granted) {
       await disableDeviceCalendarAsync();
       return {
@@ -318,8 +341,16 @@ export const clearCalendarConnectionAsync = async (
 };
 
 const fetchDeviceCalendarListAsync = async (): Promise<CalendarListResult> => {
+  const calendar = getDeviceCalendarModule();
+  if (!calendar) {
+    return {
+      type: 'error',
+      message: EXPO_CALENDAR_UNAVAILABLE_MESSAGE,
+    };
+  }
+
   try {
-    const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+    const calendars = await calendar.getCalendarsAsync(calendar.EntityTypes.EVENT);
     const listItems = calendars
       .map(toDeviceCalendarListItem)
       .filter((item): item is CalendarListItem => item !== null)
@@ -340,6 +371,14 @@ const fetchDeviceCalendarListAsync = async (): Promise<CalendarListResult> => {
 const fetchDeviceCalendarEventsAsync = async (
   calendarIds: string[],
 ): Promise<CalendarEventsResult> => {
+  const calendar = getDeviceCalendarModule();
+  if (!calendar) {
+    return {
+      type: 'error',
+      message: EXPO_CALENDAR_UNAVAILABLE_MESSAGE,
+    };
+  }
+
   const uniqueCalendarIds = [...new Set(calendarIds.map((id) => id.trim()).filter(Boolean))];
 
   const now = new Date();
@@ -352,7 +391,7 @@ const fetchDeviceCalendarEventsAsync = async (
   );
 
   try {
-    const deviceEvents = await Calendar.getEventsAsync(
+    const deviceEvents = await calendar.getEventsAsync(
       uniqueCalendarIds,
       startOfToday,
       endOfLookaheadWindow,
