@@ -268,6 +268,8 @@ type MixedEndpoint =
   | { kind: 'room'; room: RoomNode }
   | { kind: 'building'; building: BuildingShape };
 
+type RouteStartSource = 'current' | 'manual';
+
 const isRoomEndpoint = (
   endpoint: MixedEndpoint | null,
 ): endpoint is Extract<MixedEndpoint, { kind: 'room' }> => endpoint?.kind === 'room';
@@ -340,6 +342,125 @@ const getHybridRouteGuidanceMessage = (
   }
 
   return null;
+};
+
+const resolveSwapDestinationSourceFromStart = ({
+  routeStartSource,
+  previousStartBuilding,
+  previousStartLocationSnapshot,
+  currentBuilding,
+  userLocation,
+}: {
+  routeStartSource: RouteStartSource;
+  previousStartBuilding: BuildingShape | null;
+  previousStartLocationSnapshot: UserCoords | null;
+  currentBuilding: BuildingShape | null;
+  userLocation: UserCoords | null;
+}) => {
+  if (routeStartSource === 'current') {
+    return {
+      building: null,
+      locationSnapshot:
+        previousStartLocationSnapshot ??
+        userLocation ??
+        (currentBuilding ? centroidOfPolygons(currentBuilding.polygons) : null),
+    };
+  }
+
+  const building = previousStartBuilding ?? currentBuilding ?? null;
+  if (building) {
+    return {
+      building,
+      locationSnapshot: null,
+    };
+  }
+
+  return {
+    building: null,
+    locationSnapshot: previousStartLocationSnapshot ?? userLocation ?? null,
+  };
+};
+
+const resolveSwapStartFromDestination = ({
+  previousDestinationBuilding,
+  previousDestinationLocationSnapshot,
+  previousDestinationEndpoint,
+  previousDestinationRoom,
+}: {
+  previousDestinationBuilding: BuildingShape | null;
+  previousDestinationLocationSnapshot: UserCoords | null;
+  previousDestinationEndpoint: MixedEndpoint | null;
+  previousDestinationRoom: string | null;
+}) => {
+  if (previousDestinationBuilding) {
+    return {
+      startBuilding: previousDestinationBuilding,
+      startLocationSnapshot: null,
+      startEndpoint:
+        previousDestinationEndpoint?.kind === 'building'
+          ? previousDestinationEndpoint
+          : ({
+              kind: 'building',
+              building: previousDestinationBuilding,
+            } satisfies MixedEndpoint),
+      startRoom: previousDestinationRoom ?? previousDestinationBuilding.name,
+      routeStartSource: 'manual' as RouteStartSource,
+    };
+  }
+
+  return {
+    startBuilding: null,
+    startLocationSnapshot: previousDestinationLocationSnapshot,
+    startEndpoint: null,
+    startRoom: previousDestinationRoom ?? 'My Location',
+    routeStartSource: 'current' as RouteStartSource,
+  };
+};
+
+const resolveSwapDestinationFromStart = ({
+  resolvedCurrentStartBuilding,
+  resolvedCurrentStartLocationSnapshot,
+  previousStartEndpoint,
+  previousStartRoom,
+}: {
+  resolvedCurrentStartBuilding: BuildingShape | null;
+  resolvedCurrentStartLocationSnapshot: UserCoords | null;
+  previousStartEndpoint: MixedEndpoint | null;
+  previousStartRoom: string | null;
+}) => {
+  if (resolvedCurrentStartBuilding) {
+    return {
+      destinationBuilding: resolvedCurrentStartBuilding,
+      destinationLocationSnapshot: null,
+      destinationEndpoint:
+        previousStartEndpoint?.kind === 'building'
+          ? previousStartEndpoint
+          : ({
+              kind: 'building',
+              building: resolvedCurrentStartBuilding,
+            } satisfies MixedEndpoint),
+      destinationRoom: previousStartRoom ?? resolvedCurrentStartBuilding.name,
+      selectedBuilding: resolvedCurrentStartBuilding,
+    };
+  }
+
+  if (resolvedCurrentStartLocationSnapshot) {
+    return {
+      destinationBuilding: null,
+      destinationLocationSnapshot: resolvedCurrentStartLocationSnapshot,
+      destinationEndpoint: null,
+      destinationRoom: previousStartRoom ?? 'My Location',
+      selectedBuilding: null,
+    };
+  }
+
+  return {
+    destinationBuilding: null,
+    destinationLocationSnapshot: null,
+    destinationEndpoint: null,
+    destinationRoom: null,
+    selectedBuilding: null,
+  };
 };
 
 type BottomSheetProps = {
@@ -1057,7 +1178,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [destinationLocationSnapshot, setDestinationLocationSnapshot] =
       useState<UserCoords | null>(null);
     const [startLocationSnapshot, setStartLocationSnapshot] = useState<UserCoords | null>(null);
-    const [routeStartSource, setRouteStartSource] = useState<'current' | 'manual'>('current');
+    const [routeStartSource, setRouteStartSource] = useState<RouteStartSource>('current');
     const [isRouteLoading, setIsRouteLoading] = useState(false);
     const [routeErrorMessage, setRouteErrorMessage] = useState<string | null>(null);
     const [routeDistanceText, setRouteDistanceText] = useState<string | null>(null);
@@ -1594,8 +1715,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     };
 
     const handleSwapLocations = useCallback(() => {
-      if (crossBuildingRouteFlow) return;
-      if (destinationPoi) return;
+      if (crossBuildingRouteFlow || destinationPoi) return;
 
       const previousDestinationBuilding = destinationBuilding;
       const previousDestinationLocationSnapshot = destinationLocationSnapshot;
@@ -1608,62 +1728,41 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       const previousStartEndpoint = startEndpoint;
       const previousStartRoom = startRoom;
       const previousStartLocationSnapshot = startLocationSnapshot;
-      const startWasCurrentSource = routeStartSource === 'current';
-      const resolvedCurrentStartBuilding = startWasCurrentSource
-        ? null
-        : (previousStartBuilding ?? currentBuilding ?? null);
-      const resolvedCurrentStartLocationSnapshot = startWasCurrentSource
-        ? (previousStartLocationSnapshot ??
-          userLocation ??
-          (currentBuilding ? centroidOfPolygons(currentBuilding.polygons) : null))
-        : resolvedCurrentStartBuilding
-          ? null
-          : (previousStartLocationSnapshot ?? userLocation ?? null);
+      const {
+        building: resolvedCurrentStartBuilding,
+        locationSnapshot: resolvedCurrentStartLocationSnapshot,
+      } = resolveSwapDestinationSourceFromStart({
+        routeStartSource,
+        previousStartBuilding,
+        previousStartLocationSnapshot,
+        currentBuilding,
+        userLocation,
+      });
+      const startState = resolveSwapStartFromDestination({
+        previousDestinationBuilding,
+        previousDestinationLocationSnapshot,
+        previousDestinationEndpoint,
+        previousDestinationRoom,
+      });
+      const destinationState = resolveSwapDestinationFromStart({
+        resolvedCurrentStartBuilding,
+        resolvedCurrentStartLocationSnapshot,
+        previousStartEndpoint,
+        previousStartRoom,
+      });
 
       setHybridRouteErrorMessage(null);
-
-      if (previousDestinationBuilding) {
-        setStartBuilding(previousDestinationBuilding);
-        setStartLocationSnapshot(null);
-        setStartEndpoint(
-          previousDestinationEndpoint?.kind === 'building'
-            ? previousDestinationEndpoint
-            : { kind: 'building', building: previousDestinationBuilding },
-        );
-        setStartRoom(previousDestinationRoom ?? previousDestinationBuilding.name);
-        setRouteStartSource('manual');
-      } else {
-        setStartBuilding(null);
-        setStartLocationSnapshot(previousDestinationLocationSnapshot);
-        setStartEndpoint(null);
-        setStartRoom(previousDestinationRoom ?? 'My Location');
-        setRouteStartSource('current');
-      }
-
+      setStartBuilding(startState.startBuilding);
+      setStartLocationSnapshot(startState.startLocationSnapshot);
+      setStartEndpoint(startState.startEndpoint);
+      setStartRoom(startState.startRoom);
+      setRouteStartSource(startState.routeStartSource);
       setDestinationPoi(null);
-      if (resolvedCurrentStartBuilding) {
-        setDestinationBuilding(resolvedCurrentStartBuilding);
-        setDestinationLocationSnapshot(null);
-        setDestinationEndpoint(
-          previousStartEndpoint?.kind === 'building'
-            ? previousStartEndpoint
-            : { kind: 'building', building: resolvedCurrentStartBuilding },
-        );
-        setDestinationRoom(previousStartRoom ?? resolvedCurrentStartBuilding.name);
-        passSelectedBuilding(resolvedCurrentStartBuilding);
-      } else if (resolvedCurrentStartLocationSnapshot) {
-        setDestinationBuilding(null);
-        setDestinationLocationSnapshot(resolvedCurrentStartLocationSnapshot);
-        setDestinationEndpoint(null);
-        setDestinationRoom(previousStartRoom ?? 'My Location');
-        passSelectedBuilding(null);
-      } else {
-        setDestinationBuilding(null);
-        setDestinationLocationSnapshot(null);
-        setDestinationEndpoint(null);
-        setDestinationRoom(null);
-        passSelectedBuilding(null);
-      }
+      setDestinationBuilding(destinationState.destinationBuilding);
+      setDestinationLocationSnapshot(destinationState.destinationLocationSnapshot);
+      setDestinationEndpoint(destinationState.destinationEndpoint);
+      setDestinationRoom(destinationState.destinationRoom);
+      passSelectedBuilding(destinationState.selectedBuilding);
     }, [
       crossBuildingRouteFlow,
       currentBuilding,
