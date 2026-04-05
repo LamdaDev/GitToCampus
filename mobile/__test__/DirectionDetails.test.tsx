@@ -576,6 +576,24 @@ describe('Direction Details', () => {
     expect(onPressDestination).toHaveBeenCalledTimes(1);
   });
 
+  test('calls onSwapLocations when either drag handle is pressed', () => {
+    const onSwapLocations = jest.fn();
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        onSwapLocations={onSwapLocations}
+      />,
+    );
+
+    fireEvent.press(getByTestId('destination-location-drag-handle'));
+
+    expect(onSwapLocations).toHaveBeenCalledTimes(1);
+  });
+
   test('calls onPressGo with walking and driving when navigation is allowed', () => {
     const onPressGo = jest.fn();
     const { getByTestId } = render(

@@ -27,6 +27,9 @@ console.warn = (...args: unknown[]) => {
   if (typeof first === 'string' && first.includes('SafeAreaView has been deprecated')) {
     return;
   }
+  if (typeof first === 'string' && first.includes('Failed to fetch outdoor directions')) {
+    return;
+  }
   originalWarn(...args);
 };
 

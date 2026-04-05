@@ -803,6 +803,7 @@ const renderBottomSheetContent = (props: {
   userLocation: UserCoords | null;
   destinationBuilding: BuildingShape | null;
   destinationPoi?: OutdoorPoi | null;
+  directionDestinationLabel: string | null;
   routeTransitSteps: TransitInstruction[];
   showDirectionsPanel: () => void;
   startBuilding: BuildingShape | null;
@@ -852,6 +853,7 @@ const renderBottomSheetContent = (props: {
   onIndoorNavigationBack?: () => void;
   directionStageActionLabel?: string;
   onDirectionStageAction?: () => void;
+  onSwapLocations?: () => void;
 }) => {
   if (props.isSearchActive) {
     return <SearchContent {...props} />;
@@ -971,7 +973,7 @@ const renderBottomSheetContent = (props: {
       onClose={props.closeSheet}
       startBuilding={props.startBuilding}
       destinationBuilding={props.destinationBuilding}
-      destinationLabel={props.destinationPoi?.name ?? null}
+      destinationLabel={props.directionDestinationLabel}
       userLocation={props.userLocation}
       currentBuilding={props.currentBuilding}
       isCrossCampusRoute={props.isCrossCampusRoute}
@@ -991,6 +993,7 @@ const renderBottomSheetContent = (props: {
       onRetryRoute={props.handleRetryRoute}
       stageActionLabel={props.directionStageActionLabel}
       onStageAction={props.onDirectionStageAction}
+      onSwapLocations={props.onSwapLocations}
     />
   );
 };
@@ -1051,6 +1054,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const [startBuilding, setStartBuilding] = useState<BuildingShape | null>(null);
     const [destinationBuilding, setDestinationBuilding] = useState<BuildingShape | null>(null);
     const [destinationPoi, setDestinationPoi] = useState<OutdoorPoi | null>(null);
+    const [destinationLocationSnapshot, setDestinationLocationSnapshot] =
+      useState<UserCoords | null>(null);
     const [startLocationSnapshot, setStartLocationSnapshot] = useState<UserCoords | null>(null);
     const [routeStartSource, setRouteStartSource] = useState<'current' | 'manual'>('current');
     const [isRouteLoading, setIsRouteLoading] = useState(false);
@@ -1119,6 +1124,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartBuilding(null);
       setDestinationBuilding(null);
       setDestinationPoi(null);
+      setDestinationLocationSnapshot(null);
       setStartLocationSnapshot(null);
       setRouteStartSource('current');
       setHybridOutdoorTravelMode('walking');
@@ -1304,6 +1310,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         } else {
           setDestinationRoom(room.label);
           setDestinationBuilding(null);
+          setDestinationPoi(null);
+          setDestinationLocationSnapshot(null);
           setDestinationEndpoint(nextEndpoint);
         }
         setSearchFor(null);
@@ -1390,6 +1398,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartBuilding(currentBuilding ?? null);
         setStartLocationSnapshot(currentBuilding ? null : userLocation);
         setDestinationPoi(null);
+        setDestinationLocationSnapshot(null);
         setDestinationBuilding(building);
         setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
         setDestinationEndpoint({ kind: 'building', building });
@@ -1399,6 +1408,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartBuilding(building);
         setStartLocationSnapshot(null);
         setDestinationPoi(null);
+        setDestinationLocationSnapshot(null);
         setDestinationBuilding(null);
         setStartEndpoint({ kind: 'building', building });
         setDestinationEndpoint(null);
@@ -1420,6 +1430,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartLocationSnapshot(currentBuilding ? null : userLocation);
         setDestinationBuilding(null);
         setDestinationPoi(poi);
+        setDestinationLocationSnapshot(null);
         setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
         setDestinationEndpoint(null);
         setActiveView('directions');
@@ -1464,6 +1475,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartBuilding(null);
       setDestinationBuilding(null);
       setDestinationPoi(null);
+      setDestinationLocationSnapshot(null);
       setStartEndpoint(null);
       setDestinationEndpoint(null);
       setStartRoom(null);
@@ -1492,6 +1504,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartBuilding(currentBuilding ?? null);
       setStartLocationSnapshot(currentBuilding ? null : userLocation);
       setDestinationPoi(null);
+      setDestinationLocationSnapshot(null);
       setDestinationBuilding(chosenBuilding);
       setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
       setDestinationEndpoint({ kind: 'building', building: chosenBuilding });
@@ -1518,6 +1531,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           passSelectedBuilding(resolvedDestinationBuilding);
           setDestinationBuilding(resolvedDestinationBuilding);
           setDestinationPoi(null);
+          setDestinationLocationSnapshot(null);
           setDestinationEndpoint({ kind: 'building', building: resolvedDestinationBuilding });
           setStartEndpoint(null);
           setStartRoom(null);
@@ -1568,6 +1582,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       } else {
         setDestinationBuilding(building);
         setDestinationPoi(null);
+        setDestinationLocationSnapshot(null);
         setDestinationRoom(building.name);
         setDestinationEndpoint(nextEndpoint);
       }
@@ -1577,6 +1592,94 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setCalendarSliderMode(null);
       applySelectionView(nextStart, nextDestination);
     };
+
+    const handleSwapLocations = useCallback(() => {
+      if (crossBuildingRouteFlow) return;
+      if (destinationPoi) return;
+
+      const previousDestinationBuilding = destinationBuilding;
+      const previousDestinationLocationSnapshot = destinationLocationSnapshot;
+      const previousDestinationEndpoint = destinationEndpoint;
+      const previousDestinationRoom = destinationRoom;
+
+      if (!previousDestinationBuilding && !previousDestinationLocationSnapshot) return;
+
+      const previousStartBuilding = startBuilding;
+      const previousStartEndpoint = startEndpoint;
+      const previousStartRoom = startRoom;
+      const previousStartLocationSnapshot = startLocationSnapshot;
+      const startWasCurrentSource = routeStartSource === 'current';
+      const resolvedCurrentStartBuilding = startWasCurrentSource
+        ? null
+        : (previousStartBuilding ?? currentBuilding ?? null);
+      const resolvedCurrentStartLocationSnapshot = startWasCurrentSource
+        ? (previousStartLocationSnapshot ??
+          userLocation ??
+          (currentBuilding ? centroidOfPolygons(currentBuilding.polygons) : null))
+        : resolvedCurrentStartBuilding
+          ? null
+          : (previousStartLocationSnapshot ?? userLocation ?? null);
+
+      setHybridRouteErrorMessage(null);
+
+      if (previousDestinationBuilding) {
+        setStartBuilding(previousDestinationBuilding);
+        setStartLocationSnapshot(null);
+        setStartEndpoint(
+          previousDestinationEndpoint?.kind === 'building'
+            ? previousDestinationEndpoint
+            : { kind: 'building', building: previousDestinationBuilding },
+        );
+        setStartRoom(previousDestinationRoom ?? previousDestinationBuilding.name);
+        setRouteStartSource('manual');
+      } else {
+        setStartBuilding(null);
+        setStartLocationSnapshot(previousDestinationLocationSnapshot);
+        setStartEndpoint(null);
+        setStartRoom(previousDestinationRoom ?? 'My Location');
+        setRouteStartSource('current');
+      }
+
+      setDestinationPoi(null);
+      if (resolvedCurrentStartBuilding) {
+        setDestinationBuilding(resolvedCurrentStartBuilding);
+        setDestinationLocationSnapshot(null);
+        setDestinationEndpoint(
+          previousStartEndpoint?.kind === 'building'
+            ? previousStartEndpoint
+            : { kind: 'building', building: resolvedCurrentStartBuilding },
+        );
+        setDestinationRoom(previousStartRoom ?? resolvedCurrentStartBuilding.name);
+        passSelectedBuilding(resolvedCurrentStartBuilding);
+      } else if (resolvedCurrentStartLocationSnapshot) {
+        setDestinationBuilding(null);
+        setDestinationLocationSnapshot(resolvedCurrentStartLocationSnapshot);
+        setDestinationEndpoint(null);
+        setDestinationRoom(previousStartRoom ?? 'My Location');
+        passSelectedBuilding(null);
+      } else {
+        setDestinationBuilding(null);
+        setDestinationLocationSnapshot(null);
+        setDestinationEndpoint(null);
+        setDestinationRoom(null);
+        passSelectedBuilding(null);
+      }
+    }, [
+      crossBuildingRouteFlow,
+      currentBuilding,
+      destinationBuilding,
+      destinationEndpoint,
+      destinationLocationSnapshot,
+      destinationPoi,
+      destinationRoom,
+      passSelectedBuilding,
+      startBuilding,
+      startEndpoint,
+      startLocationSnapshot,
+      startRoom,
+      routeStartSource,
+      userLocation,
+    ]);
 
     const handleHybridGo = useCallback(() => {
       setHybridRouteErrorMessage(null);
@@ -1612,6 +1715,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartLocationSnapshot(null);
       setStartBuilding(flow.originBuilding);
       setDestinationBuilding(flow.destinationBuilding);
+      setDestinationLocationSnapshot(null);
       passSelectedBuilding(flow.originBuilding);
       onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
       enterIndoorView();
@@ -1646,6 +1750,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartLocationSnapshot(null);
       setStartBuilding(crossBuildingRouteFlow.originBuilding);
       setDestinationBuilding(crossBuildingRouteFlow.destinationBuilding);
+      setDestinationLocationSnapshot(null);
       onIndoorRouteChange?.(null, null);
       resetRouteState();
       onShowOutdoorMap?.();
@@ -1729,7 +1834,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       if (!didSelectedBuildingChange && destinationBuilding) return;
 
       setDestinationBuilding(selectedBuilding);
-    }, [selectedBuilding, activeView, startBuilding?.id, destinationBuilding, destinationPoi]);
+      setDestinationLocationSnapshot(null);
+    }, [
+      selectedBuilding,
+      activeView,
+      startBuilding?.id,
+      destinationBuilding,
+      destinationPoi,
+      setDestinationLocationSnapshot,
+    ]);
 
     const startCoords = useMemo(() => {
       if (routeOriginOverride) return routeOriginOverride;
@@ -1747,9 +1860,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           longitude: destinationPoi.longitude,
         };
       }
+      if (destinationLocationSnapshot) return destinationLocationSnapshot;
       if (!destinationBuilding) return null;
       return centroidOfPolygons(destinationBuilding.polygons);
-    }, [destinationBuilding, destinationPoi, routeDestinationOverride]);
+    }, [
+      destinationBuilding,
+      destinationLocationSnapshot,
+      destinationPoi,
+      routeDestinationOverride,
+    ]);
 
     const routeCoordinates = useMemo(
       () => decodePolyline(routeEncodedPolyline),
@@ -1996,6 +2115,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const hybridDestinationLabel = getEndpointLabel(destinationEndpoint) ?? destinationRoom;
     const hybridSummaryMessage = getHybridRouteGuidanceMessage(startEndpoint, destinationEndpoint);
     const hybridGoDisabled = !canStartCrossBuildingRoomRoute(startEndpoint, destinationEndpoint);
+    const directionDestinationLabel =
+      destinationPoi?.name ?? (destinationLocationSnapshot ? 'My Location' : null);
 
     const renderedContent = renderBottomSheetContent({
       isSearchActive,
@@ -2029,6 +2150,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       userLocation,
       destinationBuilding,
       destinationPoi,
+      directionDestinationLabel,
       routeTransitSteps,
       showDirectionsPanel,
       startBuilding,
@@ -2074,6 +2196,8 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       onIndoorNavigationBack: handleCrossBuildingIndoorBack,
       directionStageActionLabel,
       onDirectionStageAction: handleEnterDestinationBuilding,
+      onSwapLocations:
+        destinationPoi || directionStageActionLabel ? undefined : handleSwapLocations,
     });
     const usesDirectScrollableContent = activeView === 'transit-plan' || isSearchActive;
 
