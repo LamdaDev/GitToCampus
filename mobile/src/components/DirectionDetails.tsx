@@ -364,11 +364,6 @@ export default function DirectionDetails({
       return;
     }
 
-    if (selectedMode === 'shuttle' && !onPressGo) {
-      onPressShuttleSchedule?.();
-      return;
-    }
-
     onPressGo?.(selectedMode);
   };
 

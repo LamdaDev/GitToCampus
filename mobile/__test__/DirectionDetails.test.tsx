@@ -1,7 +1,8 @@
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import DirectionDetails from '../src/components/DirectionDetails';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import React from 'react';
+import { PanResponder } from 'react-native';
 
 const mockBuildings: BuildingShape[] = [
   {
@@ -791,5 +792,86 @@ describe('Direction Details', () => {
     expect(getByTestId('shuttle-unavailable-text').props.children).toBe(
       'Shuttle bus unavailable today. Try Public Transit.',
     );
+  });
+
+  test('pan-responder release swaps and suppresses immediate follow-up press', () => {
+    const onSwapLocations = jest.fn();
+    let panResponderConfig: any;
+    const panResponderCreateSpy = jest
+      .spyOn(PanResponder, 'create')
+      .mockImplementation((config: any) => {
+        panResponderConfig = config;
+        return { panHandlers: {} } as any;
+      });
+    const { getByTestId } = render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        onSwapLocations={onSwapLocations}
+      />,
+    );
+
+    expect(panResponderConfig.onStartShouldSetPanResponder()).toBe(false);
+    expect(panResponderConfig.onMoveShouldSetPanResponder({}, { dx: 1, dy: 8 })).toBe(true);
+    expect(panResponderConfig.onMoveShouldSetPanResponder({}, { dx: 9, dy: 8 })).toBe(false);
+
+    act(() => {
+      panResponderConfig.onPanResponderGrant({}, { dx: 0, dy: 0 });
+      panResponderConfig.onPanResponderRelease({}, { dx: 0, dy: 10 });
+    });
+    expect(onSwapLocations).toHaveBeenCalledTimes(0);
+
+    act(() => {
+      panResponderConfig.onPanResponderGrant({}, { dx: 0, dy: 0 });
+      panResponderConfig.onPanResponderRelease({}, { dx: 0, dy: 20 });
+    });
+
+    expect(onSwapLocations).toHaveBeenCalledTimes(1);
+
+    const dragHandle = getByTestId('destination-location-drag-handle');
+    fireEvent.press(dragHandle);
+    expect(onSwapLocations).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(dragHandle);
+    expect(onSwapLocations).toHaveBeenCalledTimes(2);
+    panResponderCreateSpy.mockRestore();
+  });
+
+  test('pan-responder terminate above threshold swaps locations', () => {
+    const onSwapLocations = jest.fn();
+    let panResponderConfig: any;
+    const panResponderCreateSpy = jest
+      .spyOn(PanResponder, 'create')
+      .mockImplementation((config: any) => {
+        panResponderConfig = config;
+        return { panHandlers: {} } as any;
+      });
+    render(
+      <DirectionDetails
+        startBuilding={mockBuildings[0]}
+        destinationBuilding={mockBuildings[1]}
+        onClose={jest.fn()}
+        userLocation={null}
+        currentBuilding={null}
+        onSwapLocations={onSwapLocations}
+      />,
+    );
+
+    act(() => {
+      panResponderConfig.onPanResponderGrant({}, { dx: 0, dy: 0 });
+      panResponderConfig.onPanResponderTerminate({}, { dx: 0, dy: 10 });
+    });
+    expect(onSwapLocations).toHaveBeenCalledTimes(0);
+
+    act(() => {
+      panResponderConfig.onPanResponderGrant({}, { dx: 0, dy: 0 });
+      panResponderConfig.onPanResponderTerminate({}, { dx: 0, dy: 18 });
+    });
+
+    expect(onSwapLocations).toHaveBeenCalledTimes(1);
+    panResponderCreateSpy.mockRestore();
   });
 });
