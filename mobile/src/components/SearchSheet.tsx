@@ -3,10 +3,9 @@ import { Animated, Easing, Text, TouchableOpacity, View } from 'react-native';
 import { SearchBar } from 'react-native-elements';
 import { searchBuilding } from '../styles/SearchBuilding.styles';
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheetFlatList, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, type BottomSheetScrollViewMethods } from '@gorhom/bottom-sheet';
 import { BuildingShape } from '../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
-import { roomListStyles as inDoorList } from '../styles/RoomList.Styles';
 import type { SearchMode } from '../types/SearchMode';
 import {
   clearGoogleCalendarSession,
@@ -29,6 +28,7 @@ type SearchBarProps = {
   onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
   calendarGoErrorMessage?: string | null;
   searchMode?: SearchMode;
+  searchSessionId?: number;
   onSelectRoom?: (room: RoomNode) => void;
   selectedPoiCategories?: PoiCategorySelection;
   onPoiCategoryChange?: React.Dispatch<React.SetStateAction<PoiCategorySelection>>;
@@ -37,9 +37,6 @@ type SearchBarProps = {
 };
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
-const SEARCH_LIST_INITIAL_NUM_TO_RENDER = 12;
-const SEARCH_LIST_MAX_TO_RENDER_PER_BATCH = 12;
-const SEARCH_LIST_WINDOW_SIZE = 7;
 const POI_PANEL_ANIMATION_DURATION_MS = 1000;
 
 export default function SearchSheet({
@@ -49,7 +46,8 @@ export default function SearchSheet({
   selectedCalendarIds = [],
   onCalendarGoPress,
   calendarGoErrorMessage = null,
-  searchMode = 'buildings',
+  searchMode: _searchMode = 'mixed',
+  searchSessionId = 0,
   onSelectRoom,
   selectedPoiCategories = [],
   onPoiCategoryChange,
@@ -68,6 +66,7 @@ export default function SearchSheet({
   const [hasOnlyUnsupportedNextClassEvents, setHasOnlyUnsupportedNextClassEvents] = useState(false);
   const nextClassRequestIdRef = useRef(0);
   const poiPanelAnimation = useRef(new Animated.Value(0)).current;
+  const resultsScrollViewRef = useRef<BottomSheetScrollViewMethods | null>(null);
 
   const nextClassLabel = useMemo(() => {
     if (isNextClassLoading) return 'Loading next class...';
@@ -227,6 +226,25 @@ export default function SearchSheet({
     };
   }, [isPoiPanelOpen, poiPanelAnimation]);
 
+  useEffect(() => {
+    setSearch('');
+    setIsPoiPanelOpen(false);
+    setShouldRenderPoiPanel(false);
+    poiPanelAnimation.stopAnimation();
+    poiPanelAnimation.setValue(0);
+
+    const frame = requestAnimationFrame(() => {
+      resultsScrollViewRef.current?.scrollTo?.({
+        y: 0,
+        animated: false,
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [poiPanelAnimation, searchSessionId]);
+
   const handleConnectCalendar = useCallback(async () => {
     setIsCalendarConnecting(true);
     setCalendarMessage(null);
@@ -321,9 +339,6 @@ export default function SearchSheet({
     }),
     [poiPanelAnimation],
   );
-  const showsRooms = searchMode === 'rooms' || searchMode === 'mixed';
-  const showsBuildings = searchMode === 'buildings' || searchMode === 'mixed';
-
   const renderBuildingItem = useCallback(
     ({ item }: ListRenderItemInfo<BuildingShape>) => (
       <TouchableOpacity
@@ -364,66 +379,28 @@ export default function SearchSheet({
   );
 
   const renderedSearchResults = useMemo(() => {
-    if (showsRooms && showsBuildings) {
-      return (
-        <BottomSheetScrollView
-          testID="mixed-search-results"
-          style={searchBuilding.scrollArea}
-          contentContainerStyle={searchBuilding.scrollContent}
-          showsVerticalScrollIndicator={true}
-        >
-          <Text testID="search-section-rooms" style={searchBuilding.sectionTitle}>
-            Rooms
-          </Text>
-          <View style={searchBuilding.mixedSectionContainer}>
-            <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
-          </View>
-
-          <Text testID="search-section-buildings" style={searchBuilding.sectionTitle}>
-            Buildings
-          </Text>
-          <View style={searchBuilding.mixedSectionContainer}>{renderedBuildingResults}</View>
-        </BottomSheetScrollView>
-      );
-    }
-
-    if (showsRooms) {
-      return (
-        <BottomSheetScrollView
-          testID="rooms-search-results"
-          style={searchBuilding.scrollArea}
-          contentContainerStyle={searchBuilding.scrollContent}
-          showsVerticalScrollIndicator={true}
-        >
-          <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
-        </BottomSheetScrollView>
-      );
-    }
-
     return (
-      <BottomSheetFlatList<BuildingShape>
-        data={filtered}
-        keyExtractor={(item: BuildingShape) => item.id}
-        contentContainerStyle={searchBuilding.listContent}
+      <BottomSheetScrollView
+        ref={resultsScrollViewRef}
+        testID="mixed-search-results"
+        style={searchBuilding.scrollArea}
+        contentContainerStyle={searchBuilding.scrollContent}
         showsVerticalScrollIndicator={true}
-        initialNumToRender={SEARCH_LIST_INITIAL_NUM_TO_RENDER}
-        maxToRenderPerBatch={SEARCH_LIST_MAX_TO_RENDER_PER_BATCH}
-        windowSize={SEARCH_LIST_WINDOW_SIZE}
-        removeClippedSubviews={true}
-        keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={<Text style={searchBuilding.emptyText}>No buildings found</Text>}
-        renderItem={renderBuildingItem}
-      />
+      >
+        <Text testID="search-section-rooms" style={searchBuilding.sectionTitle}>
+          Rooms
+        </Text>
+        <View style={searchBuilding.mixedSectionContainer}>
+          <RoomList search={search} onSelectRoom={onSelectRoom} variant="static" />
+        </View>
+
+        <Text testID="search-section-buildings" style={searchBuilding.sectionTitle}>
+          Buildings
+        </Text>
+        <View style={searchBuilding.mixedSectionContainer}>{renderedBuildingResults}</View>
+      </BottomSheetScrollView>
     );
-  }, [
-    filtered,
-    onSelectRoom,
-    renderedBuildingResults,
-    renderBuildingItem,
-    search,
-    showsBuildings,
-    showsRooms,
-  ]);
+  }, [onSelectRoom, renderedBuildingResults, search]);
 
   return (
     <View style={searchBuilding.screen}>
@@ -580,15 +557,7 @@ export default function SearchSheet({
       </TouchableOpacity>
       {calendarMessage ? <Text style={searchBuilding.authMessage}>{calendarMessage}</Text> : null}
 
-      <View
-        style={[
-          showsRooms && !showsBuildings
-            ? inDoorList.indoorContainer
-            : searchBuilding.buildingsContainer,
-        ]}
-      >
-        {renderedSearchResults}
-      </View>
+      <View style={searchBuilding.buildingsContainer}>{renderedSearchResults}</View>
     </View>
   );
 }

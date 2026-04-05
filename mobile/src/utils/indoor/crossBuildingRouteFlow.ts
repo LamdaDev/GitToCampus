@@ -1,6 +1,8 @@
 import type {
   BuildCrossBuildingRouteFlowInput,
   BuildCrossBuildingRouteFlowResult,
+  CrossBuildingRoomEndpoint,
+  IndoorTransferPoint,
 } from '../../types/CrossBuildingRoute';
 import { findIndoorPath } from './indoorPathFinding';
 import { getIndoorGraph } from './indoorGraphs';
@@ -40,107 +42,162 @@ const canReachTransferPoint = ({
   return Boolean(path && path.length > 0);
 };
 
+const validateTransferPoint = ({
+  room,
+  buildingKey,
+  buildingName,
+  transferPoint,
+  indoorTravelMode,
+  direction,
+}: {
+  room: CrossBuildingRoomEndpoint | null | undefined;
+  buildingKey: IndoorBuildingKey;
+  buildingName: string;
+  transferPoint: IndoorTransferPoint | null;
+  indoorTravelMode: BuildCrossBuildingRouteFlowInput['indoorTravelMode'];
+  direction: 'origin' | 'destination';
+}): { ok: true } | { ok: false; message: string } => {
+  if (!room) return { ok: true };
+
+  if (!transferPoint) {
+    return {
+      ok: false,
+      message: `No building exit is configured yet for ${getBuildingLabel(buildingName, buildingKey)}.`,
+    };
+  }
+
+  if (indoorTravelMode === 'disability' && !transferPoint.accessible) {
+    return {
+      ok: false,
+      message: `${getBuildingLabel(buildingName, buildingKey)} does not have an accessible transfer point configured yet.`,
+    };
+  }
+
+  const canReach =
+    direction === 'origin'
+      ? canReachTransferPoint({
+          buildingKey,
+          startId: room.id,
+          endId: transferPoint.accessNodeId,
+          indoorTravelMode,
+        })
+      : canReachTransferPoint({
+          buildingKey,
+          startId: transferPoint.accessNodeId,
+          endId: room.id,
+          indoorTravelMode,
+        });
+
+  if (canReach) return { ok: true };
+
+  return {
+    ok: false,
+    message:
+      direction === 'origin'
+        ? `No indoor route could be found from ${room.label} to the exit for ${getBuildingLabel(buildingName, buildingKey)}.`
+        : `No indoor route could be found from the entrance of ${getBuildingLabel(buildingName, buildingKey)} to ${room.label}.`,
+  };
+};
+
 export const buildCrossBuildingRouteFlow = ({
   startRoom,
+  startBuilding,
   destinationRoom,
+  destinationBuilding,
   buildings,
   indoorTravelMode,
   outdoorMode,
 }: BuildCrossBuildingRouteFlowInput): BuildCrossBuildingRouteFlowResult => {
-  if (startRoom.buildingKey === destinationRoom.buildingKey) {
+  if (!startRoom && !destinationRoom) {
     return {
       ok: false,
-      message: 'Choose two rooms in different buildings to start a staged cross-building route.',
+      message: 'Choose at least one room to start a staged hybrid route.',
     };
   }
 
-  const originBuilding = resolveBuildingShape(buildings, startRoom.buildingKey);
-  if (!originBuilding) {
+  const originBuildingKey =
+    startRoom?.buildingKey ?? getIndoorBuildingKeyFromShape(startBuilding ?? null);
+  const destinationBuildingKey =
+    destinationRoom?.buildingKey ?? getIndoorBuildingKeyFromShape(destinationBuilding ?? null);
+
+  if (originBuildingKey && destinationBuildingKey && originBuildingKey === destinationBuildingKey) {
+    return {
+      ok: false,
+      message:
+        startRoom && destinationRoom
+          ? 'Choose two rooms in different buildings to start a staged cross-building route.'
+          : 'Choose endpoints in different buildings to start a staged hybrid route.',
+    };
+  }
+
+  const originBuilding =
+    startRoom && originBuildingKey
+      ? resolveBuildingShape(buildings, originBuildingKey)
+      : (startBuilding ?? null);
+  if (startRoom && (!originBuilding || !originBuildingKey)) {
     return {
       ok: false,
       message: `Building details are unavailable for ${startRoom.buildingKey}.`,
     };
   }
 
-  const destinationBuilding = resolveBuildingShape(buildings, destinationRoom.buildingKey);
-  if (!destinationBuilding) {
+  const resolvedDestinationBuilding =
+    destinationRoom && destinationBuildingKey
+      ? resolveBuildingShape(buildings, destinationBuildingKey)
+      : (destinationBuilding ?? null);
+  if (!resolvedDestinationBuilding) {
     return {
       ok: false,
-      message: `Building details are unavailable for ${destinationRoom.buildingKey}.`,
+      message: `Building details are unavailable for ${destinationRoom?.buildingKey ?? 'the selected destination'}.`,
     };
   }
 
-  const originTransferPoint = getIndoorTransferPoint(startRoom.buildingKey);
-  if (!originTransferPoint) {
-    return {
-      ok: false,
-      message: `No building exit is configured yet for ${getBuildingLabel(originBuilding.name, startRoom.buildingKey)}.`,
-    };
-  }
+  const originTransferPoint = startRoom ? getIndoorTransferPoint(startRoom.buildingKey) : null;
+  const destinationTransferPoint = destinationRoom
+    ? getIndoorTransferPoint(destinationRoom.buildingKey)
+    : null;
 
-  const destinationTransferPoint = getIndoorTransferPoint(destinationRoom.buildingKey);
-  if (!destinationTransferPoint) {
-    return {
-      ok: false,
-      message: `No building exit is configured yet for ${getBuildingLabel(destinationBuilding.name, destinationRoom.buildingKey)}.`,
-    };
-  }
-
-  if (indoorTravelMode === 'disability') {
-    if (!originTransferPoint.accessible) {
-      return {
-        ok: false,
-        message: `${getBuildingLabel(originBuilding.name, startRoom.buildingKey)} does not have an accessible transfer point configured yet.`,
-      };
-    }
-
-    if (!destinationTransferPoint.accessible) {
-      return {
-        ok: false,
-        message: `${getBuildingLabel(destinationBuilding.name, destinationRoom.buildingKey)} does not have an accessible transfer point configured yet.`,
-      };
+  if (startRoom && originBuilding && originBuildingKey) {
+    const originValidation = validateTransferPoint({
+      room: startRoom,
+      buildingKey: originBuildingKey,
+      buildingName: originBuilding.name,
+      transferPoint: originTransferPoint,
+      indoorTravelMode,
+      direction: 'origin',
+    });
+    if (!originValidation.ok) {
+      return originValidation;
     }
   }
 
-  if (
-    !canReachTransferPoint({
-      buildingKey: startRoom.buildingKey,
-      startId: startRoom.id,
-      endId: originTransferPoint.accessNodeId,
+  if (destinationRoom && destinationBuildingKey) {
+    const destinationValidation = validateTransferPoint({
+      room: destinationRoom,
+      buildingKey: destinationBuildingKey,
+      buildingName: resolvedDestinationBuilding.name,
+      transferPoint: destinationTransferPoint,
       indoorTravelMode,
-    })
-  ) {
-    return {
-      ok: false,
-      message: `No indoor route could be found from ${startRoom.label} to the exit for ${getBuildingLabel(originBuilding.name, startRoom.buildingKey)}.`,
-    };
+      direction: 'destination',
+    });
+    if (!destinationValidation.ok) {
+      return destinationValidation;
+    }
   }
 
-  if (
-    !canReachTransferPoint({
-      buildingKey: destinationRoom.buildingKey,
-      startId: destinationTransferPoint.accessNodeId,
-      endId: destinationRoom.id,
-      indoorTravelMode,
-    })
-  ) {
-    return {
-      ok: false,
-      message: `No indoor route could be found from the entrance of ${getBuildingLabel(destinationBuilding.name, destinationRoom.buildingKey)} to ${destinationRoom.label}.`,
-    };
-  }
+  const initialStage = startRoom ? 'origin_indoor' : 'outdoor';
 
   return {
     ok: true,
     flow: {
-      startRoomEndpoint: startRoom,
-      destinationRoomEndpoint: destinationRoom,
+      startRoomEndpoint: startRoom ?? null,
+      destinationRoomEndpoint: destinationRoom ?? null,
       originBuilding,
-      destinationBuilding,
+      destinationBuilding: resolvedDestinationBuilding,
       originTransferPoint,
       destinationTransferPoint,
       outdoorMode,
-      currentStage: 'origin_indoor',
+      currentStage: initialStage,
     },
   };
 };

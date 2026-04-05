@@ -157,6 +157,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
       (
         props: {
           children: any;
+          snapPoints?: string[];
           onClose?: () => void;
           onAnimate?: (from: number, to: number) => void;
         },
@@ -173,6 +174,9 @@ jest.mock('@gorhom/bottom-sheet', () => {
 
         return (
           <View testID="bottom-sheet">
+            <Text testID="bottom-sheet-snap-points">
+              {Array.isArray(props.snapPoints) ? props.snapPoints.join(',') : ''}
+            </Text>
             <TouchableOpacity testID="trigger-on-close" onPress={props.onClose}>
               <Text>Trigger Close</Text>
             </TouchableOpacity>
@@ -432,9 +436,11 @@ jest.mock('../src/components/SearchSheet', () => {
     calendarGoErrorMessage,
     onSelectRoom,
     searchMode,
+    searchSessionId,
   }: any) => (
     <View testID="search-sheet">
       <Text testID="search-mode-state">{searchMode ?? 'buildings'}</Text>
+      <Text testID="search-session-id-state">{searchSessionId ?? 0}</Text>
       <TouchableOpacity
         testID="press-building-in-search"
         onPress={() => onPressBuilding(mockSameBuildingSearchResult)}
@@ -1538,6 +1544,38 @@ describe('BottomSheet', () => {
     expect(getByTestId('search-sheet')).toBeTruthy();
   });
 
+  test('internal building search reuses the standard search snap points instead of the directions snap profile', async () => {
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    expect(getByTestId('bottom-sheet-snap-points').props.children).toContain('26%');
+
+    fireEvent.press(getByTestId('press-start'));
+
+    expect(getByTestId('search-sheet')).toBeTruthy();
+    expect(getByTestId('bottom-sheet-snap-points').props.children).toBe('22%,29%,47%,75%');
+  });
+
+  test('reopening internal search after a building selection starts a fresh search session', async () => {
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    fireEvent.press(getByTestId('press-start'));
+
+    const firstSearchSessionId = Number(getByTestId('search-session-id-state').props.children);
+
+    await pressAndFlush(getByTestId('press-building-in-search'));
+    fireEvent.press(getByTestId('press-destination'));
+
+    const secondSearchSessionId = Number(getByTestId('search-session-id-state').props.children);
+
+    expect(secondSearchSessionId).toBeGreaterThan(firstSearchSessionId);
+  });
+
   test('selecting a building from internal search returns to directions view and keeps panel at 52%', async () => {
     const passSelectedBuilding = jest.fn();
     const { getByTestId } = render(
@@ -1573,7 +1611,7 @@ describe('BottomSheet', () => {
     expect(getByTestId('indoor-direction-details')).toBeTruthy();
 
     fireEvent.press(getByTestId('indoor-press-start'));
-    expect(getByTestId('search-mode-state').props.children).toBe('rooms');
+    expect(getByTestId('search-mode-state').props.children).toBe('mixed');
     await pressAndFlush(getByTestId('select-room-in-search'));
 
     expect(getByTestId('indoor-direction-details')).toBeTruthy();
@@ -1815,11 +1853,30 @@ describe('BottomSheet', () => {
     expect(queryByTestId('indoor-navigation-details')).toBeNull();
   });
 
-  test('room to building across different buildings shows hybrid guidance and disables GO', async () => {
+  test('room to building across different buildings starts the staged flow with only an origin indoor leg', async () => {
     const ref = createRef<BottomSliderHandle>();
     const { getByTestId, queryByTestId } = render(
       <BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} isIndoor={true} />,
     );
+    crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow.mockReturnValueOnce({
+      ok: true,
+      flow: {
+        startRoomEndpoint: mockSameBuildingRoom,
+        destinationRoomEndpoint: null,
+        originBuilding: mockSameBuildingSearchResult,
+        destinationBuilding: mockOtherBuildingSearchResult,
+        originTransferPoint: {
+          buildingKey: 'H',
+          campus: 'SGW',
+          accessNodeId: 'Hall_F1_building_entry_exit_3',
+          outdoorCoords: { latitude: 45.497092, longitude: -73.5788 },
+          accessible: true,
+        },
+        destinationTransferPoint: null,
+        outdoorMode: 'walking',
+        currentStage: 'origin_indoor',
+      },
+    });
 
     await act(async () => {
       ref.current?.openIndoorDirections();
@@ -1835,15 +1892,119 @@ describe('BottomSheet', () => {
     expect(getByTestId('hybrid-directions-details')).toBeTruthy();
     expect(getByTestId('hybrid-start-label').props.children).toBe('H-811');
     expect(getByTestId('hybrid-destination-label').props.children).toBe('EV Building');
-    expect(getByTestId('hybrid-summary-message').props.children).toBe(
-      'Staged cross-building guidance currently supports room-to-room routes. Choose a room for both endpoints to continue.',
-    );
-    expect(getByTestId('hybrid-go-button').props.onPress).toBeUndefined();
     expect(queryByTestId('indoor-direction-details')).toBeNull();
 
     await pressAndFlush(getByTestId('hybrid-go-button'));
 
-    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).not.toHaveBeenCalled();
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        startRoom: mockSameBuildingRoom,
+        destinationBuilding: mockOtherBuildingSearchResult,
+      }),
+    );
+    expect(getByTestId('indoor-navigation-details')).toBeTruthy();
+    expect(getByTestId('indoor-stage-action-button')).toBeTruthy();
+  });
+
+  test('building to room across different buildings starts directly in outdoor directions and keeps the destination indoor CTA', async () => {
+    const ref = createRef<BottomSliderHandle>();
+    const { getByTestId, queryByTestId } = render(
+      <BottomSlider {...defaultProps} ref={ref} selectedBuilding={mockBuildings[0]} />,
+    );
+    crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow.mockReturnValueOnce({
+      ok: true,
+      flow: {
+        startRoomEndpoint: null,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        originBuilding: mockSameBuildingSearchResult,
+        destinationBuilding: mockOtherBuildingSearchResult,
+        originTransferPoint: null,
+        destinationTransferPoint: {
+          buildingKey: 'VE',
+          campus: 'LOYOLA',
+          accessNodeId: 'VE_F1_building_entry_exit_6',
+          outdoorCoords: { latitude: 45.459026, longitude: -73.638606 },
+          accessible: true,
+        },
+        outdoorMode: 'walking',
+        currentStage: 'outdoor',
+      },
+    });
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    fireEvent.press(getByTestId('press-start'));
+    await pressAndFlush(getByTestId('press-building-in-search'));
+    fireEvent.press(getByTestId('press-destination'));
+    await pressAndFlush(getByTestId('select-room-in-search-other-building'));
+
+    expect(getByTestId('hybrid-directions-details')).toBeTruthy();
+
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        startBuilding: mockSameBuildingSearchResult,
+        destinationRoom: mockOtherBuildingRoom,
+      }),
+    );
+    expect(getByTestId('direction-details')).toBeTruthy();
+    expect(getByTestId('route-stage-action-button')).toBeTruthy();
+    expect(queryByTestId('indoor-navigation-details')).toBeNull();
+  });
+
+  test('selecting a room from the global outdoor search opens hybrid directions and can start the outdoor-to-indoor flow', async () => {
+    const SearchModeHarness = () => {
+      const [mode, setMode] = React.useState<'search' | 'detail'>('search');
+      return (
+        <BottomSlider
+          {...defaultProps}
+          ref={createRef()}
+          selectedBuilding={null}
+          mode={mode}
+          currentBuilding={null}
+          userLocation={{ latitude: 45.497, longitude: -73.579 }}
+          onExitSearch={() => setMode('detail')}
+        />
+      );
+    };
+    const { getByTestId } = render(<SearchModeHarness />);
+    crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow.mockReturnValueOnce({
+      ok: true,
+      flow: {
+        startRoomEndpoint: null,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        originBuilding: null,
+        destinationBuilding: mockOtherBuildingSearchResult,
+        originTransferPoint: null,
+        destinationTransferPoint: {
+          buildingKey: 'VE',
+          campus: 'LOYOLA',
+          accessNodeId: 'VE_F1_building_entry_exit_6',
+          outdoorCoords: { latitude: 45.459026, longitude: -73.638606 },
+          accessible: true,
+        },
+        outdoorMode: 'walking',
+        currentStage: 'outdoor',
+      },
+    });
+
+    expect(getByTestId('search-sheet')).toBeTruthy();
+    await pressAndFlush(getByTestId('select-room-in-search-other-building'));
+
+    expect(getByTestId('hybrid-directions-details')).toBeTruthy();
+    expect(getByTestId('hybrid-start-label').props.children).toBe('My Location');
+    expect(getByTestId('hybrid-destination-label').props.children).toBe('VE-1.615');
+
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        startBuilding: null,
+        destinationRoom: mockOtherBuildingRoom,
+      }),
+    );
+    expect(getByTestId('direction-details')).toBeTruthy();
+    expect(getByTestId('route-stage-action-button')).toBeTruthy();
   });
 
   test('room to room in the same building keeps the existing indoor directions panel', async () => {

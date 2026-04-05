@@ -59,8 +59,14 @@ export const crossBuildingRouteFlowReducer = (
       return {
         flow: action.flow,
         hybridRouteErrorMessage: null,
-        routeOriginOverride: null,
-        routeDestinationOverride: null,
+        routeOriginOverride:
+          action.flow.currentStage === 'outdoor'
+            ? (action.flow.originTransferPoint?.outdoorCoords ?? null)
+            : null,
+        routeDestinationOverride:
+          action.flow.currentStage === 'outdoor'
+            ? (action.flow.destinationTransferPoint?.outdoorCoords ?? null)
+            : null,
       };
     case 'advance_to_outdoor':
       if (!state.flow || state.flow.currentStage !== 'origin_indoor') return state;
@@ -71,11 +77,12 @@ export const crossBuildingRouteFlowReducer = (
           ...state.flow,
           currentStage: 'outdoor',
         },
-        routeOriginOverride: state.flow.originTransferPoint.outdoorCoords,
-        routeDestinationOverride: state.flow.destinationTransferPoint.outdoorCoords,
+        routeOriginOverride: state.flow.originTransferPoint?.outdoorCoords ?? null,
+        routeDestinationOverride: state.flow.destinationTransferPoint?.outdoorCoords ?? null,
       };
     case 'advance_to_destination_indoor':
       if (!state.flow || state.flow.currentStage !== 'outdoor') return state;
+      if (!state.flow.destinationRoomEndpoint || !state.flow.destinationTransferPoint) return state;
 
       return {
         ...state,
@@ -97,7 +104,11 @@ export const getCrossBuildingRouteFlowPresentation = ({
   fallbackStartLabel,
   fallbackDestinationLabel,
 }: CrossBuildingRouteFlowPresentationInput): CrossBuildingRouteFlowPresentation => {
-  if (flow?.currentStage === 'destination_indoor') {
+  if (
+    flow?.currentStage === 'destination_indoor' &&
+    flow.destinationRoomEndpoint &&
+    flow.destinationTransferPoint
+  ) {
     return {
       hasDirectionsStageAction: false,
       indoorNavigationBuilding: flow.destinationBuilding,
@@ -108,7 +119,7 @@ export const getCrossBuildingRouteFlowPresentation = ({
     };
   }
 
-  if (flow?.currentStage === 'origin_indoor') {
+  if (flow?.currentStage === 'origin_indoor' && flow.originBuilding && flow.startRoomEndpoint) {
     return {
       hasDirectionsStageAction: false,
       indoorNavigationBuilding: flow.originBuilding,
@@ -120,12 +131,19 @@ export const getCrossBuildingRouteFlowPresentation = ({
   }
 
   return {
-    hasDirectionsStageAction: flow?.currentStage === 'outdoor',
+    hasDirectionsStageAction:
+      flow?.currentStage === 'outdoor' &&
+      Boolean(flow.destinationRoomEndpoint && flow.destinationTransferPoint),
     indoorNavigationBuilding: fallbackBuilding,
     indoorNavigationStartLabel: fallbackStartLabel,
     indoorNavigationDestinationLabel: fallbackDestinationLabel,
     indoorStageActionLabel: undefined,
-    directionStageActionLabel: flow?.currentStage === 'outdoor' ? 'Enter Building' : undefined,
+    directionStageActionLabel:
+      flow?.currentStage === 'outdoor' &&
+      flow.destinationRoomEndpoint &&
+      flow.destinationTransferPoint
+        ? 'Enter Building'
+        : undefined,
   };
 };
 

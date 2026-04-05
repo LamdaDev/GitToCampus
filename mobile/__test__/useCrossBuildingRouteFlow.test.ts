@@ -59,6 +59,20 @@ const baseFlow: CrossBuildingRouteFlow = {
   currentStage: 'origin_indoor',
 };
 
+const destinationIndoorOnlyFlow: CrossBuildingRouteFlow = {
+  ...baseFlow,
+  startRoomEndpoint: null,
+  originTransferPoint: null,
+  currentStage: 'outdoor',
+};
+
+const roomToBuildingOutdoorFlow: CrossBuildingRouteFlow = {
+  ...baseFlow,
+  destinationRoomEndpoint: null,
+  destinationTransferPoint: null,
+  currentStage: 'outdoor',
+};
+
 describe('useCrossBuildingRouteFlow reducer', () => {
   test('starts a new flow and clears any stale hybrid error or overrides', () => {
     const staleState = {
@@ -81,6 +95,20 @@ describe('useCrossBuildingRouteFlow reducer', () => {
     });
   });
 
+  test('starts an outdoor-first flow with the correct route overrides already applied', () => {
+    expect(
+      crossBuildingRouteFlowReducer(initialCrossBuildingRouteFlowState, {
+        type: 'start_flow',
+        flow: destinationIndoorOnlyFlow,
+      }),
+    ).toEqual({
+      flow: destinationIndoorOnlyFlow,
+      hybridRouteErrorMessage: null,
+      routeOriginOverride: null,
+      routeDestinationOverride: baseFlow.destinationTransferPoint!.outdoorCoords,
+    });
+  });
+
   test('advances the flow to outdoor and derives outdoor route overrides', () => {
     const state = crossBuildingRouteFlowReducer(initialCrossBuildingRouteFlowState, {
       type: 'start_flow',
@@ -97,8 +125,8 @@ describe('useCrossBuildingRouteFlow reducer', () => {
         currentStage: 'outdoor',
       },
       hybridRouteErrorMessage: null,
-      routeOriginOverride: baseFlow.originTransferPoint.outdoorCoords,
-      routeDestinationOverride: baseFlow.destinationTransferPoint.outdoorCoords,
+      routeOriginOverride: baseFlow.originTransferPoint!.outdoorCoords,
+      routeDestinationOverride: baseFlow.destinationTransferPoint!.outdoorCoords,
     });
   });
 
@@ -110,8 +138,8 @@ describe('useCrossBuildingRouteFlow reducer', () => {
           currentStage: 'outdoor',
         },
         hybridRouteErrorMessage: null,
-        routeOriginOverride: baseFlow.originTransferPoint.outdoorCoords,
-        routeDestinationOverride: baseFlow.destinationTransferPoint.outdoorCoords,
+        routeOriginOverride: baseFlow.originTransferPoint!.outdoorCoords,
+        routeDestinationOverride: baseFlow.destinationTransferPoint!.outdoorCoords,
       },
       {
         type: 'advance_to_destination_indoor',
@@ -199,6 +227,24 @@ describe('getCrossBuildingRouteFlowPresentation', () => {
       indoorNavigationBuilding: originBuilding,
       indoorNavigationStartLabel: 'H-801',
       indoorNavigationDestinationLabel: 'H-805',
+      indoorStageActionLabel: undefined,
+      directionStageActionLabel: undefined,
+    });
+  });
+
+  test('hides the outdoor stage action when the staged route ends outdoors', () => {
+    expect(
+      getCrossBuildingRouteFlowPresentation({
+        flow: roomToBuildingOutdoorFlow,
+        fallbackBuilding: destinationBuilding,
+        fallbackStartLabel: 'H-811',
+        fallbackDestinationLabel: 'VE Building',
+      }),
+    ).toEqual({
+      hasDirectionsStageAction: false,
+      indoorNavigationBuilding: destinationBuilding,
+      indoorNavigationStartLabel: 'H-811',
+      indoorNavigationDestinationLabel: 'VE Building',
       indoorStageActionLabel: undefined,
       directionStageActionLabel: undefined,
     });

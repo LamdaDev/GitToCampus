@@ -137,6 +137,100 @@ describe('buildCrossBuildingRouteFlow', () => {
     );
   });
 
+  test('returns a staged flow for a room to building route', () => {
+    const result = buildCrossBuildingRouteFlow({
+      startRoom,
+      destinationBuilding: buildingMB,
+      buildings: [buildingH, buildingMB],
+      indoorTravelMode: 'walking',
+      outdoorMode: 'walking',
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      flow: {
+        startRoomEndpoint: startRoom,
+        destinationRoomEndpoint: null,
+        originBuilding: buildingH,
+        destinationBuilding: buildingMB,
+        originTransferPoint,
+        destinationTransferPoint: null,
+        outdoorMode: 'walking',
+        currentStage: 'origin_indoor',
+      },
+    });
+    expect(findIndoorPath).toHaveBeenCalledTimes(1);
+    expect(findIndoorPath).toHaveBeenCalledWith(
+      [],
+      [],
+      startRoom.id,
+      originTransferPoint.accessNodeId,
+      {
+        accessibleOnly: false,
+        preferElevators: false,
+      },
+    );
+  });
+
+  test('returns a staged flow for a building to room route', () => {
+    const result = buildCrossBuildingRouteFlow({
+      startBuilding: buildingH,
+      destinationRoom,
+      buildings: [buildingH, buildingMB],
+      indoorTravelMode: 'walking',
+      outdoorMode: 'walking',
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      flow: {
+        startRoomEndpoint: null,
+        destinationRoomEndpoint: destinationRoom,
+        originBuilding: buildingH,
+        destinationBuilding: buildingMB,
+        originTransferPoint: null,
+        destinationTransferPoint,
+        outdoorMode: 'walking',
+        currentStage: 'outdoor',
+      },
+    });
+    expect(findIndoorPath).toHaveBeenCalledTimes(1);
+    expect(findIndoorPath).toHaveBeenCalledWith(
+      [],
+      [],
+      destinationTransferPoint.accessNodeId,
+      destinationRoom.id,
+      {
+        accessibleOnly: false,
+        preferElevators: false,
+      },
+    );
+  });
+
+  test('returns a staged flow for a current-location to room route', () => {
+    const result = buildCrossBuildingRouteFlow({
+      destinationRoom,
+      buildings: [buildingH, buildingMB],
+      indoorTravelMode: 'walking',
+      outdoorMode: 'transit',
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      flow: {
+        startRoomEndpoint: null,
+        destinationRoomEndpoint: destinationRoom,
+        originBuilding: null,
+        destinationBuilding: buildingMB,
+        originTransferPoint: null,
+        destinationTransferPoint,
+        outdoorMode: 'transit',
+        currentStage: 'outdoor',
+      },
+    });
+    expect(findIndoorPath).toHaveBeenCalledTimes(1);
+  });
+
   test('rejects same-building room pairs', () => {
     const result = buildCrossBuildingRouteFlow({
       startRoom,

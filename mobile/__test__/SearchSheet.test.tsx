@@ -257,13 +257,14 @@ describe('SearchSheet', () => {
     expect(onPoiCategoryChange.mock.calls[0][0]([])).toEqual(['depanneur']);
   });
 
-  test('renders room results when search mode is rooms', () => {
-    const { getByTestId, queryByText } = render(
+  test('keeps the unified mixed results layout even when rooms mode is requested', () => {
+    const { getByTestId, getByText } = render(
       <SearchSheet buildings={mockBuildings} searchMode="rooms" />,
     );
 
+    expect(getByTestId('mixed-search-results')).toBeTruthy();
     expect(getByTestId('mock-room-list')).toBeTruthy();
-    expect(queryByText('Hall Building')).toBeNull();
+    expect(getByText('Hall Building')).toBeTruthy();
   });
 
   test('renders both room and building sections when search mode is mixed', () => {
@@ -276,6 +277,28 @@ describe('SearchSheet', () => {
     expect(getByTestId('search-section-buildings')).toBeTruthy();
     expect(getByText('Hall Building')).toBeTruthy();
     expect(getByTestId('mock-room-list')).toBeTruthy();
+  });
+
+  test('resets the mixed search state when a new search session starts', async () => {
+    const { getByTestId, queryByTestId, rerender } = render(
+      <SearchSheet buildings={mockBuildings} searchSessionId={1} />,
+    );
+
+    fireEvent.changeText(getByTestId('search-bar'), 'hall');
+    fireEvent.press(getByTestId('search-poi-options-toggle'));
+
+    expect(getByTestId('search-bar').props.value).toBe('hall');
+    expect(queryByTestId('search-poi-panel')).toBeTruthy();
+
+    rerender(<SearchSheet buildings={mockBuildings} searchSessionId={2} />);
+
+    await waitFor(() => {
+      expect(getByTestId('search-bar').props.value).toBe('');
+      expect(queryByTestId('search-poi-panel')).toBeNull();
+      expect(getByTestId('search-poi-options-toggle').props.accessibilityLabel).toBe(
+        'Open POI options',
+      );
+    });
   });
 
   test('forwards room selection in mixed search mode', () => {
