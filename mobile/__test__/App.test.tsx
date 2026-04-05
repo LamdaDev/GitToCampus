@@ -6,6 +6,7 @@ import App from '../src/App';
 
 const mockUseFonts = jest.fn(() => [true]);
 const mockInitializeClarityAsync = jest.fn(async () => {});
+const mockBottomSheetClose = jest.fn();
 const mockCloseCalendarSlider = jest.fn();
 const mockBottomSheetOpen = jest.fn();
 const mockOpenCalendarEventsSlider = jest.fn();
@@ -40,6 +41,7 @@ jest.mock('../src/components/BottomSheet', () => {
   ) {
     React.useImperativeHandle(ref, () => ({
       open: mockBottomSheetOpen,
+      close: mockBottomSheetClose,
       closeCalendarSlider: mockCloseCalendarSlider,
       openCalendarEventsSlider: mockOpenCalendarEventsSlider,
       openIndoorDirections: mockOpenIndoorDirections,
@@ -166,6 +168,7 @@ describe('App', () => {
   beforeEach(() => {
     mockUseFonts.mockReturnValue([true]);
     mockInitializeClarityAsync.mockClear();
+    mockBottomSheetClose.mockClear();
     mockCloseCalendarSlider.mockClear();
     mockBottomSheetOpen.mockClear();
     mockOpenCalendarEventsSlider.mockClear();
@@ -373,6 +376,21 @@ describe('App', () => {
   test('exitIndoorView resets isIndoor to false without throwing', () => {
     const { getByTestId } = render(<App />);
     expect(() => fireEvent.press(getByTestId('trigger-exit-indoor'))).not.toThrow();
+  });
+
+  test('exiting indoor view closes the bottom sheet and restores the outdoor search bar', () => {
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('trigger-enter-indoor'));
+    fireEvent.press(getByTestId('open-search'));
+
+    expect(mockOpenIndoorDirections).toHaveBeenCalledTimes(1);
+    expect(queryByTestId('search-bar')).toBeNull();
+
+    fireEvent.press(getByTestId('trigger-exit-indoor'));
+
+    expect(mockBottomSheetClose).toHaveBeenCalledTimes(1);
+    expect(getByTestId('search-bar')).toBeTruthy();
   });
 
   test('hideAppSearchBar hides the AppSearchBar', () => {
