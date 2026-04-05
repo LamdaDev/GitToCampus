@@ -252,6 +252,7 @@ jest.mock('../src/components/DirectionDetails', () => {
   const React = require('react');
 
   return ({
+    startBuilding,
     destinationBuilding,
     destinationLabel,
     destinationAddress,
@@ -273,6 +274,7 @@ jest.mock('../src/components/DirectionDetails', () => {
     onRetryRoute,
     stageActionLabel,
     onStageAction,
+    onSwapLocations,
   }: any) =>
     (() => {
       const [selectedMode, setSelectedMode] = React.useState(
@@ -306,6 +308,7 @@ jest.mock('../src/components/DirectionDetails', () => {
 
       return (
         <View testID="direction-details">
+          <Text testID="start-id">{startBuilding ? startBuilding.id : 'none'}</Text>
           <Text testID="destination-id">
             {destinationBuilding ? destinationBuilding.id : 'none'}
           </Text>
@@ -351,6 +354,9 @@ jest.mock('../src/components/DirectionDetails', () => {
           </TouchableOpacity>
           <TouchableOpacity testID="press-destination" onPress={onPressDestination}>
             <Text>Destination</Text>
+          </TouchableOpacity>
+          <TouchableOpacity testID="press-swap-locations" onPress={onSwapLocations}>
+            <Text>Swap</Text>
           </TouchableOpacity>
           <TouchableOpacity testID="transport-walk" onPress={() => handleSelectMode('walking')}>
             <Text>Walk</Text>
@@ -1158,6 +1164,135 @@ describe('BottomSheet', () => {
     fireEvent.press(getByTestId('close-directions-button'));
 
     expect(mockClose).toHaveBeenCalled();
+  });
+
+  test('swap locations flips start and destination in directions view', async () => {
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+
+    expect(getByTestId('start-id').props.children).toBe(mockBuildings[0].id);
+    expect(getByTestId('destination-id').props.children).toBe(mockBuildings[1].id);
+
+    await pressAndFlush(getByTestId('press-swap-locations'));
+
+    expect(getByTestId('start-id').props.children).toBe(mockBuildings[1].id);
+    expect(getByTestId('destination-id').props.children).toBe('none');
+    expect(getByTestId('destination-label-state').props.children).toBe('My Location');
+  });
+
+  test('swap locations restores the original destination after swapping twice', async () => {
+    const { getByTestId } = render(
+      <BottomSlider
+        {...defaultProps}
+        ref={createRef()}
+        selectedBuilding={mockBuildings[1]}
+        currentBuilding={mockBuildings[0]}
+      />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    await pressAndFlush(getByTestId('press-swap-locations'));
+    await pressAndFlush(getByTestId('press-swap-locations'));
+
+    expect(getByTestId('start-id').props.children).toBe('none');
+    expect(getByTestId('destination-id').props.children).toBe(mockBuildings[1].id);
+  });
+
+  test('swap locations clears destination when manual start has no resolvable source', async () => {
+    mockResolveCalendarRouteLocation.mockResolvedValueOnce({
+      type: 'success',
+      value: {
+        destinationBuilding: mockBuildings[1],
+        startPoint: { type: 'manual', reason: 'location_permission_denied' },
+        normalizedEventLocation: 'HALL BUILDING 435',
+        rawEventLocation: 'Hall Building 435',
+      },
+    });
+
+    const SearchModeHarness = () => {
+      const [mode, setMode] = React.useState<'search' | 'detail'>('search');
+      const [selectedBuilding, setSelectedBuilding] = React.useState<BuildingShape | null>(
+        mockBuildings[0],
+      );
+
+      return (
+        <BottomSlider
+          {...defaultProps}
+          ref={createRef()}
+          mode={mode}
+          selectedBuilding={selectedBuilding}
+          passSelectedBuilding={setSelectedBuilding}
+          onExitSearch={() => setMode('detail')}
+        />
+      );
+    };
+
+    const { getByTestId } = render(<SearchModeHarness />);
+    fireEvent.press(getByTestId('trigger-calendar-go-with-event'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(getByTestId('destination-id').props.children).toBe(mockBuildings[1].id);
+    });
+
+    await pressAndFlush(getByTestId('press-swap-locations'));
+
+    expect(getByTestId('start-id').props.children).toBe(mockBuildings[1].id);
+    expect(getByTestId('destination-id').props.children).toBe('none');
+    expect(getByTestId('destination-label-state').props.children).toBe('none');
+  });
+
+  test('swap locations falls back to user location when manual start has no building', async () => {
+    mockResolveCalendarRouteLocation.mockResolvedValueOnce({
+      type: 'success',
+      value: {
+        destinationBuilding: mockBuildings[1],
+        startPoint: { type: 'manual', reason: 'location_permission_denied' },
+        normalizedEventLocation: 'HALL BUILDING 435',
+        rawEventLocation: 'Hall Building 435',
+      },
+    });
+
+    const SearchModeHarness = () => {
+      const [mode, setMode] = React.useState<'search' | 'detail'>('search');
+      const [selectedBuilding, setSelectedBuilding] = React.useState<BuildingShape | null>(
+        mockBuildings[0],
+      );
+
+      return (
+        <BottomSlider
+          {...defaultProps}
+          ref={createRef()}
+          mode={mode}
+          userLocation={{ latitude: 45.4585, longitude: -73.6412 }}
+          selectedBuilding={selectedBuilding}
+          passSelectedBuilding={setSelectedBuilding}
+          onExitSearch={() => setMode('detail')}
+        />
+      );
+    };
+
+    const { getByTestId } = render(<SearchModeHarness />);
+    fireEvent.press(getByTestId('trigger-calendar-go-with-event'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(getByTestId('destination-id').props.children).toBe(mockBuildings[1].id);
+    });
+
+    await pressAndFlush(getByTestId('press-swap-locations'));
+
+    expect(getByTestId('start-id').props.children).toBe(mockBuildings[1].id);
+    expect(getByTestId('destination-id').props.children).toBe('none');
+    expect(getByTestId('destination-label-state').props.children).toBe('My Location');
   });
 
   test('useEffect does NOT set destinationBuilding when selecting same building', () => {
