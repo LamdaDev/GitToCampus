@@ -6,9 +6,11 @@ import App from '../src/App';
 
 const mockUseFonts = jest.fn(() => [true]);
 const mockInitializeClarityAsync = jest.fn(async () => {});
+const mockBottomSheetClose = jest.fn();
 const mockCloseCalendarSlider = jest.fn();
 const mockBottomSheetOpen = jest.fn();
 const mockOpenCalendarEventsSlider = jest.fn();
+const mockOpenIndoorDirections = jest.fn();
 const mockGetStoredGoogleCalendarSessionState = jest.fn(
   async (): Promise<any> => ({
     status: 'not_connected',
@@ -34,13 +36,15 @@ jest.mock('../src/components/BottomSheet', () => {
   const { TouchableOpacity, View, Text } = require('react-native');
 
   const MockBottomSheet = React.forwardRef(function MockBottomSheet(
-    { revealSearchBar, onExitSearch, onPrevPathFloor, onNextPathFloor }: any,
+    { revealSearchBar, onExitSearch, onPrevPathFloor, onNextPathFloor, enterIndoorView }: any,
     ref: any,
   ) {
     React.useImperativeHandle(ref, () => ({
       open: mockBottomSheetOpen,
+      close: mockBottomSheetClose,
       closeCalendarSlider: mockCloseCalendarSlider,
       openCalendarEventsSlider: mockOpenCalendarEventsSlider,
+      openIndoorDirections: mockOpenIndoorDirections,
     }));
     return (
       <View testID="bottom-sheet">
@@ -55,6 +59,9 @@ jest.mock('../src/components/BottomSheet', () => {
         </TouchableOpacity>
         <TouchableOpacity testID="trigger-next-floor" onPress={onNextPathFloor}>
           <Text>Next Floor</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="trigger-enter-indoor" onPress={enterIndoorView}>
+          <Text>Enter Indoor</Text>
         </TouchableOpacity>
       </View>
     );
@@ -161,9 +168,11 @@ describe('App', () => {
   beforeEach(() => {
     mockUseFonts.mockReturnValue([true]);
     mockInitializeClarityAsync.mockClear();
+    mockBottomSheetClose.mockClear();
     mockCloseCalendarSlider.mockClear();
     mockBottomSheetOpen.mockClear();
     mockOpenCalendarEventsSlider.mockClear();
+    mockOpenIndoorDirections.mockClear();
     mockGetStoredGoogleCalendarSessionState.mockResolvedValue({
       status: 'not_connected',
       session: null,
@@ -354,6 +363,21 @@ describe('App', () => {
   test('exitIndoorView resets isIndoor to false without throwing', () => {
     const { getByTestId } = render(<App />);
     expect(() => fireEvent.press(getByTestId('trigger-exit-indoor'))).not.toThrow();
+  });
+
+  test('exiting indoor view closes the bottom sheet and restores the outdoor search bar', () => {
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('trigger-enter-indoor'));
+    fireEvent.press(getByTestId('open-search'));
+
+    expect(mockOpenIndoorDirections).toHaveBeenCalledTimes(1);
+    expect(queryByTestId('search-bar')).toBeNull();
+
+    fireEvent.press(getByTestId('trigger-exit-indoor'));
+
+    expect(mockBottomSheetClose).toHaveBeenCalledTimes(1);
+    expect(getByTestId('search-bar')).toBeTruthy();
   });
 
   test('hideAppSearchBar hides the AppSearchBar', () => {

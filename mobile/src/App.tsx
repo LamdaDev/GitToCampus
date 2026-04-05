@@ -140,6 +140,9 @@ const App = () => {
   }, []);
 
   const handleExitIndoorView = useCallback(() => {
+    bottomSheetRef.current?.close();
+    setSheetMode('detail');
+    setSheetOpen(false);
     setIsIndoor(false);
   }, []);
 
