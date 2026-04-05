@@ -9,6 +9,7 @@ const mockInitializeClarityAsync = jest.fn(async () => {});
 const mockCloseCalendarSlider = jest.fn();
 const mockBottomSheetOpen = jest.fn();
 const mockOpenCalendarEventsSlider = jest.fn();
+const mockOpenIndoorDirections = jest.fn();
 const mockGetStoredGoogleCalendarSessionState = jest.fn(
   async (): Promise<any> => ({
     status: 'not_connected',
@@ -34,13 +35,14 @@ jest.mock('../src/components/BottomSheet', () => {
   const { TouchableOpacity, View, Text } = require('react-native');
 
   const MockBottomSheet = React.forwardRef(function MockBottomSheet(
-    { revealSearchBar, onExitSearch, onPrevPathFloor, onNextPathFloor }: any,
+    { revealSearchBar, onExitSearch, onPrevPathFloor, onNextPathFloor, enterIndoorView }: any,
     ref: any,
   ) {
     React.useImperativeHandle(ref, () => ({
       open: mockBottomSheetOpen,
       closeCalendarSlider: mockCloseCalendarSlider,
       openCalendarEventsSlider: mockOpenCalendarEventsSlider,
+      openIndoorDirections: mockOpenIndoorDirections,
     }));
     return (
       <View testID="bottom-sheet">
@@ -55,6 +57,9 @@ jest.mock('../src/components/BottomSheet', () => {
         </TouchableOpacity>
         <TouchableOpacity testID="trigger-next-floor" onPress={onNextPathFloor}>
           <Text>Next Floor</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="trigger-enter-indoor" onPress={enterIndoorView}>
+          <Text>Enter Indoor</Text>
         </TouchableOpacity>
       </View>
     );
@@ -164,6 +169,7 @@ describe('App', () => {
     mockCloseCalendarSlider.mockClear();
     mockBottomSheetOpen.mockClear();
     mockOpenCalendarEventsSlider.mockClear();
+    mockOpenIndoorDirections.mockClear();
     mockGetStoredGoogleCalendarSessionState.mockResolvedValue({
       status: 'not_connected',
       session: null,
@@ -327,6 +333,19 @@ describe('App', () => {
     fireEvent.press(getByTestId('open-calendar-shortcut'));
 
     await waitFor(() => expect(queryByTestId('search-bar')).toBeNull());
+  });
+
+  test('calendar shortcut reopens the search sheet instead of indoor directions while indoor', async () => {
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    fireEvent.press(getByTestId('trigger-enter-indoor'));
+    fireEvent.press(getByTestId('open-calendar-shortcut'));
+
+    await waitFor(() => {
+      expect(mockBottomSheetOpen).toHaveBeenCalledWith(1);
+      expect(mockOpenIndoorDirections).not.toHaveBeenCalled();
+      expect(queryByTestId('search-bar')).toBeNull();
+    });
   });
 
   test('fonts not loaded returns null and renders nothing', () => {
