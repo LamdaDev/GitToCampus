@@ -1,0 +1,21 @@
+appId: host.exp.exponent
+---
+- tapOn: Get to...
+- tapOn: Set as starting point
+- tapOn: H Building
+- tapOn: H-102-3
+- tapOn: Set destination
+- tapOn: Vanier Library
+- tapOn: VL-101-1
+- tapOn: GO
+- swipe:
+    start: "50%, 55%"
+    end: "50%, 76%"
+- swipe:
+    start: "50%, 76%"
+    end: "50%, 55%"
+- tapOn: Continue to Outdoor Directions
+- tapOn: Enter Building
+- swipe:
+    start: "50%, 55%"
+    end: "50%, 76%"
