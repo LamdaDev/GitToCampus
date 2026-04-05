@@ -445,7 +445,8 @@ export default function IndoorMapScreen({
 
       const isAtMinimumZoom =
         finalZoomLevel <= INDOOR_MIN_ZOOM_LEVEL + INDOOR_AUTO_EXIT_MIN_ZOOM_BUFFER;
-      const didZoomOutEnough = finalZoomLevel <= gestureStartZoomLevel - INDOOR_AUTO_EXIT_REQUIRED_DELTA;
+      const didZoomOutEnough =
+        finalZoomLevel <= gestureStartZoomLevel - INDOOR_AUTO_EXIT_REQUIRED_DELTA;
 
       if (!isAtMinimumZoom || !didZoomOutEnough) return;
       didAutoExitOnZoomOutRef.current = true;
