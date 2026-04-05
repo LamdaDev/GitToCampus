@@ -29,19 +29,21 @@ export type CrossBuildingRoomEndpoint = {
 };
 
 export type CrossBuildingRouteFlow = {
-  startRoomEndpoint: CrossBuildingRoomEndpoint;
-  destinationRoomEndpoint: CrossBuildingRoomEndpoint;
-  originBuilding: BuildingShape;
+  startRoomEndpoint: CrossBuildingRoomEndpoint | null;
+  destinationRoomEndpoint: CrossBuildingRoomEndpoint | null;
+  originBuilding: BuildingShape | null;
   destinationBuilding: BuildingShape;
-  originTransferPoint: IndoorTransferPoint;
-  destinationTransferPoint: IndoorTransferPoint;
+  originTransferPoint: IndoorTransferPoint | null;
+  destinationTransferPoint: IndoorTransferPoint | null;
   outdoorMode: RoutePlannerMode;
   currentStage: CrossBuildingRouteStage;
 };
 
 export type BuildCrossBuildingRouteFlowInput = {
-  startRoom: CrossBuildingRoomEndpoint;
-  destinationRoom: CrossBuildingRoomEndpoint;
+  startRoom?: CrossBuildingRoomEndpoint | null;
+  startBuilding?: BuildingShape | null;
+  destinationRoom?: CrossBuildingRoomEndpoint | null;
+  destinationBuilding?: BuildingShape | null;
   buildings: BuildingShape[];
   indoorTravelMode: IndoorRoutePlannerMode;
   outdoorMode: RoutePlannerMode;

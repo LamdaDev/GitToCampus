@@ -1,7 +1,7 @@
 //BuildingDetails.tsx loads building details upon tapping a building the user chooses.
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { PanResponder, Text, TouchableOpacity, View } from 'react-native';
 import { Divider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -37,7 +37,10 @@ type DirectionDetailProps = {
   onRetryRoute?: () => void;
   stageActionLabel?: string;
   onStageAction?: () => void;
+  onSwapLocations?: () => void;
 };
+
+const SWAP_DRAG_THRESHOLD_PX = 14;
 
 /**
  * Helper to determine what to display as the start location.
@@ -327,8 +330,10 @@ export default function DirectionDetails({
   onRetryRoute,
   stageActionLabel,
   onStageAction,
+  onSwapLocations,
 }: Readonly<DirectionDetailProps>) {
   const [activeMode, setActiveMode] = useState<RoutePlannerMode>(selectedTravelMode ?? 'walking');
+  const didSwapOnDragRef = React.useRef(false);
   const isSelected = (mode: RoutePlannerMode) => activeMode === mode;
   const isTransitSelected = isSelected('transit');
   const isShuttleSelected = isSelected('shuttle');
@@ -359,17 +364,56 @@ export default function DirectionDetails({
       return;
     }
 
-    if (selectedMode === 'shuttle' && !onPressGo) {
-      onPressShuttleSchedule?.();
-      return;
-    }
-
     onPressGo?.(selectedMode);
   };
 
   const startDisplayText = getStartDisplayText(startBuilding, currentBuilding, userLocation);
   const resolvedDestinationLabel =
     destinationLabel ?? destinationBuilding?.name ?? 'Set destination';
+  const canSwapLocations =
+    Boolean(onSwapLocations) &&
+    startDisplayText !== 'Set as starting point' &&
+    resolvedDestinationLabel !== 'Set destination';
+  const triggerSwap = React.useCallback(() => {
+    if (!canSwapLocations) return;
+    onSwapLocations?.();
+  }, [canSwapLocations, onSwapLocations]);
+
+  const handleSwapPress = React.useCallback(() => {
+    if (!canSwapLocations) return;
+    if (didSwapOnDragRef.current) {
+      didSwapOnDragRef.current = false;
+      return;
+    }
+    onSwapLocations?.();
+  }, [canSwapLocations, onSwapLocations]);
+
+  const swapLocationPanResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_event, gestureState) =>
+          canSwapLocations &&
+          Math.abs(gestureState.dy) > 4 &&
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+        onPanResponderGrant: () => {
+          didSwapOnDragRef.current = false;
+        },
+        onPanResponderRelease: (_event, gestureState) => {
+          if (!canSwapLocations) return;
+          if (Math.abs(gestureState.dy) < SWAP_DRAG_THRESHOLD_PX) return;
+          didSwapOnDragRef.current = true;
+          triggerSwap();
+        },
+        onPanResponderTerminate: (_event, gestureState) => {
+          if (!canSwapLocations) return;
+          if (Math.abs(gestureState.dy) < SWAP_DRAG_THRESHOLD_PX) return;
+          didSwapOnDragRef.current = true;
+          triggerSwap();
+        },
+      }),
+    [canSwapLocations, triggerSwap],
+  );
   const routeEtaText = formatEta(routeDurationSeconds);
   const nextDepartureInMinutes = shuttlePlan?.nextDepartureInMinutes ?? null;
   const effectiveDirection =
@@ -408,9 +452,6 @@ export default function DirectionDetails({
               </Text>
             </TouchableOpacity>
           </View>
-          <View style={directionDetailsStyles.subLocationHeader}>
-            <Ionicons name="menu-outline" size={20} style={directionDetailsStyles.dragIcon} />
-          </View>
         </View>
         <View style={directionDetailsStyles.separationHeader}>
           <Ionicons name="ellipsis-vertical" size={20} style={directionDetailsStyles.dragIcon} />
@@ -432,7 +473,20 @@ export default function DirectionDetails({
             </TouchableOpacity>
           </View>
           <View style={directionDetailsStyles.subLocationHeader}>
-            <Ionicons name="menu-outline" size={20} style={directionDetailsStyles.dragIcon} />
+            <TouchableOpacity
+              testID="destination-location-drag-handle"
+              accessibilityRole="button"
+              accessibilityLabel="Reorder locations"
+              accessibilityHint="Drag up or down to swap start and destination"
+              accessibilityState={{ disabled: !canSwapLocations }}
+              disabled={!canSwapLocations}
+              activeOpacity={canSwapLocations ? 0.72 : 1}
+              onPress={handleSwapPress}
+              style={directionDetailsStyles.dragHandleTouchTarget}
+              {...(canSwapLocations ? swapLocationPanResponder.panHandlers : {})}
+            >
+              <Ionicons name="swap-vertical" size={20} style={directionDetailsStyles.dragIcon} />
+            </TouchableOpacity>
           </View>
         </View>
       </View>

@@ -353,14 +353,14 @@ describe('Building Details', () => {
     warnSpy.mockRestore();
   });
 
-  test('shows the enter building button for indoor buildings and calls onEnterBuilding', () => {
+  test('shows the switch to indoor button for indoor buildings and calls onEnterBuilding', () => {
     const indoorBuilding: BuildingShape = {
       ...mockBuildings[0],
       name: 'H Building',
       shortCode: 'H',
     };
 
-    const { UNSAFE_getByProps } = render(
+    const { getByTestId, getByText, UNSAFE_getByProps } = render(
       <BuildingDetails
         selectedBuilding={indoorBuilding}
         onClose={mockOnClose}
@@ -371,10 +371,9 @@ describe('Building Details', () => {
       />,
     );
 
-    const enterIndoorIcon = UNSAFE_getByProps({ name: 'enter-outline' });
-    expect(enterIndoorIcon.parent).toBeTruthy();
-
-    fireEvent.press(enterIndoorIcon.parent!);
+    expect(getByText('Indoor view')).toBeTruthy();
+    expect(UNSAFE_getByProps({ name: 'enter-outline' })).toBeTruthy();
+    fireEvent.press(getByTestId('switch-to-indoor-button'));
 
     expect(mockOnEnterBuilding).toHaveBeenCalledTimes(1);
     expect(mockOnEnterBuilding).toHaveBeenCalledWith(indoorBuilding);

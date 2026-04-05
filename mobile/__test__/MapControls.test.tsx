@@ -42,7 +42,7 @@ describe('MapControls', () => {
       />,
     );
 
-    expect(getByText('SGW')).toBeTruthy();
+    expect(getByText('LOY')).toBeTruthy();
     expect(mockAnimatedStyles[mockAnimatedStyles.length - 1]).toEqual({ bottom: 110 });
 
     const toggleButton = getByLabelText('Toggle Campus');

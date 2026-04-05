@@ -46,6 +46,9 @@ export const directionDetailsStyles = StyleSheet.create({
     gap: 10,
     justifyContent: 'space-between',
   },
+  dragHandleTouchTarget: {
+    borderRadius: 16,
+  },
   inlineHeader: {
     flexDirection: 'row',
     marginBottom: 0,

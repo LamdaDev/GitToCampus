@@ -11,6 +11,11 @@ import { getIndoorGraph } from '../utils/indoor/indoorGraphs';
 import { normalizeIndoorBuildingKey } from '../utils/indoor/buildingKeys';
 import styles from '../styles/IndoorMapScreen.styles';
 
+const INDOOR_MIN_ZOOM_LEVEL = 0.4;
+const INDOOR_INITIAL_ZOOM_LEVEL = 0.4;
+const INDOOR_AUTO_EXIT_MIN_ZOOM_BUFFER = 0.015;
+const INDOOR_AUTO_EXIT_REQUIRED_DELTA = 0.08;
+
 type props = {
   onExitIndoor: () => void;
   onOpenCalendar?: () => void;
@@ -207,6 +212,10 @@ export default function IndoorMapScreen({
   indoorTravelMode = 'walking',
 }: Readonly<props>) {
   const bottomSheetRef = useRef<IndoorBottomSheetRef>(null);
+  const lastZoomLevelRef = useRef(INDOOR_INITIAL_ZOOM_LEVEL);
+  const zoomGestureStartLevelRef = useRef<number | null>(null);
+  const isZoomGestureActiveRef = useRef(false);
+  const didAutoExitOnZoomOutRef = useRef(false);
 
   const [isIndoorSheetOpen, setIndoorSheetOpen] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState(building);
@@ -383,6 +392,76 @@ export default function IndoorMapScreen({
   const shouldShowSvgFallback =
     !nativeSvgSupported && (plan?.type === 'svg' || currentFloorPath.length >= 2);
 
+  const handleZoomBefore = useCallback(
+    (
+      _event: unknown,
+      _gestureState: unknown,
+      zoomableViewEventObject: { zoomLevel: number } | null | undefined,
+    ): boolean | undefined => {
+      const nextZoomLevel = zoomableViewEventObject?.zoomLevel;
+      if (typeof nextZoomLevel !== 'number' || !Number.isFinite(nextZoomLevel)) return undefined;
+
+      if (!isZoomGestureActiveRef.current) {
+        isZoomGestureActiveRef.current = true;
+        zoomGestureStartLevelRef.current = nextZoomLevel;
+      }
+
+      return undefined;
+    },
+    [],
+  );
+
+  const handleZoomAfter = useCallback(
+    (
+      _event: unknown,
+      _gestureState: unknown,
+      zoomableViewEventObject: { zoomLevel: number } | null | undefined,
+    ) => {
+      const nextZoomLevel = zoomableViewEventObject?.zoomLevel;
+      if (typeof nextZoomLevel !== 'number' || !Number.isFinite(nextZoomLevel)) return;
+      lastZoomLevelRef.current = nextZoomLevel;
+    },
+    [],
+  );
+
+  const handleZoomEnd = useCallback(
+    (
+      _event: unknown,
+      _gestureState: unknown,
+      zoomableViewEventObject: { zoomLevel: number } | null | undefined,
+    ) => {
+      const finalZoomLevel = zoomableViewEventObject?.zoomLevel;
+      if (typeof finalZoomLevel !== 'number' || !Number.isFinite(finalZoomLevel)) {
+        isZoomGestureActiveRef.current = false;
+        zoomGestureStartLevelRef.current = null;
+        return;
+      }
+
+      const gestureStartZoomLevel = zoomGestureStartLevelRef.current ?? finalZoomLevel;
+      isZoomGestureActiveRef.current = false;
+      zoomGestureStartLevelRef.current = null;
+
+      if (didAutoExitOnZoomOutRef.current) return;
+
+      const isAtMinimumZoom =
+        finalZoomLevel <= INDOOR_MIN_ZOOM_LEVEL + INDOOR_AUTO_EXIT_MIN_ZOOM_BUFFER;
+      const didZoomOutEnough =
+        finalZoomLevel <= gestureStartZoomLevel - INDOOR_AUTO_EXIT_REQUIRED_DELTA;
+
+      if (!isAtMinimumZoom || !didZoomOutEnough) return;
+      didAutoExitOnZoomOutRef.current = true;
+      onExitIndoor();
+    },
+    [onExitIndoor],
+  );
+
+  useEffect(() => {
+    lastZoomLevelRef.current = INDOOR_INITIAL_ZOOM_LEVEL;
+    zoomGestureStartLevelRef.current = null;
+    isZoomGestureActiveRef.current = false;
+    didAutoExitOnZoomOutRef.current = false;
+  }, [selectedBuilding?.id]);
+
   return (
     <View style={styles.container}>
       {/* CONTROLS */}
@@ -400,12 +479,15 @@ export default function IndoorMapScreen({
       {/* MAP */}
       <ReactNativeZoomableView
         maxZoom={10}
-        minZoom={0.4}
+        minZoom={INDOOR_MIN_ZOOM_LEVEL}
         zoomStep={0.5}
-        initialZoom={0.4}
+        initialZoom={INDOOR_INITIAL_ZOOM_LEVEL}
         bindToBorders={true}
         contentWidth={2000}
         contentHeight={3000}
+        onZoomBefore={handleZoomBefore}
+        onZoomAfter={handleZoomAfter}
+        onZoomEnd={handleZoomEnd}
       >
         <View style={{ width: 2000, height: 3000, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ width: 1000, height: 1000 }}>

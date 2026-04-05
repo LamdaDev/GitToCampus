@@ -7,6 +7,7 @@ import * as ReactNative from 'react-native';
 import { Polygon } from 'react-native-maps';
 import * as turf from '@turf/turf';
 import MapScreen from '../src/screens/MapScreen';
+import type { MapScreenHandle } from '../src/screens/MapScreen';
 import type { BuildingShape } from '../src/types/BuildingShape';
 import * as buildingsRepository from '../src/utils/buildingsRepository';
 import * as geoJson from '../src/utils/geoJson';
@@ -26,7 +27,9 @@ const mockFitToCoordinates = jest.fn();
 const mockHideAppSearchBar = jest.fn();
 const mockRevealSearchBar = jest.fn();
 const mockExitIndoorView = jest.fn();
+const mockOnAutoIndoorEntry = jest.fn();
 let mockHasAnimateToRegion = true;
+let capturedIndoorMapScreenProps: Record<string, unknown> | null = null;
 const originalPlatformOSDescriptor = Object.getOwnPropertyDescriptor(Platform, 'OS');
 
 const mockPlatformOS = (os: 'ios' | 'android') => {
@@ -122,6 +125,15 @@ jest.mock('../src/utils/outdoorPoisRepository', () => ({
   findNearbyOutdoorPois: jest.fn(),
 }));
 
+jest.mock('../src/screens/IndoorMapScreen', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return function MockIndoorMapScreen(props: Record<string, unknown>) {
+    capturedIndoorMapScreenProps = props;
+    return <View testID="indoor-map-screen" />;
+  };
+});
+
 const mockBuildings: BuildingShape[] = [
   {
     id: 'sgw-1',
@@ -175,6 +187,8 @@ describe('MapScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockHasAnimateToRegion = true;
+    capturedIndoorMapScreenProps = null;
+    mockOnAutoIndoorEntry.mockClear();
     mockFitToCoordinates.mockClear();
     mockOnMapPress.mockClear();
     mockOnOpenCalendar.mockClear();
@@ -1233,6 +1247,397 @@ describe('MapScreen', () => {
       expect(markers.length).toBe(1);
       expect(markers[0].props.anchor).toEqual({ x: 0.5, y: 0.5 });
     });
+  });
+
+  test('auto switches to indoor view when zoomed in and centered on a building with indoor maps', async () => {
+    repoMock.findBuildingAt.mockReturnValue(mockBuildings[0]);
+
+    const { getByTestId, queryByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        onAutoIndoorEntry={mockOnAutoIndoorEntry}
+      />,
+    );
+
+    expect(queryByTestId('indoor-map-screen')).toBeNull();
+
+    act(() => {
+      getByTestId('campus-map').props.onRegionChangeComplete({
+        latitude: 45.505,
+        longitude: -73.575,
+        latitudeDelta: 0.0008,
+        longitudeDelta: 0.0008,
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockOnAutoIndoorEntry).toHaveBeenCalledTimes(1);
+      expect(mockPassSelectedBuilding).toHaveBeenLastCalledWith(mockBuildings[0]);
+      expect(queryByTestId('indoor-map-screen')).toBeTruthy();
+    });
+  });
+
+  test('does not evaluate auto-entry when indoor view is already open', async () => {
+    repoMock.findBuildingAt.mockReturnValue(mockBuildings[0]);
+
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        onAutoIndoorEntry={mockOnAutoIndoorEntry}
+      />,
+    );
+
+    act(() => {
+      getByTestId('campus-map').props.onRegionChangeComplete({
+        latitude: 45.505,
+        longitude: -73.575,
+        latitudeDelta: 0.0008,
+        longitudeDelta: 0.0008,
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockOnAutoIndoorEntry).toHaveBeenCalledTimes(1);
+      expect(repoMock.findBuildingAt).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      getByTestId('campus-map').props.onRegionChangeComplete({
+        latitude: 45.505,
+        longitude: -73.575,
+        latitudeDelta: 0.0007,
+        longitudeDelta: 0.0007,
+      });
+    });
+
+    expect(mockOnAutoIndoorEntry).toHaveBeenCalledTimes(1);
+    expect(repoMock.findBuildingAt).toHaveBeenCalledTimes(1);
+  });
+
+  test('guards auto-entry when region deltas are invalid', () => {
+    repoMock.findBuildingAt.mockReturnValue(mockBuildings[0]);
+
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        onAutoIndoorEntry={mockOnAutoIndoorEntry}
+      />,
+    );
+
+    act(() => {
+      getByTestId('campus-map').props.onRegionChangeComplete({
+        latitude: 45.505,
+        longitude: -73.575,
+        latitudeDelta: Number.NaN,
+        longitudeDelta: 0.0007,
+      });
+    });
+
+    expect(repoMock.findBuildingAt).not.toHaveBeenCalled();
+    expect(mockOnAutoIndoorEntry).not.toHaveBeenCalled();
+  });
+
+  test('logs and aborts auto-entry when candidate lookup throws during zoom', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const zoomError = new Error('zoom candidate lookup failed');
+    repoMock.findBuildingAt.mockImplementation(() => {
+      throw zoomError;
+    });
+
+    const { getByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        onAutoIndoorEntry={mockOnAutoIndoorEntry}
+      />,
+    );
+
+    act(() => {
+      getByTestId('campus-map').props.onRegionChangeComplete({
+        latitude: 45.505,
+        longitude: -73.575,
+        latitudeDelta: 0.0007,
+        longitudeDelta: 0.0007,
+      });
+    });
+
+    expect(mockOnAutoIndoorEntry).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith('Error resolving indoor auto-entry candidate', zoomError);
+    warnSpy.mockRestore();
+  });
+
+  test('does not auto switch to indoor view when zoom is not close enough', () => {
+    repoMock.findBuildingAt.mockReturnValue(mockBuildings[0]);
+
+    const { getByTestId, queryByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        onAutoIndoorEntry={mockOnAutoIndoorEntry}
+      />,
+    );
+
+    act(() => {
+      getByTestId('campus-map').props.onRegionChangeComplete({
+        latitude: 45.505,
+        longitude: -73.575,
+        latitudeDelta: 0.0025,
+        longitudeDelta: 0.0025,
+      });
+    });
+
+    expect(mockOnAutoIndoorEntry).not.toHaveBeenCalled();
+    expect(queryByTestId('indoor-map-screen')).toBeNull();
+  });
+
+  test('does not auto switch to indoor view for buildings without indoor maps', () => {
+    repoMock.findBuildingAt.mockReturnValue(mockBuildings[1]);
+
+    const { getByTestId, queryByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        onAutoIndoorEntry={mockOnAutoIndoorEntry}
+      />,
+    );
+
+    act(() => {
+      getByTestId('campus-map').props.onRegionChangeComplete({
+        latitude: 45.525,
+        longitude: -73.595,
+        latitudeDelta: 0.0008,
+        longitudeDelta: 0.0008,
+      });
+    });
+
+    expect(mockOnAutoIndoorEntry).not.toHaveBeenCalled();
+    expect(queryByTestId('indoor-map-screen')).toBeNull();
+  });
+
+  test('sets a cooldown after exiting indoor to prevent immediate re-entry', async () => {
+    jest.useFakeTimers();
+    repoMock.findBuildingAt.mockReturnValue(mockBuildings[0]);
+
+    try {
+      const { getByTestId, queryByTestId } = render(
+        <MapScreen
+          passSelectedBuilding={mockPassSelectedBuilding}
+          passUserLocation={mockPassUserLocation}
+          passCurrentBuilding={mockPassCurrentBuilding}
+          openBottomSheet={mockOpenBottomSheet}
+          hideAppSearchBar={mockHideAppSearchBar}
+          revealSearchBar={mockRevealSearchBar}
+          exitIndoorView={mockExitIndoorView}
+          onAutoIndoorEntry={mockOnAutoIndoorEntry}
+        />,
+      );
+
+      act(() => {
+        getByTestId('campus-map').props.onRegionChangeComplete({
+          latitude: 45.505,
+          longitude: -73.575,
+          latitudeDelta: 0.0008,
+          longitudeDelta: 0.0008,
+        });
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('indoor-map-screen')).toBeTruthy();
+      });
+
+      const onExitIndoor = capturedIndoorMapScreenProps?.onExitIndoor as (() => void) | undefined;
+      expect(onExitIndoor).toBeDefined();
+
+      act(() => {
+        onExitIndoor?.();
+      });
+
+      act(() => {
+        getByTestId('campus-map').props.onRegionChangeComplete({
+          latitude: 45.505,
+          longitude: -73.575,
+          latitudeDelta: 0.0008,
+          longitudeDelta: 0.0008,
+        });
+      });
+
+      expect(mockOnAutoIndoorEntry).toHaveBeenCalledTimes(1);
+      expect(queryByTestId('indoor-map-screen')).toBeTruthy();
+
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('indoor-map-screen')).toBeNull();
+      });
+
+      act(() => {
+        jest.advanceTimersByTime(1300);
+      });
+
+      act(() => {
+        getByTestId('campus-map').props.onRegionChangeComplete({
+          latitude: 45.505,
+          longitude: -73.575,
+          latitudeDelta: 0.0008,
+          longitudeDelta: 0.0008,
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockOnAutoIndoorEntry).toHaveBeenCalledTimes(2);
+        expect(queryByTestId('indoor-map-screen')).toBeTruthy();
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('mapHandle showIndoor and hideIndoor support fade lifecycle', async () => {
+    jest.useFakeTimers();
+
+    try {
+      const mapHandleRef = React.createRef<MapScreenHandle>();
+      const { queryByTestId } = render(
+        <MapScreen
+          passSelectedBuilding={mockPassSelectedBuilding}
+          passUserLocation={mockPassUserLocation}
+          passCurrentBuilding={mockPassCurrentBuilding}
+          openBottomSheet={mockOpenBottomSheet}
+          hideAppSearchBar={mockHideAppSearchBar}
+          revealSearchBar={mockRevealSearchBar}
+          exitIndoorView={mockExitIndoorView}
+          mapHandle={mapHandleRef}
+        />,
+      );
+
+      expect(queryByTestId('indoor-map-screen')).toBeNull();
+
+      act(() => {
+        mapHandleRef.current?.showIndoor(mockBuildings[0]);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('indoor-map-screen')).toBeTruthy();
+      });
+
+      act(() => {
+        mapHandleRef.current?.hideIndoor();
+      });
+
+      expect(mockExitIndoorView).toHaveBeenCalledTimes(1);
+      expect(queryByTestId('indoor-map-screen')).toBeTruthy();
+
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('indoor-map-screen')).toBeNull();
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('mapHandle hideIndoor safely no-ops when indoor view is not active', () => {
+    const mapHandleRef = React.createRef<MapScreenHandle>();
+    const { queryByTestId } = render(
+      <MapScreen
+        passSelectedBuilding={mockPassSelectedBuilding}
+        passUserLocation={mockPassUserLocation}
+        passCurrentBuilding={mockPassCurrentBuilding}
+        openBottomSheet={mockOpenBottomSheet}
+        hideAppSearchBar={mockHideAppSearchBar}
+        revealSearchBar={mockRevealSearchBar}
+        exitIndoorView={mockExitIndoorView}
+        mapHandle={mapHandleRef}
+      />,
+    );
+
+    act(() => {
+      mapHandleRef.current?.hideIndoor();
+    });
+
+    expect(mockExitIndoorView).toHaveBeenCalledTimes(1);
+    expect(queryByTestId('indoor-map-screen')).toBeNull();
+  });
+
+  test('android POI marker refresh timer runs to completion', () => {
+    jest.useFakeTimers();
+    mockPlatformOS('android');
+    outdoorPoisRepoMock.findNearbyOutdoorPois.mockReturnValue([
+      {
+        poi: {
+          id: 'sgw-cafe-refresh',
+          name: 'Refresh Cafe',
+          category: 'cafe',
+          campus: 'SGW',
+          latitude: 45.497,
+          longitude: -73.579,
+          address: '3 Test St',
+        },
+        distance: 90,
+      },
+    ]);
+
+    try {
+      const { queryByTestId } = render(
+        <MapScreen
+          passSelectedBuilding={mockPassSelectedBuilding}
+          passUserLocation={mockPassUserLocation}
+          passCurrentBuilding={mockPassCurrentBuilding}
+          openBottomSheet={mockOpenBottomSheet}
+          hideAppSearchBar={mockHideAppSearchBar}
+          revealSearchBar={mockRevealSearchBar}
+          exitIndoorView={mockExitIndoorView}
+          selectedPoiCategories={['cafe']}
+        />,
+      );
+
+      expect(queryByTestId('poi-marker-sgw-cafe-refresh')).toBeTruthy();
+
+      act(() => {
+        jest.advanceTimersByTime(400);
+      });
+    } finally {
+      jest.useRealTimers();
+      restorePlatformOS();
+    }
   });
   test('pressing a polygon selects it and applies styling', async () => {
     const { UNSAFE_getAllByType } = render(
