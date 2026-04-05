@@ -251,13 +251,14 @@ describe('SearchSheet', () => {
     expect(onPoiCategoryChange).toHaveBeenCalledWith('depanneur');
   });
 
-  test('renders room results when search mode is rooms', () => {
-    const { getByTestId, queryByText } = render(
+  test('keeps the unified mixed results layout even when rooms mode is requested', () => {
+    const { getByTestId, getByText } = render(
       <SearchSheet buildings={mockBuildings} searchMode="rooms" />,
     );
 
+    expect(getByTestId('mixed-search-results')).toBeTruthy();
     expect(getByTestId('mock-room-list')).toBeTruthy();
-    expect(queryByText('Hall Building')).toBeNull();
+    expect(getByText('Hall Building')).toBeTruthy();
   });
 
   test('renders both room and building sections when search mode is mixed', () => {

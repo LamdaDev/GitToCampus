@@ -55,6 +55,7 @@ import type { SearchMode } from '../types/SearchMode';
 import type { PoiCategory, PoiRangeKm } from '../types/Poi';
 import HybridDirectionsDetails from './HybridDirectionsDetails';
 import { getIndoorBuildingKeyFromShape } from '../utils/indoor/buildingKeys';
+import { getIndoorTransferPoint } from '../utils/indoor/indoorTransferPoints';
 import { buildCrossBuildingRouteFlow } from '../utils/indoor/crossBuildingRouteFlow';
 import {
   getCrossBuildingRouteFlowPresentation,
@@ -268,10 +269,17 @@ const isRoomEndpoint = (
   endpoint: MixedEndpoint | null,
 ): endpoint is Extract<MixedEndpoint, { kind: 'room' }> => endpoint?.kind === 'room';
 
+const isBuildingEndpoint = (
+  endpoint: MixedEndpoint | null,
+): endpoint is Extract<MixedEndpoint, { kind: 'building' }> => endpoint?.kind === 'building';
+
 const getEndpointLabel = (endpoint: MixedEndpoint | null): string | null => {
   if (!endpoint) return null;
   return endpoint.kind === 'room' ? endpoint.room.label : endpoint.building.name;
 };
+
+const getWaypointBuildingLabel = (building: Pick<BuildingShape, 'shortCode' | 'name'>) =>
+  building.shortCode ?? building.name;
 
 const getEndpointBuildingKey = (endpoint: MixedEndpoint | null): string | null => {
   if (!endpoint) return null;
@@ -291,6 +299,32 @@ const canStartCrossBuildingRoomRoute = (
   isRoomEndpoint(start) &&
   isRoomEndpoint(destination) &&
   start.room.buildingKey !== destination.room.buildingKey;
+
+const canStartMixedHybridRoute = ({
+  start,
+  destination,
+  hasOutdoorOrigin,
+}: {
+  start: MixedEndpoint | null;
+  destination: MixedEndpoint | null;
+  hasOutdoorOrigin: boolean;
+}) => {
+  if (canStartCrossBuildingRoomRoute(start, destination)) return true;
+
+  if (isRoomEndpoint(start) && isBuildingEndpoint(destination)) {
+    return start.room.buildingKey !== getEndpointBuildingKey(destination);
+  }
+
+  if (isBuildingEndpoint(start) && isRoomEndpoint(destination)) {
+    return getEndpointBuildingKey(start) !== destination.room.buildingKey;
+  }
+
+  if (!start && isRoomEndpoint(destination)) {
+    return hasOutdoorOrigin;
+  }
+
+  return false;
+};
 
 const shouldShowHybridDirectionsPanel = (
   start: MixedEndpoint | null,
@@ -327,14 +361,41 @@ const shouldShowHybridDirectionsPanel = (
 const getHybridRouteGuidanceMessage = (
   start: MixedEndpoint | null,
   destination: MixedEndpoint | null,
+  hasOutdoorOrigin: boolean,
 ) => {
-  if (!start || !destination) return null;
-  if (canStartCrossBuildingRoomRoute(start, destination)) return null;
-
-  if (start.kind !== destination.kind) {
-    return 'Staged cross-building guidance currently supports room-to-room routes. Choose a room for both endpoints to continue.';
+  if (canStartMixedHybridRoute({ start, destination, hasOutdoorOrigin })) {
+    return null;
   }
 
+  if (!isRoomEndpoint(start) && !isRoomEndpoint(destination)) {
+    return 'Choose at least one room to start a staged hybrid route.';
+  }
+
+  if (!start && isRoomEndpoint(destination) && !hasOutdoorOrigin) {
+    return 'Choose a starting point to continue.';
+  }
+
+  if (!destination) {
+    return 'Choose a destination to continue.';
+  }
+
+  return 'Choose endpoints in different buildings to start a staged hybrid route.';
+};
+
+const getOutdoorStartLabel = ({
+  startBuilding,
+  currentBuilding,
+  startLocationSnapshot,
+  userLocation,
+}: {
+  startBuilding: BuildingShape | null;
+  currentBuilding: BuildingShape | null;
+  startLocationSnapshot: UserCoords | null;
+  userLocation: UserCoords | null;
+}) => {
+  if (startBuilding?.name) return startBuilding.name;
+  if (currentBuilding?.name) return `${currentBuilding.name} (My Location)`;
+  if (startLocationSnapshot || userLocation) return 'My Location';
   return null;
 };
 
@@ -988,7 +1049,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       passOutdoorRoute,
       animatedPosition,
       onEnterBuilding,
-      isIndoor,
+      isIndoor: _isIndoor,
       enterIndoorView,
       onIndoorRouteChange,
       indoorPathSteps,
@@ -1185,6 +1246,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
     const resolveViewForSelections = useCallback(
       (nextStart: MixedEndpoint | null, nextDestination: MixedEndpoint | null): ViewType => {
+        const hasOutdoorOrigin = Boolean(
+          !nextStart && (startBuilding || startLocationSnapshot || currentBuilding || userLocation),
+        );
+
+        if (!nextStart && isRoomEndpoint(nextDestination) && hasOutdoorOrigin) {
+          return 'hybrid-directions';
+        }
+
         if (shouldShowHybridDirectionsPanel(nextStart, nextDestination)) {
           return 'hybrid-directions';
         }
@@ -1210,7 +1279,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
 
         return activeView;
       },
-      [activeView],
+      [activeView, currentBuilding, startBuilding, startLocationSnapshot, userLocation],
     );
 
     const syncIndoorRouteChange = useCallback(
@@ -1225,33 +1294,32 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           return;
         }
 
+        if (isRoomEndpoint(nextStart) && isBuildingEndpoint(nextDestination)) {
+          const destinationBuildingKey = getIndoorBuildingKeyFromShape(nextDestination.building);
+          const transferPoint =
+            destinationBuildingKey === nextStart.room.buildingKey
+              ? getIndoorTransferPoint(destinationBuildingKey)
+              : null;
+          onIndoorRouteChange?.(nextStart.room.id, transferPoint?.accessNodeId ?? null);
+          return;
+        }
+
+        if (isBuildingEndpoint(nextStart) && isRoomEndpoint(nextDestination)) {
+          const startBuildingKey = getIndoorBuildingKeyFromShape(nextStart.building);
+          const transferPoint =
+            startBuildingKey === nextDestination.room.buildingKey
+              ? getIndoorTransferPoint(startBuildingKey)
+              : null;
+          onIndoorRouteChange?.(transferPoint?.accessNodeId ?? null, nextDestination.room.id);
+          return;
+        }
+
         onIndoorRouteChange?.(null, null);
       },
       [onIndoorRouteChange],
     );
 
-    const internalSearchMode = useMemo<SearchMode>(() => {
-      if (!isInternalSearch) {
-        return isIndoor ? 'rooms' : 'buildings';
-      }
-
-      if (activeView === 'hybrid-directions') {
-        return 'mixed';
-      }
-
-      if (activeView === 'indoor-directions') {
-        let oppositeEndpoint: MixedEndpoint | null = null;
-        if (searchFor === 'start') {
-          oppositeEndpoint = destinationEndpoint;
-        } else if (searchFor === 'destination') {
-          oppositeEndpoint = startEndpoint;
-        }
-
-        return isRoomEndpoint(oppositeEndpoint) ? 'mixed' : 'rooms';
-      }
-
-      return 'buildings';
-    }, [activeView, destinationEndpoint, isIndoor, isInternalSearch, searchFor, startEndpoint]);
+    const internalSearchMode = useMemo<SearchMode>(() => 'mixed', []);
 
     const applySelectionView = useCallback(
       (nextStart: MixedEndpoint | null, nextDestination: MixedEndpoint | null) => {
@@ -1270,14 +1338,34 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       (room: RoomNode) => {
         setHybridRouteErrorMessage(null);
         const nextEndpoint: MixedEndpoint = { kind: 'room', room };
-        const nextStart = searchFor === 'start' ? nextEndpoint : startEndpoint;
-        const nextDestination = searchFor === 'destination' ? nextEndpoint : destinationEndpoint;
+        const nextStart: MixedEndpoint | null =
+          searchFor === 'start'
+            ? nextEndpoint
+            : searchFor === null
+              ? currentBuilding
+                ? { kind: 'building' as const, building: currentBuilding }
+                : null
+              : startEndpoint;
+        const nextDestination: MixedEndpoint | null =
+          searchFor === 'start' ? destinationEndpoint : nextEndpoint;
 
         if (searchFor === 'start') {
           setStartRoom(room.label);
           setStartBuilding(null);
           setStartEndpoint(nextEndpoint);
         } else {
+          if (searchFor === null) {
+            clearCrossBuildingRouteFlowState();
+            setTravelMode('walking');
+            setHybridOutdoorTravelMode('walking');
+            setRouteStartSource('current');
+            setStartBuilding(currentBuilding ?? null);
+            setStartLocationSnapshot(currentBuilding ? null : userLocation);
+            setStartEndpoint(
+              currentBuilding ? { kind: 'building', building: currentBuilding } : null,
+            );
+            setStartRoom(null);
+          }
           setDestinationRoom(room.label);
           setDestinationBuilding(null);
           setDestinationEndpoint(nextEndpoint);
@@ -1287,7 +1375,16 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setCalendarSliderMode(null);
         applySelectionView(nextStart, nextDestination);
       },
-      [applySelectionView, destinationEndpoint, onExitSearch, searchFor, startEndpoint],
+      [
+        applySelectionView,
+        clearCrossBuildingRouteFlowState,
+        currentBuilding,
+        destinationEndpoint,
+        onExitSearch,
+        searchFor,
+        startEndpoint,
+        userLocation,
+      ],
     );
 
     const openCalendarSelectionSlider = useCallback(
@@ -1500,6 +1597,17 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       const nextEndpoint: MixedEndpoint = { kind: 'building', building };
       const nextStart = searchFor === 'start' ? nextEndpoint : startEndpoint;
       const nextDestination = searchFor === 'destination' ? nextEndpoint : destinationEndpoint;
+      const oppositeEndpoint = searchFor === 'start' ? destinationEndpoint : startEndpoint;
+      const oppositeRoomBuildingKey = isRoomEndpoint(oppositeEndpoint)
+        ? oppositeEndpoint.room.buildingKey
+        : null;
+      const buildingKey = getIndoorBuildingKeyFromShape(building);
+      const shouldUseIndoorWaypointLabel =
+        oppositeRoomBuildingKey !== null && oppositeRoomBuildingKey === buildingKey;
+      const buildingWaypointLabel = searchFor === 'start' ? 'Entrance' : 'Exit';
+      const buildingSelectionLabel = shouldUseIndoorWaypointLabel
+        ? `${getWaypointBuildingLabel(building)} ${buildingWaypointLabel}`
+        : building.name;
 
       passSelectedBuilding(building);
 
@@ -1507,11 +1615,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setRouteStartSource('manual');
         setStartBuilding(building);
         setStartLocationSnapshot(null);
-        setStartRoom(building.name);
+        setStartRoom(buildingSelectionLabel);
         setStartEndpoint(nextEndpoint);
       } else {
         setDestinationBuilding(building);
-        setDestinationRoom(building.name);
+        setDestinationRoom(buildingSelectionLabel);
         setDestinationEndpoint(nextEndpoint);
       }
 
@@ -1524,18 +1632,32 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     const handleHybridGo = useCallback(() => {
       setHybridRouteErrorMessage(null);
 
-      if (!canStartCrossBuildingRoomRoute(startEndpoint, destinationEndpoint)) {
+      const hasOutdoorOrigin = Boolean(
+        !startEndpoint &&
+        (startBuilding || startLocationSnapshot || currentBuilding || userLocation),
+      );
+
+      if (
+        !canStartMixedHybridRoute({
+          start: startEndpoint,
+          destination: destinationEndpoint,
+          hasOutdoorOrigin,
+        })
+      ) {
         setHybridRouteErrorMessage(
-          getHybridRouteGuidanceMessage(startEndpoint, destinationEndpoint) ??
-            'Choose two rooms in different buildings to start a staged cross-building route.',
+          getHybridRouteGuidanceMessage(startEndpoint, destinationEndpoint, hasOutdoorOrigin) ??
+            'Choose endpoints in different buildings to start a staged hybrid route.',
         );
         return;
       }
-      if (!isRoomEndpoint(startEndpoint) || !isRoomEndpoint(destinationEndpoint)) return;
 
       const result = buildCrossBuildingRouteFlow({
-        startRoom: startEndpoint.room,
-        destinationRoom: destinationEndpoint.room,
+        startRoom: isRoomEndpoint(startEndpoint) ? startEndpoint.room : null,
+        startBuilding: isBuildingEndpoint(startEndpoint) ? startEndpoint.building : startBuilding,
+        destinationRoom: isRoomEndpoint(destinationEndpoint) ? destinationEndpoint.room : null,
+        destinationBuilding: isBuildingEndpoint(destinationEndpoint)
+          ? destinationEndpoint.building
+          : destinationBuilding,
         buildings,
         indoorTravelMode,
         outdoorMode: hybridOutdoorTravelMode,
@@ -1551,31 +1673,55 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       resetRouteState();
       startCrossBuildingRouteFlow(flow);
       setTravelMode(flow.outdoorMode);
-      setRouteStartSource('manual');
-      setStartLocationSnapshot(null);
+      setRouteStartSource(flow.originBuilding ? 'manual' : 'current');
+      setStartLocationSnapshot(
+        flow.originBuilding ? null : (startLocationSnapshot ?? userLocation),
+      );
       setStartBuilding(flow.originBuilding);
       setDestinationBuilding(flow.destinationBuilding);
-      passSelectedBuilding(flow.originBuilding);
-      onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
-      enterIndoorView();
-      onEnterBuilding(flow.originBuilding);
-      setActiveView('indoor-navigation');
-      requestAnimationFrame(() => {
-        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
-      });
+      passSelectedBuilding(
+        flow.currentStage === 'origin_indoor' ? flow.originBuilding : flow.destinationBuilding,
+      );
+
+      if (
+        flow.currentStage === 'origin_indoor' &&
+        flow.startRoomEndpoint &&
+        flow.originTransferPoint &&
+        flow.originBuilding
+      ) {
+        onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
+        enterIndoorView();
+        onEnterBuilding(flow.originBuilding);
+        setActiveView('indoor-navigation');
+        requestAnimationFrame(() => {
+          sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+        });
+        return;
+      }
+
+      onIndoorRouteChange?.(null, null);
+      resetRouteState();
+      onShowOutdoorMap?.();
+      setActiveView('directions');
     }, [
       buildings,
       clearCrossBuildingRouteFlowState,
+      currentBuilding,
+      destinationBuilding,
       destinationEndpoint,
       enterIndoorView,
       hybridOutdoorTravelMode,
       indoorTravelMode,
       onEnterBuilding,
       onIndoorRouteChange,
+      onShowOutdoorMap,
       passSelectedBuilding,
       resetRouteState,
+      startBuilding,
+      startLocationSnapshot,
       startCrossBuildingRouteFlow,
       startEndpoint,
+      userLocation,
     ]);
 
     const handleContinueToOutdoorDirections = useCallback(() => {
@@ -1602,7 +1748,12 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ]);
 
     const handleEnterDestinationBuilding = useCallback(() => {
-      if (!crossBuildingRouteFlow || crossBuildingRouteFlow.currentStage !== 'outdoor') {
+      if (
+        !crossBuildingRouteFlow ||
+        crossBuildingRouteFlow.currentStage !== 'outdoor' ||
+        !crossBuildingRouteFlow.destinationRoomEndpoint ||
+        !crossBuildingRouteFlow.destinationTransferPoint
+      ) {
         return;
       }
 
@@ -1915,10 +2066,30 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       },
     }));
 
-    const hybridStartLabel = getEndpointLabel(startEndpoint) ?? startRoom;
-    const hybridDestinationLabel = getEndpointLabel(destinationEndpoint) ?? destinationRoom;
-    const hybridSummaryMessage = getHybridRouteGuidanceMessage(startEndpoint, destinationEndpoint);
-    const hybridGoDisabled = !canStartCrossBuildingRoomRoute(startEndpoint, destinationEndpoint);
+    const hasHybridOutdoorOrigin = Boolean(
+      !startEndpoint && (startBuilding || startLocationSnapshot || currentBuilding || userLocation),
+    );
+    const hybridStartLabel =
+      getEndpointLabel(startEndpoint) ??
+      startRoom ??
+      getOutdoorStartLabel({
+        startBuilding,
+        currentBuilding,
+        startLocationSnapshot,
+        userLocation,
+      });
+    const hybridDestinationLabel =
+      getEndpointLabel(destinationEndpoint) ?? destinationRoom ?? destinationBuilding?.name ?? null;
+    const hybridSummaryMessage = getHybridRouteGuidanceMessage(
+      startEndpoint,
+      destinationEndpoint,
+      hasHybridOutdoorOrigin,
+    );
+    const hybridGoDisabled = !canStartMixedHybridRoute({
+      start: startEndpoint,
+      destination: destinationEndpoint,
+      hasOutdoorOrigin: hasHybridOutdoorOrigin,
+    });
 
     const renderedContent = renderBottomSheetContent({
       isSearchActive,
