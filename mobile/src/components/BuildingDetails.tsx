@@ -196,10 +196,14 @@ export default function BuildingDetails({
           {/**Hides the 'enter building' button if no floor plan exists  */}
           {hasIndoor && onEnterBuilding ? (
             <TouchableOpacity
-              style={buildingDetailsStyles.iconButton}
+              testID="switch-to-indoor-button"
+              accessibilityRole="button"
+              accessibilityLabel="Switch to indoor view"
+              accessibilityHint="Open this building's indoor map"
+              style={buildingDetailsStyles.switchToIndoorButton}
               onPress={handleEnterBuildingPress}
             >
-              <Ionicons name="enter-outline" size={25} color="#fff" />
+              <Text style={buildingDetailsStyles.switchToIndoorButtonText}>Switch to Indoor</Text>
             </TouchableOpacity>
           ) : (
             ''

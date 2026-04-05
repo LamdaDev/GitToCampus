@@ -49,6 +49,7 @@ export const buildingDetailsStyles = StyleSheet.create({
   headerIcons: {
     flexDirection: 'row',
     gap: 10,
+    alignItems: 'center',
   },
   navigationSection: {
     flexDirection: 'row',
@@ -85,6 +86,25 @@ export const buildingDetailsStyles = StyleSheet.create({
     padding: 8,
     elevation: 10,
     boxShadow: 'inset 0 -3.5px 4px rgba(0, 0, 0, 0.4)',
+  },
+  switchToIndoorButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.30)',
+    borderWidth: 0.8,
+    borderColor: 'rgba(255, 255, 255, 0.55)',
+    borderRadius: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    minHeight: 42,
+    justifyContent: 'center',
+    elevation: 10,
+    boxShadow: 'inset 0 -3.5px 4px rgba(0, 0, 0, 0.4)',
+  },
+  switchToIndoorButtonText: {
+    fontSize: 13,
+    fontFamily: 'gabarito',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.15,
   },
   carouselContainer: {
     width: '100%',
