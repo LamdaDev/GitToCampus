@@ -196,7 +196,11 @@ describe('SearchSheet', () => {
 
   test('shows POI range controls when a category is selected', () => {
     const { getByTestId, getByText } = render(
-      <SearchSheet buildings={mockBuildings} selectedPoiCategory="cafe" selectedPoiRangeKm={2} />,
+      <SearchSheet
+        buildings={mockBuildings}
+        selectedPoiCategories={['cafe']}
+        selectedPoiRangeKm={2}
+      />,
     );
 
     fireEvent.press(getByTestId('search-poi-options-toggle'));
@@ -211,7 +215,7 @@ describe('SearchSheet', () => {
     const { getByTestId } = render(
       <SearchSheet
         buildings={mockBuildings}
-        selectedPoiCategory="cafe"
+        selectedPoiCategories={['cafe']}
         onPoiCategoryChange={onPoiCategoryChange}
         selectedPoiRangeKm={2}
         onPoiRangeChange={onPoiRangeChange}
@@ -223,7 +227,8 @@ describe('SearchSheet', () => {
     fireEvent.press(getByTestId('search-poi-range-increase'));
     fireEvent.press(getByTestId('search-poi-range-decrease'));
 
-    expect(onPoiCategoryChange).toHaveBeenCalledWith('restaurant');
+    expect(typeof onPoiCategoryChange.mock.calls[0][0]).toBe('function');
+    expect(onPoiCategoryChange.mock.calls[0][0](['cafe'])).toEqual(['cafe', 'restaurant']);
     expect(typeof onPoiRangeChange.mock.calls[0][0]).toBe('function');
     expect(onPoiRangeChange.mock.calls[0][0](2)).toBe(3);
     expect(typeof onPoiRangeChange.mock.calls[1][0]).toBe('function');
@@ -239,7 +244,8 @@ describe('SearchSheet', () => {
     fireEvent.press(getByTestId('search-poi-options-toggle'));
     fireEvent.press(getByTestId('search-poi-chip-depanneur'));
 
-    expect(onPoiCategoryChange).toHaveBeenCalledWith('depanneur');
+    expect(typeof onPoiCategoryChange.mock.calls[0][0]).toBe('function');
+    expect(onPoiCategoryChange.mock.calls[0][0]([])).toEqual(['depanneur']);
   });
 
   test('renders room results when search mode is rooms', () => {

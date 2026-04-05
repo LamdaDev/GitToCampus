@@ -13,8 +13,8 @@ import type { OutdoorRouteOverlay } from './types/Map';
 import { useSharedValue } from 'react-native-reanimated';
 import { initializeClarityAsync } from './services/clarity';
 import { getCalendarConnectionStateAsync } from './services/calendarAccess';
-import type { PoiCategory, PoiRangeKm } from './types/Poi';
-
+import { getStoredGoogleCalendarSessionState } from './services/googleCalendarAuth';
+import type { OutdoorPoi, PoiCategorySelection, PoiRangeKm } from './types/Poi';
 LogBox.ignoreLogs(['A props object containing a "key" prop is being spread into JSX']);
 /**
  * App.tsx is the entry point Expo looks for by default.
@@ -36,8 +36,9 @@ const App = () => {
   const [outdoorRoute, setOutdoorRoute] = useState<OutdoorRouteOverlay | null>(null);
   const bottomSheetRef = useRef<BottomSliderHandle>(null);
   const [sheetMode, setSheetMode] = useState<SheetMode>('detail');
-  const [selectedPoiCategory, setSelectedPoiCategory] = useState<PoiCategory | null>(null);
+  const [selectedPoiCategories, setSelectedPoiCategories] = useState<PoiCategorySelection>([]);
   const [selectedPoiRangeKm, setSelectedPoiRangeKm] = useState<PoiRangeKm>(3);
+  const [selectedPoi, setSelectedPoi] = useState<OutdoorPoi | null>(null);
   const [indoorStartRoomId, setIndoorStartRoomId] = useState<string | null>(null);
   const [indoorEndRoomId, setIndoorEndRoomId] = useState<string | null>(null);
   const [indoorPathSteps, setIndoorPathSteps] = useState<{ icon: string; label: string }[]>([]);
@@ -164,6 +165,7 @@ const App = () => {
           passSelectedBuilding={setSelectedBuilding}
           passUserLocation={setUserLocation}
           passCurrentBuilding={setCurrentBuilding}
+          passSelectedPoi={setSelectedPoi}
           openBottomSheet={openBuildingDetails}
           onMapPress={handleMapPress}
           onOpenCalendar={openCalendarFromMap}
@@ -179,8 +181,9 @@ const App = () => {
           indoorPathStepsChange={setIndoorPathSteps}
           onIndoorFloorNavReady={handleIndoorFloorNavReady}
           indoorTravelMode={indoorTravelMode}
-          selectedPoiCategory={selectedPoiCategory}
+          selectedPoiCategories={selectedPoiCategories}
           selectedPoiRangeKm={selectedPoiRangeKm}
+          selectedPoi={selectedPoi}
         />
 
         {sheetOpen ? null : <AppSearchBar openSearch={openSearchBuilding} />}
@@ -206,8 +209,9 @@ const App = () => {
           onIndoorRouteChange={handleIndoorRouteChange}
           onIndoorTravelModeChange={setIndoorTravelMode}
           onShowOutdoorMap={handleShowOutdoorMap}
-          selectedPoiCategory={selectedPoiCategory}
-          onPoiCategoryChange={setSelectedPoiCategory}
+          selectedPoi={selectedPoi}
+          selectedPoiCategories={selectedPoiCategories}
+          onPoiCategoryChange={setSelectedPoiCategories}
           selectedPoiRangeKm={selectedPoiRangeKm}
           onPoiRangeChange={setSelectedPoiRangeKm}
         />
