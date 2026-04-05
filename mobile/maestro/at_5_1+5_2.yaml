@@ -1,0 +1,14 @@
+appId: host.exp.exponent
+---
+- tapOn: Get to...
+- tapOn: 
+- tapOn: Cafes
+- tapOn: 
+- tapOn: 
+- swipe:
+    start: "50%, 55%"
+    end: "50%, 95%"
+- tapOn: Hinnawi Bros Bagel & Café | Mackay
+- tapOn: Get Directions
+- tapOn: My Location
+- tapOn: Henry F. Hall Building
