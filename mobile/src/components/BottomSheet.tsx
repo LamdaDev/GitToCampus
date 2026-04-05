@@ -752,6 +752,7 @@ const HybridDirectionsView = ({
 type SearchContentProps = {
   calendarSliderMode: 'selection' | 'events' | null;
   isInternalSearch: boolean;
+  searchSessionId: number;
   selectedCalendarIds: string[];
   handleReselectCalendars: () => void;
   handleCloseUpcomingClassesSlider: () => void;
@@ -775,6 +776,7 @@ type SearchContentProps = {
 const SearchContent = ({
   calendarSliderMode,
   isInternalSearch,
+  searchSessionId,
   selectedCalendarIds,
   handleReselectCalendars,
   handleCloseUpcomingClassesSlider,
@@ -823,6 +825,7 @@ const SearchContent = ({
       onCalendarGoPress={handleCalendarGoFromSearch}
       calendarGoErrorMessage={calendarGoErrorMessage}
       searchMode={searchMode}
+      searchSessionId={searchSessionId}
       onSelectRoom={onSelectRoom}
       selectedPoiCategories={selectedPoiCategories}
       onPoiCategoryChange={onPoiCategoryChange}
@@ -836,6 +839,7 @@ const renderBottomSheetContent = (props: {
   isSearchActive: boolean;
   calendarSliderMode: 'selection' | 'events' | null;
   isInternalSearch: boolean;
+  searchSessionId: number;
   selectedCalendarIds: string[];
   handleReselectCalendars: () => void;
   handleCloseUpcomingClassesSlider: () => void;
@@ -1088,12 +1092,6 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
   ) => {
     const sheetRef = useRef<BottomSheet>(null);
     const [activeView, setActiveView] = useState<ViewType>('building');
-    const snapPoints = useMemo(() => {
-      if (activeView === 'navigation') return [...NAVIGATION_SNAP_POINTS];
-      if (activeView === 'directions') return [...DIRECTIONS_SNAP_POINTS];
-      if (activeView === 'shuttle-schedule') return [...SHUTTLE_SCHEDULE_SNAP_POINTS];
-      return [...DEFAULT_SNAP_POINTS];
-    }, [activeView]);
 
     const [startEndpoint, setStartEndpoint] = useState<MixedEndpoint | null>(null);
     const [destinationEndpoint, setDestinationEndpoint] = useState<MixedEndpoint | null>(null);
@@ -1201,6 +1199,24 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setRouteRetryNonce((currentValue) => currentValue + 1);
     }, []);
 
+    const [searchFor, setSearchFor] = useState<SearchTarget>(null);
+    const [calendarSliderMode, setCalendarSliderMode] = useState<'selection' | 'events' | null>(
+      null,
+    );
+    const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
+    const [calendarGoErrorMessage, setCalendarGoErrorMessage] = useState<string | null>(null);
+    const [searchSessionId, setSearchSessionId] = useState(0);
+    const isInternalSearch = searchFor !== null;
+    const isGlobalSearch = mode === 'search';
+    const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
+    const snapPoints = useMemo(() => {
+      if (isSearchActive) return [...DEFAULT_SNAP_POINTS];
+      if (activeView === 'navigation') return [...NAVIGATION_SNAP_POINTS];
+      if (activeView === 'directions') return [...DIRECTIONS_SNAP_POINTS];
+      if (activeView === 'shuttle-schedule') return [...SHUTTLE_SCHEDULE_SNAP_POINTS];
+      return [...DEFAULT_SNAP_POINTS];
+    }, [activeView, isSearchActive]);
+
     const closeSheet = () => sheetRef.current?.close();
     const openSheet = (index: number = 0) => {
       if (activeView === 'directions') {
@@ -1244,29 +1260,26 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       () => getDirectionsPanelSnapPoint(travelMode, isCrossCampusRoute, hasDirectionsStageAction),
       [hasDirectionsStageAction, travelMode, isCrossCampusRoute],
     );
-
-    useEffect(() => {
-      if (activeView !== 'directions') return;
-
-      snapToDirectionsPanel(directionsPanelSnapPoint);
-    }, [activeView, directionsPanelSnapPoint, snapToDirectionsPanel]);
-
-    const [searchFor, setSearchFor] = useState<SearchTarget>(null);
-    const [calendarSliderMode, setCalendarSliderMode] = useState<'selection' | 'events' | null>(
-      null,
-    );
-    const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
-    const [calendarGoErrorMessage, setCalendarGoErrorMessage] = useState<string | null>(null);
-    const isInternalSearch = searchFor !== null;
-    const isGlobalSearch = mode === 'search';
-    const isSearchActive = isInternalSearch || isGlobalSearch || calendarSliderMode !== null;
     const openSearchFor = useCallback(
       (target: SearchTarget) => {
         clearCrossBuildingRouteFlowState();
+        setSearchSessionId((previousSessionId) => previousSessionId + 1);
         setSearchFor(target);
       },
       [clearCrossBuildingRouteFlowState],
     );
+
+    useEffect(() => {
+      if (mode !== 'search') return;
+      setSearchSessionId((previousSessionId) => previousSessionId + 1);
+    }, [mode]);
+
+    useEffect(() => {
+      if (isSearchActive) return;
+      if (activeView !== 'directions') return;
+
+      snapToDirectionsPanel(directionsPanelSnapPoint);
+    }, [activeView, directionsPanelSnapPoint, isSearchActive, snapToDirectionsPanel]);
 
     const resolveViewForSelections = useCallback(
       (nextStart: MixedEndpoint | null, nextDestination: MixedEndpoint | null): ViewType => {
@@ -2172,6 +2185,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       isSearchActive,
       calendarSliderMode,
       isInternalSearch,
+      searchSessionId,
       selectedCalendarIds,
       handleReselectCalendars,
       handleCloseUpcomingClassesSlider,

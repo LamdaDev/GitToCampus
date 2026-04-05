@@ -157,6 +157,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
       (
         props: {
           children: any;
+          snapPoints?: string[];
           onClose?: () => void;
           onAnimate?: (from: number, to: number) => void;
         },
@@ -173,6 +174,9 @@ jest.mock('@gorhom/bottom-sheet', () => {
 
         return (
           <View testID="bottom-sheet">
+            <Text testID="bottom-sheet-snap-points">
+              {Array.isArray(props.snapPoints) ? props.snapPoints.join(',') : ''}
+            </Text>
             <TouchableOpacity testID="trigger-on-close" onPress={props.onClose}>
               <Text>Trigger Close</Text>
             </TouchableOpacity>
@@ -426,9 +430,11 @@ jest.mock('../src/components/SearchSheet', () => {
     calendarGoErrorMessage,
     onSelectRoom,
     searchMode,
+    searchSessionId,
   }: any) => (
     <View testID="search-sheet">
       <Text testID="search-mode-state">{searchMode ?? 'buildings'}</Text>
+      <Text testID="search-session-id-state">{searchSessionId ?? 0}</Text>
       <TouchableOpacity
         testID="press-building-in-search"
         onPress={() => onPressBuilding(mockSameBuildingSearchResult)}
@@ -1401,6 +1407,38 @@ describe('BottomSheet', () => {
     fireEvent.press(getByTestId('press-destination'));
 
     expect(getByTestId('search-sheet')).toBeTruthy();
+  });
+
+  test('internal building search reuses the standard search snap points instead of the directions snap profile', async () => {
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    expect(getByTestId('bottom-sheet-snap-points').props.children).toContain('26%');
+
+    fireEvent.press(getByTestId('press-start'));
+
+    expect(getByTestId('search-sheet')).toBeTruthy();
+    expect(getByTestId('bottom-sheet-snap-points').props.children).toBe('22%,29%,47%,75%');
+  });
+
+  test('reopening internal search after a building selection starts a fresh search session', async () => {
+    const { getByTestId } = render(
+      <BottomSlider {...defaultProps} ref={createRef()} selectedBuilding={mockBuildings[0]} />,
+    );
+
+    await pressAndFlush(getByTestId('on-show-directions-as-destination'));
+    fireEvent.press(getByTestId('press-start'));
+
+    const firstSearchSessionId = Number(getByTestId('search-session-id-state').props.children);
+
+    await pressAndFlush(getByTestId('press-building-in-search'));
+    fireEvent.press(getByTestId('press-destination'));
+
+    const secondSearchSessionId = Number(getByTestId('search-session-id-state').props.children);
+
+    expect(secondSearchSessionId).toBeGreaterThan(firstSearchSessionId);
   });
 
   test('selecting a building from internal search returns to directions view and keeps panel at 52%', async () => {

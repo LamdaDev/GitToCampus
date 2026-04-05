@@ -3,7 +3,7 @@ import { Animated, Easing, Text, TouchableOpacity, View } from 'react-native';
 import { SearchBar } from 'react-native-elements';
 import { searchBuilding } from '../styles/SearchBuilding.styles';
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, type BottomSheetScrollViewMethods } from '@gorhom/bottom-sheet';
 import { BuildingShape } from '../types/BuildingShape';
 import type { ListRenderItemInfo } from 'react-native';
 import type { SearchMode } from '../types/SearchMode';
@@ -28,6 +28,7 @@ type SearchBarProps = {
   onCalendarGoPress?: (nextClassEvent: GoogleCalendarEventItem | null) => void;
   calendarGoErrorMessage?: string | null;
   searchMode?: SearchMode;
+  searchSessionId?: number;
   onSelectRoom?: (room: RoomNode) => void;
   selectedPoiCategories?: PoiCategorySelection;
   onPoiCategoryChange?: React.Dispatch<React.SetStateAction<PoiCategorySelection>>;
@@ -46,6 +47,7 @@ export default function SearchSheet({
   onCalendarGoPress,
   calendarGoErrorMessage = null,
   searchMode: _searchMode = 'mixed',
+  searchSessionId = 0,
   onSelectRoom,
   selectedPoiCategories = [],
   onPoiCategoryChange,
@@ -64,6 +66,7 @@ export default function SearchSheet({
   const [hasOnlyUnsupportedNextClassEvents, setHasOnlyUnsupportedNextClassEvents] = useState(false);
   const nextClassRequestIdRef = useRef(0);
   const poiPanelAnimation = useRef(new Animated.Value(0)).current;
+  const resultsScrollViewRef = useRef<BottomSheetScrollViewMethods | null>(null);
 
   const nextClassLabel = useMemo(() => {
     if (isNextClassLoading) return 'Loading next class...';
@@ -223,6 +226,25 @@ export default function SearchSheet({
     };
   }, [isPoiPanelOpen, poiPanelAnimation]);
 
+  useEffect(() => {
+    setSearch('');
+    setIsPoiPanelOpen(false);
+    setShouldRenderPoiPanel(false);
+    poiPanelAnimation.stopAnimation();
+    poiPanelAnimation.setValue(0);
+
+    const frame = requestAnimationFrame(() => {
+      resultsScrollViewRef.current?.scrollTo?.({
+        y: 0,
+        animated: false,
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [poiPanelAnimation, searchSessionId]);
+
   const handleConnectCalendar = useCallback(async () => {
     setIsCalendarConnecting(true);
     setCalendarMessage(null);
@@ -359,6 +381,7 @@ export default function SearchSheet({
   const renderedSearchResults = useMemo(() => {
     return (
       <BottomSheetScrollView
+        ref={resultsScrollViewRef}
         testID="mixed-search-results"
         style={searchBuilding.scrollArea}
         contentContainerStyle={searchBuilding.scrollContent}

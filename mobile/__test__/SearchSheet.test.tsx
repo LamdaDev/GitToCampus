@@ -279,6 +279,28 @@ describe('SearchSheet', () => {
     expect(getByTestId('mock-room-list')).toBeTruthy();
   });
 
+  test('resets the mixed search state when a new search session starts', async () => {
+    const { getByTestId, queryByTestId, rerender } = render(
+      <SearchSheet buildings={mockBuildings} searchSessionId={1} />,
+    );
+
+    fireEvent.changeText(getByTestId('search-bar'), 'hall');
+    fireEvent.press(getByTestId('search-poi-options-toggle'));
+
+    expect(getByTestId('search-bar').props.value).toBe('hall');
+    expect(queryByTestId('search-poi-panel')).toBeTruthy();
+
+    rerender(<SearchSheet buildings={mockBuildings} searchSessionId={2} />);
+
+    await waitFor(() => {
+      expect(getByTestId('search-bar').props.value).toBe('');
+      expect(queryByTestId('search-poi-panel')).toBeNull();
+      expect(getByTestId('search-poi-options-toggle').props.accessibilityLabel).toBe(
+        'Open POI options',
+      );
+    });
+  });
+
   test('forwards room selection in mixed search mode', () => {
     const onSelectRoom = jest.fn();
     const { getByTestId } = render(
