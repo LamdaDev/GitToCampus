@@ -1,0 +1,23 @@
+appId: host.exp.exponent
+---
+# Zoom into a building to go indoors
+- doubleTapOn:
+    point: '50%,50%'
+
+- doubleTapOn:
+    point: '50%,50%'
+
+- doubleTapOn:
+    point: '50%,50%'
+
+- doubleTapOn:
+    point: '50%,50%'
+
+- doubleTapOn:
+    point: '50%,50%'
+
+# Return to outdoors
+- tapOn: 
+
+# Reset the view for SGW campus
+- doubleTapOn: LOY
