@@ -1,0 +1,10 @@
+appId: com.anonymous.mobile
+---
+- tapOn: Get to...
+- assertVisible: MB-1.294
+- tapOn: GO
+- tapOn: GO
+- tapOn: Enter Building
+- swipe:
+    start: '50%, 55%'
+    end: '50%, 85%'
