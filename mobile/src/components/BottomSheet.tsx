@@ -1498,37 +1498,62 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       [resolveViewForSelections, snapToDirectionsPanel, syncIndoorRouteChange],
     );
 
+    const resetWalkingRouteFlow = useCallback(() => {
+      clearCrossBuildingRouteFlowState();
+      setHybridOutdoorTravelMode('walking');
+      setTravelMode('walking');
+    }, [clearCrossBuildingRouteFlowState]);
+
+    const clearRoomSelectionsAndIndoorRoute = useCallback(() => {
+      setStartRoom(null);
+      setDestinationRoom(null);
+      onIndoorRouteChange?.(null, null);
+    }, [onIndoorRouteChange]);
+
+    const getCurrentRouteStartEndpoint = useCallback((): MixedEndpoint | null => {
+      if (!currentBuilding) return null;
+      return { kind: 'building', building: currentBuilding };
+    }, [currentBuilding]);
+
+    const applyCurrentRouteStartState = useCallback((): MixedEndpoint | null => {
+      const nextStartEndpoint = getCurrentRouteStartEndpoint();
+      setRouteStartSource('current');
+      setStartBuilding(currentBuilding ?? null);
+      setStartLocationSnapshot(currentBuilding ? null : userLocation);
+      setStartEndpoint(nextStartEndpoint);
+      setStartRoom(null);
+      return nextStartEndpoint;
+    }, [currentBuilding, getCurrentRouteStartEndpoint, userLocation]);
+
+    const openDefaultDirectionsPanel = useCallback(() => {
+      setActiveView('directions');
+      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+    }, [snapToDirectionsPanel]);
+
     const handleSelectRoom = useCallback(
       (room: RoomNode) => {
         setHybridRouteErrorMessage(null);
         const nextEndpoint: MixedEndpoint = { kind: 'room', room };
-        const nextStart: MixedEndpoint | null =
-          searchFor === 'start'
-            ? nextEndpoint
-            : searchFor === null
-              ? currentBuilding
-                ? { kind: 'building' as const, building: currentBuilding }
-                : null
-              : startEndpoint;
-        const nextDestination: MixedEndpoint | null =
-          searchFor === 'start' ? destinationEndpoint : nextEndpoint;
+        const isSelectingStart = searchFor === 'start';
+        const isSelectingDestinationFromCurrent = searchFor === null;
+        let nextStart: MixedEndpoint | null = startEndpoint;
+        if (isSelectingStart) {
+          nextStart = nextEndpoint;
+        } else if (isSelectingDestinationFromCurrent) {
+          nextStart = getCurrentRouteStartEndpoint();
+        }
+        const nextDestination: MixedEndpoint | null = isSelectingStart
+          ? destinationEndpoint
+          : nextEndpoint;
 
-        if (searchFor === 'start') {
+        if (isSelectingStart) {
           setStartRoom(room.label);
           setStartBuilding(null);
           setStartEndpoint(nextEndpoint);
         } else {
-          if (searchFor === null) {
-            clearCrossBuildingRouteFlowState();
-            setTravelMode('walking');
-            setHybridOutdoorTravelMode('walking');
-            setRouteStartSource('current');
-            setStartBuilding(currentBuilding ?? null);
-            setStartLocationSnapshot(currentBuilding ? null : userLocation);
-            setStartEndpoint(
-              currentBuilding ? { kind: 'building', building: currentBuilding } : null,
-            );
-            setStartRoom(null);
+          if (isSelectingDestinationFromCurrent) {
+            resetWalkingRouteFlow();
+            nextStart = applyCurrentRouteStartState();
           }
           setDestinationRoom(room.label);
           setDestinationBuilding(null);
@@ -1542,14 +1567,14 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         applySelectionView(nextStart, nextDestination);
       },
       [
+        applyCurrentRouteStartState,
         applySelectionView,
-        clearCrossBuildingRouteFlowState,
-        currentBuilding,
         destinationEndpoint,
+        getCurrentRouteStartEndpoint,
         onExitSearch,
+        resetWalkingRouteFlow,
         searchFor,
         startEndpoint,
-        userLocation,
       ],
     );
 
@@ -1617,21 +1642,15 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     }, []);
 
     const showDirections = (building: BuildingShape, asDestination?: boolean) => {
-      clearCrossBuildingRouteFlowState();
-      setHybridOutdoorTravelMode('walking');
-      setTravelMode('walking');
-      setRouteStartSource('current');
-      setStartRoom(null);
-      setDestinationRoom(null);
-      onIndoorRouteChange?.(null, null);
+      resetWalkingRouteFlow();
+      clearRoomSelectionsAndIndoorRoute();
+
       if (asDestination) {
         // Walking figure: building is destination, start is current location
-        setStartBuilding(currentBuilding ?? null);
-        setStartLocationSnapshot(currentBuilding ? null : userLocation);
+        applyCurrentRouteStartState();
         setDestinationPoi(null);
         setDestinationLocationSnapshot(null);
         setDestinationBuilding(building);
-        setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
         setDestinationEndpoint({ kind: 'building', building });
       } else {
         // "Set as starting point" button: building is start
@@ -1644,35 +1663,25 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         setStartEndpoint({ kind: 'building', building });
         setDestinationEndpoint(null);
       }
-      setActiveView('directions');
-      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+      openDefaultDirectionsPanel();
     };
 
     const showPoiDirections = useCallback(
       (poi: OutdoorPoi) => {
-        clearCrossBuildingRouteFlowState();
-        setHybridOutdoorTravelMode('walking');
-        setTravelMode('walking');
-        setRouteStartSource('current');
-        setStartRoom(null);
-        setDestinationRoom(null);
-        onIndoorRouteChange?.(null, null);
-        setStartBuilding(currentBuilding ?? null);
-        setStartLocationSnapshot(currentBuilding ? null : userLocation);
+        resetWalkingRouteFlow();
+        clearRoomSelectionsAndIndoorRoute();
+        applyCurrentRouteStartState();
         setDestinationBuilding(null);
         setDestinationPoi(poi);
         setDestinationLocationSnapshot(null);
-        setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
         setDestinationEndpoint(null);
-        setActiveView('directions');
-        snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+        openDefaultDirectionsPanel();
       },
       [
-        clearCrossBuildingRouteFlowState,
-        currentBuilding,
-        onIndoorRouteChange,
-        snapToDirectionsPanel,
-        userLocation,
+        applyCurrentRouteStartState,
+        clearRoomSelectionsAndIndoorRoute,
+        openDefaultDirectionsPanel,
+        resetWalkingRouteFlow,
       ],
     );
 
@@ -1727,26 +1736,19 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     );
 
     const closeSearchBuilding = (chosenBuilding: BuildingShape) => {
-      clearCrossBuildingRouteFlowState();
-      setHybridOutdoorTravelMode('walking');
+      resetWalkingRouteFlow();
       passSelectedBuilding(chosenBuilding);
 
       //SET START BUILDING SHOULD BE WHERE USER IS CURRENTLY POSITION. (FOR FUTURE USES)
-      setStartBuilding(currentBuilding ?? null);
-      setStartLocationSnapshot(currentBuilding ? null : userLocation);
+      applyCurrentRouteStartState();
       setDestinationPoi(null);
       setDestinationLocationSnapshot(null);
       setDestinationBuilding(chosenBuilding);
-      setStartEndpoint(currentBuilding ? { kind: 'building', building: currentBuilding } : null);
       setDestinationEndpoint({ kind: 'building', building: chosenBuilding });
-      setStartRoom(null);
-      setDestinationRoom(null);
-      setTravelMode('walking');
+      clearRoomSelectionsAndIndoorRoute();
       setRouteStartSource('current');
-      setActiveView('directions');
-      onIndoorRouteChange?.(null, null);
       onExitSearch();
-      snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+      openDefaultDirectionsPanel();
     };
 
     const handleUpcomingClassPress = useCallback(
@@ -1998,16 +2000,17 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ]);
 
     const handleContinueToOutdoorDirections = useCallback(() => {
-      if (!crossBuildingRouteFlow || crossBuildingRouteFlow.currentStage !== 'origin_indoor') {
+      const flow = crossBuildingRouteFlow;
+      if (flow?.currentStage !== 'origin_indoor') {
         return;
       }
 
       continueCrossBuildingRouteFlowToOutdoor();
-      setTravelMode(crossBuildingRouteFlow.outdoorMode);
+      setTravelMode(flow.outdoorMode);
       setRouteStartSource('manual');
       setStartLocationSnapshot(null);
-      setStartBuilding(crossBuildingRouteFlow.originBuilding);
-      setDestinationBuilding(crossBuildingRouteFlow.destinationBuilding);
+      setStartBuilding(flow.originBuilding);
+      setDestinationBuilding(flow.destinationBuilding);
       setDestinationLocationSnapshot(null);
       onIndoorRouteChange?.(null, null);
       resetRouteState();
@@ -2022,24 +2025,24 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
     ]);
 
     const handleEnterDestinationBuilding = useCallback(() => {
+      const flow = crossBuildingRouteFlow;
       if (
-        !crossBuildingRouteFlow ||
-        crossBuildingRouteFlow.currentStage !== 'outdoor' ||
-        !crossBuildingRouteFlow.destinationRoomEndpoint ||
-        !crossBuildingRouteFlow.destinationTransferPoint
+        flow?.currentStage !== 'outdoor' ||
+        !flow.destinationRoomEndpoint ||
+        !flow.destinationTransferPoint
       ) {
         return;
       }
 
       continueCrossBuildingRouteFlowToDestinationIndoor();
       resetRouteState();
-      passSelectedBuilding(crossBuildingRouteFlow.destinationBuilding);
+      passSelectedBuilding(flow.destinationBuilding);
       onIndoorRouteChange?.(
-        crossBuildingRouteFlow.destinationTransferPoint.accessNodeId,
-        crossBuildingRouteFlow.destinationRoomEndpoint.id,
+        flow.destinationTransferPoint.accessNodeId,
+        flow.destinationRoomEndpoint.id,
       );
       enterIndoorView();
-      onEnterBuilding(crossBuildingRouteFlow.destinationBuilding);
+      onEnterBuilding(flow.destinationBuilding);
       setActiveView('indoor-navigation');
       requestAnimationFrame(() => {
         sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);

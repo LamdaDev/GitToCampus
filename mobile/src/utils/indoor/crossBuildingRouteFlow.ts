@@ -99,22 +99,23 @@ const validateTransferPoint = ({
   };
 };
 
-export const buildCrossBuildingRouteFlow = ({
+type ResolvedEndpointBuildings = {
+  originBuildingKey: IndoorBuildingKey | null;
+  destinationBuildingKey: IndoorBuildingKey | null;
+  originBuilding: BuildCrossBuildingRouteFlowInput['startBuilding'];
+  destinationBuilding: NonNullable<BuildCrossBuildingRouteFlowInput['destinationBuilding']>;
+};
+
+const resolveEndpointBuildings = ({
   startRoom,
   startBuilding,
   destinationRoom,
   destinationBuilding,
   buildings,
-  indoorTravelMode,
-  outdoorMode,
-}: BuildCrossBuildingRouteFlowInput): BuildCrossBuildingRouteFlowResult => {
-  if (!startRoom && !destinationRoom) {
-    return {
-      ok: false,
-      message: 'Choose at least one room to start a staged hybrid route.',
-    };
-  }
-
+}: Pick<
+  BuildCrossBuildingRouteFlowInput,
+  'startRoom' | 'startBuilding' | 'destinationRoom' | 'destinationBuilding' | 'buildings'
+>): { ok: true; value: ResolvedEndpointBuildings } | { ok: false; message: string } => {
   const originBuildingKey =
     startRoom?.buildingKey ?? getIndoorBuildingKeyFromShape(startBuilding ?? null);
   const destinationBuildingKey =
@@ -152,11 +153,38 @@ export const buildCrossBuildingRouteFlow = ({
     };
   }
 
-  const originTransferPoint = startRoom ? getIndoorTransferPoint(startRoom.buildingKey) : null;
-  const destinationTransferPoint = destinationRoom
-    ? getIndoorTransferPoint(destinationRoom.buildingKey)
-    : null;
+  return {
+    ok: true,
+    value: {
+      originBuildingKey,
+      destinationBuildingKey,
+      originBuilding,
+      destinationBuilding: resolvedDestinationBuilding,
+    },
+  };
+};
 
+const validateIndoorTransferPoints = ({
+  startRoom,
+  originBuilding,
+  originBuildingKey,
+  destinationRoom,
+  destinationBuilding,
+  destinationBuildingKey,
+  originTransferPoint,
+  destinationTransferPoint,
+  indoorTravelMode,
+}: {
+  startRoom: BuildCrossBuildingRouteFlowInput['startRoom'];
+  originBuilding: BuildCrossBuildingRouteFlowInput['startBuilding'];
+  originBuildingKey: IndoorBuildingKey | null;
+  destinationRoom: BuildCrossBuildingRouteFlowInput['destinationRoom'];
+  destinationBuilding: NonNullable<BuildCrossBuildingRouteFlowInput['destinationBuilding']>;
+  destinationBuildingKey: IndoorBuildingKey | null;
+  originTransferPoint: IndoorTransferPoint | null;
+  destinationTransferPoint: IndoorTransferPoint | null;
+  indoorTravelMode: BuildCrossBuildingRouteFlowInput['indoorTravelMode'];
+}): { ok: true } | { ok: false; message: string } => {
   if (startRoom && originBuilding && originBuildingKey) {
     const originValidation = validateTransferPoint({
       room: startRoom,
@@ -175,7 +203,7 @@ export const buildCrossBuildingRouteFlow = ({
     const destinationValidation = validateTransferPoint({
       room: destinationRoom,
       buildingKey: destinationBuildingKey,
-      buildingName: resolvedDestinationBuilding.name,
+      buildingName: destinationBuilding.name,
       transferPoint: destinationTransferPoint,
       indoorTravelMode,
       direction: 'destination',
@@ -183,6 +211,63 @@ export const buildCrossBuildingRouteFlow = ({
     if (!destinationValidation.ok) {
       return destinationValidation;
     }
+  }
+
+  return { ok: true };
+};
+
+export const buildCrossBuildingRouteFlow = ({
+  startRoom,
+  startBuilding,
+  destinationRoom,
+  destinationBuilding,
+  buildings,
+  indoorTravelMode,
+  outdoorMode,
+}: BuildCrossBuildingRouteFlowInput): BuildCrossBuildingRouteFlowResult => {
+  if (!startRoom && !destinationRoom) {
+    return {
+      ok: false,
+      message: 'Choose at least one room to start a staged hybrid route.',
+    };
+  }
+
+  const resolvedEndpoints = resolveEndpointBuildings({
+    startRoom,
+    startBuilding,
+    destinationRoom,
+    destinationBuilding,
+    buildings,
+  });
+  if (!resolvedEndpoints.ok) {
+    return resolvedEndpoints;
+  }
+
+  const {
+    originBuildingKey,
+    destinationBuildingKey,
+    originBuilding,
+    destinationBuilding: resolvedDestinationBuilding,
+  } = resolvedEndpoints.value;
+
+  const originTransferPoint = startRoom ? getIndoorTransferPoint(startRoom.buildingKey) : null;
+  const destinationTransferPoint = destinationRoom
+    ? getIndoorTransferPoint(destinationRoom.buildingKey)
+    : null;
+
+  const transferValidation = validateIndoorTransferPoints({
+    startRoom,
+    originBuilding,
+    originBuildingKey,
+    destinationRoom,
+    destinationBuilding: resolvedDestinationBuilding,
+    destinationBuildingKey,
+    originTransferPoint,
+    destinationTransferPoint,
+    indoorTravelMode,
+  });
+  if (!transferValidation.ok) {
+    return transferValidation;
   }
 
   const initialStage = startRoom ? 'origin_indoor' : 'outdoor';
