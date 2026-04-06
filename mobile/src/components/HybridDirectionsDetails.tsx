@@ -132,6 +132,24 @@ export default function HybridDirectionsDetails({
   goDisabled = false,
 }: Readonly<HybridDirectionsDetailsProps>) {
   const canPressGo = !goDisabled && !!onPressGo;
+  let summaryContent = (
+    <Text style={directionDetailsStyles.hybridSummarySubtitle}>{'Indoor & Outdoor'}</Text>
+  );
+  if (summaryMessage) {
+    summaryContent = (
+      <Text testID="hybrid-summary-message" style={directionDetailsStyles.hybridSummarySubtitle}>
+        {summaryMessage}
+      </Text>
+    );
+  }
+  if (errorMessage) {
+    summaryContent = (
+      <Text testID="hybrid-error-message" style={directionDetailsStyles.routeErrorText}>
+        {errorMessage}
+      </Text>
+    );
+  }
+
   const indoorOptions: HybridModeOption[] = [
     {
       testID: 'hybrid-indoor-walking',
@@ -253,20 +271,7 @@ export default function HybridDirectionsDetails({
       <View style={directionDetailsStyles.hybridSummaryCard}>
         <View style={directionDetailsStyles.hybridSummaryTextWrap}>
           <Text style={directionDetailsStyles.hybridSummaryTitle}>Full Route</Text>
-          {errorMessage ? (
-            <Text testID="hybrid-error-message" style={directionDetailsStyles.routeErrorText}>
-              {errorMessage}
-            </Text>
-          ) : summaryMessage ? (
-            <Text
-              testID="hybrid-summary-message"
-              style={directionDetailsStyles.hybridSummarySubtitle}
-            >
-              {summaryMessage}
-            </Text>
-          ) : (
-            <Text style={directionDetailsStyles.hybridSummarySubtitle}>{'Indoor & Outdoor'}</Text>
-          )}
+          {summaryContent}
         </View>
         <TouchableOpacity
           testID="hybrid-go-button"

@@ -69,7 +69,7 @@ export const crossBuildingRouteFlowReducer = (
             : null,
       };
     case 'advance_to_outdoor':
-      if (!state.flow || state.flow.currentStage !== 'origin_indoor') return state;
+      if (state.flow?.currentStage !== 'origin_indoor') return state;
 
       return {
         ...state,
@@ -81,7 +81,7 @@ export const crossBuildingRouteFlowReducer = (
         routeDestinationOverride: state.flow.destinationTransferPoint?.outdoorCoords ?? null,
       };
     case 'advance_to_destination_indoor':
-      if (!state.flow || state.flow.currentStage !== 'outdoor') return state;
+      if (state.flow?.currentStage !== 'outdoor') return state;
       if (!state.flow.destinationRoomEndpoint || !state.flow.destinationTransferPoint) return state;
 
       return {

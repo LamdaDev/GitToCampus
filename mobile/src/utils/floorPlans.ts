@@ -52,7 +52,7 @@ export const hasFloorPlans = (
   buildingCode: string | null | undefined,
 ): buildingCode is FloorPlanBuildingKey => {
   if (!buildingCode) return false;
-  return Object.prototype.hasOwnProperty.call(buildFloorPlans(), buildingCode);
+  return Object.hasOwn(buildFloorPlans(), buildingCode);
 };
 
 export const getFloorPlansForBuilding = (

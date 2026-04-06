@@ -38,6 +38,11 @@ type SearchBarProps = {
 
 const SearchBarCompat = SearchBar as React.ComponentType<any>;
 const POI_PANEL_ANIMATION_DURATION_MS = 1000;
+const POI_CATEGORY_LABELS: Record<PoiCategory, string> = {
+  cafe: 'Cafes',
+  restaurant: 'Restaurants',
+  depanneur: 'Depanneurs',
+};
 
 export default function SearchSheet({
   buildings,
@@ -318,6 +323,18 @@ export default function SearchSheet({
   const handleSearchChange = useCallback((text?: string) => {
     setSearch(text ?? '');
   }, []);
+  const togglePoiCategory = useCallback(
+    (category: PoiCategory) => {
+      onPoiCategoryChange?.((previousCategories) => {
+        const hasCategory = previousCategories.includes(category);
+        if (hasCategory) {
+          return previousCategories.filter((entry) => entry !== category);
+        }
+        return [...previousCategories, category];
+      });
+    },
+    [onPoiCategoryChange],
+  );
   const poiOptionsAccessibilityLabel = isPoiPanelOpen ? 'Close POI options' : 'Open POI options';
   const poiPanelAnimatedStyle = useMemo(
     () => ({
@@ -439,12 +456,7 @@ export default function SearchSheet({
           <View style={searchBuilding.poiCategoryColumn}>
             {(['cafe', 'restaurant', 'depanneur'] as PoiCategory[]).map((category) => {
               const isSelected = selectedPoiCategories.includes(category);
-              const categoryLabel =
-                category === 'cafe'
-                  ? 'Cafes'
-                  : category === 'restaurant'
-                    ? 'Restaurants'
-                    : 'Depanneurs';
+              const categoryLabel = POI_CATEGORY_LABELS[category];
               return (
                 <TouchableOpacity
                   key={category}
@@ -454,13 +466,7 @@ export default function SearchSheet({
                     isSelected && searchBuilding.poiCategoryCheckboxRowSelected,
                   ]}
                   activeOpacity={0.85}
-                  onPress={() =>
-                    onPoiCategoryChange?.((previousCategories) =>
-                      previousCategories.includes(category)
-                        ? previousCategories.filter((entry) => entry !== category)
-                        : [...previousCategories, category],
-                    )
-                  }
+                  onPress={() => togglePoiCategory(category)}
                 >
                   <Text style={searchBuilding.poiCategoryCheckboxLabel}>{categoryLabel}</Text>
                   <View

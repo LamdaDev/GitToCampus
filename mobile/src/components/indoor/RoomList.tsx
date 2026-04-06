@@ -57,8 +57,7 @@ const getBuildingData = (buildingKey: IndoorBuildingKey, search: string) => {
   graph.nodes.forEach((node: any) => {
     if (node.type === 'room' && node.label && node.label.trim() !== '') {
       const label = node.label.toLowerCase();
-
-      const roomNumber = label.replace(/[^0-9]/g, '');
+      const roomNumber = label.replaceAll(/\D/g, '');
 
       if (!searchLower || roomNumber.startsWith(searchLower) || label.startsWith(searchLower)) {
         if (!grouped[node.floor]) grouped[node.floor] = [];
@@ -76,7 +75,9 @@ const getBuildingData = (buildingKey: IndoorBuildingKey, search: string) => {
     }
   });
 
-  Object.values(grouped).forEach((rooms) => rooms.sort((a, b) => a.label.localeCompare(b.label)));
+  for (const rooms of Object.values(grouped)) {
+    rooms.sort((a, b) => a.label.localeCompare(b.label));
+  }
 
   return grouped;
 };
@@ -150,6 +151,25 @@ const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props)
     [buildingCache, isSearching],
   );
 
+  const renderRoom = useCallback(
+    (room: RoomNode) => (
+      <TouchableOpacity key={room.id} onPress={() => onSelectRoom?.(room)} style={styles.roomItem}>
+        <Text style={styles.roomText}>{room.label}</Text>
+      </TouchableOpacity>
+    ),
+    [onSelectRoom],
+  );
+
+  const renderFloorSection = useCallback(
+    ([floor, rooms]: [string, RoomNode[]]) => (
+      <View key={floor} style={{ marginBottom: 12 }}>
+        <Text style={styles.floorTitle}>Floor {floor}</Text>
+        {rooms.map(renderRoom)}
+      </View>
+    ),
+    [renderRoom],
+  );
+
   const renderBuilding = useCallback(
     (buildingId: IndoorBuildingKey) => {
       const floors = buildingCache[buildingId];
@@ -186,21 +206,7 @@ const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props)
             <View style={styles.contentContainer}>
               {Object.entries(floors)
                 .sort(([a], [b]) => Number(a) - Number(b))
-                .map(([floor, rooms]) => (
-                  <View key={floor} style={{ marginBottom: 12 }}>
-                    <Text style={styles.floorTitle}>Floor {floor}</Text>
-
-                    {rooms.map((room) => (
-                      <TouchableOpacity
-                        key={room.id}
-                        onPress={() => onSelectRoom?.(room)}
-                        style={styles.roomItem}
-                      >
-                        <Text style={styles.roomText}>{room.label}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                ))}
+                .map(renderFloorSection)}
             </View>
           )}
         </View>
@@ -212,7 +218,7 @@ const RoomList = ({ onSelectRoom, search = '', variant = 'virtualized' }: Props)
       collapsedBuildings,
       handleToggleBuilding,
       isSearching,
-      onSelectRoom,
+      renderFloorSection,
     ],
   );
 
