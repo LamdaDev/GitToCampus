@@ -1,6 +1,13 @@
 import { getAllBuildingShapes, findBuildingAt } from './buildingsRepository';
 import { getCurrentLocationResult } from './location';
+import { getIndoorGraph } from './indoor/indoorGraphs';
+import {
+  getIndoorBuildingCampus,
+  getIndoorBuildingKeyFromShape,
+  type IndoorBuildingKey,
+} from './indoor/buildingKeys';
 import type { BuildingShape } from '../types/BuildingShape';
+import type { CrossBuildingRoomEndpoint } from '../types/CrossBuildingRoute';
 import type { UserLocationCoords } from './location';
 
 type DestinationMatchMethod = 'short_code' | 'name' | 'address';
@@ -22,6 +29,7 @@ export type CalendarRouteStartPoint = AutomaticStartPoint | ManualStartPoint;
 
 export type CalendarRouteLocation = {
   destinationBuilding: BuildingShape;
+  destinationRoomEndpoint: CrossBuildingRoomEndpoint | null;
   startPoint: CalendarRouteStartPoint;
   normalizedEventLocation: string;
   rawEventLocation: string;
@@ -56,6 +64,8 @@ const PUNCTUATION_PATTERN = /[.,;:()[\]{}]/g;
 const WHITESPACE_PATTERN = /\s+/g;
 const CAMPUS_PREFIX_PATTERN = /\b(SGW|LOY|LOYOLA)\b/g;
 const NON_ALPHANUMERIC_PATTERN = /[^A-Z0-9]/g;
+const ROOM_LABEL_TOKEN_PATTERN = /[A-Z0-9]+/g;
+const ROOM_TOKEN_SEPARATOR_PATTERN = '[\\s.,;:()[\\]{}_-]*';
 
 const normalizeText = (value: string) =>
   value
@@ -70,6 +80,8 @@ const normalizeWithoutCampusPrefix = (value: string) =>
 
 const normalizeCode = (value: string) =>
   value.toUpperCase().replaceAll(NON_ALPHANUMERIC_PATTERN, '');
+
+const escapeRegex = (value: string) => value.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const isUppercaseLetter = (char: string) => char >= 'A' && char <= 'Z';
 const isDigit = (char: string) => char >= '0' && char <= '9';
@@ -330,6 +342,129 @@ const matchDestinationBuilding = (
   );
 };
 
+type RoomLabelCandidate = {
+  endpoint: CrossBuildingRoomEndpoint;
+  canonicalLabel: string;
+  pattern: RegExp;
+  tokenCount: number;
+  labelLength: number;
+};
+
+const roomCandidatesByBuildingKey = new Map<IndoorBuildingKey, RoomLabelCandidate[]>();
+
+const toRoomLabelTokens = (value: string): string[] =>
+  value.toUpperCase().match(ROOM_LABEL_TOKEN_PATTERN) ?? [];
+
+const buildRoomLabelPattern = (tokens: string[]) =>
+  new RegExp(
+    `(^|[^A-Z0-9])${tokens.map((token) => escapeRegex(token)).join(ROOM_TOKEN_SEPARATOR_PATTERN)}(?=$|[^A-Z0-9])`,
+    'i',
+  );
+
+const getRoomLabelCandidates = (
+  destinationBuilding: BuildingShape,
+  buildingKey: IndoorBuildingKey,
+): RoomLabelCandidate[] => {
+  const cachedCandidates = roomCandidatesByBuildingKey.get(buildingKey);
+  if (cachedCandidates) return cachedCandidates;
+
+  const graph = getIndoorGraph(buildingKey);
+  if (!graph) {
+    roomCandidatesByBuildingKey.set(buildingKey, []);
+    return [];
+  }
+
+  const candidates: RoomLabelCandidate[] = [];
+  const seenCanonicalLabels = new Set<string>();
+  const roomCampus = getIndoorBuildingCampus(buildingKey) ?? destinationBuilding.campus ?? null;
+
+  for (const node of graph.nodes) {
+    if (node.type !== 'room') continue;
+
+    const label = node.label.trim();
+    if (!label) continue;
+
+    const canonicalLabel = normalizeCode(label);
+    if (!canonicalLabel || seenCanonicalLabels.has(canonicalLabel)) continue;
+
+    const tokens = toRoomLabelTokens(label);
+    if (tokens.length < 2) continue;
+
+    candidates.push({
+      endpoint: {
+        id: node.id,
+        label,
+        buildingId: node.buildingId,
+        buildingKey,
+        campus: roomCampus,
+        floor: node.floor,
+      },
+      canonicalLabel,
+      pattern: buildRoomLabelPattern(tokens),
+      tokenCount: tokens.length,
+      labelLength: label.length,
+    });
+    seenCanonicalLabels.add(canonicalLabel);
+  }
+
+  roomCandidatesByBuildingKey.set(buildingKey, candidates);
+  return candidates;
+};
+
+const scoreRoomLabelCandidate = ({
+  candidate,
+  uppercaseRawLocation,
+  canonicalLocation,
+}: {
+  candidate: RoomLabelCandidate;
+  uppercaseRawLocation: string;
+  canonicalLocation: string;
+}) => {
+  let matchScore = 0;
+  if (candidate.pattern.test(uppercaseRawLocation)) matchScore += 3;
+  if (canonicalLocation.includes(candidate.canonicalLabel)) matchScore += 2;
+  if (canonicalLocation === candidate.canonicalLabel) matchScore += 1;
+  if (matchScore === 0) return -1;
+
+  return matchScore * 10_000 + candidate.canonicalLabel.length * 100 + candidate.tokenCount * 10;
+};
+
+const resolveDestinationRoomEndpoint = ({
+  destinationBuilding,
+  rawEventLocation,
+  normalizedEventLocation,
+}: {
+  destinationBuilding: BuildingShape;
+  rawEventLocation: string;
+  normalizedEventLocation: string;
+}): CrossBuildingRoomEndpoint | null => {
+  const destinationBuildingKey = getIndoorBuildingKeyFromShape(destinationBuilding);
+  if (!destinationBuildingKey) return null;
+
+  const candidates = getRoomLabelCandidates(destinationBuilding, destinationBuildingKey);
+  if (candidates.length === 0) return null;
+
+  const uppercaseRawLocation = rawEventLocation.toUpperCase();
+  const canonicalLocation = normalizeCode(normalizedEventLocation);
+
+  let bestMatch: { candidate: RoomLabelCandidate; score: number } | null = null;
+
+  for (const candidate of candidates) {
+    const score = scoreRoomLabelCandidate({
+      candidate,
+      uppercaseRawLocation,
+      canonicalLocation,
+    });
+    if (score < 0) continue;
+
+    if (!bestMatch || score > bestMatch.score) {
+      bestMatch = { candidate, score };
+    }
+  }
+
+  return bestMatch?.candidate.endpoint ?? null;
+};
+
 const resolveStartPoint = async (): Promise<CalendarRouteStartPoint> => {
   const currentLocationResult = await getCurrentLocationResult();
 
@@ -355,13 +490,10 @@ const resolveStartPoint = async (): Promise<CalendarRouteStartPoint> => {
 };
 
 export const getManualStartReasonMessage = (reason: ManualStartReason): string => {
-  if (reason === 'permission_denied') {
-    return 'Location permission required—please select your starting building manually';
-  }
   if (reason === 'location_unavailable') {
     return 'Could not generate route—try again';
   }
-  return 'Location permission required—please select your starting building manually';
+  return '';
 };
 
 export const resolveCalendarEventDestination = (
@@ -379,10 +511,17 @@ export const resolveCalendarEventDestination = (
     return toCalendarLocationError('UNRECOGNIZED_EVENT_LOCATION');
   }
 
+  const destinationRoomEndpoint = resolveDestinationRoomEndpoint({
+    destinationBuilding: destinationMatch.building,
+    rawEventLocation,
+    normalizedEventLocation,
+  });
+
   return {
     type: 'success',
     value: {
       destinationBuilding: destinationMatch.building,
+      destinationRoomEndpoint,
       normalizedEventLocation,
       rawEventLocation,
     },

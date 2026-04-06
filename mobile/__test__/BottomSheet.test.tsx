@@ -697,9 +697,7 @@ describe('BottomSheet', () => {
     jest.useRealTimers();
     delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_WEEKDAY;
     delete process.env.EXPO_PUBLIC_SHUTTLE_DEBUG_FORCE_PLANNING_TIME;
-    mockGetManualStartReasonMessage.mockReturnValue(
-      'Location permission required—please select your starting building manually',
-    );
+    mockGetManualStartReasonMessage.mockReturnValue('');
     mockResolveCalendarRouteLocation.mockResolvedValue({
       type: 'success',
       value: {
@@ -3229,12 +3227,111 @@ describe('BottomSheet', () => {
     expect(queryByTestId('calendar-selection-slider')).toBeNull();
   });
 
+  test('calendar GO with a resolved room inside a building prompts for exact start room first', async () => {
+    crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow.mockReturnValueOnce({
+      ok: true,
+      flow: {
+        startRoomEndpoint: mockSameBuildingRoom,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        originBuilding: mockSameBuildingSearchResult,
+        destinationBuilding: mockOtherBuildingSearchResult,
+        originTransferPoint: {
+          buildingKey: 'H',
+          campus: 'SGW',
+          accessNodeId: 'H1_F1_building_entry_exit_7',
+          outdoorCoords: { latitude: 45.497092, longitude: -73.5788 },
+          accessible: true,
+        },
+        destinationTransferPoint: {
+          buildingKey: 'VE',
+          campus: 'LOYOLA',
+          accessNodeId: 'VE_F1_building_entry_exit_6',
+          outdoorCoords: { latitude: 45.459026, longitude: -73.638606 },
+          accessible: true,
+        },
+        outdoorMode: 'walking',
+        currentStage: 'origin_indoor',
+      },
+    });
+
+    mockResolveCalendarRouteLocation.mockResolvedValueOnce({
+      type: 'success',
+      value: {
+        destinationBuilding: mockOtherBuildingSearchResult,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        startPoint: {
+          type: 'automatic',
+          coordinates: { latitude: 45.4971, longitude: -73.5791 },
+          building: mockSameBuildingSearchResult,
+        },
+        normalizedEventLocation: 'VE 1 615',
+        rawEventLocation: 'VE-1.615',
+      },
+    });
+
+    const SearchModeHarness = () => {
+      const [mode, setMode] = React.useState<'search' | 'detail'>('search');
+      const [selectedBuilding, setSelectedBuilding] = React.useState<BuildingShape | null>(
+        mockSameBuildingSearchResult,
+      );
+      return (
+        <BottomSlider
+          {...defaultProps}
+          ref={createRef()}
+          mode={mode}
+          selectedBuilding={selectedBuilding}
+          passSelectedBuilding={setSelectedBuilding}
+          onExitSearch={() => setMode('detail')}
+        />
+      );
+    };
+
+    const { getByTestId } = render(<SearchModeHarness />);
+    fireEvent.press(getByTestId('trigger-calendar-go-with-event'));
+
+    await waitFor(() => {
+      expect(getByTestId('hybrid-directions-details')).toBeTruthy();
+      expect(getByTestId('hybrid-start-label').props.children).toBe('Hall Building');
+      expect(getByTestId('hybrid-destination-label').props.children).toBe('VE-1.615');
+      expect(getByTestId('hybrid-summary-message').props.children).toBe(
+        'Choose your current room as the start point to continue.',
+      );
+    });
+
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).not.toHaveBeenCalled();
+
+    await pressAndFlush(getByTestId('hybrid-press-start'));
+    await pressAndFlush(getByTestId('select-room-in-search'));
+    await pressAndFlush(getByTestId('hybrid-go-button'));
+
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        destinationRoom: mockOtherBuildingRoom,
+        outdoorMode: 'walking',
+        startRoom: expect.objectContaining({
+          id: mockSameBuildingRoom.id,
+          label: mockSameBuildingRoom.label,
+          buildingKey: 'H',
+        }),
+      }),
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('indoor-navigation-details')).toBeTruthy();
+      expect(getByTestId('indoor-navigation-start-room').props.children).toBe('H-811');
+      expect(getByTestId('indoor-navigation-destination-room').props.children).toBe('H Exit');
+      expect(defaultProps.enterIndoorView).toHaveBeenCalled();
+      expect(defaultProps.onEnterBuilding).toHaveBeenCalledWith(mockSameBuildingSearchResult);
+    });
+  });
+
   // here
   test('handleUpcomingClassPress sets manual start when startPoint type is manual', async () => {
     mockResolveCalendarRouteLocation.mockResolvedValueOnce({
       type: 'success',
       value: {
         destinationBuilding: mockBuildings[1],
+        destinationRoomEndpoint: null,
         startPoint: { type: 'manual', reason: 'location_permission_denied' },
         normalizedEventLocation: 'HALL BUILDING 435',
         rawEventLocation: 'Hall Building 435',
