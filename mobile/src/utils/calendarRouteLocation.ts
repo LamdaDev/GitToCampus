@@ -65,7 +65,8 @@ const WHITESPACE_PATTERN = /\s+/g;
 const CAMPUS_PREFIX_PATTERN = /\b(SGW|LOY|LOYOLA)\b/g;
 const NON_ALPHANUMERIC_PATTERN = /[^A-Z0-9]/g;
 const ROOM_LABEL_TOKEN_PATTERN = /[A-Z0-9]+/g;
-const ROOM_TOKEN_SEPARATOR_PATTERN = '[\\s.,;:()[\\]{}_-]*';
+const ROOM_TOKEN_SEPARATOR_PATTERN = String.raw`[\s.,;:()[\]{}_-]*`;
+const REGEX_ESCAPE_REPLACEMENT = String.raw`\$&`;
 
 const normalizeText = (value: string) =>
   value
@@ -81,7 +82,8 @@ const normalizeWithoutCampusPrefix = (value: string) =>
 const normalizeCode = (value: string) =>
   value.toUpperCase().replaceAll(NON_ALPHANUMERIC_PATTERN, '');
 
-const escapeRegex = (value: string) => value.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (value: string) =>
+  value.replaceAll(/[.*+?^${}()|[\]\\]/g, REGEX_ESCAPE_REPLACEMENT);
 
 const isUppercaseLetter = (char: string) => char >= 'A' && char <= 'Z';
 const isDigit = (char: string) => char >= '0' && char <= '9';

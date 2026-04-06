@@ -3366,6 +3366,181 @@ describe('BottomSheet', () => {
     });
   });
 
+  test('calendar GO with a room destination and manual start opens hybrid directions without building a staged flow', async () => {
+    mockResolveCalendarRouteLocation.mockResolvedValueOnce({
+      type: 'success',
+      value: {
+        destinationBuilding: mockOtherBuildingSearchResult,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        startPoint: { type: 'manual', reason: 'outside_campus' },
+        normalizedEventLocation: 'VE 1 615',
+        rawEventLocation: 'VE-1.615',
+      },
+    });
+
+    const SearchModeHarness = () => {
+      const [mode, setMode] = React.useState<'search' | 'detail'>('search');
+      const [selectedBuilding, setSelectedBuilding] = React.useState<BuildingShape | null>(
+        mockSameBuildingSearchResult,
+      );
+
+      return (
+        <BottomSlider
+          {...defaultProps}
+          ref={createRef()}
+          mode={mode}
+          selectedBuilding={selectedBuilding}
+          passSelectedBuilding={setSelectedBuilding}
+          onExitSearch={() => setMode('detail')}
+        />
+      );
+    };
+
+    const { getByTestId } = render(<SearchModeHarness />);
+    fireEvent.press(getByTestId('trigger-calendar-go-with-event'));
+
+    await waitFor(() => {
+      expect(getByTestId('hybrid-directions-details')).toBeTruthy();
+      expect(getByTestId('hybrid-start-label').props.children).toBe('none');
+      expect(getByTestId('hybrid-destination-label').props.children).toBe('VE-1.615');
+    });
+
+    expect(mockGetManualStartReasonMessage).toHaveBeenCalledWith('outside_campus');
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).not.toHaveBeenCalled();
+  });
+
+  test('calendar GO with a room destination surfaces staged-flow build errors when start is outdoor', async () => {
+    crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow.mockReturnValueOnce({
+      ok: false,
+      message: 'No transfer route available for this class.',
+    });
+    mockResolveCalendarRouteLocation.mockResolvedValueOnce({
+      type: 'success',
+      value: {
+        destinationBuilding: mockOtherBuildingSearchResult,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        startPoint: {
+          type: 'automatic',
+          coordinates: { latitude: 45.4972, longitude: -73.5792 },
+          building: null,
+        },
+        normalizedEventLocation: 'VE 1 615',
+        rawEventLocation: 'VE-1.615',
+      },
+    });
+
+    const SearchModeHarness = () => {
+      const [mode, setMode] = React.useState<'search' | 'detail'>('search');
+      const [selectedBuilding, setSelectedBuilding] = React.useState<BuildingShape | null>(
+        mockSameBuildingSearchResult,
+      );
+
+      return (
+        <BottomSlider
+          {...defaultProps}
+          ref={createRef()}
+          mode={mode}
+          selectedBuilding={selectedBuilding}
+          passSelectedBuilding={setSelectedBuilding}
+          onExitSearch={() => setMode('detail')}
+        />
+      );
+    };
+
+    const { getByTestId } = render(<SearchModeHarness />);
+    fireEvent.press(getByTestId('trigger-calendar-go-with-event'));
+
+    await waitFor(() => {
+      expect(getByTestId('hybrid-directions-details')).toBeTruthy();
+      expect(getByTestId('hybrid-start-label').props.children).toBe('My Location');
+      expect(getByTestId('hybrid-error-message').props.children).toBe(
+        'No transfer route available for this class.',
+      );
+    });
+
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        startRoom: null,
+        startBuilding: null,
+        destinationRoom: mockOtherBuildingRoom,
+        outdoorMode: 'walking',
+      }),
+    );
+  });
+
+  test('calendar GO with a room destination and outdoor start enters staged outdoor directions directly', async () => {
+    crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow.mockReturnValueOnce({
+      ok: true,
+      flow: {
+        startRoomEndpoint: null,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        originBuilding: null,
+        destinationBuilding: mockOtherBuildingSearchResult,
+        originTransferPoint: null,
+        destinationTransferPoint: {
+          buildingKey: 'VE',
+          campus: 'LOYOLA',
+          accessNodeId: 'VE_F1_building_entry_exit_6',
+          outdoorCoords: { latitude: 45.459026, longitude: -73.638606 },
+          accessible: true,
+        },
+        outdoorMode: 'walking',
+        currentStage: 'outdoor',
+      },
+    });
+    mockResolveCalendarRouteLocation.mockResolvedValueOnce({
+      type: 'success',
+      value: {
+        destinationBuilding: mockOtherBuildingSearchResult,
+        destinationRoomEndpoint: mockOtherBuildingRoom,
+        startPoint: {
+          type: 'automatic',
+          coordinates: { latitude: 45.4972, longitude: -73.5792 },
+          building: null,
+        },
+        normalizedEventLocation: 'VE 1 615',
+        rawEventLocation: 'VE-1.615',
+      },
+    });
+
+    const SearchModeHarness = () => {
+      const [mode, setMode] = React.useState<'search' | 'detail'>('search');
+      const [selectedBuilding, setSelectedBuilding] = React.useState<BuildingShape | null>(
+        mockSameBuildingSearchResult,
+      );
+
+      return (
+        <BottomSlider
+          {...defaultProps}
+          ref={createRef()}
+          mode={mode}
+          selectedBuilding={selectedBuilding}
+          passSelectedBuilding={setSelectedBuilding}
+          onExitSearch={() => setMode('detail')}
+        />
+      );
+    };
+
+    const { getByTestId, queryByTestId } = render(<SearchModeHarness />);
+    fireEvent.press(getByTestId('trigger-calendar-go-with-event'));
+
+    await waitFor(() => {
+      expect(getByTestId('direction-details')).toBeTruthy();
+      expect(getByTestId('route-stage-action-button')).toBeTruthy();
+      expect(queryByTestId('hybrid-directions-details')).toBeNull();
+    });
+
+    expect(defaultProps.onShowOutdoorMap).toHaveBeenCalledTimes(1);
+    expect(crossBuildingRouteFlowMock.buildCrossBuildingRouteFlow).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        startRoom: null,
+        startBuilding: null,
+        destinationRoom: mockOtherBuildingRoom,
+        outdoorMode: 'walking',
+      }),
+    );
+  });
+
   test('openIndoorDirections and openIndoorNavigation both snap to expanded', async () => {
     const ref = createRef<BottomSliderHandle>();
     render(<BottomSlider {...defaultProps} ref={ref} selectedBuilding={null} />);

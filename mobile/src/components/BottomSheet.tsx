@@ -41,6 +41,7 @@ import { fetchShuttleCompositeDirections } from '../services/directions/shuttleC
 import type { GoogleCalendarEventItem } from '../services/googleCalendarAuth';
 import {
   CALENDAR_LOCATION_NOT_FOUND_MESSAGE,
+  type CalendarRouteStartPoint,
   getManualStartReasonMessage,
   resolveCalendarRouteLocation,
 } from '../utils/calendarRouteLocation';
@@ -54,6 +55,7 @@ import IndoorNavigationDetails from './indoor/IndoorNavigationDetails';
 import { IndoorRoutePlannerMode } from '../types/SheetMode';
 import type { SearchMode } from '../types/SearchMode';
 import type { OutdoorPoi, PoiCategorySelection, PoiRangeKm } from '../types/Poi';
+import type { CrossBuildingRouteFlow } from '../types/CrossBuildingRoute';
 import HybridDirectionsDetails from './HybridDirectionsDetails';
 import {
   getIndoorBuildingCampus,
@@ -315,6 +317,18 @@ const getTransferRoomEndpoint = ({
     campus: getIndoorBuildingCampus(buildingKey),
     floor: transferNode?.floor ?? 1,
   };
+};
+
+const resolveStartEndpoint = ({
+  roomEndpoint,
+  building,
+}: {
+  roomEndpoint: RoomNode | null;
+  building: BuildingShape | null;
+}): MixedEndpoint | null => {
+  if (roomEndpoint) return { kind: 'room', room: roomEndpoint };
+  if (building) return { kind: 'building', building };
+  return null;
 };
 
 const getEndpointBuildingKey = (endpoint: MixedEndpoint | null): string | null => {
@@ -1563,6 +1577,177 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
     }, [snapToDirectionsPanel]);
 
+    const snapToExpandedPanel = useCallback(() => {
+      requestAnimationFrame(() => {
+        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+      });
+    }, []);
+
+    const showExpandedHybridDirectionsPanel = useCallback(() => {
+      setActiveView('hybrid-directions');
+      snapToExpandedPanel();
+    }, [snapToExpandedPanel]);
+
+    const showExpandedIndoorNavigationPanel = useCallback(
+      ({
+        startNodeId,
+        destinationNodeId,
+        building,
+      }: {
+        startNodeId: string;
+        destinationNodeId: string;
+        building: BuildingShape;
+      }) => {
+        onIndoorRouteChange?.(startNodeId, destinationNodeId);
+        enterIndoorView();
+        onEnterBuilding(building);
+        setActiveView('indoor-navigation');
+        snapToExpandedPanel();
+      },
+      [enterIndoorView, onEnterBuilding, onIndoorRouteChange, snapToExpandedPanel],
+    );
+
+    const showOutdoorDirectionsStage = useCallback(() => {
+      onIndoorRouteChange?.(null, null);
+      resetRouteState();
+      onShowOutdoorMap?.();
+      setActiveView('directions');
+    }, [onIndoorRouteChange, onShowOutdoorMap, resetRouteState]);
+
+    const applyCrossBuildingFlowState = useCallback(
+      (flow: CrossBuildingRouteFlow, startCoordinates: UserCoords | null) => {
+        resetRouteState();
+        startCrossBuildingRouteFlow(flow);
+        setTravelMode(flow.outdoorMode);
+        setRouteStartSource(flow.originBuilding ? 'manual' : 'current');
+        setStartLocationSnapshot(flow.originBuilding ? null : startCoordinates);
+        setStartBuilding(flow.originBuilding);
+        setDestinationBuilding(flow.destinationBuilding);
+        setDestinationLocationSnapshot(null);
+        passSelectedBuilding(
+          flow.currentStage === 'origin_indoor' ? flow.originBuilding : flow.destinationBuilding,
+        );
+      },
+      [passSelectedBuilding, resetRouteState, startCrossBuildingRouteFlow],
+    );
+
+    const continueCrossBuildingFlow = useCallback(
+      (flow: CrossBuildingRouteFlow, startCoordinates: UserCoords | null) => {
+        applyCrossBuildingFlowState(flow, startCoordinates);
+
+        if (
+          flow.currentStage === 'origin_indoor' &&
+          flow.startRoomEndpoint &&
+          flow.originTransferPoint &&
+          flow.originBuilding
+        ) {
+          showExpandedIndoorNavigationPanel({
+            startNodeId: flow.startRoomEndpoint.id,
+            destinationNodeId: flow.originTransferPoint.accessNodeId,
+            building: flow.originBuilding,
+          });
+          return;
+        }
+
+        showOutdoorDirectionsStage();
+      },
+      [applyCrossBuildingFlowState, showExpandedIndoorNavigationPanel, showOutdoorDirectionsStage],
+    );
+
+    const initializeCalendarRouteState = useCallback(
+      (destinationBuilding: BuildingShape) => {
+        passSelectedBuilding(destinationBuilding);
+        setCalendarSliderMode(null);
+        setSearchFor(null);
+        onExitSearch();
+        setDestinationPoi(null);
+        setDestinationLocationSnapshot(null);
+        setTravelMode('walking');
+        setHybridOutdoorTravelMode('walking');
+        setRouteErrorMessage(null);
+        setHybridRouteErrorMessage(null);
+        setRequiresIndoorStartRoomSelection(false);
+      },
+      [onExitSearch, passSelectedBuilding],
+    );
+
+    const applyCalendarBuildingDestination = useCallback(
+      (destinationBuilding: BuildingShape, startPoint: CalendarRouteStartPoint): void => {
+        setDestinationBuilding(destinationBuilding);
+        setDestinationEndpoint({ kind: 'building', building: destinationBuilding });
+        setStartEndpoint(null);
+        setStartRoom(null);
+        setDestinationRoom(null);
+        onIndoorRouteChange?.(null, null);
+        setActiveView('directions');
+
+        if (startPoint.type === 'automatic') {
+          setRouteStartSource('current');
+          // Calendar GO should always start from the user's live location coordinates.
+          setStartBuilding(null);
+          setStartLocationSnapshot(startPoint.coordinates);
+        } else {
+          setStartBuilding(null);
+          setStartLocationSnapshot(null);
+          setRouteStartSource('manual');
+          setRouteErrorMessage(getManualStartReasonMessage(startPoint.reason));
+        }
+
+        snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+      },
+      [onIndoorRouteChange, snapToDirectionsPanel],
+    );
+
+    const applyCalendarManualRoomStart = useCallback(
+      (startPoint: Extract<CalendarRouteStartPoint, { type: 'manual' }>): void => {
+        setStartBuilding(null);
+        setStartLocationSnapshot(null);
+        setStartEndpoint(null);
+        setStartRoom(null);
+        setRouteStartSource('manual');
+        setHybridRouteErrorMessage(getManualStartReasonMessage(startPoint.reason));
+        setRequiresIndoorStartRoomSelection(false);
+        onIndoorRouteChange?.(null, null);
+        showExpandedHybridDirectionsPanel();
+      },
+      [onIndoorRouteChange, showExpandedHybridDirectionsPanel],
+    );
+
+    const promptCalendarStartRoomSelection = useCallback(
+      (startBuildingForSelection: BuildingShape): void => {
+        setStartBuilding(startBuildingForSelection);
+        setStartLocationSnapshot(null);
+        setStartEndpoint(null);
+        setStartRoom(null);
+        setRouteStartSource('manual');
+        setRequiresIndoorStartRoomSelection(true);
+        onIndoorRouteChange?.(null, null);
+        showExpandedHybridDirectionsPanel();
+      },
+      [onIndoorRouteChange, showExpandedHybridDirectionsPanel],
+    );
+
+    const showCalendarFlowBuildError = useCallback(
+      ({
+        startBuildingForError,
+        startCoordinates,
+        message,
+      }: {
+        startBuildingForError: BuildingShape | null;
+        startCoordinates: UserCoords;
+        message: string;
+      }) => {
+        setStartBuilding(startBuildingForError);
+        setStartLocationSnapshot(startCoordinates);
+        setRouteStartSource('current');
+        setHybridRouteErrorMessage(message);
+        setRequiresIndoorStartRoomSelection(false);
+        onIndoorRouteChange?.(null, null);
+        showExpandedHybridDirectionsPanel();
+      },
+      [onIndoorRouteChange, showExpandedHybridDirectionsPanel],
+    );
+
     const handleSelectRoom = useCallback(
       (room: RoomNode) => {
         setHybridRouteErrorMessage(null);
@@ -1801,40 +1986,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             startPoint,
           } = resolved.value;
 
-          passSelectedBuilding(resolvedDestinationBuilding);
-          setCalendarSliderMode(null);
-          setSearchFor(null);
-          onExitSearch();
-          setDestinationPoi(null);
-          setDestinationLocationSnapshot(null);
-          setTravelMode('walking');
-          setHybridOutdoorTravelMode('walking');
-          setRouteErrorMessage(null);
-          setHybridRouteErrorMessage(null);
-          setRequiresIndoorStartRoomSelection(false);
+          initializeCalendarRouteState(resolvedDestinationBuilding);
 
           if (!resolvedDestinationRoomEndpoint) {
-            setDestinationBuilding(resolvedDestinationBuilding);
-            setDestinationEndpoint({ kind: 'building', building: resolvedDestinationBuilding });
-            setStartEndpoint(null);
-            setStartRoom(null);
-            setDestinationRoom(null);
-            onIndoorRouteChange?.(null, null);
-            setActiveView('directions');
-
-            if (startPoint.type === 'automatic') {
-              setRouteStartSource('current');
-              // Calendar GO should always start from the user's live location coordinates.
-              setStartBuilding(null);
-              setStartLocationSnapshot(startPoint.coordinates);
-            } else {
-              setStartBuilding(null);
-              setStartLocationSnapshot(null);
-              setRouteStartSource('manual');
-              setRouteErrorMessage(getManualStartReasonMessage(startPoint.reason));
-            }
-
-            snapToDirectionsPanel(DIRECTIONS_PANEL_SNAP_POINT);
+            applyCalendarBuildingDestination(resolvedDestinationBuilding, startPoint);
             return null;
           }
 
@@ -1844,18 +1999,7 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           setDestinationRoom(resolvedDestinationRoom.label);
 
           if (startPoint.type !== 'automatic') {
-            setStartBuilding(null);
-            setStartLocationSnapshot(null);
-            setStartEndpoint(null);
-            setStartRoom(null);
-            setRouteStartSource('manual');
-            setHybridRouteErrorMessage(getManualStartReasonMessage(startPoint.reason));
-            setRequiresIndoorStartRoomSelection(false);
-            onIndoorRouteChange?.(null, null);
-            setActiveView('hybrid-directions');
-            requestAnimationFrame(() => {
-              sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
-            });
+            applyCalendarManualRoomStart(startPoint);
             return null;
           }
 
@@ -1865,22 +2009,9 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           const hasIndoorStartGraph = Boolean(
             automaticStartBuildingKey && getIndoorGraph(automaticStartBuildingKey),
           );
-          const shouldRequireIndoorStartRoomSelection = Boolean(
-            automaticStartBuilding && hasIndoorStartGraph,
-          );
 
-          if (shouldRequireIndoorStartRoomSelection && automaticStartBuilding) {
-            setStartBuilding(automaticStartBuilding);
-            setStartLocationSnapshot(null);
-            setStartEndpoint(null);
-            setStartRoom(null);
-            setRouteStartSource('manual');
-            setRequiresIndoorStartRoomSelection(true);
-            onIndoorRouteChange?.(null, null);
-            setActiveView('hybrid-directions');
-            requestAnimationFrame(() => {
-              sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
-            });
+          if (automaticStartBuilding && hasIndoorStartGraph) {
+            promptCalendarStartRoomSelection(automaticStartBuilding);
             return null;
           }
 
@@ -1894,11 +2025,10 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
                 })
               : null;
 
-          const nextStartEndpoint: MixedEndpoint | null = stagedStartRoomEndpoint
-            ? { kind: 'room', room: stagedStartRoomEndpoint }
-            : automaticStartBuilding
-              ? { kind: 'building', building: automaticStartBuilding }
-              : null;
+          const nextStartEndpoint = resolveStartEndpoint({
+            roomEndpoint: stagedStartRoomEndpoint,
+            building: automaticStartBuilding,
+          });
 
           setStartEndpoint(nextStartEndpoint);
           setStartRoom(stagedStartRoomEndpoint?.label ?? automaticStartBuilding?.name ?? null);
@@ -1915,70 +2045,30 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
           });
 
           if (!flowResult.ok) {
-            setStartBuilding(automaticStartBuilding ?? null);
-            setStartLocationSnapshot(startPoint.coordinates);
-            setRouteStartSource('current');
-            setHybridRouteErrorMessage(flowResult.message);
-            setRequiresIndoorStartRoomSelection(false);
-            onIndoorRouteChange?.(null, null);
-            setActiveView('hybrid-directions');
-            requestAnimationFrame(() => {
-              sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+            showCalendarFlowBuildError({
+              startBuildingForError: automaticStartBuilding,
+              startCoordinates: startPoint.coordinates,
+              message: flowResult.message,
             });
             return null;
           }
 
-          const { flow } = flowResult;
-          resetRouteState();
-          startCrossBuildingRouteFlow(flow);
-          setTravelMode(flow.outdoorMode);
-          setRouteStartSource(flow.originBuilding ? 'manual' : 'current');
-          setStartLocationSnapshot(flow.originBuilding ? null : startPoint.coordinates);
-          setStartBuilding(flow.originBuilding);
-          setDestinationBuilding(flow.destinationBuilding);
-          setDestinationLocationSnapshot(null);
-          passSelectedBuilding(
-            flow.currentStage === 'origin_indoor' ? flow.originBuilding : flow.destinationBuilding,
-          );
-
-          if (
-            flow.currentStage === 'origin_indoor' &&
-            flow.startRoomEndpoint &&
-            flow.originTransferPoint &&
-            flow.originBuilding
-          ) {
-            onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
-            enterIndoorView();
-            onEnterBuilding(flow.originBuilding);
-            setActiveView('indoor-navigation');
-            requestAnimationFrame(() => {
-              sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
-            });
-            return null;
-          }
-
-          onIndoorRouteChange?.(null, null);
-          resetRouteState();
-          onShowOutdoorMap?.();
-          setActiveView('directions');
+          continueCrossBuildingFlow(flowResult.flow, startPoint.coordinates);
           return null;
         } catch {
           return CALENDAR_LOCATION_NOT_FOUND_MESSAGE;
         }
       },
       [
+        applyCalendarBuildingDestination,
+        applyCalendarManualRoomStart,
         buildings,
         clearCrossBuildingRouteFlowState,
-        enterIndoorView,
+        continueCrossBuildingFlow,
         indoorTravelMode,
-        onEnterBuilding,
-        onExitSearch,
-        onIndoorRouteChange,
-        onShowOutdoorMap,
-        passSelectedBuilding,
-        resetRouteState,
-        snapToDirectionsPanel,
-        startCrossBuildingRouteFlow,
+        initializeCalendarRouteState,
+        promptCalendarStartRoomSelection,
+        showCalendarFlowBuildError,
       ],
     );
 
@@ -2131,61 +2221,21 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
         return;
       }
 
-      const { flow } = result;
       clearCrossBuildingRouteFlowState();
-      resetRouteState();
       setRequiresIndoorStartRoomSelection(false);
-      startCrossBuildingRouteFlow(flow);
-      setTravelMode(flow.outdoorMode);
-      setRouteStartSource(flow.originBuilding ? 'manual' : 'current');
-      setStartLocationSnapshot(
-        flow.originBuilding ? null : (startLocationSnapshot ?? userLocation),
-      );
-      setStartBuilding(flow.originBuilding);
-      setDestinationBuilding(flow.destinationBuilding);
-      setDestinationLocationSnapshot(null);
-      passSelectedBuilding(
-        flow.currentStage === 'origin_indoor' ? flow.originBuilding : flow.destinationBuilding,
-      );
-
-      if (
-        flow.currentStage === 'origin_indoor' &&
-        flow.startRoomEndpoint &&
-        flow.originTransferPoint &&
-        flow.originBuilding
-      ) {
-        onIndoorRouteChange?.(flow.startRoomEndpoint.id, flow.originTransferPoint.accessNodeId);
-        enterIndoorView();
-        onEnterBuilding(flow.originBuilding);
-        setActiveView('indoor-navigation');
-        requestAnimationFrame(() => {
-          sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
-        });
-        return;
-      }
-
-      onIndoorRouteChange?.(null, null);
-      resetRouteState();
-      onShowOutdoorMap?.();
-      setActiveView('directions');
+      continueCrossBuildingFlow(result.flow, startLocationSnapshot ?? userLocation);
     }, [
       buildings,
       clearCrossBuildingRouteFlowState,
+      continueCrossBuildingFlow,
       currentBuilding,
       destinationBuilding,
       destinationEndpoint,
-      enterIndoorView,
       hybridOutdoorTravelMode,
       indoorTravelMode,
-      onEnterBuilding,
-      onIndoorRouteChange,
-      onShowOutdoorMap,
-      passSelectedBuilding,
       requiresIndoorStartRoomSelection,
-      resetRouteState,
       startBuilding,
       startLocationSnapshot,
-      startCrossBuildingRouteFlow,
       startEndpoint,
       userLocation,
     ]);
@@ -2203,16 +2253,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       setStartBuilding(flow.originBuilding);
       setDestinationBuilding(flow.destinationBuilding);
       setDestinationLocationSnapshot(null);
-      onIndoorRouteChange?.(null, null);
-      resetRouteState();
-      onShowOutdoorMap?.();
-      setActiveView('directions');
+      showOutdoorDirectionsStage();
     }, [
       continueCrossBuildingRouteFlowToOutdoor,
       crossBuildingRouteFlow,
-      onIndoorRouteChange,
-      onShowOutdoorMap,
-      resetRouteState,
+      showOutdoorDirectionsStage,
     ]);
 
     const handleEnterDestinationBuilding = useCallback(() => {
@@ -2228,24 +2273,17 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
       continueCrossBuildingRouteFlowToDestinationIndoor();
       resetRouteState();
       passSelectedBuilding(flow.destinationBuilding);
-      onIndoorRouteChange?.(
-        flow.destinationTransferPoint.accessNodeId,
-        flow.destinationRoomEndpoint.id,
-      );
-      enterIndoorView();
-      onEnterBuilding(flow.destinationBuilding);
-      setActiveView('indoor-navigation');
-      requestAnimationFrame(() => {
-        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+      showExpandedIndoorNavigationPanel({
+        startNodeId: flow.destinationTransferPoint.accessNodeId,
+        destinationNodeId: flow.destinationRoomEndpoint.id,
+        building: flow.destinationBuilding,
       });
     }, [
       continueCrossBuildingRouteFlowToDestinationIndoor,
       crossBuildingRouteFlow,
-      enterIndoorView,
-      onEnterBuilding,
-      onIndoorRouteChange,
       passSelectedBuilding,
       resetRouteState,
+      showExpandedIndoorNavigationPanel,
     ]);
 
     const handleCrossBuildingIndoorBack = useCallback(() => {
@@ -2560,11 +2598,11 @@ const BottomSlider = forwardRef<BottomSliderHandle, BottomSheetProps>(
             ? 'hybrid-directions'
             : 'indoor-directions',
         );
-        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+        snapToExpandedPanel();
       },
       openIndoorNavigation: () => {
         setActiveView('indoor-navigation');
-        sheetRef.current?.snapToIndex(SHEET_INDEX_EXPANDED);
+        snapToExpandedPanel();
       },
     }));
 
