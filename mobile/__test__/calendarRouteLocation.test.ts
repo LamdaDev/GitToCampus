@@ -69,6 +69,7 @@ describe('calendarRouteLocation', () => {
     expect(result.type).toBe('success');
     if (result.type !== 'success') return;
     expect(result.value.destinationBuilding.id).toBe('hall');
+    expect(result.value.destinationRoomEndpoint?.label).toBe('H-110');
     expect(result.value.normalizedEventLocation).toBe('SGW H 110');
     expect(result.value.startPoint).toEqual({
       type: 'automatic',
@@ -90,6 +91,7 @@ describe('calendarRouteLocation', () => {
     if (result.type !== 'success') return;
     expect(result.value.destinationBuilding.id).toBe('hall');
     expect(result.value.destinationBuilding.name).toBe('Henry F. Hall Building');
+    expect(result.value.destinationRoomEndpoint).toBeNull();
   });
 
   test('resolves short-code location MB S1.150 to MB building', async () => {
@@ -105,6 +107,22 @@ describe('calendarRouteLocation', () => {
     if (result.type !== 'success') return;
     expect(result.value.destinationBuilding.id).toBe('mb');
     expect(result.value.destinationBuilding.shortCode).toBe('MB');
+    expect(result.value.destinationRoomEndpoint).toBeNull();
+  });
+
+  test('resolves MB S2 210 to the mapped MB room endpoint', async () => {
+    locationUtilsMock.getCurrentLocationResult.mockResolvedValueOnce({
+      type: 'success',
+      coords: { latitude: 45.5, longitude: -73.57 },
+    });
+    buildingsRepositoryMock.findBuildingAt.mockReturnValueOnce(hallBuilding);
+
+    const result = await resolveCalendarRouteLocation('MB S2 210');
+
+    expect(result.type).toBe('success');
+    if (result.type !== 'success') return;
+    expect(result.value.destinationBuilding.id).toBe('mb');
+    expect(result.value.destinationRoomEndpoint?.label).toBe('MB-S2.210');
   });
 
   test('resolves compact room location H435 to Hall building', async () => {
@@ -133,6 +151,7 @@ describe('calendarRouteLocation', () => {
     expect(result.type).toBe('success');
     if (result.type !== 'success') return;
     expect(result.value.destinationBuilding.id).toBe('hall');
+    expect(result.value.destinationRoomEndpoint?.label).toBe('H-110');
     expect(result.value.startPoint).toEqual({
       type: 'manual',
       reason: 'permission_denied',
@@ -168,15 +187,11 @@ describe('calendarRouteLocation', () => {
   });
 
   test('maps manual fallback reasons to user-friendly messages', () => {
-    expect(getManualStartReasonMessage('permission_denied')).toBe(
-      'Location permission required—please select your starting building manually',
-    );
+    expect(getManualStartReasonMessage('permission_denied')).toBe('');
     expect(getManualStartReasonMessage('location_unavailable')).toBe(
       'Could not generate route—try again',
     );
-    expect(getManualStartReasonMessage('outside_campus')).toBe(
-      'Location permission required—please select your starting building manually',
-    );
+    expect(getManualStartReasonMessage('outside_campus')).toBe('');
   });
 
   test('resolves a supported event destination without requiring async start-point lookup', () => {
@@ -185,6 +200,7 @@ describe('calendarRouteLocation', () => {
     expect(result.type).toBe('success');
     if (result.type !== 'success') return;
     expect(result.value.destinationBuilding.id).toBe('mb');
+    expect(result.value.destinationRoomEndpoint).toBeNull();
     expect(result.value.normalizedEventLocation).toBe('MB S1 150');
     expect(result.value.rawEventLocation).toBe('MB S1.150');
   });
