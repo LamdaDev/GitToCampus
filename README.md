@@ -10,6 +10,14 @@ With an interactive campus map and smart routing, GitToCampus helps you:
 - Navigate to your **next class automatically** by connecting to your schedule (e.g., calendar or course data)
 - Use **indoor directions** to find classrooms and key points of interest (washrooms, stairs, elevators, water fountains), including accessibility-friendly routes
 
+<br>
+
+<p align="center">
+  <img width="299" height="637" alt="task6 4" src="https://github.com/user-attachments/assets/b1687bec-51fe-4750-8e30-332982bcd8cc" />
+</p>
+
+<br>
+
 Designed with usability and accessibility in mind, GitToCampus is built to reduce “first-week lost” moments and help users move confidently across campus.
 
 Created by Team GitGood.
